@@ -31,9 +31,9 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'npm run dev -- --port 3000',
+    command: `REQUIRE_ADMIN_AUTH=${process.env.REQUIRE_ADMIN_AUTH || 'false'} npm run dev -- --port 3000`,
     url: 'http://localhost:3000/api/health',
-    reuseExistingServer: true,
+    reuseExistingServer: !process.env.CI,
     timeout: 60000,
     stdout: 'pipe',
     stderr: 'pipe',

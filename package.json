@@ -12,7 +12,9 @@
     "e2e:install": "playwright install chromium",
     "e2e:dev": "playwright test",
     "e2e:prod": "REQUIRE_ADMIN_AUTH=true playwright test",
-    "qa:week4": "npm run test:integration && npm run e2e:prod",
+    "qa:seed-e2e": "E2E_SEED=true tsx scripts/qa-seed-e2e.ts",
+    "qa:week4": "bash -c 'export RATE_LIMIT_NAMESPACE=test-$(date +%s) && npm run test:integration && npm run e2e:prod'",
+    "qa:week4:dev": "bash -c 'export RATE_LIMIT_NAMESPACE=test-$(date +%s) && npm run test:integration && npm run qa:seed-e2e && npm run e2e:dev'",
     "lint": "next lint",
     "qa:rls-bypass": "tsx scripts/qa-rls-bypass.test.ts",
     "qa:service-smoke": "tsx scripts/qa-service-role-smoke.ts",
@@ -34,6 +36,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.41.0",
+    "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^20.11.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",

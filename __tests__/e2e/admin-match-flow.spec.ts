@@ -3,17 +3,27 @@
 // Validates: UI, API, DB state, tracking code format
 
 import { test, expect } from '@playwright/test'
+import { readFileSync, existsSync } from 'fs'
+import { resolve } from 'path'
 
 // Skip these tests when auth gating is enabled (REQUIRE_ADMIN_AUTH=true)
 // These tests are for functional flows, not security validation
 test.describe.configure({ mode: 'serial' })
 
+// Load E2E seed data
+const seedDataPath = resolve(process.cwd(), '.e2e-test-data.json')
+let seedData: any = null
+if (existsSync(seedDataPath)) {
+  seedData = JSON.parse(readFileSync(seedDataPath, 'utf-8'))
+}
+
 test.describe('Admin Match Creation Flow', () => {
   test.skip(!!process.env.REQUIRE_ADMIN_AUTH, 'Skipped when auth gating enabled')
+  test.skip(!seedData, 'Skipped: E2E seed data not found (run: npm run qa:seed-e2e)')
 
   test('should create match with 3 professionals and validate DB state', async ({ page }) => {
-    // Navigate to match creation page
-    await page.goto('/admin/leads/00000000-0000-0000-0000-000000000001/match')
+    // Navigate to match creation page using seeded lead ID
+    await page.goto(`/admin/leads/${seedData.lead_id}/match`)
 
     // Wait for page to load
     await expect(page.getByTestId('create-match-page')).toBeVisible()
@@ -55,7 +65,7 @@ test.describe('Admin Match Creation Flow', () => {
     // Validate response structure
     expect(data.success).toBe(true)
     expect(data.match_id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
-    expect(data.tracking_code).toMatch(/^[a-zA-Z0-9]{8,16}$/)
+    expect(data.tracking_code).toMatch(/^M-\d{13}-[A-Z0-9]{6}$/) // M-<timestamp>-<6-char>
     expect(data.recommendations).toHaveLength(3)
 
     // Validate recommendations have correct structure
@@ -75,7 +85,7 @@ test.describe('Admin Match Creation Flow', () => {
   })
 
   test('should reject duplicate professionals', async ({ page }) => {
-    await page.goto('/admin/leads/00000000-0000-0000-0000-000000000001/match')
+    await page.goto(`/admin/leads/${seedData.lead_id}/match`)
 
     await expect(page.getByTestId('create-match-page')).toBeVisible()
 

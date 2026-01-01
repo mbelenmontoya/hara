@@ -5,6 +5,7 @@
 import { spawn, ChildProcess } from 'child_process'
 import { config } from 'dotenv'
 import { resolve } from 'path'
+import { rmSync, existsSync } from 'fs'
 
 // Load .env.local explicitly
 config({ path: resolve(process.cwd(), '.env.local') })
@@ -12,6 +13,12 @@ config({ path: resolve(process.cwd(), '.env.local') })
 let serverProcess: ChildProcess | null = null
 
 export async function setup() {
+  // Clear Next.js cache to prevent corruption
+  const nextDir = resolve(process.cwd(), '.next')
+  if (existsSync(nextDir)) {
+    rmSync(nextDir, { recursive: true, force: true })
+  }
+
   console.log('Starting Next.js dev server for integration tests...')
 
   // Start dev server with explicit env vars

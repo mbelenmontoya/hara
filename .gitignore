@@ -18,6 +18,8 @@ qa.env
 # Testing
 coverage/
 .nyc_output/
+test-results/*.log
+.e2e-test-data.json
 
 # Misc
 .DS_Store
@@ -29,3 +31,5 @@ npm-debug.log*
 .idea/
 *.swp
 *.swo
+STABILIZATION_SESSION_SUMMARY.md
+full-gpt-context.md

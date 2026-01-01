@@ -41,6 +41,11 @@ function getRedis(): Redis {
 export const ratelimit = {
   limit: async (key: string, options?: RateLimitOptions) => {
     try {
+      // Test isolation: Add namespace prefix if env var is set
+      // This allows consecutive test runs to use separate Redis buckets
+      const namespace = process.env.RATE_LIMIT_NAMESPACE
+      const namespacedKey = namespace ? `${namespace}:${key}` : key
+
       const limiter = new Ratelimit({
         redis: getRedis(),
         limiter: Ratelimit.slidingWindow(
@@ -50,7 +55,7 @@ export const ratelimit = {
         analytics: true,
       })
 
-      return await limiter.limit(key)
+      return await limiter.limit(namespacedKey)
     } catch (err) {
       // Production: FAIL-CLOSED (propagate error, /api/events returns 500)
       if (process.env.NODE_ENV === 'production') {

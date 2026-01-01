@@ -102,3 +102,31 @@
 ✅ 10+ real PQLs created
 ✅ Billing export ready
 ✅ Attribution integrity 100%
+
+---
+
+## Post-Week 4: Next Milestones
+
+**Status:** Week 4 UI stabilized (2025-12-29), ready for production enhancements
+
+### Build Now (Not Blocked)
+
+1. ✅ **Rate limiting for public endpoints** - Added to `/api/public/recommendations` (30/5min per IP or tracking_code)
+2. **E2E seed integration** - Deterministic test data to unblock 3 skipped E2E tests
+3. **Cron endpoints** - Partition creation, event purge, PQL reconciliation
+4. **Admin dashboard landing** - Overview page at `/admin` with key metrics
+5. **Lead detail page** - View lead info at `/admin/leads/[id]`
+
+### Blocked by WordPress Migration
+
+6. **Professional content import** - Migrate profiles from WordPress
+7. **SEO/marketing pages** - Landing pages, about, etc.
+
+### Nice-to-Have / Later
+
+- Enhanced professional edit page
+- Sentry error tracking setup
+- CSV export improvements for billing
+- Email notification system
+- Visual regression testing for UI changes
+- Rate limit test cleanup (Redis state between runs)

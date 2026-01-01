@@ -27,11 +27,8 @@ export async function POST(req: Request) {
   // Validate token (includes claim validation)
   const token = await verifyAttributionToken(body.attribution_token)
   if (!token) {
-    console.error('Token validation failed for:', body.attribution_token?.substring(0, 50))
     return NextResponse.json({ error: 'Invalid or expired token' }, { status: 403 })
   }
-
-  console.log('Token validated:', token.match_id, token.tracking_code)
 
   // Extract identifiers (never fail event)
   const clientIP = extractClientIP(req)

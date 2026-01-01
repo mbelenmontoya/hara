@@ -9,6 +9,7 @@ interface Recommendation {
   id: string
   rank: number
   reasons: string[]
+  attribution_token: string
   professional: {
     slug: string
     name: string
@@ -98,6 +99,7 @@ export default async function RecommendationsPage({
                     whatsappNumber={rec.professional.whatsapp}
                     trackingCode={data.tracking_code}
                     rank={rec.rank}
+                    attributionToken={rec.attribution_token}
                   />
                 </div>
               </div>

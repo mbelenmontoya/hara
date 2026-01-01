@@ -34,35 +34,16 @@ export async function verifyAttributionToken(token: string): Promise<Attribution
   try {
     const { payload } = await jwtVerify(token, getSecret())
 
-    console.log('JWT verified, payload:', JSON.stringify(payload, null, 2))
-
     // Validate UUIDs
-    if (!UUID_REGEX.test(payload.match_id as string)) {
-      console.warn('Invalid match_id in token:', payload.match_id)
-      return null
-    }
-    if (!UUID_REGEX.test(payload.professional_id as string)) {
-      console.warn('Invalid professional_id in token:', payload.professional_id)
-      return null
-    }
-    if (!UUID_REGEX.test(payload.lead_id as string)) {
-      console.warn('Invalid lead_id in token:', payload.lead_id)
-      return null
-    }
+    if (!UUID_REGEX.test(payload.match_id as string)) return null
+    if (!UUID_REGEX.test(payload.professional_id as string)) return null
+    if (!UUID_REGEX.test(payload.lead_id as string)) return null
 
     // Validate rank
-    if (typeof payload.rank !== 'number' || payload.rank < 1 || payload.rank > 3) {
-      console.warn('Invalid rank in token:', payload.rank, typeof payload.rank)
-      return null
-    }
+    if (typeof payload.rank !== 'number' || payload.rank < 1 || payload.rank > 3) return null
 
     // Validate tracking_code
-    if (!TRACKING_CODE_REGEX.test(payload.tracking_code as string)) {
-      console.warn('Invalid tracking_code in token:', payload.tracking_code)
-      return null
-    }
-
-    console.log('All validations passed')
+    if (!TRACKING_CODE_REGEX.test(payload.tracking_code as string)) return null
 
     return {
       match_id: payload.match_id as string,
@@ -72,7 +53,9 @@ export async function verifyAttributionToken(token: string): Promise<Attribution
       rank: payload.rank as number,
     }
   } catch (err) {
-    console.error('JWT verification failed:', err)
+    // Expected auth failures (invalid/expired tokens) - log without stacktrace
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    console.warn('Token verification rejected:', message)
     return null
   }
 }

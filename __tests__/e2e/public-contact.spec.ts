@@ -3,9 +3,19 @@
 // Validates: Event tracking, sendBeacon call, wa.me navigation
 
 import { test, expect } from '@playwright/test'
+import { readFileSync, existsSync } from 'fs'
+import { resolve } from 'path'
+
+// Load E2E seed data
+const seedDataPath = resolve(process.cwd(), '.e2e-test-data.json')
+let seedData: any = null
+if (existsSync(seedDataPath)) {
+  seedData = JSON.parse(readFileSync(seedDataPath, 'utf-8'))
+}
 
 test.describe('Public Contact Flow', () => {
-  test.skip(!!process.env.REQUIRE_ADMIN_AUTH, 'Requires seed data setup')
+  test.skip(!!process.env.REQUIRE_ADMIN_AUTH, 'Skipped when auth gating enabled')
+  test.skip(!seedData, 'Skipped: E2E seed data not found (run: npm run qa:seed-e2e)')
 
   test('should track contact event and navigate to WhatsApp', async ({ page, context }) => {
     // Track API calls
@@ -20,17 +30,8 @@ test.describe('Public Contact Flow', () => {
       }
     })
 
-    // Go to recommendations page (using a test tracking code)
-    // Note: This test assumes you have seeded data with a known tracking code
-    // For now, we'll test with a mock or skip if no seed data
-    await page.goto('/r/TESTCODE123')
-
-    // If the page doesn't exist, skip (this test needs seed data)
-    const pageContent = await page.textContent('body')
-    if (pageContent?.includes('404') || pageContent?.includes('not found')) {
-      test.skip()
-      return
-    }
+    // Go to recommendations page using seeded tracking code
+    await page.goto(`/r/${seedData.tracking_code}`)
 
     // Assume the page loaded successfully with recommendations
     await expect(page.getByTestId('recommendations-page')).toBeVisible()
@@ -45,8 +46,9 @@ test.describe('Public Contact Flow', () => {
       contactButton.click(),
     ])
 
-    // Verify navigation to WhatsApp
-    expect(newPage.url()).toContain('wa.me/')
+    // Verify navigation to WhatsApp (wa.me or api.whatsapp.com redirect)
+    const url = newPage.url()
+    expect(url.includes('wa.me/') || url.includes('whatsapp.com')).toBe(true)
 
     // Close the new page
     await newPage.close()

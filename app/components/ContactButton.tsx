@@ -12,6 +12,7 @@ interface ContactButtonProps {
   whatsappNumber: string // Format: digits only (e.g., "5215512345678")
   trackingCode: string
   rank: number
+  attributionToken: string // JWT token for /api/events validation
   className?: string
 }
 
@@ -21,17 +22,19 @@ export function ContactButton({
   whatsappNumber,
   trackingCode,
   rank,
+  attributionToken,
   className = '',
 }: ContactButtonProps) {
   const [isTracking, setIsTracking] = useState(false)
 
   const handleClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault()
+    // Don't prevent default - let the link open naturally with target="_blank"
+    // Track event (non-blocking, fires before navigation)
     setIsTracking(true)
 
-    // Track event (non-blocking)
     const eventPayload = {
-      event_type: 'contact_initiated',
+      attribution_token: attributionToken,
+      event_type: 'contact_click',
       tracking_code: trackingCode,
       professional_slug: professionalSlug,
       rank,
@@ -54,14 +57,15 @@ export function ContactButton({
       })
     }
 
-    // Navigate immediately (don't await tracking)
-    const whatsappUrl = `https://wa.me/${whatsappNumber}`
-    window.location.href = whatsappUrl
+    // Let browser handle navigation (target="_blank" opens new tab)
+    setIsTracking(false)
   }
 
   return (
     <a
       href={`https://wa.me/${whatsappNumber}`}
+      target="_blank"
+      rel="noopener noreferrer"
       onClick={handleClick}
       data-testid={`contact-button-${professionalSlug}`}
       className={`inline-block px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors ${className} ${isTracking ? 'opacity-75' : ''}`}

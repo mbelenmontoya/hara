@@ -22,9 +22,10 @@ export async function setup() {
   console.log('Starting Next.js dev server for integration tests...')
 
   // Start dev server with explicit env vars
+  // Use shell: false with array args to avoid deprecation warning
   serverProcess = spawn('npm', ['run', 'dev'], {
     stdio: 'pipe',
-    shell: true,
+    shell: false,
     env: {
       ...process.env,
       // Ensure NODE_ENV is set for dev mode

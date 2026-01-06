@@ -29,8 +29,12 @@ const OPTIONAL_ENV_VARS = [
  * Note: Skips validation in test environment to avoid breaking tests
  */
 export function validateEnv(): void {
-  // Skip validation in test environment
-  if (process.env.NODE_ENV === 'test' || process.env.VITEST === 'true') {
+  // Skip validation in test environment or when explicitly disabled
+  if (
+    process.env.NODE_ENV === 'test' ||
+    process.env.VITEST === 'true' ||
+    process.env.SKIP_ENV_VALIDATION === 'true'
+  ) {
     return
   }
 

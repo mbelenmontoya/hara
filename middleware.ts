@@ -4,10 +4,6 @@
 
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { validateEnv } from './lib/env'
-
-// Validate environment variables on module load (fails fast if misconfigured)
-validateEnv()
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl

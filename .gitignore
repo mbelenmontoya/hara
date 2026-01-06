@@ -18,11 +18,14 @@ qa.env
 # Testing
 coverage/
 .nyc_output/
-test-results/*.log
-test-results/**/
+test-results/
 .e2e-test-data.json
 playwright-report/
 *.spec.ts-snapshots/
+
+# TypeScript
+*.tsbuildinfo
+tsconfig.tsbuildinfo
 
 # Misc
 .DS_Store

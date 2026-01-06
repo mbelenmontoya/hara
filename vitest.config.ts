@@ -7,6 +7,9 @@ export default defineConfig({
     environment: 'node',
     globalSetup: ['./__tests__/setup/global-setup.ts'],
     testTimeout: 30000,
+    env: {
+      SKIP_ENV_VALIDATION: 'true',
+    },
   },
   resolve: {
     alias: {

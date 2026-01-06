@@ -1,1 +1,166 @@
 @import "tailwindcss";
+
+/* Hará UI v2 - Production Design Tokens */
+/* Brand personality: calm, warm, trustworthy, premium (wellness-focused) */
+/* Spacing rhythm: 8px base → 12/16/20/24/32/48 for consistent layout */
+
+@theme {
+  /* Warm neutrals - wellness-oriented, no pure white backgrounds */
+  --color-background: #FBF7F2;      /* Warm beige base */
+  --color-surface: #FFFFFF;         /* White for cards */
+  --color-surface-2: #F6F0E8;       /* Warm tinted surface */
+  --color-outline: #E7DDCF;         /* Warm beige border */
+  --color-foreground: #1F1A24;      /* Deep warm near-black */
+  --color-muted: #6B6374;           /* Readable muted text */
+
+  /* Brand - refined violet (premium wellness) */
+  --color-brand: #4B2BBF;           /* Brand violet */
+  --color-brand-weak: #EEE8FF;      /* Light brand tint */
+  --color-brand-hover: #3F24A4;     /* Hover/active state */
+
+  /* Primary alias for components */
+  --color-primary: #4B2BBF;
+  --color-primary-hover: #3F24A4;
+  --color-primary-light: #EEE8FF;
+
+  /* Feedback states - cohesive wellness palette */
+  --color-success: #2F8A73;         /* Clean teal (uplifting, not moss) */
+  --color-success-weak: #E7F6F1;    /* Mint tint */
+  --color-warning: #F2A43A;         /* Warm apricot (explicitly NOT brown) */
+  --color-warning-weak: #FFF2DE;    /* Soft amber tint */
+  --color-danger: #D6455D;          /* Warm coral red */
+  --color-danger-weak: #FDECEF;     /* Soft pink tint */
+  --color-info: #7B61D9;            /* Lavender (brand-adjacent, not corporate blue) */
+  --color-info-weak: #F0EDFF;       /* Periwinkle tint */
+
+  /* Error alias */
+  --color-error: #D6455D;
+  --color-error-bg: #FDECEF;
+
+  /* Spacing scale - 4px base unit for consistent rhythm */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+
+  /* Radius - tactile, friendly */
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* Shadows - soft, elevated */
+  --shadow-soft: 0 1px 3px rgb(31 26 36 / 0.06), 0 1px 2px rgb(31 26 36 / 0.04);
+  --shadow-elevated: 0 4px 12px rgb(31 26 36 / 0.08), 0 2px 4px rgb(31 26 36 / 0.04);
+  --shadow-strong: 0 8px 24px rgb(31 26 36 / 0.12), 0 4px 8px rgb(31 26 36 / 0.06);
+}
+
+/* Typography - Hará brand voice */
+body {
+  font-family: var(--font-body), system-ui, -apple-system, sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+/* Layout Primitives - Consistent spacing system */
+
+/* Container: max width + horizontal padding */
+.container-public {
+  max-width: 640px;
+  margin: 0 auto;
+  padding-left: var(--spacing-4);
+  padding-right: var(--spacing-4);
+}
+
+.container-admin {
+  max-width: 1024px;
+  margin: 0 auto;
+  padding-left: var(--spacing-4);
+  padding-right: var(--spacing-4);
+}
+
+/* Section: vertical spacing between major blocks */
+.section-public {
+  padding-top: var(--spacing-12);
+  padding-bottom: var(--spacing-12);
+}
+
+.section-admin {
+  padding-top: var(--spacing-6);
+  padding-bottom: var(--spacing-6);
+}
+
+/* Stack: vertical spacing between sibling elements */
+.stack-tight > * + * {
+  margin-top: var(--spacing-3);
+}
+
+.stack-default > * + * {
+  margin-top: var(--spacing-4);
+}
+
+.stack-relaxed > * + * {
+  margin-top: var(--spacing-6);
+}
+
+/* Typography spacing */
+h1, h2, h3 {
+  margin-bottom: var(--spacing-4);
+}
+
+p + p {
+  margin-top: var(--spacing-4);
+}
+
+/* ========================================
+   Liquid Glass Effect (Light BG)
+   Source: greenbit-portal + research
+   ======================================== */
+
+.liquid-glass {
+  position: relative;
+  background-color: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 25px 45px rgba(75, 43, 191, 0.12);
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+}
+
+.liquid-glass-content {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+}
+
+/* ========================================
+   Hero Background Image
+   Used in: /r/[tracking_code] page
+   ======================================== */
+
+.hero-background-image {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image: url(/assets/harli-marten-n7a2OJDSZns-unsplash.jpg);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}

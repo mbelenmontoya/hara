@@ -1,8 +1,13 @@
-// Hará Match - Admin Leads Inbox
-// Mobile-first, Server Component (no client JS)
+// Hará Match - Admin Leads Page
+// Functional admin interface with consistent rhythm
 
 import Link from 'next/link'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { AdminLayout } from '@/app/components/AdminLayout'
+import { Card } from '@/app/components/ui/Card'
+import { Button } from '@/app/components/ui/Button'
+import { Badge } from '@/app/components/ui/Badge'
+import { EmptyState } from '@/app/components/ui/EmptyState'
 
 export const runtime = 'nodejs'
 
@@ -14,77 +19,72 @@ export default async function AdminLeadsPage() {
     .limit(50)
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Leads Inbox</h1>
-          <p className="text-sm text-gray-600 mt-1">
-            {leads?.length || 0} leads • Most recent first
-          </p>
-        </div>
+    <AdminLayout>
+      <div className="mb-6">
+        <h2 className="text-2xl font-semibold text-foreground">Leads</h2>
+        <p className="text-sm text-muted mt-2">
+          {leads?.length || 0} leads en la bandeja
+        </p>
+      </div>
 
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="divide-y divide-gray-200">
-            {leads?.map((lead) => {
-              const isMatched = lead.status !== 'new'
-              const primaryNeed = lead.intent_tags?.[0] || 'General'
+      {!leads?.length ? (
+        <Card>
+          <EmptyState
+            icon={
+              <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            }
+            title="No hay leads para procesar"
+            description="Los nuevos leads aparecerán aquí cuando se registren desde el formulario público."
+          />
+        </Card>
+      ) : (
+        <div className="stack-tight">
+          {leads.map((lead) => {
+            const isMatched = lead.status !== 'new'
+            const primaryNeed = lead.intent_tags?.[0] || 'General'
 
-              return (
-                <div
-                  key={lead.id}
-                  className="p-4 hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-medium text-gray-900 truncate">
-                          {lead.email || `Lead #${lead.id.slice(0, 8)}`}
-                        </h3>
-                        <span
-                          className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                            isMatched
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-yellow-100 text-yellow-700'
-                          }`}
-                        >
-                          {lead.status}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-wrap gap-2 text-sm text-gray-600">
-                        <span>🌍 {lead.country}</span>
-                        <span>💭 {primaryNeed}</span>
-                        <span className="text-gray-400">
-                          {new Date(lead.created_at).toLocaleDateString('es-AR')}
-                        </span>
-                      </div>
+            return (
+              <Card key={lead.id}>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-3">
+                      <span className="font-semibold text-foreground">
+                        {lead.email || `Lead ${lead.id.slice(0, 8)}`}
+                      </span>
+                      <Badge variant={isMatched ? 'matched' : 'new'}>
+                        {lead.status}
+                      </Badge>
                     </div>
 
-                    {!isMatched && (
-                      <Link
-                        href={`/admin/leads/${lead.id}/match`}
-                        className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
-                      >
-                        Create Match
-                      </Link>
-                    )}
+                    <div className="flex items-center gap-2 text-sm text-muted flex-wrap">
+                      <span>{lead.country}</span>
+                      <span className="text-outline">•</span>
+                      <span>{primaryNeed}</span>
+                      <span className="text-outline">•</span>
+                      <time>
+                        {new Date(lead.created_at).toLocaleDateString('es-AR', {
+                          day: 'numeric',
+                          month: 'short',
+                        })}
+                      </time>
+                    </div>
                   </div>
-                </div>
-              )
-            })}
 
-            {!leads?.length && (
-              <div className="p-8 text-center text-gray-500">
-                No leads yet. Run{' '}
-                <code className="px-2 py-1 bg-gray-100 rounded text-sm">
-                  npx tsx scripts/qa-seed.ts
-                </code>{' '}
-                to create test data.
-              </div>
-            )}
-          </div>
+                  {!isMatched && (
+                    <Link href={`/admin/leads/${lead.id}/match`} className="flex-shrink-0">
+                      <Button variant="primary" size="sm">
+                        Crear match
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              </Card>
+            )
+          })}
         </div>
-      </div>
-    </div>
+      )}
+    </AdminLayout>
   )
 }

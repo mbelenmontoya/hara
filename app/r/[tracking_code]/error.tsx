@@ -4,6 +4,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { logError } from '@/lib/monitoring'
 
 export default function RecommendationsError({
   error,
@@ -13,10 +14,12 @@ export default function RecommendationsError({
   reset: () => void
 }) {
   useEffect(() => {
-    // Log error for debugging
-    console.error('Recommendations page error:', error)
-
-    // TODO: Log to error monitoring service (Sentry)
+    // Log error to monitoring service
+    logError(error, {
+      location: 'recommendations-error-boundary',
+      route: '/r/[tracking_code]',
+      digest: error.digest,
+    })
   }, [error])
 
   return (

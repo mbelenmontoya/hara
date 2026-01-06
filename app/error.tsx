@@ -4,6 +4,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { logError } from '@/lib/monitoring'
 
 export default function Error({
   error,
@@ -13,13 +14,11 @@ export default function Error({
   reset: () => void
 }) {
   useEffect(() => {
-    // Log error to console for debugging
-    console.error('Application error:', error)
-
-    // TODO: Log to error monitoring service (Sentry)
-    // if (typeof window !== 'undefined' && window.Sentry) {
-    //   window.Sentry.captureException(error)
-    // }
+    // Log error to monitoring service
+    logError(error, {
+      location: 'root-error-boundary',
+      digest: error.digest,
+    })
   }, [error])
 
   return (

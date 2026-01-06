@@ -3,11 +3,19 @@
 **Status:** ✅ STABILIZED & COMPLETE
 **Date:** 2025-12-28 (Initial), 2025-12-29 (Stabilization Patch)
 
-**Test Results (Prod-Gated Mode):**
-- Integration: 12/12 passed (baseline maintained)
-- E2E: 4 passed, 3 skipped (expected when REQUIRE_ADMIN_AUTH=true)
-  - Always run: admin-auth-gating (3 tests), ui-smoke (1 test)
-  - Skipped in prod mode: admin-match-flow (2 tests), public-contact (1 test)
+**Test Results:**
+- **Prod-Gated Mode (`npm run qa:week4`):**
+  - Integration: 12 passed (12)
+  - E2E: 4 passed, 3 skipped (expected)
+    - Executed: admin-auth-gating (3), ui-smoke (1)
+    - Skipped: admin-match-flow (2), public-contact (1) - require unauthenticated admin access
+- **Dev Mode (`npm run qa:week4:dev`):**
+  - Integration: 12 passed (12)
+  - E2E: 4 passed, 3 skipped (expected)
+    - Executed: admin-match-flow (2), public-contact (1), ui-smoke (1)
+    - Skipped: admin-auth-gating (3) - only run when REQUIRE_ADMIN_AUTH=true
+
+**Note:** No single mode executes all 7 E2E tests (intentional - security vs functional validation require different configurations)
 
 ---
 
@@ -126,6 +134,7 @@ Created `__tests__/e2e/ui-smoke.spec.ts` to prevent future regressions:
 **Protected Routes:**
 - `/admin/*`
 - `/api/admin/*`
+- `/api/debug/*`
 
 **Gating Logic:**
 ```typescript
@@ -297,44 +306,40 @@ Total: 16/16 passed
 
 ### 4. Manual UI Checks
 
-**Admin Gating Verification (Prod-Gated Mode):**
+**Middleware Gating Behavior:**
+- **Development (default):** Admin routes accessible (for local dev and integration tests)
+- **Development + REQUIRE_ADMIN_AUTH=true:** Returns 503 on protected routes (used in `qa:week4`)
+- **Production without Clerk:** Returns 503 automatically
+- **Production with Clerk:** Returns 503 until Clerk auth implemented
 
-Set `REQUIRE_ADMIN_AUTH=true` or omit `ALLOW_ADMIN_DEV=true` (default fail-closed):
+**Manual Verification (Development Mode):**
 ```bash
+# Start dev server normally (no REQUIRE_ADMIN_AUTH)
+npm run dev
+
+# Verify admin/debug routes accessible
+curl http://localhost:3000/api/debug/professionals
+# Expected: HTTP 200 with JSON
+
+curl http://localhost:3000/api/debug/pqls
+# Expected: HTTP 200 with JSON
+
+# Note: POST-only endpoints return 405 on GET
+curl http://localhost:3000/api/admin/matches
+# Expected: HTTP 405 (method not allowed)
+```
+
+**Manual Verification (Prod-Gated Mode):**
+```bash
+# Start server with auth gating enabled
+REQUIRE_ADMIN_AUTH=true npm run dev
+
 # Verify protected routes return 503
-curl -i http://localhost:3000/admin/leads
-# Expected: HTTP/1.1 503, JSON with "Admin authentication required"
-
-curl -i http://localhost:3000/api/admin/matches
-# Expected: HTTP/1.1 503, JSON with "Admin authentication required"
-
-curl -i http://localhost:3000/api/debug/professionals
-# Expected: HTTP/1.1 503 (debug endpoints also gated)
+curl http://localhost:3000/admin/leads
+curl http://localhost:3000/api/admin/matches
+curl http://localhost:3000/api/debug/professionals
+# Expected: HTTP 503 with "Admin authentication required" message
 ```
-
-**Admin Gating Verification (Dev-Open Mode):**
-
-Set `ALLOW_ADMIN_DEV=true` in `.env.local` to explicitly allow local dev access:
-```bash
-# Verify protected routes are accessible
-curl -i http://localhost:3000/api/debug/professionals
-# Expected: HTTP/1.1 200, JSON with {"professionals": [...]}
-
-curl -i http://localhost:3000/api/debug/pqls
-# Expected: HTTP/1.1 200, JSON with {"entries": [...]}
-
-# Note: POST-only endpoints still return 405 on GET
-curl -i http://localhost:3000/api/admin/matches
-# Expected: HTTP/1.1 405 (method not allowed, not 503)
-```
-
-**Middleware Behavior:**
-- **Development (default):** Open (admin routes accessible for local dev and integration tests)
-- **Development + REQUIRE_ADMIN_AUTH=true:** Gated (503) - env var explicitly passed in test commands
-- **Production without Clerk:** Gated (503) automatically
-- **Production with Clerk:** Gated (503) until Clerk auth implemented
-
-**Note:** Manual `curl` verification requires setting env before starting server (not in request)
 
 ---
 

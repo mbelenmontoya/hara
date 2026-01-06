@@ -21,7 +21,7 @@ export function middleware(request: NextRequest) {
   // Determine if we should gate protected routes
   const requireAdminAuth = process.env.REQUIRE_ADMIN_AUTH === 'true'
   const isProduction = process.env.NODE_ENV === 'production'
-  const hasClerkKeys = Boolean(process.env.CLERK_SECRET_KEY) && !process.env.CLERK_SECRET_KEY.startsWith('sk_...')
+  const hasClerkKeys = Boolean(process.env.CLERK_SECRET_KEY) && !process.env.CLERK_SECRET_KEY?.startsWith('sk_...')
 
   // Gate if: explicitly required OR production without valid Clerk keys
   const shouldGate = requireAdminAuth || (isProduction && !hasClerkKeys)

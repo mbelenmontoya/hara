@@ -250,6 +250,8 @@ export default function RecommendationsPage() {
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
+              role="region"
+              aria-label="Recomendaciones de profesionales"
             >
               {recommendations.map((rec, idx) => {
                 // Card spacing creates natural peek effect

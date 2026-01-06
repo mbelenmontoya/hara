@@ -44,6 +44,9 @@ export function BottomSheet({
     <div
       className="fixed inset-0 z-50 flex items-end animate-in fade-in duration-200"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="professional-name"
     >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-foreground/60 backdrop-blur-md" />
@@ -64,7 +67,7 @@ export function BottomSheet({
           <div className="flex items-center gap-4">
             <div className="w-20 h-20 bg-gradient-to-br from-brand-weak to-info-weak rounded-3xl shadow-soft flex-shrink-0" />
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-foreground leading-tight mb-1.5">
+              <h2 id="professional-name" className="text-2xl font-bold text-foreground leading-tight mb-1.5">
                 {professional.name}
               </h2>
               <p className="text-base text-muted">

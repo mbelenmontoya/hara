@@ -34,8 +34,8 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const trackingCode = searchParams.get('tracking_code')
 
-  // Validate tracking_code format (alphanumeric, 8-16 chars)
-  if (!trackingCode || !/^[a-zA-Z0-9]{8,16}$/.test(trackingCode)) {
+  // Validate tracking_code format (M-<timestamp>-<6-char> pattern)
+  if (!trackingCode || !/^M-\d{13}-[A-Z0-9]{6}$/.test(trackingCode)) {
     return NextResponse.json({ error: 'Invalid tracking_code format' }, { status: 400 })
   }
 

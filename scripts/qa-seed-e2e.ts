@@ -107,11 +107,19 @@ async function seedE2EData() {
   console.log('🌱 Seeding E2E test data...')
 
   // Create 4 professionals (3 for match + 1 extra for duplicate rejection test)
+  // Using realistic names to catch display issues during testing
+  const realisticNames = [
+    'María González',
+    'Carlos Rodríguez',
+    'Laura Martínez',
+    'Diego Fernández'
+  ]
+
   const professionals = []
   for (let i = 0; i < E2E_PRO_SLUGS.length; i++) {
     const { data, error } = await supabase.from('professionals').insert({
       slug: E2E_PRO_SLUGS[i],
-      full_name: `E2E Test Professional ${i + 1}`,
+      full_name: realisticNames[i],
       email: `e2e-pro-${i + 1}@test.local`,
       whatsapp: `+1555000${String(i + 1).padStart(4, '0')}`,
       country: 'AR',
@@ -119,7 +127,7 @@ async function seedE2EData() {
       modality: ['online', 'in-person'],
       specialties: ['anxiety', 'depression'],
       status: 'active',
-      bio: `Test professional ${i + 1} for E2E testing.`,
+      bio: `Psicóloga especializada en terapia cognitivo-conductual con ${5 + i} años de experiencia.`,
     }).select().single()
 
     if (error) throw new Error(`Failed to create professional ${i + 1}: ${error.message}`)
@@ -159,13 +167,19 @@ async function seedE2EData() {
     }))
   )
 
-  // Create match recommendations
+  // Create match recommendations with realistic reasons
+  const realisticReasons = [
+    ['Tiene experiencia comprobada con ansiedad y modalidad online', 'Disponibilidad inmediata en Buenos Aires'],
+    ['Especialista en terapia cognitivo-conductual con enfoque personalizado', 'Excelentes referencias de casos similares'],
+    ['Profesional con enfoque empático y metodología estructurada', 'Horarios flexibles y sesiones virtuales'],
+  ]
+
   const { error: recError } = await supabase.from('match_recommendations').insert(
     professionals.slice(0, 3).map((p, i) => ({
       match_id: match.id,
       professional_id: p.id,
       rank: i + 1,
-      reasons: [`E2E test reason ${i + 1}`],
+      reasons: realisticReasons[i],
       attribution_token: tokens[i],
     }))
   )

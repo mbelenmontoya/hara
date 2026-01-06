@@ -31,18 +31,26 @@ async function seed() {
   // Use timestamp to make slugs unique across runs
   const timestamp = Date.now()
 
-  // Create 3 DISTINCT professionals
+  // Create 3 DISTINCT professionals with realistic names
+  const realisticNames = ['Ana Pérez', 'Javier Sánchez', 'Sofía Torres']
+  const bios = [
+    'Psicóloga clínica con 8 años de experiencia en terapia de ansiedad',
+    'Especialista en mindfulness y técnicas de relajación aplicadas',
+    'Terapeuta cognitivo-conductual enfocada en resultados medibles'
+  ]
+
   const pros = []
   for (let i = 1; i <= 3; i++) {
     const { data, error } = await supabase.from('professionals').insert({
       slug: `qa-pro-${timestamp}-${i}`,
-      full_name: `Test Pro ${i}`,
+      full_name: realisticNames[i - 1],
       email: `test-${timestamp}-${i}@qa.com`,
       whatsapp: `+549111234567${i}`,
       country: 'AR',
       modality: ['therapy'],
       specialties: ['anxiety'],
       status: 'active',
+      bio: bios[i - 1],
     }).select().single()
 
     if (error) {
@@ -93,13 +101,19 @@ async function seed() {
     }))
   )
 
-  // Insert 3 match_recommendations
+  // Insert 3 match_recommendations with realistic reasons
+  const realisticReasons = [
+    ['Experiencia demostrada en casos de ansiedad generalizada', 'Enfoque cálido y empático según referencias'],
+    ['Técnicas innovadoras y efectivas para manejo del estrés', 'Disponibilidad flexible para sesiones online'],
+    ['Metodología estructurada con seguimiento personalizado', 'Resultados positivos en casos similares al tuyo'],
+  ]
+
   const { error: recError } = await supabase.from('match_recommendations').insert(
     pros.map((p, i) => ({
       match_id: match.id,
       professional_id: p.id,
       rank: i + 1,
-      reasons: ['Test'],
+      reasons: realisticReasons[i],
       attribution_token: tokens[i],
     }))
   )

@@ -42,9 +42,12 @@ yarn-error.log*
 *.sublime-project
 *.sublime-workspace
 
-# Session files (keep locally, don't commit)
+# Session files and planning docs (keep locally, don't commit)
 STABILIZATION_SESSION_SUMMARY.md
+SESSION_SUMMARY_*.md
 full-gpt-context.md
+*_PLAN_*.md
+*_CLEANUP_*.md
 
 # OS
 Thumbs.db

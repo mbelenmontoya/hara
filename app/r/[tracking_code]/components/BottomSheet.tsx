@@ -48,12 +48,9 @@ export function BottomSheet({
       aria-modal="true"
       aria-labelledby="professional-name"
     >
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-foreground/60 backdrop-blur-md" />
-
       {/* Sheet content */}
       <div
-        className="relative bg-surface/98 backdrop-blur-3xl border-t border-brand/15 rounded-t-[32px] shadow-strong w-full max-h-[88vh] overflow-y-auto animate-in slide-in-from-bottom-8 duration-400"
+        className="relative liquid-glass border-t border-brand/15 rounded-t-[32px] shadow-strong w-full max-h-[88vh] overflow-y-auto animate-in slide-in-from-bottom-8 duration-400"
         style={{ transition: 'all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)' }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -157,18 +154,18 @@ export function BottomSheet({
             className="w-full"
           />
 
-          {/* Secondary actions */}
-          <div className="space-y-3">
+          {/* Secondary actions - links side by side */}
+          <div className="flex items-center justify-center gap-4 text-sm">
             <a
               href={`/p/${professional.slug}`}
-              className="block w-full px-6 py-3.5 text-center bg-surface-2 text-foreground font-medium rounded-full border border-outline hover:bg-subtle active:scale-[0.98] transition-all"
+              className="text-brand font-medium hover:underline"
             >
               Ver perfil completo
             </a>
-
+            <span className="text-outline">|</span>
             <button
               onClick={onClose}
-              className="w-full px-6 py-3 text-muted hover:text-foreground transition-colors text-sm"
+              className="text-brand font-medium hover:underline"
             >
               Ver otras opciones
             </button>

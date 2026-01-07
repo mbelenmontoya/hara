@@ -124,13 +124,22 @@ export default function RecommendationsPage() {
       className="min-h-screen bg-background relative overflow-hidden"
       data-testid="recommendations-page"
     >
-      {/* Plain off-white background */}
-      <div className="fixed inset-0 z-0 bg-background" />
+      {/* Illustration background */}
+      <div
+        className="fixed inset-0 z-0"
+        style={{
+          backgroundColor: '#FBF7F2',
+          backgroundImage: 'url(/assets/illustrations/rizki-kurniawan-SSp6eC-LKBU-unsplash.svg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      />
 
       {/* Reveal screen (exit animation on transition) */}
       {(revealing || isTransitioning) && (
         <div
-          className="absolute inset-0 flex items-center justify-center p-4 z-20"
+          className="absolute inset-0 flex items-start justify-center pt-8 pb-8 px-4 z-20"
           style={{
             opacity: isTransitioning ? 0 : 1,
             transform: isTransitioning ? 'translateY(-8px) scale(0.995)' : 'translateY(0) scale(1)',
@@ -140,41 +149,12 @@ export default function RecommendationsPage() {
         >
           <div className="liquid-glass rounded-3xl max-w-md w-full text-center relative z-10 animate-in zoom-in-95 fade-in duration-500">
             <div className="liquid-glass-content p-8">
-              <div className="w-20 h-20 bg-gradient-to-br from-brand-weak to-info-weak rounded-full flex items-center justify-center mx-auto mb-5 shadow-soft animate-in zoom-in-90 delay-200 duration-300">
-                <svg
-                  className="w-10 h-10 text-brand"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-
               <h1 className="text-3xl font-semibold text-foreground mb-3">
                 Tus 3 opciones están listas
               </h1>
               <p className="text-base text-muted leading-relaxed mb-6">
                 Elegimos profesionales que encajan con lo que nos contaste.
               </p>
-
-              {recommendations.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-2 mb-7">
-                  {recommendations[0].professional.specialty && (
-                    <span className="px-4 py-2 bg-brand-weak text-brand text-sm font-medium rounded-full border border-brand/20">
-                      {SPECIALTY_MAP[recommendations[0].professional.specialty] ||
-                        recommendations[0].professional.specialty}
-                    </span>
-                  )}
-                  <span className="px-4 py-2 bg-brand-weak text-brand text-sm font-medium rounded-full border border-brand/20">
-                    Online
-                  </span>
-                  <span className="px-4 py-2 bg-brand-weak text-brand text-sm font-medium rounded-full border border-brand/20">
-                    Argentina
-                  </span>
-                </div>
-              )}
 
               <button
                 onClick={startTransition}
@@ -185,7 +165,7 @@ export default function RecommendationsPage() {
               </button>
 
               <p className="text-xs text-muted leading-relaxed">
-                Deslizá para comparar. Tu info se comparte recién cuando vos escribís.
+                Tu info se comparte recién cuando vos escribís.
               </p>
             </div>
           </div>
@@ -207,22 +187,17 @@ export default function RecommendationsPage() {
             pointerEvents: revealing && !isTransitioning ? 'none' : 'auto',
           }}
         >
-          {/* Progress */}
+          {/* Progress - 3 equal lines */}
           <div className="relative z-10 pt-safe pt-4 px-4 pb-4">
-            <div className="text-center">
-              <p className="text-sm text-muted mb-2">
-                {currentIndex + 1} de {recommendations.length}
-              </p>
-              <div className="flex justify-center gap-2">
-                {recommendations.map((_, i) => (
-                  <div
-                    key={i}
-                    className={`h-1 rounded-full transition-all ${
-                      i === currentIndex ? 'w-10 bg-brand' : 'w-2 bg-outline/40'
-                    }`}
-                  />
-                ))}
-              </div>
+            <div className="flex justify-center gap-2">
+              {recommendations.map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-1 w-10 rounded-full transition-all ${
+                    i === currentIndex ? 'bg-brand' : 'bg-muted/50'
+                  }`}
+                />
+              ))}
             </div>
           </div>
 
@@ -279,23 +254,17 @@ export default function RecommendationsPage() {
                     }}
                   >
                     <div
-                      className={`bg-surface/90 backdrop-blur-2xl rounded-3xl shadow-elevated border overflow-hidden flex flex-col ${
+                      className={`liquid-glass rounded-3xl shadow-elevated border overflow-hidden flex flex-col ${
                         isCurrent ? 'border-brand/20' : 'border-outline/30'
                       }`}
                       onClick={() => isCurrent && setSheetOpen(true)}
                     >
-                      {/* Hero with CSS glow - Clickable to profile */}
+                      {/* Hero - Clickable to profile */}
                       <div className="relative overflow-hidden">
-                        <div
-                          className="absolute inset-0"
-                          style={{
-                            background: `radial-gradient(circle 200px at 50% -30px, rgba(75, 43, 191, 0.12), transparent 70%), radial-gradient(circle 150px at 80% 30px, rgba(123, 97, 217, 0.06), transparent), rgba(243, 236, 246, 0.25)`,
-                          }}
-                        />
                         <a
                           href={`/p/${rec.professional.slug}`}
                           onClick={(e) => e.stopPropagation()}
-                          className="relative z-10 pt-6 px-6 pb-4 flex items-center gap-4 active:opacity-80 transition-opacity"
+                          className="pt-6 px-6 pb-4 flex items-center gap-4 active:opacity-80 transition-opacity"
                         >
                           <div className="w-16 h-16 bg-gradient-to-br from-brand-weak to-info-weak rounded-3xl shadow-soft flex-shrink-0" />
                           <div className="flex-1 min-w-0">
@@ -361,7 +330,7 @@ export default function RecommendationsPage() {
                           </div>
                         )}
 
-                        {/* Primary CTA inside card */}
+                        {/* Primary CTA - full width */}
                         {isCurrent && (
                           <ContactButton
                             professionalSlug={rec.professional.slug}
@@ -370,39 +339,28 @@ export default function RecommendationsPage() {
                             trackingCode={trackingCode}
                             rank={rec.rank}
                             attributionToken={rec.attribution_token}
+                            className="w-full"
                           />
                         )}
 
-                        {/* Secondary links */}
+                        {/* Ver detalles link */}
                         {isCurrent && (
-                          <div className="flex items-center justify-center gap-4 text-xs">
-                            <a
-                              href={`/p/${rec.professional.slug}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-brand font-medium hover:underline"
-                            >
-                              Ver perfil
-                            </a>
-                            <span className="text-outline">|</span>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setSheetOpen(true)
-                              }}
-                              className="text-brand font-medium hover:underline"
-                            >
-                              Ver detalles
-                            </button>
-                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSheetOpen(true)
+                            }}
+                            className="w-full text-sm text-brand font-medium hover:underline mt-3"
+                          >
+                            Ver detalles
+                          </button>
                         )}
                       </div>
 
                       {/* Footer hint */}
                       <div className="px-6 py-3 border-t border-outline/30 bg-subtle/10 text-center">
                         <p className="text-xs text-muted leading-relaxed">
-                          {isCurrent && idx < recommendations.length - 1
-                            ? 'Deslizá para comparar'
-                            : 'Tocá el nombre para ver perfil'}
+                          Tu info se comparte recién cuando vos escribís.
                         </p>
                       </div>
                     </div>

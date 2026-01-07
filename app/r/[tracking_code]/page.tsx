@@ -124,21 +124,8 @@ export default function RecommendationsPage() {
       className="min-h-screen bg-background relative overflow-hidden"
       data-testid="recommendations-page"
     >
-      {/* Optimized image background with Next.js Image */}
-      <div className="fixed inset-0 z-0">
-        <Image
-          src="/assets/harli-marten-n7a2OJDSZns-unsplash.jpg"
-          alt="Background"
-          fill
-          priority
-          quality={85}
-          sizes="100vw"
-          style={{
-            objectFit: 'cover',
-            objectPosition: 'center',
-          }}
-        />
-      </div>
+      {/* Plain off-white background */}
+      <div className="fixed inset-0 z-0 bg-background" />
 
       {/* Reveal screen (exit animation on transition) */}
       {(revealing || isTransitioning) && (

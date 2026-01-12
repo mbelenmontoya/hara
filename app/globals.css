@@ -177,3 +177,90 @@ p + p {
   background-position: center;
   background-repeat: no-repeat;
 }
+
+/* ========================================
+   Button Press Feedback (No Scale)
+   ======================================== */
+
+.btn-press-glow {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.btn-press-glow:active,
+.btn-press-glow:focus:active {
+  filter: brightness(1.2) !important;
+  box-shadow: 0 0 0 5px rgba(75, 43, 191, 0.3), 0 6px 16px rgba(75, 43, 191, 0.35) !important;
+  transition: filter 0.05s ease-out, box-shadow 0.05s ease-out !important;
+}
+
+.btn-press-inset {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.btn-press-inset:active,
+.btn-press-inset:focus:active {
+  box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+  filter: brightness(0.92) !important;
+  transition: filter 0.05s ease-out, box-shadow 0.05s ease-out !important;
+}
+
+/* ========================================
+   Google Places Autocomplete Overrides
+   ======================================== */
+
+.pac-container {
+  font-family: var(--font-body), system-ui, -apple-system, sans-serif !important;
+  background-color: var(--color-surface) !important;
+  border: 1px solid var(--color-outline) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 8px 24px rgb(31 26 36 / 0.12), 0 4px 8px rgb(31 26 36 / 0.06) !important;
+  margin-top: 8px !important;
+  padding: 8px 0 !important;
+  overflow: hidden !important;
+}
+
+.pac-item {
+  font-family: var(--font-body), system-ui, -apple-system, sans-serif !important;
+  padding: 12px 16px !important;
+  border: none !important;
+  cursor: pointer !important;
+  color: var(--color-foreground) !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+}
+
+.pac-item:hover,
+.pac-item-selected {
+  background-color: var(--color-surface-2) !important;
+}
+
+.pac-item-query {
+  font-size: 14px !important;
+  color: var(--color-foreground) !important;
+  font-weight: 500 !important;
+}
+
+.pac-matched {
+  font-weight: 600 !important;
+  color: var(--color-brand) !important;
+}
+
+.pac-icon {
+  display: none !important;
+}
+
+.pac-item span:last-child {
+  font-size: 12px !important;
+  color: var(--color-muted) !important;
+}
+
+/* Hide Google logo */
+.pac-logo::after {
+  display: none !important;
+}
+
+.pac-container::after {
+  display: none !important;
+}

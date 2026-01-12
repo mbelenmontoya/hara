@@ -10,7 +10,10 @@ import { ContactButton } from '@/app/components/ContactButton'
 import { useRecommendations } from './hooks/useRecommendations'
 import { useSwipeGesture } from './hooks/useSwipeGesture'
 import { useRevealTransition } from './hooks/useRevealTransition'
+import { useIsDesktop } from './hooks/useMediaQuery'
 import { BottomSheet } from './components/BottomSheet'
+import { BackgroundPicker } from './components/BackgroundPicker'
+import { LoadingSkeleton } from './components/CardSkeleton'
 
 // ============================================================================
 // INTERACTION CONSTANTS
@@ -70,10 +73,16 @@ export default function RecommendationsPage() {
   // Custom hooks
   const { recommendations, loading, error } = useRecommendations(trackingCode)
   const { revealing, isTransitioning, startTransition } = useRevealTransition()
+  const isDesktop = useIsDesktop()
 
   // Local state
   const [currentIndex, setCurrentIndex] = useState(0)
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [cardsHidden, setCardsHidden] = useState(false) // Separate state for card visibility
+  const [backgroundPath, setBackgroundPath] = useState<string | null>('/assets/illustrations/rizki-kurniawan-SSp6eC-LKBU-unsplash.svg')
+
+  // Skip reveal screen on desktop (show deck immediately)
+  const shouldShowReveal = !isDesktop && revealing
 
   // Swipe gesture hook
   const { dragOffset, handleTouchStart, handleTouchMove, handleTouchEnd } = useSwipeGesture({
@@ -84,16 +93,9 @@ export default function RecommendationsPage() {
 
   const current = recommendations[currentIndex]
 
-  // Loading state
+  // Loading state - skeleton loader
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="animate-pulse text-center">
-          <div className="w-12 h-12 border-3 border-brand/30 border-t-brand rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-sm text-muted">Cargando...</p>
-        </div>
-      </div>
-    )
+    return <LoadingSkeleton />
   }
 
   // Error state
@@ -129,15 +131,15 @@ export default function RecommendationsPage() {
         className="fixed inset-0 z-0"
         style={{
           backgroundColor: '#FBF7F2',
-          backgroundImage: 'url(/assets/illustrations/rizki-kurniawan-SSp6eC-LKBU-unsplash.svg)',
+          backgroundImage: backgroundPath ? `url(${backgroundPath})` : 'none',
           backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          backgroundPosition: 'bottom',
           backgroundRepeat: 'no-repeat',
         }}
       />
 
-      {/* Reveal screen (exit animation on transition) */}
-      {(revealing || isTransitioning) && (
+      {/* Reveal screen (exit animation on transition) - Mobile only */}
+      {(shouldShowReveal || isTransitioning) && (
         <div
           className="absolute inset-0 flex items-start justify-center pt-8 pb-8 px-4 z-20"
           style={{
@@ -159,7 +161,7 @@ export default function RecommendationsPage() {
               <button
                 onClick={startTransition}
                 disabled={isTransitioning}
-                className="w-full bg-brand text-white px-6 py-4 rounded-full shadow-elevated hover:shadow-strong active:scale-[0.98] transition-all font-semibold mb-4 disabled:opacity-50"
+                className="w-full bg-brand text-white px-6 py-4 rounded-full shadow-elevated hover:shadow-strong btn-press-glow transition-all font-semibold mb-4 disabled:opacity-50"
               >
                 Ver mis 3 opciones
               </button>
@@ -172,8 +174,8 @@ export default function RecommendationsPage() {
         </div>
       )}
 
-      {/* Deck view (enter animation on transition) */}
-      {(!revealing || isTransitioning) && (
+      {/* Deck view (enter animation on transition) - Always visible on desktop */}
+      {(isDesktop || !revealing || isTransitioning) && (
         <div
           className="absolute inset-0 z-10"
           style={{
@@ -203,11 +205,55 @@ export default function RecommendationsPage() {
 
           {/* Deck container - responsive for all viewports */}
           <div className="relative z-10 px-4 pb-24">
+            {/* Desktop navigation arrows */}
+            {isDesktop && recommendations.length > 1 && (
+              <>
+                {currentIndex > 0 && (
+                  <button
+                    onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 bg-surface/90 backdrop-blur-sm border border-outline/30 rounded-full shadow-elevated hover:shadow-strong active:scale-95 transition-all flex items-center justify-center"
+                    aria-label="Anterior profesional"
+                  >
+                    <svg
+                      className="w-5 h-5 text-foreground"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2.5}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                )}
+                {currentIndex < recommendations.length - 1 && (
+                  <button
+                    onClick={() =>
+                      setCurrentIndex((i) => Math.min(recommendations.length - 1, i + 1))
+                    }
+                    className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 bg-surface/90 backdrop-blur-sm border border-outline/30 rounded-full shadow-elevated hover:shadow-strong active:scale-95 transition-all flex items-center justify-center"
+                    aria-label="Siguiente profesional"
+                  >
+                    <svg
+                      className="w-5 h-5 text-foreground"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2.5}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                )}
+              </>
+            )}
+
             <div
-              className="relative mx-auto max-w-md"
+              className="relative mx-auto max-w-md transition-opacity duration-200"
               style={{
                 height: `min(${CARD_HEIGHT_VH}vh, 600px)`,
                 minHeight: `min(${CARD_MIN_HEIGHT_PX}px, ${CARD_MIN_HEIGHT_VH}vh)`,
+                opacity: cardsHidden ? 0 : 1,
+                pointerEvents: cardsHidden ? 'none' : 'auto',
               }}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
@@ -257,7 +303,12 @@ export default function RecommendationsPage() {
                       className={`liquid-glass rounded-3xl shadow-elevated border overflow-hidden flex flex-col ${
                         isCurrent ? 'border-brand/20' : 'border-outline/30'
                       }`}
-                      onClick={() => isCurrent && setSheetOpen(true)}
+                      onClick={() => {
+                        if (isCurrent) {
+                          setCardsHidden(true)
+                          setSheetOpen(true)
+                        }
+                      }}
                     >
                       {/* Hero - Clickable to profile */}
                       <div className="relative overflow-hidden">
@@ -348,6 +399,7 @@ export default function RecommendationsPage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
+                              setCardsHidden(true)
                               setSheetOpen(true)
                             }}
                             className="w-full text-sm text-brand font-medium hover:underline mt-3"
@@ -378,8 +430,15 @@ export default function RecommendationsPage() {
           recommendation={current}
           trackingCode={trackingCode}
           onClose={() => setSheetOpen(false)}
+          onCloseStart={() => setCardsHidden(false)} // Show cards immediately when close starts
         />
       )}
+
+      {/* Dev-only background picker */}
+      <BackgroundPicker
+        currentBackground={backgroundPath}
+        onBackgroundChange={setBackgroundPath}
+      />
     </div>
   )
 }

@@ -1,10 +1,16 @@
 // Bottom sheet component for displaying professional details
 // Shows full information, reasons, bio, and contact CTA
+// Uses iOS-style liquid glass with proper animations
 
 'use client'
 
+import { useState, useEffect } from 'react'
 import { ContactButton } from '@/app/components/ContactButton'
 import type { Recommendation } from '../hooks/useRecommendations'
+
+// Animation timing
+const SHEET_ANIMATION_MS = 250
+const EASING = 'cubic-bezier(0.32, 0.72, 0, 1)' // iOS spring-like easing
 
 // Specialty translations
 const SPECIALTY_MAP: Record<string, string> = {
@@ -24,42 +30,69 @@ interface BottomSheetProps {
   recommendation: Recommendation
   trackingCode: string
   onClose: () => void
+  onCloseStart?: () => void // Called immediately when close animation begins
 }
 
 /**
  * Bottom sheet modal displaying full professional details
  * Includes bio, reasons, suggested message, and contact CTA
+ * Uses iOS-style liquid glass effect with slide-up animation
  */
 export function BottomSheet({
   recommendation,
   trackingCode,
   onClose,
+  onCloseStart,
 }: BottomSheetProps) {
   const { professional, reasons, rank, attribution_token } = recommendation
-
-  // Extract first name for personalized message
   const firstName = professional.name?.split(' ')[0] || ''
+  
+  // Animation state - starts closed, animates open
+  const [isVisible, setIsVisible] = useState(false)
+  const [isClosing, setIsClosing] = useState(false)
+
+  // Animate in on mount
+  useEffect(() => {
+    // Small delay to ensure DOM is ready for animation
+    const timer = requestAnimationFrame(() => setIsVisible(true))
+    return () => cancelAnimationFrame(timer)
+  }, [])
+
+  // Handle close with animation
+  const handleClose = () => {
+    if (isClosing) return // Prevent double-close
+    setIsClosing(true)
+    setIsVisible(false)
+    onCloseStart?.() // Notify parent immediately so cards can start fading in
+    setTimeout(onClose, SHEET_ANIMATION_MS) // Unmount after animation
+  }
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end animate-in fade-in duration-200"
-      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-end"
+      onClick={handleClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="professional-name"
     >
-      {/* Sheet content */}
+      
+      {/* Sheet content - iOS liquid glass style */}
       <div
-        className="relative liquid-glass border-t border-brand/15 rounded-t-[32px] shadow-strong w-full max-h-[88vh] overflow-y-auto animate-in slide-in-from-bottom-8 duration-400"
-        style={{ transition: 'all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)' }}
+        className="relative liquid-glass border-t border-white/30 rounded-t-[32px] shadow-strong w-full"
+        style={{
+          transform: isVisible ? 'translateY(0)' : 'translateY(100%)',
+          transition: `transform ${SHEET_ANIMATION_MS}ms ${EASING}`,
+          maxHeight: '85vh',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drag handle */}
-        <div className="flex justify-center py-4">
-          <div className="w-14 h-1.5 bg-outline/50 rounded-full" />
+        <div className="flex justify-center py-4 sticky top-0 bg-transparent">
+          <div className="w-14 h-1.5 bg-white/40 rounded-full" />
         </div>
 
-        <div className="px-6 pb-10 space-y-8">
+        {/* Scrollable content area - only scrolls if content exceeds max height */}
+        <div className="px-6 pb-10 pb-safe space-y-6 overflow-y-auto" style={{ maxHeight: 'calc(85vh - 56px)' }}>
           {/* Header */}
           <div className="flex items-center gap-4">
             <div className="w-20 h-20 bg-gradient-to-br from-brand-weak to-info-weak rounded-3xl shadow-soft flex-shrink-0" />
@@ -152,6 +185,7 @@ export function BottomSheet({
             rank={rank}
             attributionToken={attribution_token}
             className="w-full"
+            onBeforeNavigate={handleClose}
           />
 
           {/* Secondary actions - links side by side */}
@@ -164,7 +198,7 @@ export function BottomSheet({
             </a>
             <span className="text-outline">|</span>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="text-brand font-medium hover:underline"
             >
               Ver otras opciones

@@ -25,8 +25,8 @@ export function Button({
   const baseStyles = 'inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed'
 
   const variantStyles = {
-    primary: 'bg-brand text-white hover:bg-brand-hover active:scale-[0.98] active:brightness-95 shadow-elevated hover:shadow-strong transition-all duration-150',
-    secondary: 'bg-surface border border-outline text-foreground hover:bg-surface-2 hover:border-muted active:scale-[0.98] shadow-soft transition-all duration-150',
+    primary: 'bg-brand text-white hover:bg-brand-hover btn-press-glow shadow-elevated hover:shadow-strong transition-all duration-150',
+    secondary: 'bg-surface border border-outline text-foreground hover:bg-surface-2 hover:border-muted btn-press-inset shadow-soft transition-all duration-150',
     ghost: 'text-foreground hover:bg-surface-2 active:opacity-80 transition-all duration-120',
     link: 'text-brand hover:text-brand-hover underline-offset-4 hover:underline transition-colors duration-120',
   }

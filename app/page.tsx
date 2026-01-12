@@ -23,9 +23,11 @@ export default function HomePage() {
             <Button variant="primary" size="lg" className="w-full">
               Solicitar recomendaciones
             </Button>
-            <Button variant="secondary" size="lg" className="w-full">
-              Únete como profesional
-            </Button>
+            <Link href="/profesionales/registro">
+              <Button variant="secondary" size="lg" className="w-full">
+                Únete como profesional
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

@@ -7,24 +7,7 @@
 import { useState, useEffect } from 'react'
 import { ContactButton } from '@/app/components/ContactButton'
 import type { Recommendation } from '../hooks/useRecommendations'
-
-// Animation timing
-const SHEET_ANIMATION_MS = 250
-const EASING = 'cubic-bezier(0.32, 0.72, 0, 1)' // iOS spring-like easing
-
-// Specialty translations
-const SPECIALTY_MAP: Record<string, string> = {
-  anxiety: 'Ansiedad',
-  depression: 'Depresión',
-  stress: 'Estrés',
-  trauma: 'Trauma',
-  relationships: 'Relaciones',
-}
-
-// Simple validation: reason must exist and have meaningful length
-function isValidReason(reason: string | null | undefined): boolean {
-  return !!reason && reason.trim().length >= 10
-}
+import { SHEET_ANIMATION_MS, EASING, SPECIALTY_MAP, isValidReason } from '@/lib/design-constants'
 
 interface BottomSheetProps {
   recommendation: Recommendation

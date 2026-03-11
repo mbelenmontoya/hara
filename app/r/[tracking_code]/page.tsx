@@ -14,57 +14,14 @@ import { useIsDesktop } from './hooks/useMediaQuery'
 import { BottomSheet } from './components/BottomSheet'
 import { BackgroundPicker } from './components/BackgroundPicker'
 import { LoadingSkeleton } from './components/CardSkeleton'
-
-// ============================================================================
-// INTERACTION CONSTANTS
-// Fine-tuned values for card swipe feel and transitions
-// ============================================================================
-
-// Card Layout
-const CARD_SPACING_PERCENT = 88 // Spacing between cards (88% = 12% visible peek of next card)
-const CARD_HEIGHT_VH = 70 // Maximum card height as viewport percentage
-const CARD_MIN_HEIGHT_VH = 60 // Minimum card height for small screens
-const CARD_MIN_HEIGHT_PX = 400 // Absolute minimum card height in pixels
-
-// Card Scaling
-const ACTIVE_CARD_SCALE = 1 // Current card scale (no scaling)
-const PEEK_CARD_SCALE = 0.985 // Adjacent card scale (slightly smaller)
-const FAR_CARD_SCALE = 0.90 // Non-adjacent card scale (more noticeable)
-
-// Card Opacity
-const ACTIVE_CARD_OPACITY = 1 // Current card fully visible
-const PEEK_CARD_OPACITY = 0.65 // Adjacent cards semi-transparent
-const FAR_CARD_OPACITY = 0.25 // Far cards very faint
-
-// Transitions
-const DRAG_RESISTANCE_FACTOR = 3.5 // Reduces drag sensitivity for smoother feel
-const REVEAL_EXIT_DURATION_MS = 320 // How long reveal fades out
-const DECK_ENTER_DURATION_MS = 380 // How long deck fades in
-const CARD_SWIPE_DURATION_MS = 500 // Animation duration for card position changes
-
-// Animation Easing
-const TRANSITION_EASING = 'cubic-bezier(0.2, 0.8, 0.2, 1)' // Custom easing for smooth feel
-
-// ============================================================================
-
-const RANK_LABELS: Record<number, string> = {
-  1: 'Mejor ajuste para vos',
-  2: 'Muy compatible',
-  3: 'Alternativa sólida',
-}
-
-const SPECIALTY_MAP: Record<string, string> = {
-  anxiety: 'Ansiedad',
-  depression: 'Depresión',
-  stress: 'Estrés',
-  trauma: 'Trauma',
-  relationships: 'Relaciones',
-}
-
-// Simple validation: reason must exist and have meaningful length
-function isValidReason(reason: string | null | undefined): boolean {
-  return !!reason && reason.trim().length >= 10
-}
+import {
+  CARD_SPACING_PERCENT, CARD_HEIGHT_VH, CARD_MIN_HEIGHT_VH, CARD_MIN_HEIGHT_PX,
+  ACTIVE_CARD_SCALE, PEEK_CARD_SCALE, FAR_CARD_SCALE,
+  ACTIVE_CARD_OPACITY, PEEK_CARD_OPACITY, FAR_CARD_OPACITY,
+  DRAG_RESISTANCE_FACTOR, REVEAL_EXIT_DURATION_MS, DECK_ENTER_DURATION_MS,
+  CARD_SWIPE_DURATION_MS, TRANSITION_EASING,
+  SPECIALTY_MAP, isValidReason,
+} from '@/lib/design-constants'
 
 export default function RecommendationsPage() {
   const params = useParams()

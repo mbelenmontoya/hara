@@ -71,14 +71,14 @@ Hooks fire on Claude Code events. Users don't interact with them directly.
 
 ## Implementation Status
 
-| Category | Status |
-|----------|--------|
-| CLAUDE.md | ✅ Complete |
-| README.md | ✅ Complete |
-| Rules | Milestone 2 |
-| Skills | Milestone 3 |
-| Commands | Milestone 4 |
-| Agents | Milestone 5 |
-| Hooks | Milestone 6 |
-| Hara-specific skills | Milestone 7 |
-| TODO/DONE consolidation | Milestone 8 |
+All tooling is complete and operational.
+
+| Category | Status | Count |
+|----------|--------|-------|
+| CLAUDE.md | ✅ | Project guide |
+| Rules | ✅ | 4 path-scoped rules |
+| Skills | ✅ | 7 skills (4 core + 3 hara-specific) |
+| Commands | ✅ | 5 slash commands |
+| Agents | ✅ | 3 specialized agents |
+| Hooks | ✅ | 3 automatic hooks |
+| TODO/DONE | ✅ | Consolidated task tracking |

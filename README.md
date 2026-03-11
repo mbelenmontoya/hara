@@ -115,10 +115,7 @@ REQUIRE_ADMIN_AUTH=false  # Set true to test auth gating
 Run migrations in Supabase:
 
 ```sql
--- See schema definitions in:
--- WEEK_1_SUMMARY.md (core tables)
--- WEEK_2_SUMMARY.md (billing tables)
--- WEEK_3_FINAL.md (match tables)
+-- See complete schema in FINAL_SPEC.md (single source of truth)
 ```
 
 ### 4. Seed Development Data
@@ -358,7 +355,7 @@ This project follows strict production quality standards:
 - ✅ **Scalable:** Optimized assets, efficient queries, proper caching
 - ✅ **Not Over-Engineered:** Use platform features, avoid premature abstraction
 
-See CODE_QUALITY_AUDIT_2026-01-06.md for detailed standards.
+See CLAUDE.md for detailed standards and DEVELOPMENT_HISTORY.md for context.
 
 ### Commit Conventions
 

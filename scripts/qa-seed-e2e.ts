@@ -7,6 +7,7 @@ import { resolve } from 'path'
 import { config } from 'dotenv'
 import { createClient } from '@supabase/supabase-js'
 import { createAttributionToken } from '../lib/attribution-tokens.js'
+import { generateTrackingCode } from '../lib/tracking-code.js'
 
 // Load environment
 config({ path: resolve(process.cwd(), '.env.local') })
@@ -32,52 +33,62 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
-// Deterministic E2E test identifiers (never change these)
+// E2E test identifiers — professionals and leads use fixed slugs for cleanup
+// Tracking code is generated using the real format (M-{timestamp}-{6char})
 const E2E_LEAD_SLUG = 'e2e-lead-1'
 const E2E_PRO_SLUGS = ['e2e-pro-1', 'e2e-pro-2', 'e2e-pro-3', 'e2e-pro-4']
-const E2E_TRACKING_CODE = 'E2ETEST12345'
 
 async function cleanupExistingE2EData() {
   console.log('🧹 Cleaning up existing E2E test data...')
 
-  // Get existing match IDs to clean up dependencies
-  const { data: existingMatches } = await supabase
-    .from('matches')
+  // Find E2E professionals by their fixed slugs
+  const { data: existingPros } = await supabase
+    .from('professionals')
     .select('id')
-    .eq('tracking_code', E2E_TRACKING_CODE)
+    .in('slug', E2E_PRO_SLUGS)
 
-  const matchIds = (existingMatches || []).map(m => m.id)
+  const proIds = (existingPros || []).map(p => p.id)
 
-  if (matchIds.length > 0) {
-    // 1. Delete PQLs first (depends on match_id, professional_id, lead_id)
-    const { error: pqlError } = await supabase
-      .from('pqls')
-      .delete()
-      .in('match_id', matchIds)
-
-    if (pqlError && pqlError.code !== 'PGRST116') {
-      console.warn('Warning cleaning PQLs:', pqlError.message)
-    }
-
-    // 2. Delete match_recommendations (depends on match + professionals)
-    const { error: recError } = await supabase
+  if (proIds.length > 0) {
+    // Find matches that reference these professionals via match_recommendations
+    const { data: existingRecs } = await supabase
       .from('match_recommendations')
-      .delete()
-      .in('match_id', matchIds)
+      .select('match_id')
+      .in('professional_id', proIds)
 
-    if (recError && recError.code !== 'PGRST116') {
-      console.warn('Warning cleaning match_recommendations:', recError.message)
+    const matchIds = [...new Set((existingRecs || []).map(r => r.match_id))]
+
+    if (matchIds.length > 0) {
+      // 1. Delete PQLs first (depends on match_id)
+      const { error: pqlError } = await supabase
+        .from('pqls')
+        .delete()
+        .in('match_id', matchIds)
+
+      if (pqlError && pqlError.code !== 'PGRST116') {
+        console.warn('Warning cleaning PQLs:', pqlError.message)
+      }
+
+      // 2. Delete match_recommendations
+      const { error: recError } = await supabase
+        .from('match_recommendations')
+        .delete()
+        .in('match_id', matchIds)
+
+      if (recError && recError.code !== 'PGRST116') {
+        console.warn('Warning cleaning match_recommendations:', recError.message)
+      }
+
+      // 3. Delete matches
+      const { error: matchError } = await supabase
+        .from('matches')
+        .delete()
+        .in('id', matchIds)
+
+      if (matchError && matchError.code !== 'PGRST116') {
+        console.warn('Warning cleaning matches:', matchError.message)
+      }
     }
-  }
-
-  // 3. Delete matches
-  const { error: matchError } = await supabase
-    .from('matches')
-    .delete()
-    .eq('tracking_code', E2E_TRACKING_CODE)
-
-  if (matchError && matchError.code !== 'PGRST116') {
-    console.warn('Warning cleaning matches:', matchError.message)
   }
 
   // 4. Delete leads (use country marker)
@@ -146,10 +157,11 @@ async function seedE2EData() {
   if (leadError) throw new Error(`Failed to create lead: ${leadError.message}`)
   console.log(`✅ Created lead: ${lead.id}`)
 
-  // Create match
+  // Create match with properly formatted tracking code
+  const trackingCode = generateTrackingCode()
   const { data: match, error: matchError } = await supabase.from('matches').insert({
     lead_id: lead.id,
-    tracking_code: E2E_TRACKING_CODE,
+    tracking_code: trackingCode,
     status: 'sent',
   }).select().single()
 
@@ -162,7 +174,7 @@ async function seedE2EData() {
       match_id: match.id,
       professional_id: p.id,
       lead_id: lead.id,
-      tracking_code: E2E_TRACKING_CODE,
+      tracking_code: trackingCode,
       rank: i + 1,
     }))
   )
@@ -191,7 +203,7 @@ async function seedE2EData() {
   const testData = {
     lead_id: lead.id,
     match_id: match.id,
-    tracking_code: E2E_TRACKING_CODE,
+    tracking_code: trackingCode,
     professionals: professionals.map(p => ({ id: p.id, slug: p.slug })),
     tokens: tokens,
     seeded_at: new Date().toISOString(),
@@ -204,7 +216,7 @@ async function seedE2EData() {
   console.log('\n📋 E2E Test Data Summary:')
   console.log(`   Lead ID: ${lead.id}`)
   console.log(`   Match ID: ${match.id}`)
-  console.log(`   Tracking Code: ${E2E_TRACKING_CODE}`)
+  console.log(`   Tracking Code: ${trackingCode}`)
   console.log(`   Professionals: ${professionals.length}`)
 }
 

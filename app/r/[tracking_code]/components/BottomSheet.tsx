@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from 'react'
 import { ContactButton } from '@/app/components/ContactButton'
+import { Chip } from '@/app/components/ui/Chip'
 import type { Recommendation } from '../hooks/useRecommendations'
 import { SHEET_ANIMATION_MS, EASING, SPECIALTY_MAP, isValidReason } from '@/lib/design-constants'
 
@@ -91,15 +92,9 @@ export function BottomSheet({
 
           {/* Chips */}
           <div className="flex flex-wrap gap-2">
-            <span className="px-3 py-1.5 bg-success-weak text-success text-xs font-medium rounded-full border border-success/20">
-              Perfil revisado
-            </span>
-            <span className="px-3 py-1.5 bg-warning-weak text-warning text-xs font-medium rounded-full border border-warning/20">
-              Turnos esta semana
-            </span>
-            <span className="px-3 py-1.5 bg-surface-2 text-foreground text-xs font-medium rounded-full border border-outline">
-              Online
-            </span>
+            <Chip label="Perfil revisado" variant="success" />
+            <Chip label="Turnos esta semana" variant="warning" />
+            <Chip label="Online" variant="neutral" />
           </div>
 
           {/* Reasons - only if valid reasons exist */}

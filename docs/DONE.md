@@ -105,3 +105,11 @@
 - [x] 3 agents (complexity-watchdog, code-reviewer, documentation-architect)
 - [x] 3 hooks (file-size-warning, protected-files-guard, console-log-detector)
 - [x] Documentation consolidation (8 obsolete files removed, TODO.md + DONE.md created)
+- [x] Phase 1 design system extraction: shared constants (`lib/design-constants.ts`)
+- [x] Chip component extracted to `app/components/ui/Chip.tsx` (replaces 6+ inline chip patterns)
+- [x] Chip integrated into recommendations page and BottomSheet
+- [x] Chip added to UI showcase (`/ui`)
+- [x] E2E seed script fixed to use `generateTrackingCode()` instead of hardcoded invalid format
+- [x] E2E seed cleanup rewritten to find matches via professional slugs instead of hardcoded tracking code
+- [x] Working rules added to CLAUDE.md (8 process rules)
+- [x] Full page/workflow map added to TODO.md (27 routes: 10 exist, 17 new)

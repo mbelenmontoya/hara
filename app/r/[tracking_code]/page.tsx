@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import { ContactButton } from '@/app/components/ContactButton'
+import { Chip } from '@/app/components/ui/Chip'
 import { useRecommendations } from './hooks/useRecommendations'
 import { useSwipeGesture } from './hooks/useSwipeGesture'
 import { useRevealTransition } from './hooks/useRevealTransition'
@@ -291,15 +292,9 @@ export default function RecommendationsPage() {
                       <div className="px-6 py-4 space-y-4">
                         {/* Chips (up to 3) */}
                         <div className="flex flex-wrap gap-2">
-                          <span className="px-3 py-1.5 bg-success-weak text-success text-xs font-medium rounded-full border border-success/20">
-                            Perfil revisado
-                          </span>
-                          <span className="px-3 py-1.5 bg-brand-weak text-brand text-xs font-medium rounded-full border border-brand/20">
-                            Online
-                          </span>
-                          <span className="px-3 py-1.5 bg-warning-weak text-warning text-xs font-medium rounded-full border border-warning/20">
-                            Esta semana
-                          </span>
+                          <Chip label="Perfil revisado" variant="success" />
+                          <Chip label="Online" variant="brand" />
+                          <Chip label="Esta semana" variant="warning" />
                         </div>
 
                         {/* "Why recommended" - max 2 bullets, clamped to 2-3 lines each */}

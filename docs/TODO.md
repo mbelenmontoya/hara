@@ -4,6 +4,83 @@
 
 ---
 
+## Pages & Workflows (Full App Map)
+
+### Público (Lead)
+
+| # | Route | Status | Notes |
+|---|-------|--------|-------|
+| 1 | `/` | Exists — modify | Home page, needs design system |
+| 2 | `/r/[tracking_code]` | Exists — modify | Recommendations, design system in progress |
+| 3 | `/solicitar` | **New** | Intake web fallback |
+| 4 | `/gracias` | **New** | Confirmation post-solicitud |
+| 5 | `/ayuda` | **New** | Soporte / recuperación de link / errores comunes |
+
+### Público (Profesional)
+
+| # | Route | Status | Notes |
+|---|-------|--------|-------|
+| 1 | `/p/[slug]` | Exists — modify | Perfil público (bug: queries wrong column `specialty` instead of `specialties`, uses Tailwind grays not design tokens) |
+| 2 | `/profesionales` | **New** | Landing de captación |
+
+Note: `/profesionales/registro` (registration form) and `/profesionales/registro/confirmacion` (confirmation) already exist.
+
+### Admin / Ops
+
+| # | Route | Status | Notes |
+|---|-------|--------|-------|
+| 1 | `/admin/leads` | Exists — modify | Bandeja de solicitudes |
+| 2 | `/admin/leads/[id]` | **New** | Detalle de solicitud |
+| 3 | `/admin/leads/[id]/match` | Exists — modify | Crear match |
+| 4 | `/admin/matches` | **New** | Listado de matches / tokens |
+| 5 | `/admin/matches/[id]` | **New** | Detalle de match: link, estado, vencimiento, mensaje enviado, timeline |
+| 6 | `/admin/professionals` | Exists — modify | Listado profesionales |
+| 7 | `/admin/professionals/[id]` | **New** | Detalle profesional: info + performance + historial |
+| 8 | `/admin/analytics` | **New** | Dashboard general (mínimo: funnel y eventos) |
+| 9 | `/admin/events` | **New** | Eventos crudos / auditoría (contact_click, etc.) |
+| 10 | `/admin/pqls` | Exists — modify | Ledger PQL (posible ajuste visual) |
+| 11 | `/admin/settings` | **New** | Configuración operativa: IG handle, vencimientos, plantillas de mensaje |
+
+### Legales / Confianza
+
+| # | Route | Status | Notes |
+|---|-------|--------|-------|
+| 1 | `/privacidad` | **New** | |
+| 2 | `/terminos` | **New** | |
+
+### Futuro (no MVP inmediato, pero en roadmap)
+
+| # | Route | Status | Notes |
+|---|-------|--------|-------|
+| 1 | `/pro` | **New** | Home profesional autenticado |
+| 2 | `/pro/leads` o `/pro/pqls` | **New** | Visibilidad de leads/PQL para el profesional |
+| 3 | `/pro/analytics` | **New** | Performance por profesional |
+
+---
+
+## Known Bugs
+
+- [ ] `/p/[slug]` queries `specialty` (singular) but DB has `specialties` (array) — page 404s
+- [ ] `/p/[slug]` uses Tailwind grays instead of design system tokens
+- [ ] E2E seed script was generating invalid tracking codes (fixed in this session)
+- [ ] Hardcoded `#FBF7F2` in 3 pages instead of using `var(--color-background)` or `bg-background`
+- [ ] Duplicate `SPECIALTY_MAP` and `isValidReason` in page.tsx and BottomSheet.tsx (fixed — moved to `lib/design-constants.ts`)
+
+---
+
+## Design System Extraction (In Progress)
+
+- [x] Phase 1: Shared constants file (`lib/design-constants.ts`)
+- [ ] Phase 2: Chip component
+- [ ] Phase 3: AvatarPlaceholder component
+- [ ] Phase 4: GlassCard component
+- [ ] Phase 5: PrivacyNotice component
+- [ ] Phase 6: SectionHeader component
+- [ ] Phase 7: FormField component
+- [ ] Phase 8: Sweep + document
+
+---
+
 ## UI / UX — High Priority
 
 - [ ] Fix BottomSheet backdrop animation (no dimming overlay behind sheet)

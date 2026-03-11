@@ -82,6 +82,19 @@ const EASING = 'cubic-bezier(0.32, 0.72, 0, 1)'           // iOS spring-like
 const TRANSITION_EASING = 'cubic-bezier(0.2, 0.8, 0.2, 1)' // Smooth feel
 ```
 
+## Working Rules
+
+These are non-negotiable process rules. Follow them always.
+
+1. **Never delete information without preserving it first.** Before removing any file, every piece of content (done, not done, decisions, context) must exist in another file. Verify by reading both files.
+2. **Do not assume — verify.** Before claiming something works, test it. Before running a script, read its code. Before saying a page loads, hit the URL. Before saying Supabase is down, check connectivity.
+3. **Discuss before executing.** Do not jump to fix bugs, refactor code, or make changes without discussing the approach with the user first. Present the problem, propose options, wait for direction.
+4. **Do not take shortcuts.** No flags, workarounds, hardcoded values, or hacks to make things pass. Understand how the system works and work within it.
+5. **One thing at a time.** Complete what was agreed upon before starting something new. Test after every change.
+6. **Check the dev server before sending URLs.** Verify the port, verify the page returns 200, verify the content renders.
+7. **Read before writing.** Always read the file, the docs, the schema, and the related code before making changes. Understand the full context.
+8. **Track everything in TODO.md.** Any new task discovered, any bug found, any pending item — add it immediately. Never lose track of work.
+
 ## Code Quality Standards
 
 - Components ≤ **440 lines**, functions ≤ **50 lines**

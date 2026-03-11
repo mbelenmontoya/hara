@@ -8,6 +8,7 @@ import { Button } from '../components/ui/Button'
 import { Card, CardContent } from '../components/ui/Card'
 import { Input, Select } from '../components/ui/Input'
 import { Badge } from '../components/ui/Badge'
+import { Chip } from '../components/ui/Chip'
 import { Alert } from '../components/ui/Alert'
 import { EmptyState } from '../components/ui/EmptyState'
 
@@ -103,6 +104,19 @@ export default function UIPage() {
               Los cambios se guardaron correctamente.
             </Alert>
           )}
+
+          <Card className="mb-4">
+            <CardContent>
+              <p className="text-sm font-medium text-foreground mb-4">Chips</p>
+              <div className="flex flex-wrap gap-2">
+                <Chip label="Perfil revisado" variant="success" />
+                <Chip label="Turnos esta semana" variant="warning" />
+                <Chip label="Online" variant="neutral" />
+                <Chip label="Recomendado" variant="brand" />
+                <Chip label="Nuevo" variant="info" />
+              </div>
+            </CardContent>
+          </Card>
 
           <Card>
             <CardContent>

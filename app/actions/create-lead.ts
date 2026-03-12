@@ -5,6 +5,7 @@
 // Note: leads table RLS denies public INSERT, must use service role
 
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { notifyNewLead } from '@/lib/email'
 
 export interface CreateLeadInput {
   country: string
@@ -49,6 +50,16 @@ export async function createLead(input: CreateLeadInput) {
     console.error('Failed to create lead:', error)
     throw new Error('Failed to create lead')
   }
+
+  // Notify admin — fire and forget, never block the response
+  notifyNewLead({
+    intent_tags: input.intent_tags,
+    country: input.country,
+    city: input.city,
+    whatsapp: input.whatsapp || '',
+    urgency: input.urgency,
+    modality_preference: input.modality_preference,
+  }).catch(() => {}) // Swallow errors — email failure must not affect lead creation
 
   return { lead_id: data.id }
 }

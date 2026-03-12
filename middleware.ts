@@ -1,12 +1,16 @@
-// Hará Match - Admin Route Protection Middleware
-// Purpose: Gate /admin/* and /api/admin/* with fail-closed authentication
-// Security: Returns 503 if REQUIRE_ADMIN_AUTH=true OR (production AND Clerk missing)
+// Hará Match - Route Protection Middleware
+// Purpose: Gate /admin/* routes with Supabase Auth
+// Public routes (/r/, /p/, /solicitar, etc.) are not affected
 
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { updateSession } from '@/lib/supabase/middleware'
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+
+  // Always refresh session cookies (needed for Supabase Auth to work)
+  const { response, user } = await updateSession(request)
 
   // Check if this is a protected route
   const isProtectedRoute =
@@ -14,31 +18,32 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/api/admin') ||
     pathname.startsWith('/api/debug')
 
+  // The login page itself should not be protected
+  if (pathname === '/admin/login') {
+    // If already logged in, redirect to dashboard
+    if (user) {
+      return NextResponse.redirect(new URL('/admin/leads', request.url))
+    }
+    return response
+  }
+
   if (!isProtectedRoute) {
-    return NextResponse.next()
+    return response
   }
 
-  // Determine if we should gate protected routes
-  const requireAdminAuth = process.env.REQUIRE_ADMIN_AUTH === 'true'
-  const isProduction = process.env.NODE_ENV === 'production'
-  const hasClerkKeys = Boolean(process.env.CLERK_SECRET_KEY) && !process.env.CLERK_SECRET_KEY?.startsWith('sk_...')
-
-  // Gate if: explicitly required OR production without valid Clerk keys
-  const shouldGate = requireAdminAuth || (isProduction && !hasClerkKeys)
-
-  if (shouldGate) {
-    return NextResponse.json(
-      {
-        error: 'Service unavailable: Admin authentication required. Configure Clerk authentication before accessing admin routes.',
-      },
-      { status: 503 }
-    )
+  // Protected route without session → redirect to login
+  if (!user) {
+    const loginUrl = new URL('/admin/login', request.url)
+    loginUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(loginUrl)
   }
 
-  // Development mode: allow access (tests and local dev)
-  return NextResponse.next()
+  return response
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/api/admin/:path*', '/api/debug/:path*'],
+  matcher: [
+    // Match all routes except static files
+    '/((?!_next/static|_next/image|favicon.ico|assets|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 }

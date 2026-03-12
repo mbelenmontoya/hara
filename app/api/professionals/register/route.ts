@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { notifyNewProfessional } from '@/lib/email'
 
 // Validation
 function validateEmail(email: string): boolean {
@@ -127,6 +128,15 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
+
+    // Notify admin — fire and forget, never block the response
+    notifyNewProfessional({
+      full_name,
+      email,
+      whatsapp,
+      country,
+      specialties,
+    }).catch(() => {})
 
     return NextResponse.json({
       success: true,

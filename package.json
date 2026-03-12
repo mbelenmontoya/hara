@@ -24,15 +24,18 @@
   "dependencies": {
     "@clerk/nextjs": "^5.0.0",
     "@fingerprintjs/fingerprintjs": "^4.2.0",
+    "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.39.0",
     "@upstash/ratelimit": "^1.0.0",
     "@upstash/redis": "^1.28.0",
     "dotenv": "^17.2.3",
     "jose": "^5.2.0",
+    "libphonenumber-js": "^1.12.39",
     "nanoid": "^5.1.6",
     "next": "^14.2.0",
     "react": "^18.3.0",
-    "react-dom": "^18.3.0"
+    "react-dom": "^18.3.0",
+    "resend": "^6.9.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.41.0",

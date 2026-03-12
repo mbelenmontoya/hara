@@ -113,3 +113,18 @@
 - [x] E2E seed cleanup rewritten to find matches via professional slugs instead of hardcoded tracking code
 - [x] Working rules added to CLAUDE.md (8 process rules)
 - [x] Full page/workflow map added to TODO.md (27 routes: 10 exist, 17 new)
+
+## Professional Profile Page Rebuild (Mar 12, 2026)
+
+- [x] Fixed specialty vs specialties bug (was querying wrong column, causing 404)
+- [x] Schema migration: 6 new columns (instagram, short_description, experience_description, service_type, offers_courses_online, courses_presencial_location)
+- [x] FINAL_SPEC.md updated with new schema
+- [x] Rebuilt `/p/[slug]` with 5 glass cards (identity, expertise, about, logistics, contact)
+- [x] Uses design system: liquid-glass, Chip component, tokens, SVG background
+- [x] Back button with `?from=` param (returns to recommendations or home)
+- [x] Seed script updated with realistic data for all new fields
+- [x] sessionStorage for reveal screen — skips on revisit within session
+- [x] Links from /r/ and BottomSheet pass `?from=/r/{trackingCode}`
+- [x] Fixed liquid-glass backdrop-filter in production (changed to @apply)
+- [x] Resolved Upstash Redis 503 on Vercel (Marketplace integration)
+- [x] Deployed and verified at https://hara-weld.vercel.app

@@ -1,6 +1,6 @@
 # Hará Match — Pending Tasks
 
-**Last Updated:** 2026-03-11
+**Last Updated:** 2026-03-12
 
 ---
 
@@ -20,7 +20,7 @@
 
 | # | Route | Status | Notes |
 |---|-------|--------|-------|
-| 1 | `/p/[slug]` | Exists — modify | Perfil público (bug: queries wrong column `specialty` instead of `specialties`, uses Tailwind grays not design tokens) |
+| 1 | `/p/[slug]` | **Done** | Perfil público — rebuilt with 5 glass cards, design system, new DB fields |
 | 2 | `/profesionales` | **New** | Landing de captación |
 
 Note: `/profesionales/registro` (registration form) and `/profesionales/registro/confirmacion` (confirmation) already exist.
@@ -60,18 +60,19 @@ Note: `/profesionales/registro` (registration form) and `/profesionales/registro
 
 ## Known Bugs
 
-- [ ] `/p/[slug]` queries `specialty` (singular) but DB has `specialties` (array) — page 404s
-- [ ] `/p/[slug]` uses Tailwind grays instead of design system tokens
-- [ ] E2E seed script was generating invalid tracking codes (fixed in this session)
+- [x] `/p/[slug]` queries `specialty` (singular) but DB has `specialties` (array) — **fixed**
+- [x] `/p/[slug]` uses Tailwind grays instead of design system tokens — **fixed (rebuilt with 5 glass cards)**
+- [x] E2E seed script was generating invalid tracking codes — **fixed**
 - [ ] Hardcoded `#FBF7F2` in 3 pages instead of using `var(--color-background)` or `bg-background`
-- [ ] Duplicate `SPECIALTY_MAP` and `isValidReason` in page.tsx and BottomSheet.tsx (fixed — moved to `lib/design-constants.ts`)
+- [x] Duplicate `SPECIALTY_MAP` and `isValidReason` — **fixed (moved to `lib/design-constants.ts`)**
+- [x] liquid-glass backdrop-filter dropped in production build — **fixed (using @apply)**
 
 ---
 
 ## Design System Extraction (In Progress)
 
 - [x] Phase 1: Shared constants file (`lib/design-constants.ts`)
-- [ ] Phase 2: Chip component
+- [x] Phase 2: Chip component
 - [ ] Phase 3: AvatarPlaceholder component
 - [ ] Phase 4: GlassCard component
 - [ ] Phase 5: PrivacyNotice component
@@ -84,7 +85,7 @@ Note: `/profesionales/registro` (registration form) and `/profesionales/registro
 ## UI / UX — High Priority
 
 - [ ] Fix BottomSheet backdrop animation (no dimming overlay behind sheet)
-- [ ] Polish professional profile page (`/p/[slug]`)
+- [x] Polish professional profile page (`/p/[slug]`) — **done (5 glass cards, all fields)**
 - [ ] Seed database with 3 real professionals
 - [ ] WhatsApp button redesign (add icon, pulse animation)
 - [ ] Backdrop-filter blur delay — decide on fix approach (Option B: remove scale recommended)

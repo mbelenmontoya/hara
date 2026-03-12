@@ -137,8 +137,18 @@ async function seedE2EData() {
       city: 'Buenos Aires',
       modality: ['online', 'in-person'],
       specialties: ['anxiety', 'depression'],
+      style: ['cbt', 'integrative'],
       status: 'active',
-      bio: `Psicóloga especializada en terapia cognitivo-conductual con ${5 + i} años de experiencia.`,
+      bio: `Mi nombre es ${realisticNames[i].split(' ')[0]}, soy psicóloga clínica con ${5 + i} años de experiencia. Acompaño a personas que buscan bienestar emocional, trabajando desde un enfoque integrador y personalizado.`,
+      short_description: 'Acompañar desde la comprensión, siempre.',
+      experience_description: `Abordamos la terapia desde una perspectiva global y personalizada. Las sesiones son a medida y necesidad del consultante. El propósito es acompañar al ritmo y disponibilidad de cada persona, haciendo más dinámico y ameno el camino.`,
+      instagram: `https://www.instagram.com/${realisticNames[i].split(' ')[0].toLowerCase()}terapia`,
+      service_type: ['individual', 'grupal'],
+      offers_courses_online: i % 2 === 0,
+      courses_presencial_location: i % 2 === 1 ? 'Buenos Aires, Argentina' : null,
+      price_range_min: 5000 + (i * 1000),
+      price_range_max: 8000 + (i * 1000),
+      currency: 'ARS',
     }).select().single()
 
     if (error) throw new Error(`Failed to create professional ${i + 1}: ${error.message}`)

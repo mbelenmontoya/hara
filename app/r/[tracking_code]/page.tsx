@@ -30,7 +30,7 @@ export default function RecommendationsPage() {
 
   // Custom hooks
   const { recommendations, loading, error } = useRecommendations(trackingCode)
-  const { revealing, isTransitioning, startTransition } = useRevealTransition()
+  const { revealing, isTransitioning, startTransition } = useRevealTransition(trackingCode)
   const isDesktop = useIsDesktop()
 
   // Local state
@@ -271,7 +271,7 @@ export default function RecommendationsPage() {
                       {/* Hero - Clickable to profile */}
                       <div className="relative overflow-hidden">
                         <a
-                          href={`/p/${rec.professional.slug}`}
+                          href={`/p/${rec.professional.slug}?from=/r/${trackingCode}`}
                           onClick={(e) => e.stopPropagation()}
                           className="pt-6 px-6 pb-4 flex items-center gap-4 active:opacity-80 transition-opacity"
                         >

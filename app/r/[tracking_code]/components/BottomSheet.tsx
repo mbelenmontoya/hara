@@ -169,7 +169,7 @@ export function BottomSheet({
           {/* Secondary actions - links side by side */}
           <div className="flex items-center justify-center gap-4 text-sm">
             <a
-              href={`/p/${professional.slug}`}
+              href={`/p/${professional.slug}?from=/r/${trackingCode}`}
               className="text-brand font-medium hover:underline"
             >
               Ver perfil completo

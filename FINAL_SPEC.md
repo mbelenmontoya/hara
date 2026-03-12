@@ -34,6 +34,12 @@ CREATE TABLE professionals (
   currency TEXT DEFAULT 'USD',
   accepting_new_clients BOOLEAN DEFAULT true,
   bio TEXT,
+  short_description TEXT,
+  experience_description TEXT,
+  instagram TEXT,
+  service_type TEXT[] DEFAULT '{}',
+  offers_courses_online BOOLEAN DEFAULT false,
+  courses_presencial_location TEXT,
   profile_image_url TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()

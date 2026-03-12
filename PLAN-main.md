@@ -56,28 +56,67 @@ Deployed at: https://hara-weld.vercel.app
 - 27 routes total: 10 exist, 17 new
 - Grouped by: Público (Lead), Público (Profesional), Admin/Ops, Legales, Futuro
 
+### Session: Mar 12, 2026 (continued)
+
+**Intake form (`/solicitar`) — new page:**
+- Single scrollable form with 4 glass cards (intent tags, location/modality, urgency, WhatsApp) + expandable advanced section (style preference, budget, email)
+- Google Places Autocomplete replaces country dropdown + city input — auto-detects country from selected city
+- Live phone validation with `libphonenumber-js` — validates format against detected country, shows error inline as user types
+- Auto-fills country calling code prefix when city is selected (e.g., `+54` for Argentina)
+- Submits via `createLead` server action → redirects to `/gracias`
+
+**Confirmation page (`/gracias`) — new page:**
+- Post-submission page with timeline steps (analizamos, seleccionamos, enviamos link, vos elegís)
+- Same design patterns: SVG background, liquid-glass card, privacy notice
+
+**Email notifications (`lib/email.ts`):**
+- Installed Resend (`npm install resend`)
+- Created `lib/email.ts` with `notifyNewLead()` and `notifyNewProfessional()` functions
+- Admin email notifications on new lead submission (with urgency indicator, intent tags, location, WhatsApp)
+- Admin email notifications on new professional registration
+- Fire-and-forget pattern — email failures never block the main operation
+- Wired into `create-lead.ts` server action and `professionals/register/route.ts`
+- Currently sends to `mariabmontoya@gmail.com` (Resend test mode limitation — needs domain verification for other recipients)
+
+**Supabase Auth for admin (`/admin/login`):**
+- Installed `@supabase/ssr`
+- Created `lib/supabase/client.ts` (browser client), `lib/supabase/server.ts` (server client), `lib/supabase/middleware.ts` (session refresh helper)
+- Replaced Clerk middleware with Supabase Auth — `/admin/*` routes now require login, public routes unaffected
+- Login page at `/admin/login` with email + password, redirects to dashboard after auth
+- If already logged in, `/admin/login` redirects to `/admin/leads`
+- Added `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` env vars
+- Admin user created in Supabase Auth dashboard
+
 ## Next Steps
 
-Following the core user flow, in priority order:
+### Tomorrow: Test the full deployed flow
+1. **Deploy and test on Vercel** — add `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `RESEND_API_KEY` to Vercel env vars, redeploy, and test:
+   - `/solicitar` → fill form → redirects to `/gracias` → email arrives
+   - `/admin/login` → sign in → see leads dashboard with the new submission
+   - `/r/{tracking_code}` → tap profile → `/p/{slug}` → back button works
+   - Public pages load without login requirement
 
-1. **`/solicitar` — Intake web form (new page)**
-   - Top of funnel — currently no way for users to submit a request without admin manually creating a lead
-   - Needs: form fields matching `leads` table, service role insert, confirmation redirect to `/gracias`
+### Then, in priority order:
 
-2. **`/gracias` — Post-solicitud confirmation (new page)**
-   - Simple thank-you page after intake submission
-   - Explain what happens next (we'll match you with 3 professionals)
-
-3. **`/` — Home page redesign**
+2. **`/` — Home page redesign**
    - Currently exists but needs design system (liquid-glass, tokens, consistent patterns)
    - Should link to `/solicitar` and `/profesionales`
 
-4. **`/profesionales` — Professional landing page (new page)**
+3. **`/profesionales` — Professional landing page (new page)**
    - Captures new professionals — links to `/profesionales/registro`
    - Value prop, how it works, CTA to register
 
-5. **`/ayuda` — Help page (new page)**
+4. **`/ayuda` — Help page (new page)**
    - Link recovery, common errors, support contact
+
+5. **Admin pages (new):**
+   - `/admin/leads/[id]` — Lead detail
+   - `/admin/matches` — Match list
+   - `/admin/matches/[id]` — Match detail with timeline
+   - `/admin/professionals/[id]` — Professional detail
+   - `/admin/analytics` — Funnel dashboard
+   - `/admin/events` — Event audit log
+   - `/admin/settings` — Operational config
 
 6. **Design system extraction (remaining phases):**
    - Phase 3: AvatarPlaceholder component
@@ -87,14 +126,9 @@ Following the core user flow, in priority order:
    - Phase 7: FormField component (would bring registro/page.tsx from 571 → ~380 lines)
    - Phase 8: Sweep + document
 
-7. **Admin pages (new):**
-   - `/admin/leads/[id]` — Lead detail
-   - `/admin/matches` — Match list
-   - `/admin/matches/[id]` — Match detail with timeline
-   - `/admin/professionals/[id]` — Professional detail
-   - `/admin/analytics` — Funnel dashboard
-   - `/admin/events` — Event audit log
-   - `/admin/settings` — Operational config
+7. **Email: send copy to person who submitted**
+   - Add checkbox to `/solicitar` form: "Recibir una copia por email"
+   - Requires domain verification in Resend to send to arbitrary addresses
 
 8. **Legal pages:**
    - `/privacidad`
@@ -125,6 +159,24 @@ Following the core user flow, in priority order:
 - liquid-glass backdrop-filter dropped in production — fixed (using @apply)
 - Upstash Redis 503 on Vercel — fixed (Marketplace integration)
 
+### Auth decisions
+- Clerk removed — was never configured, no reason to keep a third service
+- Supabase Auth chosen because we already use Supabase and professionals will need accounts later for `/pro/*` portal
+- Middleware changed from fail-closed-503 to redirect-to-login pattern
+- Admin user created manually in Supabase Auth dashboard for now
+
+### Email decisions
+- Resend chosen for simplicity (one API call, good Next.js integration, free tier 3,000/month)
+- Test mode only sends to the account owner email (`mariabmontoya@gmail.com`)
+- To send to other recipients (e.g., centrovitalhara@gmail.com, or copy to the person who submitted): need to verify a domain in Resend dashboard
+- `lib/email.ts` has both `notifyNewLead()` and `notifyNewProfessional()` ready
+- `create-lead.ts` server action has `additional_context` field but it doesn't exist in DB schema — skipped for now
+
+### Google Places in intake form
+- PlacesAutocomplete component already existed, reused it
+- Returns city, country, countryCode from selected place — replaces manual country dropdown
+- Arrow key selection in Places dropdown may have minor issues (noted by user, not investigated yet)
+
 ### Key files reference
 - `docs/TODO.md` — Full task list with page map
 - `docs/DONE.md` — All completed work
@@ -142,3 +194,9 @@ Following the core user flow, in priority order:
 - Upstash Redis connected via Vercel Marketplace integration
 - All env vars set in Vercel
 - Live at https://hara-weld.vercel.app
+- **New env vars needed in Vercel for latest deploy:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `RESEND_API_KEY`
+
+### Packages added this session
+- `@supabase/ssr` — Supabase server-side auth for Next.js
+- `resend` — transactional email API
+- `libphonenumber-js` — phone number validation by country

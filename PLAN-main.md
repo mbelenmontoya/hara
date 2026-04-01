@@ -301,12 +301,20 @@ Deployed at: https://hara-weld.vercel.app
 - [ ] Card deck depth shadows between cards
 - [ ] Spring physics for swipe (momentum, bounce)
 - [ ] Smoother drag resistance curve
+- [ ] More delightful entrance animation for reveal screen
 - [ ] Shimmer effect on loading elements
+- [ ] Text reveal animations
 - [ ] Better hierarchy on card typography
 
 ### UI / UX — Low Priority
 
 - [ ] Dark mode (define tokens, toggle, respect system preference)
+- [ ] Confetti on contact initiation
+- [ ] Success animation after WhatsApp opens
+- [ ] Document desktop-specific issues
+- [ ] Moonly-style card redesign exploration (text over image, no card container)
+- [ ] Design system component extraction (AnimatedIcon, enhanced GlassCard)
+- [ ] Background may need adjustment (currently SVG illustration)
 - [ ] Admin dashboard design polish
 - [ ] Hover states for desktop
 
@@ -332,18 +340,31 @@ Deployed at: https://hara-weld.vercel.app
 - [ ] Add Sentry DSN + integration
 - [ ] Vercel Analytics integration
 - [ ] Uptime monitoring configured
+- [ ] Log aggregation set up
+- [ ] Monitor post-deploy error rates (first 48 hours)
+- [ ] Set up alerts for error spikes
+- [ ] Monitor Supabase query performance
+- [ ] Review user feedback channels
+- [ ] Check for unexpected traffic patterns
 
 ### Performance Targets
 
 - [ ] Lighthouse score > 90
 - [ ] LCP < 2.5s
+- [ ] FID < 100ms
 - [ ] CLS < 0.1
+- [ ] TTFB < 800ms
+- [ ] API response times < 500ms
+- [ ] Page load < 3s on 3G
+- [ ] Time to interactive < 5s
 - [ ] Build size < 100KB first load JS
 
 ### Testing
 
 - [ ] Add unit tests for custom hooks
 - [ ] E2E tests for complete user journey
+- [ ] Visual regression tests
+- [ ] Contract tests for validation rules
 - [ ] Core Web Vitals measurement
 
 ### CI/CD
@@ -356,6 +377,8 @@ Deployed at: https://hara-weld.vercel.app
 - [ ] Focus trap for modals/bottom sheets
 - [ ] Skip navigation links
 - [ ] Screen reader announcements for swipe actions
+- [ ] High contrast mode support
+- [ ] WCAG AAA compliance (full)
 
 ### Content / SEO
 
@@ -370,6 +393,7 @@ Deployed at: https://hara-weld.vercel.app
 - [ ] Schedule recurring event purge job (calls `purge_old_events()`)
 - [ ] Pre-merge checklist: ensure all 7 QA rules pass
 - [ ] Drift prevention: update FINAL_SPEC.md before architecture changes
+- [ ] Lazy load BottomSheet if it grows >200 lines
 
 ### Documentation Cleanup
 
@@ -391,9 +415,7 @@ Deployed at: https://hara-weld.vercel.app
 8. Track everything in this plan file
 
 ### Known bugs still open
-- Hardcoded `#FBF7F2` in 3 pages instead of using `var(--color-background)` or `bg-background`
-- BottomSheet has no backdrop animation (dimming overlay)
-- Backdrop-filter blur delay on card swipe (Chrome bug — documented in KNOWN_ISSUES.md)
+_(See also "Known Bugs" in Pending Tasks above)_
 
 ### Bugs fixed in previous sessions
 - `/p/[slug]` specialty vs specialties column name — fixed

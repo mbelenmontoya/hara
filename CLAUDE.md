@@ -93,7 +93,7 @@ These are non-negotiable process rules. Follow them always.
 5. **One thing at a time.** Complete what was agreed upon before starting something new. Test after every change.
 6. **Check the dev server before sending URLs.** Verify the port, verify the page returns 200, verify the content renders.
 7. **Read before writing.** Always read the file, the docs, the schema, and the related code before making changes. Understand the full context.
-8. **Track everything in TODO.md.** Any new task discovered, any bug found, any pending item — add it immediately. Never lose track of work.
+8. **Track everything in PLAN-main.md.** Any new task discovered, any bug found, any pending item — add it immediately. Never lose track of work.
 
 ## Code Quality Standards
 
@@ -136,7 +136,7 @@ These are production-ready, tested, and locked. Do not modify without explicit a
 | `PRODUCTION_READINESS.md` | Deployment checklist |
 | `SELF_QA_RULES.md` | 7 QA validation rules |
 | `KNOWN_ISSUES.md` | Chrome backdrop-filter bug |
-| `docs/TODO.md` | All pending tasks |
+| `PLAN-main.md` | Plan, roadmap, and all pending tasks |
 | `docs/DONE.md` | All completed work |
 
 ## Full Tooling Reference

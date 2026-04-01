@@ -214,6 +214,170 @@ Deployed at: https://hara-weld.vercel.app
     - Profile editing
     - Subscription management
 
+---
+
+## Pages & Workflows (Full App Map)
+
+### Público (Lead)
+
+| # | Route | Status | Notes |
+|---|-------|--------|-------|
+| 1 | `/` | Exists — redesign | Home page, needs design system + dual CTA |
+| 2 | `/r/[tracking_code]` | Exists | Concierge recommendations (kept for concierge flow) |
+| 3 | `/solicitar` | **Done** | Concierge intake form |
+| 4 | `/gracias` | **Done** | Confirmation post-solicitud |
+| 5 | `/profesionales` | **New — Phase 1** | Public directory ranked by reputation |
+| 6 | `/ayuda` | **New — Phase 3** | Soporte / recuperación de link / errores comunes |
+
+### Público (Profesional)
+
+| # | Route | Status | Notes |
+|---|-------|--------|-------|
+| 1 | `/p/[slug]` | **Done** | Perfil público — 5 glass cards, design system |
+| 2 | `/profesionales/registro` | **Done** | Registration form |
+| 3 | `/profesionales/registro/confirmacion` | **Done** | Registration confirmation |
+
+### Admin / Ops
+
+| # | Route | Status | Notes |
+|---|-------|--------|-------|
+| 1 | `/admin/leads` | Exists — modify | Bandeja de solicitudes |
+| 2 | `/admin/leads/[id]` | **New — Phase 3** | Detalle de solicitud |
+| 3 | `/admin/leads/[id]/match` | Exists | Crear match (concierge flow) |
+| 4 | `/admin/professionals` | Exists — modify | Listado profesionales + tier management |
+| 5 | `/admin/professionals/[id]` | **New — Phase 3** | Detalle profesional: info + reviews + tier |
+| 6 | `/admin/analytics` | **New — Phase 3** | Dashboard: funnel + directory metrics |
+| 7 | `/admin/settings` | **New — Phase 3** | Configuración operativa |
+| 8 | `/admin/pqls` | Exists | Ledger PQL (kept for concierge billing) |
+
+### Legales / Confianza
+
+| # | Route | Status | Notes |
+|---|-------|--------|-------|
+| 1 | `/privacidad` | **New — Phase 3** | |
+| 2 | `/terminos` | **New — Phase 3** | |
+
+### Futuro (Phase 4)
+
+| # | Route | Status | Notes |
+|---|-------|--------|-------|
+| 1 | `/pro` | **New** | Home profesional autenticado |
+| 2 | `/pro/leads` | **New** | Visibilidad de leads para el profesional |
+| 3 | `/pro/analytics` | **New** | Performance por profesional |
+
+---
+
+## Pending Tasks
+
+### Known Bugs
+
+- [ ] Hardcoded `#FBF7F2` in 3 pages instead of using `var(--color-background)` or `bg-background`
+- [ ] BottomSheet has no backdrop animation (no dimming overlay behind sheet)
+- [ ] Backdrop-filter blur delay on card swipe (Chrome bug — documented in KNOWN_ISSUES.md)
+
+### Design System Extraction
+
+- [x] Phase 1: Shared constants file (`lib/design-constants.ts`)
+- [x] Phase 2: Chip component
+- [ ] Phase 3: AvatarPlaceholder component
+- [ ] Phase 4: GlassCard component
+- [ ] Phase 5: PrivacyNotice component
+- [ ] Phase 6: SectionHeader component
+- [ ] Phase 7: FormField component
+- [ ] Phase 8: Sweep + document
+
+### UI / UX — High Priority
+
+- [ ] WhatsApp button redesign (add icon, pulse animation)
+- [ ] Backdrop-filter blur delay — decide on fix approach (Option B: remove scale recommended)
+
+### UI / UX — Medium Priority
+
+- [ ] Progress indicator dot animations (transitions between cards)
+- [ ] Chips staggered entrance animation
+- [ ] Avatar/photo placeholders with initials fallback
+- [ ] Micro-animations (haptic feedback on buttons)
+- [ ] Staggered element reveals
+- [ ] Card deck depth shadows between cards
+- [ ] Spring physics for swipe (momentum, bounce)
+- [ ] Smoother drag resistance curve
+- [ ] Shimmer effect on loading elements
+- [ ] Better hierarchy on card typography
+
+### UI / UX — Low Priority
+
+- [ ] Dark mode (define tokens, toggle, respect system preference)
+- [ ] Admin dashboard design polish
+- [ ] Hover states for desktop
+
+### Feature Work
+
+- [x] Email notifications (`lib/email.ts`) — `notifyNewLead()` and `notifyNewProfessional()` — **done**
+- [x] Resend installed and wired — **done**
+- [ ] Email: send copy to person who submitted (requires Resend domain verification)
+- [ ] Google Places Autocomplete refinement (feels "funky")
+- [ ] Reconciliation API endpoint (`/api/admin/reconciliation`) — for concierge flow
+
+### Deployment / Infrastructure
+
+- [x] Supabase Auth replaces Clerk — **done**
+- [x] Upstash Redis connected via Vercel Marketplace — **done**
+- [ ] Set production environment variables (verify all are in Vercel)
+- [ ] Rate limiting verified in production
+- [ ] CORS configured (if needed)
+- [ ] Enable Cloudflare proxy / DDoS protection
+
+### Monitoring / Analytics
+
+- [ ] Add Sentry DSN + integration
+- [ ] Vercel Analytics integration
+- [ ] Uptime monitoring configured
+
+### Performance Targets
+
+- [ ] Lighthouse score > 90
+- [ ] LCP < 2.5s
+- [ ] CLS < 0.1
+- [ ] Build size < 100KB first load JS
+
+### Testing
+
+- [ ] Add unit tests for custom hooks
+- [ ] E2E tests for complete user journey
+- [ ] Core Web Vitals measurement
+
+### CI/CD
+
+- [ ] CI/CD workflow (GitHub Actions)
+- [ ] Lockfile verification in CI (`npm ci`)
+
+### Accessibility
+
+- [ ] Focus trap for modals/bottom sheets
+- [ ] Skip navigation links
+- [ ] Screen reader announcements for swipe actions
+
+### Content / SEO
+
+- [ ] SEO meta tags verified in production
+- [ ] Open Graph images set
+- [ ] 404 page customized
+- [ ] Spanish copy reviewed (full audit)
+
+### Operations
+
+- [ ] Schedule recurring reconciliation job (calls `check_pql_event_integrity()`)
+- [ ] Schedule recurring event purge job (calls `purge_old_events()`)
+- [ ] Pre-merge checklist: ensure all 7 QA rules pass
+- [ ] Drift prevention: update FINAL_SPEC.md before architecture changes
+
+### Documentation Cleanup
+
+- [ ] README references `CODE_QUALITY_AUDIT_2026-01-06.md` (deleted) — fix reference
+- [ ] README references week summary docs for DB setup (wrong path) — fix reference
+
+---
+
 ## Notes
 
 ### Working rules (from CLAUDE.md)
@@ -224,7 +388,7 @@ Deployed at: https://hara-weld.vercel.app
 5. One thing at a time, test after every change
 6. Check the dev server before sending URLs
 7. Read before writing
-8. Track everything in TODO.md
+8. Track everything in this plan file
 
 ### Known bugs still open
 - Hardcoded `#FBF7F2` in 3 pages instead of using `var(--color-background)` or `bg-background`
@@ -258,7 +422,6 @@ Deployed at: https://hara-weld.vercel.app
 - Arrow key selection in Places dropdown may have minor issues (noted by user, not investigated yet)
 
 ### Key files reference
-- `docs/TODO.md` — Full task list with page map
 - `docs/DONE.md` — All completed work
 - `CLAUDE.md` — Project guide and working rules
 - `FINAL_SPEC.md` — Database schema (source of truth, updated with 6 new columns)

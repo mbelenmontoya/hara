@@ -1,6 +1,83 @@
 # Hará Match — Pending Tasks
 
-**Last Updated:** 2026-03-12
+**Last Updated:** 2026-04-01
+
+> **Model pivot (Apr 1, 2026):** Moved from PQL-only billing to Directory + Concierge model.
+> See PLAN-main.md "Business Model Decision Log" for full rationale.
+
+---
+
+## Phase 1: Foundation for Directory Model
+
+### 1.1 Populate real professionals
+- [ ] Get real professional data from owner (email/spreadsheet)
+- [ ] Add them to Supabase `professionals` table with all fields filled
+
+### 1.2 DB: Add ranking/tier fields
+- [ ] Add `subscription_tier` to `professionals` — enum: `basico`, `destacado` (default: `basico`)
+- [ ] Add `rating_average` — decimal, default 3.0
+- [ ] Add `rating_count` — integer, default 0
+- [ ] Add `profile_completeness_score` — integer 0-100
+- [ ] Add `ranking_score` — decimal, computed from tier + rating + completeness
+- [ ] Update FINAL_SPEC.md with new schema
+
+### 1.3 `/profesionales` — Public directory page (new)
+- [ ] List all approved professionals, sorted by `ranking_score` desc
+- [ ] "Destacado" badge for paid tier
+- [ ] Filter by specialty, location, modality (online/presencial)
+- [ ] Search by name
+- [ ] Links to `/p/[slug]`
+- [ ] CTA: "¿Sos profesional? Registrate" → `/profesionales/registro`
+
+### 1.4 `/` — Home page redesign
+- [ ] Apply design system (liquid-glass, tokens)
+- [ ] Two CTAs: "Buscar profesional" → `/profesionales` and "Que te recomendemos" → `/solicitar`
+- [ ] Featured "Destacado" professionals section
+
+---
+
+## Phase 2: Reviews & Reputation
+
+### 2.1 Review collection system
+- [ ] After contact event, generate unique review link (no login needed)
+- [ ] Review form: star rating (1-5) + optional text comment
+- [ ] DB: `reviews` table (professional_id, rating, comment, review_token, created_at)
+- [ ] Reviews update `rating_average` and `rating_count` on `professionals`
+- [ ] Display reviews on `/p/[slug]` profile page
+
+### 2.2 Profile completeness scoring
+- [ ] Calculate score based on filled fields (photo, short_description, specialties, location, etc.)
+- [ ] Auto-update on profile changes
+- [ ] Show completeness indicator on admin dashboard
+
+---
+
+## Phase 3: Monetization & Polish
+
+### 3.1 Subscription tier system
+- [ ] Admin can set a professional's tier (manual for now)
+- [ ] "Destacado" visual treatment in directory and profile
+- [ ] Future: Stripe/MercadoPago integration for self-service
+
+### 3.2 New pages
+- [ ] `/ayuda` — Help page (link recovery, common errors, support contact)
+- [ ] `/privacidad` — Privacy policy
+- [ ] `/terminos` — Terms of service
+
+### 3.3 Admin pages (new)
+- [ ] `/admin/leads/[id]` — Lead detail
+- [ ] `/admin/professionals/[id]` — Professional detail with reviews, rating, tier
+- [ ] `/admin/analytics` — Funnel dashboard (directory views → profile views → contacts)
+- [ ] `/admin/settings` — Operational config
+
+---
+
+## Phase 4: Professional Portal (Future)
+- [ ] `/pro` — Authenticated professional home
+- [ ] `/pro/leads` — Lead visibility for the professional
+- [ ] `/pro/analytics` — Performance stats
+- [ ] Profile editing
+- [ ] Subscription management
 
 ---
 
@@ -10,50 +87,47 @@
 
 | # | Route | Status | Notes |
 |---|-------|--------|-------|
-| 1 | `/` | Exists — modify | Home page, needs design system |
-| 2 | `/r/[tracking_code]` | Exists — modify | Recommendations, design system in progress |
-| 3 | `/solicitar` | **New** | Intake web fallback |
-| 4 | `/gracias` | **New** | Confirmation post-solicitud |
-| 5 | `/ayuda` | **New** | Soporte / recuperación de link / errores comunes |
+| 1 | `/` | Exists — redesign | Home page, needs design system + dual CTA |
+| 2 | `/r/[tracking_code]` | Exists | Concierge recommendations (kept for concierge flow) |
+| 3 | `/solicitar` | **Done** | Concierge intake form |
+| 4 | `/gracias` | **Done** | Confirmation post-solicitud |
+| 5 | `/profesionales` | **New — Phase 1** | Public directory ranked by reputation |
+| 6 | `/ayuda` | **New — Phase 3** | Soporte / recuperación de link / errores comunes |
 
 ### Público (Profesional)
 
 | # | Route | Status | Notes |
 |---|-------|--------|-------|
-| 1 | `/p/[slug]` | **Done** | Perfil público — rebuilt with 5 glass cards, design system, new DB fields |
-| 2 | `/profesionales` | **New** | Landing de captación |
-
-Note: `/profesionales/registro` (registration form) and `/profesionales/registro/confirmacion` (confirmation) already exist.
+| 1 | `/p/[slug]` | **Done** | Perfil público — 5 glass cards, design system |
+| 2 | `/profesionales/registro` | **Done** | Registration form |
+| 3 | `/profesionales/registro/confirmacion` | **Done** | Registration confirmation |
 
 ### Admin / Ops
 
 | # | Route | Status | Notes |
 |---|-------|--------|-------|
 | 1 | `/admin/leads` | Exists — modify | Bandeja de solicitudes |
-| 2 | `/admin/leads/[id]` | **New** | Detalle de solicitud |
-| 3 | `/admin/leads/[id]/match` | Exists — modify | Crear match |
-| 4 | `/admin/matches` | **New** | Listado de matches / tokens |
-| 5 | `/admin/matches/[id]` | **New** | Detalle de match: link, estado, vencimiento, mensaje enviado, timeline |
-| 6 | `/admin/professionals` | Exists — modify | Listado profesionales |
-| 7 | `/admin/professionals/[id]` | **New** | Detalle profesional: info + performance + historial |
-| 8 | `/admin/analytics` | **New** | Dashboard general (mínimo: funnel y eventos) |
-| 9 | `/admin/events` | **New** | Eventos crudos / auditoría (contact_click, etc.) |
-| 10 | `/admin/pqls` | Exists — modify | Ledger PQL (posible ajuste visual) |
-| 11 | `/admin/settings` | **New** | Configuración operativa: IG handle, vencimientos, plantillas de mensaje |
+| 2 | `/admin/leads/[id]` | **New — Phase 3** | Detalle de solicitud |
+| 3 | `/admin/leads/[id]/match` | Exists | Crear match (concierge flow) |
+| 4 | `/admin/professionals` | Exists — modify | Listado profesionales + tier management |
+| 5 | `/admin/professionals/[id]` | **New — Phase 3** | Detalle profesional: info + reviews + tier |
+| 6 | `/admin/analytics` | **New — Phase 3** | Dashboard: funnel + directory metrics |
+| 7 | `/admin/settings` | **New — Phase 3** | Configuración operativa |
+| 8 | `/admin/pqls` | Exists | Ledger PQL (kept for concierge billing) |
 
 ### Legales / Confianza
 
 | # | Route | Status | Notes |
 |---|-------|--------|-------|
-| 1 | `/privacidad` | **New** | |
-| 2 | `/terminos` | **New** | |
+| 1 | `/privacidad` | **New — Phase 3** | |
+| 2 | `/terminos` | **New — Phase 3** | |
 
-### Futuro (no MVP inmediato, pero en roadmap)
+### Futuro (Phase 4)
 
 | # | Route | Status | Notes |
 |---|-------|--------|-------|
 | 1 | `/pro` | **New** | Home profesional autenticado |
-| 2 | `/pro/leads` o `/pro/pqls` | **New** | Visibilidad de leads/PQL para el profesional |
+| 2 | `/pro/leads` | **New** | Visibilidad de leads para el profesional |
 | 3 | `/pro/analytics` | **New** | Performance por profesional |
 
 ---
@@ -119,27 +193,20 @@ Note: `/profesionales/registro` (registration form) and `/profesionales/registro
 
 ## Feature Work
 
-- [ ] Email confirmation to professional on registration (Resend recommended)
-- [ ] Notification email to admin on new professional registration
-- [ ] Install Resend and configure `RESEND_API_KEY`
-- [ ] Create `lib/email.ts` for reusable email functions
-- [ ] Handle email failures gracefully (don't fail registration)
+- [x] Email notifications (`lib/email.ts`) — `notifyNewLead()` and `notifyNewProfessional()` — **done**
+- [x] Resend installed and wired — **done**
+- [ ] Email: send copy to person who submitted (requires Resend domain verification)
 - [ ] Google Places Autocomplete refinement (feels "funky")
-- [ ] Reconciliation API endpoint (`/api/admin/reconciliation`)
+- [ ] Reconciliation API endpoint (`/api/admin/reconciliation`) — for concierge flow
 
 ## Deployment / Infrastructure
 
-- [ ] Configure Clerk authentication keys
-- [ ] Set production environment variables
-- [ ] All environment variables set in Vercel
-- [ ] `NODE_ENV=production` configured
-- [ ] Upstash Redis connected (production)
-- [ ] Supabase production database ready
-- [ ] Admin routes gated — test with `REQUIRE_ADMIN_AUTH=true`
+- [x] Supabase Auth replaces Clerk — **done**
+- [x] Upstash Redis connected via Vercel Marketplace — **done**
+- [ ] Set production environment variables (verify all are in Vercel)
 - [ ] Rate limiting verified in production
 - [ ] CORS configured (if needed)
 - [ ] Enable Cloudflare proxy / DDoS protection
-- [ ] Advanced DDoS protection (Cloudflare WAF rules)
 
 ## Monitoring / Analytics
 

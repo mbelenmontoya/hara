@@ -329,14 +329,14 @@ Deployed at: https://hara-weld.vercel.app
 - [ ] Google Places Autocomplete refinement (feels "funky")
 - [ ] Reconciliation API endpoint (`/api/admin/reconciliation`) — for concierge flow
 
-### Deployment / Infrastructure
-
 - [x] Supabase Auth replaces Clerk — **done**
 - [x] Upstash Redis connected via Vercel Marketplace — **done**
 - [ ] Set production environment variables (verify all are in Vercel)
+- [ ] `NODE_ENV=production` configured
 - [ ] Rate limiting verified in production
 - [ ] CORS configured (if needed)
 - [ ] Enable Cloudflare proxy / DDoS protection
+- [ ] Advanced DDoS protection (Cloudflare WAF rules)
 
 ### Monitoring / Analytics
 

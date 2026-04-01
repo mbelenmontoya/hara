@@ -249,6 +249,9 @@ Deployed at: https://hara-weld.vercel.app
 | 6 | `/admin/analytics` | **New — Phase 3** | Dashboard: funnel + directory metrics |
 | 7 | `/admin/settings` | **New — Phase 3** | Configuración operativa |
 | 8 | `/admin/pqls` | Exists | Ledger PQL (kept for concierge billing) |
+| 9 | `/admin/matches` | Deprioritized (pivot) | Listado de matches / tokens — may revisit for concierge |
+| 10 | `/admin/matches/[id]` | Deprioritized (pivot) | Detalle de match: link, estado, vencimiento, timeline |
+| 11 | `/admin/events` | Deprioritized (pivot) | Eventos crudos / auditoría (contact_click, etc.) |
 
 ### Legales / Confianza
 

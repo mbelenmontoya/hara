@@ -1,41 +1,31 @@
-// Tests for the Modal component
-// Covers: open/closed state, title, children, ESC key, overlay click, footer
-
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi } from 'vitest'
 import { Modal } from './Modal'
 
 describe('Modal', () => {
-  it('renders nothing when closed', () => {
-    render(<Modal open={false} onClose={vi.fn()} title="Test">Content</Modal>)
-    expect(screen.queryByText('Content')).not.toBeInTheDocument()
+  it('renders nothing when closed, shows title + children when open', () => {
+    const { rerender } = render(<Modal open={false} onClose={vi.fn()} title="Test">Hidden</Modal>)
+    expect(screen.queryByText('Hidden')).not.toBeInTheDocument()
+
+    rerender(<Modal open={true} onClose={vi.fn()} title="Confirmar">¿Seguro?</Modal>)
+    expect(screen.getByText('Confirmar')).toBeInTheDocument()
+    expect(screen.getByText('¿Seguro?')).toBeInTheDocument()
   })
 
-  it('renders title and children when open', () => {
-    render(<Modal open={true} onClose={vi.fn()} title="Confirmar acción">¿Estás seguro?</Modal>)
-    expect(screen.getByText('Confirmar acción')).toBeInTheDocument()
-    expect(screen.getByText('¿Estás seguro?')).toBeInTheDocument()
-  })
-
-  it('calls onClose when ESC key is pressed', async () => {
+  it('closes via ESC key and X button', async () => {
     const onClose = vi.fn()
     render(<Modal open={true} onClose={onClose} title="Test">Content</Modal>)
     await userEvent.keyboard('{Escape}')
-    expect(onClose).toHaveBeenCalledOnce()
-  })
-
-  it('calls onClose when clicking the X button', async () => {
-    const onClose = vi.fn()
-    render(<Modal open={true} onClose={onClose} title="Test">Content</Modal>)
+    expect(onClose).toHaveBeenCalledTimes(1)
     await userEvent.click(screen.getByLabelText('Cerrar'))
-    expect(onClose).toHaveBeenCalledOnce()
+    expect(onClose).toHaveBeenCalledTimes(2)
   })
 
-  it('renders optional footer content', () => {
+  it('renders optional footer', () => {
     render(
-      <Modal open={true} onClose={vi.fn()} title="Test" footer={<button>Confirmar</button>}>
-        Content
+      <Modal open={true} onClose={vi.fn()} title="T" footer={<button>Confirmar</button>}>
+        Body
       </Modal>
     )
     expect(screen.getByRole('button', { name: 'Confirmar' })).toBeInTheDocument()

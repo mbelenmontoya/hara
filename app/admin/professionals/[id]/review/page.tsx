@@ -19,7 +19,7 @@ import {
   type ProfileScore,
   type ScorableProfile,
 } from '@/lib/profile-score'
-import { SPECIALTY_MAP } from '@/lib/design-constants'
+import { SpecialtyMapper } from './components/SpecialtyMapper'
 
 // ============================================================================
 // TYPES
@@ -187,6 +187,7 @@ export default function ProfessionalReviewPage() {
 
   const [rejectModalOpen, setRejectModalOpen] = useState(false)
   const [rejectionReason, setRejectionReason] = useState('')
+  const [editedSpecialties, setEditedSpecialties] = useState<string[] | null>(null)
 
   const fetchProfessional = useCallback(async () => {
     try {
@@ -230,7 +231,10 @@ export default function ProfessionalReviewPage() {
       const res = await fetch(`/api/admin/professionals/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'approve' }),
+        body: JSON.stringify({
+          action: 'approve',
+          ...(editedSpecialties !== null && { specialties: editedSpecialties }),
+        }),
       })
       const body = await res.json()
       if (!res.ok) throw new Error(body.error || 'Error al aprobar')
@@ -289,7 +293,7 @@ export default function ProfessionalReviewPage() {
 
   const statusConfig = STATUS_CONFIG[professional.status] || STATUS_CONFIG.draft
   const isReviewable = professional.status === 'submitted'
-  const specialtyLabels = professional.specialties.map((s) => SPECIALTY_MAP[s] || s)
+
   const modalityLabels = professional.modality.map((m) => MODALITY_MAP[m] || m)
   const styleLabels = (professional.style || []).map((s) => STYLE_MAP[s] || s)
   const location = professional.online_only
@@ -392,11 +396,10 @@ export default function ProfessionalReviewPage() {
           <div className="space-y-5">
             <div>
               <p className="text-xs text-muted mb-2">Especialidades</p>
-              <div className="flex flex-wrap gap-2">
-                {specialtyLabels.map((label) => (
-                  <Chip key={label} label={label} variant="brand" />
-                ))}
-              </div>
+              <SpecialtyMapper
+                specialties={editedSpecialties ?? professional.specialties}
+                onChange={setEditedSpecialties}
+              />
             </div>
 
             <div>

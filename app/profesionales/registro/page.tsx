@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AsYouType, isValidPhoneNumber, parsePhoneNumberFromString, getCountryCallingCode, type CountryCode } from 'libphonenumber-js'
 import { PlacesAutocomplete } from '@/app/components/PlacesAutocomplete'
+import { SpecialtySelector } from '@/app/profesionales/registro/components/SpecialtySelector'
 
 // Form steps
 const STEPS = [
@@ -34,20 +35,6 @@ const MODALITIES = [
   { value: 'ambos', label: 'Ambos' },
 ]
 
-const SPECIALTIES = [
-  { value: 'anxiety', label: 'Ansiedad' },
-  { value: 'depression', label: 'Depresión' },
-  { value: 'stress', label: 'Estrés' },
-  { value: 'trauma', label: 'Trauma' },
-  { value: 'relationships', label: 'Relaciones' },
-  { value: 'self-esteem', label: 'Autoestima' },
-  { value: 'grief', label: 'Duelo' },
-  { value: 'addiction', label: 'Adicciones' },
-  { value: 'eating-disorders', label: 'Trastornos alimentarios' },
-  { value: 'couples', label: 'Terapia de pareja' },
-  { value: 'family', label: 'Terapia familiar' },
-  { value: 'children', label: 'Niños y adolescentes' },
-]
 
 const STYLES = [
   { value: 'cognitive-behavioral', label: 'Cognitivo-conductual' },
@@ -490,27 +477,10 @@ export default function ProfessionalRegistrationPage() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-3">
-                    Especialidades * (seleccioná al menos una)
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {SPECIALTIES.map(s => (
-                      <button
-                        key={s.value}
-                        type="button"
-                        onClick={() => toggleArrayField('specialties', s.value)}
-                        className={`px-3 py-1.5 rounded-full text-sm transition-all ${
-                          formData.specialties.includes(s.value)
-                            ? 'bg-brand text-white'
-                            : 'bg-surface border border-outline text-foreground hover:border-brand/50'
-                        }`}
-                      >
-                        {s.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <SpecialtySelector
+                  selected={formData.specialties}
+                  onChange={(specialties) => updateField('specialties', specialties)}
+                />
 
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-3">

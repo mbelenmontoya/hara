@@ -1,12 +1,24 @@
 // Admin API — Single Professional
 // GET: Fetch professional by UUID (all fields for review)
 // PATCH: Update status (approve → 'active', reject → 'rejected' + reason)
+//        Accepts optional `specialties` array for editing before/alongside approval.
+//        Specialty-only updates (no `action`) work regardless of profile status.
 // Security: Gated by middleware (requires admin session)
 
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
 export const runtime = 'nodejs'
+
+function validateSpecialties(specialties: unknown): string | null {
+  if (!Array.isArray(specialties)) return 'specialties debe ser un array'
+  if (specialties.length === 0) return 'specialties no puede estar vacío'
+  for (const s of specialties) {
+    if (typeof s !== 'string') return 'specialties debe contener solo strings'
+    if (s.trim().length < 1 || s.trim().length > 50) return 'Cada especialidad debe tener entre 1 y 50 caracteres'
+  }
+  return null
+}
 
 export async function GET(
   _request: NextRequest,
@@ -45,11 +57,45 @@ export async function PATCH(
   }
 
   const body = await request.json()
-  const { action, rejection_reason } = body as {
-    action: string
+  const { action, rejection_reason, specialties } = body as {
+    action?: string
     rejection_reason?: string
+    specialties?: unknown
   }
 
+  // Validate specialties if provided
+  if (specialties !== undefined) {
+    const specialtiesError = validateSpecialties(specialties)
+    if (specialtiesError) {
+      return NextResponse.json({ error: specialtiesError }, { status: 400 })
+    }
+  }
+
+  // Specialty-only update — no action, bypass status check
+  if (!action && specialties !== undefined) {
+    const { data: existing, error: fetchError } = await supabaseAdmin
+      .from('professionals')
+      .select('id')
+      .eq('id', id)
+      .single()
+
+    if (fetchError || !existing) {
+      return NextResponse.json({ error: 'Profesional no encontrado' }, { status: 404 })
+    }
+
+    const { error: updateError } = await supabaseAdmin
+      .from('professionals')
+      .update({ specialties: (specialties as string[]).map(s => s.trim()), updated_at: new Date().toISOString() })
+      .eq('id', id)
+
+    if (updateError) {
+      return NextResponse.json({ error: 'Error al actualizar especialidades' }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true })
+  }
+
+  // Action-based update (approve / reject) — requires submitted status
   if (action !== 'approve' && action !== 'reject') {
     return NextResponse.json(
       { error: 'Acción inválida. Usar "approve" o "reject".' },
@@ -57,7 +103,6 @@ export async function PATCH(
     )
   }
 
-  // Verify the professional exists and is in a reviewable state
   const { data: existing, error: fetchError } = await supabaseAdmin
     .from('professionals')
     .select('id, status')
@@ -65,10 +110,7 @@ export async function PATCH(
     .single()
 
   if (fetchError || !existing) {
-    return NextResponse.json(
-      { error: 'Profesional no encontrado' },
-      { status: 404 }
-    )
+    return NextResponse.json({ error: 'Profesional no encontrado' }, { status: 404 })
   }
 
   if (existing.status !== 'submitted') {
@@ -96,32 +138,29 @@ export async function PATCH(
       .eq('id', id)
 
     if (updateError) {
-      console.error('Reject error:', updateError)
-      return NextResponse.json(
-        { error: 'Error al rechazar el perfil' },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: 'Error al rechazar el perfil' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, status: 'rejected' })
   }
 
   // action === 'approve'
+  const updatePayload: Record<string, unknown> = {
+    status: 'active',
+    rejection_reason: null,
+    updated_at: new Date().toISOString(),
+  }
+  if (specialties !== undefined) {
+    updatePayload.specialties = (specialties as string[]).map(s => s.trim())
+  }
+
   const { error: updateError } = await supabaseAdmin
     .from('professionals')
-    .update({
-      status: 'active',
-      rejection_reason: null,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updatePayload)
     .eq('id', id)
 
   if (updateError) {
-    console.error('Approve error:', updateError)
-    return NextResponse.json(
-      { error: 'Error al aprobar el perfil' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Error al aprobar el perfil' }, { status: 500 })
   }
 
   return NextResponse.json({ success: true, status: 'active' })

@@ -10,7 +10,8 @@ import { GlassCard } from '@/app/components/ui/GlassCard'
 import { Badge } from '@/app/components/ui/Badge'
 import { SectionHeader } from '@/app/components/ui/SectionHeader'
 import { EmptyState } from '@/app/components/ui/EmptyState'
-import { SPECIALTY_MAP } from '@/lib/design-constants'
+import { Chip } from '@/app/components/ui/Chip'
+import { logError } from '@/lib/monitoring'
 
 interface Professional {
   id: string
@@ -42,7 +43,7 @@ export default function ProfessionalsPage() {
         const data = await res.json()
         setProfessionals(data.professionals || [])
       } catch (err) {
-        console.error('Failed to load professionals:', err)
+        logError(err instanceof Error ? err : new Error(String(err)), { source: 'ProfessionalsPage' })
       } finally {
         setLoading(false)
       }
@@ -109,20 +110,27 @@ export default function ProfessionalsPage() {
 
 function ProfessionalRow({ professional }: { professional: Professional }) {
   const badge = STATUS_BADGE[professional.status] || STATUS_BADGE.draft
-  const firstSpecialty = professional.specialties[0]
-  const specialtyLabel = firstSpecialty ? (SPECIALTY_MAP[firstSpecialty] || firstSpecialty) : null
   const location = [professional.city, professional.country].filter(Boolean).join(', ')
+  const visibleSpecialties = professional.specialties.slice(0, 3)
+  const overflow = professional.specialties.length - visibleSpecialties.length
 
   return (
     <Link href={`/admin/professionals/${professional.id}/review`} className="block">
       <GlassCard>
         <div className="flex items-center gap-4">
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-foreground truncate">{professional.name}</p>
-            <p className="text-xs text-muted mt-1">
-              {specialtyLabel && <span>{specialtyLabel} · </span>}
-              {location}
-            </p>
+            <p className="text-sm font-medium text-foreground truncate mb-1.5">{professional.name}</p>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {visibleSpecialties.map(s => (
+                <Chip key={s} specialty={s} className="text-[11px] px-2 py-1" />
+              ))}
+              {overflow > 0 && (
+                <span className="text-xs text-muted">+{overflow}</span>
+              )}
+              {location && (
+                <span className="text-xs text-muted">{visibleSpecialties.length > 0 ? '· ' : ''}{location}</span>
+              )}
+            </div>
           </div>
           <Badge variant={badge.variant}>{badge.label}</Badge>
           <svg className="w-4 h-4 text-muted flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

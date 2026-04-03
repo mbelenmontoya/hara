@@ -88,6 +88,15 @@ Deployed at: https://hara-weld.vercel.app
 
 ## Session Log
 
+### Session — 2026-04-03
+
+**Completed:**
+- WhatsApp phone input reworked — flag dropdown with country auto-detect from Google Places, user types local number only, E.164 formatted on submit
+- Reordered Step 0: Name → Email → Location → WhatsApp → Instagram (location before phone so country is known)
+- Added 40-country phone dropdown (LATAM + Europe + US) with flag emojis via Unicode regional indicators
+- Instagram field: now accepts username only, auto-strips URLs/@ prefixes/query params, validates Instagram username format (1-30 chars, letters/numbers/periods/underscores)
+- Pushed all uncommitted work from Apr 2 + today's changes (`40bd918`)
+
 ### Session — 2026-04-02
 
 **Completed:**

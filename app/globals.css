@@ -37,6 +37,32 @@
   --color-error: #D6455D;
   --color-error-bg: #FDECEF;
 
+  /* Specialty colors — curated specialty palette (12 hues, each distinct) */
+  --color-sp-teal: #1A7A65;        /* Ansiedad — distinct from --color-success (#2F8A73) */
+  --color-sp-teal-weak: #DFF4EE;
+  --color-sp-indigo: #4B5FC1;      /* Depresión */
+  --color-sp-indigo-weak: #ECEFFE;
+  --color-sp-amber: #C48A1A;       /* Estrés */
+  --color-sp-amber-weak: #FFF5E0;
+  --color-sp-rose: #C2506A;        /* Trauma */
+  --color-sp-rose-weak: #FDECF0;
+  --color-sp-violet: #6B50C8;      /* Relaciones — distinct from --color-info (#7B61D9) */
+  --color-sp-violet-weak: #EDE8FC;
+  --color-sp-cyan: #1B8FA6;        /* Autoestima */
+  --color-sp-cyan-weak: #E4F5F9;
+  --color-sp-slate: #5C6578;       /* Duelo */
+  --color-sp-slate-weak: #ECEEF2;
+  --color-sp-orange: #C46B2A;      /* Adicciones */
+  --color-sp-orange-weak: #FFF0E5;
+  --color-sp-fuchsia: #A855A0;     /* T. alimentarios */
+  --color-sp-fuchsia-weak: #F9EDFA;
+  --color-sp-pink: #D44B7A;        /* T. pareja */
+  --color-sp-pink-weak: #FDE8F0;
+  --color-sp-emerald: #2A8C5E;     /* T. familiar */
+  --color-sp-emerald-weak: #E6F6ED;
+  --color-sp-sky: #3B82C4;         /* Niños/adolescentes */
+  --color-sp-sky-weak: #E8F2FC;
+
   /* Spacing scale - 4px base unit for consistent rhythm */
   --spacing-1: 4px;
   --spacing-2: 8px;

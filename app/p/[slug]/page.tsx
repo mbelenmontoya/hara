@@ -6,7 +6,6 @@ import { notFound } from 'next/navigation'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { ContactButton } from '@/app/components/ContactButton'
 import { Chip } from '@/app/components/ui/Chip'
-import { SPECIALTY_MAP } from '@/lib/design-constants'
 
 interface Professional {
   slug: string
@@ -118,7 +117,7 @@ export default async function ProfessionalProfilePage({
   const backHref = fromPath && fromPath.startsWith('/r/') ? fromPath : '/'
   const backLabel = fromPath && fromPath.startsWith('/r/') ? 'Volver a recomendaciones' : 'Ir al inicio'
 
-  const specialtyLabels = professional.specialties.map(s => SPECIALTY_MAP[s] || s)
+
   const modalityLabels = professional.modality.map(m => MODALITY_MAP[m] || m)
   const styleLabels = (professional.style || []).map(s => STYLE_MAP[s] || s)
   const serviceTypeLabels = professional.service_type.map(s => SERVICE_TYPE_MAP[s] || s)
@@ -209,8 +208,8 @@ export default async function ProfessionalProfilePage({
           <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">Especialidades</h2>
 
           <div className="flex flex-wrap gap-2 mb-4">
-            {specialtyLabels.map(label => (
-              <Chip key={label} label={label} variant="brand" />
+            {professional.specialties.map(s => (
+              <Chip key={s} specialty={s} />
             ))}
           </div>
 

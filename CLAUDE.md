@@ -115,18 +115,6 @@ npm run qa:week4         # Full QA suite (prod mode)
 npm run qa:week4:dev     # Full QA suite (dev mode)
 ```
 
-## Don't Touch
-
-These are production-ready, tested, and locked. Do not modify without explicit approval:
-
-- `app/api/events/route.ts` — Billing-critical event ingestion
-- `app/api/admin/` — Admin endpoints
-- `lib/attribution-tokens.ts` — JWT security
-- `lib/rate-limit.ts` — Rate limiting config
-- `lib/supabase-admin.ts` — Service role client
-- `middleware.ts` — Auth gating (fail-closed)
-- Database schema — Locked in `FINAL_SPEC.md`
-
 ## Key Documentation
 
 | File | Purpose |

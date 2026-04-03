@@ -19,7 +19,8 @@
 CREATE TABLE professionals (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   slug TEXT UNIQUE NOT NULL,
-  status TEXT NOT NULL CHECK (status IN ('draft','submitted','approved','active','paused')),
+  status TEXT NOT NULL CHECK (status IN ('draft','submitted','approved','active','paused','rejected')),
+  rejection_reason TEXT,
   full_name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
   whatsapp TEXT NOT NULL,

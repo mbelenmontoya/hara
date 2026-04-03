@@ -1,26 +1,9 @@
 ---
-description: Supabase service-role patterns, rate limiting, and locked backend file warnings
+description: Supabase service-role patterns, rate limiting, and API route conventions
 globs: app/api/**/*.ts
 ---
 
 # API Route Rules
-
-## Locked Files — Do Not Modify
-
-These files are production-tested and billing-critical. Do not edit without explicit user approval:
-
-| File | Why it's locked |
-|------|----------------|
-| `app/api/events/route.ts` | Billing-critical event ingestion — triggers PQL creation |
-| `app/api/admin/matches/route.ts` | Atomic match creation with attribution tokens |
-| `app/api/admin/pqls/*/route.ts` | PQL adjustment endpoints |
-| `lib/attribution-tokens.ts` | JWT security — tampering breaks billing |
-| `lib/rate-limit.ts` | Rate limiting config — changes affect abuse protection |
-| `lib/supabase-admin.ts` | Service role client — single point of DB access |
-| `lib/validation.ts` | IP/fingerprint/session validators |
-| `middleware.ts` | Auth gating — fail-closed security model |
-
-If you need to change a locked file, **stop and ask the user first**. Explain what you want to change and why.
 
 ## Supabase Patterns
 

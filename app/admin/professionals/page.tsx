@@ -1,18 +1,33 @@
-// Hará Match - Admin Professionals List Page
-// Purpose: View all professionals
-// Security: Admin-only via middleware
+// Admin — Professionals List
+// Shows all professionals grouped by status, links to review
 
 'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { AdminLayout } from '@/app/components/AdminLayout'
+import { GlassCard } from '@/app/components/ui/GlassCard'
+import { Badge } from '@/app/components/ui/Badge'
+import { SectionHeader } from '@/app/components/ui/SectionHeader'
+import { EmptyState } from '@/app/components/ui/EmptyState'
+import { SPECIALTY_MAP } from '@/lib/design-constants'
 
 interface Professional {
   id: string
   slug: string
-  name: string // Will be mapped from full_name
-  specialty: string
+  name: string
+  specialties: string[]
   status: string
+  country: string
+  city: string | null
+}
+
+const STATUS_BADGE: Record<string, { label: string; variant: 'new' | 'converted' | 'closed' | 'default' }> = {
+  submitted: { label: 'Pendiente', variant: 'new' },
+  active: { label: 'Activo', variant: 'converted' },
+  rejected: { label: 'Rechazado', variant: 'closed' },
+  draft: { label: 'Borrador', variant: 'default' },
+  paused: { label: 'Pausado', variant: 'default' },
 }
 
 export default function ProfessionalsPage() {
@@ -20,76 +35,101 @@ export default function ProfessionalsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    async function fetchProfessionals() {
+      try {
+        const res = await fetch('/api/debug/professionals')
+        if (!res.ok) throw new Error('Failed to fetch professionals')
+        const data = await res.json()
+        setProfessionals(data.professionals || [])
+      } catch (err) {
+        console.error('Failed to load professionals:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
     fetchProfessionals()
   }, [])
 
-  async function fetchProfessionals() {
-    try {
-      const res = await fetch('/api/debug/professionals')
-      if (!res.ok) throw new Error('Failed to fetch professionals')
-      const data = await res.json()
-      setProfessionals(data.professionals || [])
-    } catch (err) {
-      console.error('Failed to load professionals:', err)
-    } finally {
-      setLoading(false)
-    }
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center py-20 text-muted">Cargando...</div>
+      </AdminLayout>
+    )
   }
 
-  if (loading) return <div className="p-8">Loading...</div>
+  const submitted = professionals.filter((p) => p.status === 'submitted')
+  const others = professionals.filter((p) => p.status !== 'submitted')
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4" data-testid="professionals-page">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Professionals</h1>
+    <AdminLayout>
+      <div className="space-y-8">
 
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Slug
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Specialty
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {professionals.map((pro) => (
-                <tr key={pro.id} data-testid={`professional-${pro.slug}`}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {pro.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <Link href={`/p/${pro.slug}`} className="text-blue-600 hover:text-blue-900">
-                      {pro.slug}
-                    </Link>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {pro.specialty}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      pro.status === 'active'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {pro.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {professionals.length === 0 ? (
+          <GlassCard>
+            <EmptyState
+              title="Sin profesionales"
+              description="Todavía no hay profesionales registrados."
+            />
+          </GlassCard>
+        ) : (
+          <>
+            {submitted.length > 0 && (
+              <section>
+                <SectionHeader className="mb-3 px-1">
+                  {`Pendientes de revisión (${submitted.length})`}
+                </SectionHeader>
+                <div className="space-y-3">
+                  {submitted.map((pro) => (
+                    <ProfessionalRow key={pro.id} professional={pro} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {others.length > 0 && (
+              <section>
+                <SectionHeader className="mb-3 px-1">
+                  {`Revisados (${others.length})`}
+                </SectionHeader>
+                <div className="space-y-3">
+                  {others.map((pro) => (
+                    <ProfessionalRow key={pro.id} professional={pro} />
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
+        )}
+
       </div>
-    </div>
+    </AdminLayout>
+  )
+}
+
+function ProfessionalRow({ professional }: { professional: Professional }) {
+  const badge = STATUS_BADGE[professional.status] || STATUS_BADGE.draft
+  const firstSpecialty = professional.specialties[0]
+  const specialtyLabel = firstSpecialty ? (SPECIALTY_MAP[firstSpecialty] || firstSpecialty) : null
+  const location = [professional.city, professional.country].filter(Boolean).join(', ')
+
+  return (
+    <Link href={`/admin/professionals/${professional.id}/review`} className="block">
+      <GlassCard>
+        <div className="flex items-center gap-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-foreground truncate">{professional.name}</p>
+            <p className="text-xs text-muted mt-1">
+              {specialtyLabel && <span>{specialtyLabel} · </span>}
+              {location}
+            </p>
+          </div>
+          <Badge variant={badge.variant}>{badge.label}</Badge>
+          <svg className="w-4 h-4 text-muted flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </GlassCard>
+    </Link>
   )
 }

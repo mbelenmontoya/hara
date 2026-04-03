@@ -101,12 +101,19 @@ export async function notifyNewLead(lead: {
 
 /** Notify admin when a new professional registers */
 export async function notifyNewProfessional(professional: {
+  id: string
   full_name: string
   email: string
   whatsapp: string
   country: string
   specialties: string[]
 }): Promise<boolean> {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : 'http://localhost:3000'
+  const reviewPath = `/admin/professionals/${professional.id}/review`
+  const reviewUrl = `${baseUrl}/admin/login?redirect=${encodeURIComponent(reviewPath)}`
+
   return sendEmail({
     to: ADMIN_EMAIL,
     subject: `Nuevo profesional registrado — ${professional.full_name}`,
@@ -135,8 +142,13 @@ export async function notifyNewProfessional(professional: {
             <td style="padding: 8px 0; color: #1F1A24; font-size: 14px;">${professional.specialties.join(', ')}</td>
           </tr>
         </table>
-        <p style="margin-top: 24px; font-size: 13px; color: #6B6374;">
-          Revisá el perfil en el panel de admin y aprobalo si corresponde.
+        <div style="margin-top: 24px;">
+          <a href="${reviewUrl}" style="display: inline-block; padding: 12px 24px; background-color: #4B2BBF; color: #ffffff; text-decoration: none; border-radius: 9999px; font-size: 14px; font-weight: 600;">
+            Revisar perfil
+          </a>
+        </div>
+        <p style="margin-top: 16px; font-size: 13px; color: #6B6374;">
+          O copiá este enlace: ${reviewUrl}
         </p>
       </div>
     `,

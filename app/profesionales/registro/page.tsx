@@ -5,6 +5,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { AsYouType, isValidPhoneNumber, parsePhoneNumberFromString, getCountryCallingCode, type CountryCode } from 'libphonenumber-js'
 import { PlacesAutocomplete } from '@/app/components/PlacesAutocomplete'
 
 // Form steps
@@ -57,6 +58,11 @@ const STYLES = [
   { value: 'integrative', label: 'Integrativo' },
 ]
 
+const SERVICE_TYPES = [
+  { value: 'individual', label: 'Sesiones individuales' },
+  { value: 'grupal', label: 'Sesiones grupales' },
+]
+
 const CURRENCIES = [
   { value: 'ARS', label: 'ARS (Peso argentino)' },
   { value: 'USD', label: 'USD (Dólar)' },
@@ -64,38 +70,68 @@ const CURRENCIES = [
   { value: 'MXN', label: 'MXN (Peso mexicano)' },
 ]
 
+// Countries for the phone flag dropdown (LATAM + Europe + US)
+const PHONE_COUNTRIES: CountryCode[] = [
+  // LATAM
+  'AR', 'MX', 'CO', 'CL', 'PE', 'UY', 'BR', 'EC',
+  'VE', 'BO', 'PY', 'CR', 'PA', 'DO', 'GT', 'HN', 'SV', 'NI', 'CU',
+  // Europe
+  'ES', 'PT', 'FR', 'IT', 'DE', 'GB', 'NL', 'BE', 'CH', 'AT',
+  'IE', 'SE', 'NO', 'DK', 'FI', 'PL', 'CZ', 'RO', 'GR', 'HR',
+  // US
+  'US',
+]
+
+function countryCodeToFlag(code: string): string {
+  return code
+    .toUpperCase()
+    .split('')
+    .map(char => String.fromCodePoint(127397 + char.charCodeAt(0)))
+    .join('')
+}
+
 interface FormData {
   full_name: string
   email: string
   whatsapp: string
+  instagram: string
   country: string
   city: string
   modality: string[]
   online_only: boolean
   specialties: string[]
   style: string[]
+  service_type: string[]
   price_range_min: string
   price_range_max: string
   currency: string
   accepting_new_clients: boolean
+  short_description: string
   bio: string
+  experience_description: string
+  profile_image: File | null
 }
 
 const initialFormData: FormData = {
   full_name: '',
   email: '',
   whatsapp: '',
+  instagram: '',
   country: '',
   city: '',
   modality: [],
   online_only: false,
   specialties: [],
   style: [],
+  service_type: [],
   price_range_min: '',
   price_range_max: '',
   currency: 'USD',
   accepting_new_clients: true,
+  short_description: '',
   bio: '',
+  experience_description: '',
+  profile_image: null,
 }
 
 // Available backgrounds (illustrations only)
@@ -116,6 +152,10 @@ export default function ProfessionalRegistrationPage() {
   const [formData, setFormData] = useState<FormData>(initialFormData)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [emailError, setEmailError] = useState<string | null>(null)
+  const [phoneError, setPhoneError] = useState<string | null>(null)
+  const [phoneCountry, setPhoneCountry] = useState<CountryCode>('AR')
+  const [instagramError, setInstagramError] = useState<string | null>(null)
   const [backgroundPath, setBackgroundPath] = useState<string | null>('/assets/illustrations/rizki-kurniawan-SSp6eC-LKBU-unsplash.svg')
   const [showBgPicker, setShowBgPicker] = useState(false)
 
@@ -123,7 +163,65 @@ export default function ProfessionalRegistrationPage() {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  const toggleArrayField = (field: 'modality' | 'specialties' | 'style', value: string) => {
+  function handleInstagramChange(value: string) {
+    // Strip common prefixes to extract just the username
+    let username = value.trim()
+    username = username.replace(/^https?:\/\/(www\.)?instagram\.com\//, '')
+    username = username.replace(/^@/, '')
+    username = username.replace(/\/+$/, '') // trailing slashes
+    username = username.split('?')[0] // query params
+
+    updateField('instagram', username)
+
+    if (!username) {
+      setInstagramError(null)
+      return
+    }
+    // Instagram usernames: 1-30 chars, letters, numbers, periods, underscores
+    const valid = /^[a-zA-Z0-9._]{1,30}$/.test(username)
+    setInstagramError(valid ? null : 'No parece un usuario de Instagram válido')
+  }
+
+  function handleEmailChange(value: string) {
+    updateField('email', value)
+    if (!value) {
+      setEmailError(null)
+      return
+    }
+    const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+    setEmailError(valid ? null : 'El email no parece válido')
+  }
+
+  function handleWhatsappChange(value: string, country?: CountryCode) {
+    const activeCountry = country || phoneCountry
+    const formatter = new AsYouType(activeCountry)
+    const formatted = formatter.input(value)
+    updateField('whatsapp', formatted)
+
+    if (!value) {
+      setPhoneError(null)
+      return
+    }
+    // Only validate once enough digits are typed
+    const digits = value.replace(/\D/g, '')
+    if (digits.length < 6) {
+      setPhoneError(null)
+      return
+    }
+    // Prepend calling code for validation since user types local number
+    const callingCode = getCountryCallingCode(activeCountry)
+    const fullNumber = `+${callingCode}${digits}`
+    const valid = isValidPhoneNumber(fullNumber)
+    setPhoneError(valid ? null : 'El número no parece válido')
+  }
+
+  function handlePhoneBlur() {
+    if (!formData.whatsapp) return
+    // Re-validate on blur with current country
+    handleWhatsappChange(formData.whatsapp)
+  }
+
+  const toggleArrayField = (field: 'modality' | 'specialties' | 'style' | 'service_type', value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: prev[field].includes(value)
@@ -135,7 +233,7 @@ export default function ProfessionalRegistrationPage() {
   const canProceed = () => {
     switch (currentStep) {
       case 0: // Personal
-        return formData.full_name && formData.email && formData.whatsapp && formData.country
+        return formData.full_name && formData.email && !emailError && formData.whatsapp && !phoneError && formData.country
       case 1: // Professional
         return formData.modality.length > 0 && formData.specialties.length > 0
       case 2: // Pricing
@@ -164,14 +262,36 @@ export default function ProfessionalRegistrationPage() {
     setError(null)
 
     try {
+      const payload = new FormData()
+      payload.append('full_name', formData.full_name)
+      payload.append('email', formData.email)
+      const digits = formData.whatsapp.replace(/\D/g, '')
+      const callingCode = getCountryCallingCode(phoneCountry)
+      const fullNumber = `+${callingCode}${digits}`
+      const parsedPhone = parsePhoneNumberFromString(fullNumber)
+      payload.append('whatsapp', parsedPhone ? parsedPhone.format('E.164') : fullNumber)
+      payload.append('instagram', formData.instagram)
+      payload.append('country', formData.country)
+      payload.append('city', formData.city)
+      payload.append('online_only', String(formData.online_only))
+      payload.append('modality', JSON.stringify(formData.modality))
+      payload.append('specialties', JSON.stringify(formData.specialties))
+      payload.append('style', JSON.stringify(formData.style))
+      payload.append('service_type', JSON.stringify(formData.service_type))
+      payload.append('price_range_min', formData.price_range_min)
+      payload.append('price_range_max', formData.price_range_max)
+      payload.append('currency', formData.currency)
+      payload.append('accepting_new_clients', String(formData.accepting_new_clients))
+      payload.append('short_description', formData.short_description)
+      payload.append('bio', formData.bio)
+      payload.append('experience_description', formData.experience_description)
+      if (formData.profile_image) {
+        payload.append('profile_image', formData.profile_image)
+      }
+
       const response = await fetch('/api/professionals/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          price_range_min: formData.price_range_min ? parseInt(formData.price_range_min) : null,
-          price_range_max: formData.price_range_max ? parseInt(formData.price_range_max) : null,
-        }),
+        body: payload,
       })
 
       if (!response.ok) {
@@ -250,26 +370,13 @@ export default function ProfessionalRegistrationPage() {
                   <input
                     type="email"
                     value={formData.email}
-                    onChange={(e) => updateField('email', e.target.value)}
+                    onChange={(e) => handleEmailChange(e.target.value)}
                     placeholder="tu@email.com"
                     className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all"
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    WhatsApp *
-                  </label>
-                  <input
-                    type="tel"
-                    value={formData.whatsapp}
-                    onChange={(e) => updateField('whatsapp', e.target.value)}
-                    placeholder="Ej: +5491123456789"
-                    className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all"
-                  />
-                  <p className="text-xs text-muted mt-1.5">
-                    Con + y código de país, sin espacios ni guiones
-                  </p>
+                  {emailError && (
+                    <p className="text-xs text-danger mt-1.5">{emailError}</p>
+                  )}
                 </div>
 
                 <div>
@@ -282,6 +389,10 @@ export default function ProfessionalRegistrationPage() {
                       if (placeData) {
                         updateField('city', placeData.city)
                         updateField('country', placeData.countryCode)
+                        // Auto-set phone country from location
+                        const code = placeData.countryCode as CountryCode
+                        setPhoneCountry(code)
+                        if (formData.whatsapp) handleWhatsappChange(formData.whatsapp, code)
                       } else {
                         updateField('city', value)
                       }
@@ -292,6 +403,64 @@ export default function ProfessionalRegistrationPage() {
                   <p className="text-xs text-muted mt-1.5">
                     Empezá a escribir y seleccioná tu ciudad
                   </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    WhatsApp *
+                  </label>
+                  <div className="flex gap-2">
+                    <select
+                      value={phoneCountry}
+                      onChange={(e) => {
+                        const code = e.target.value as CountryCode
+                        setPhoneCountry(code)
+                        if (formData.whatsapp) handleWhatsappChange(formData.whatsapp, code)
+                      }}
+                      className="px-3 py-3 bg-surface border border-outline rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all text-sm min-w-[120px]"
+                    >
+                      {PHONE_COUNTRIES.map(code => (
+                        <option key={code} value={code}>
+                          {countryCodeToFlag(code)} +{getCountryCallingCode(code)}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="tel"
+                      value={formData.whatsapp}
+                      onChange={(e) => handleWhatsappChange(e.target.value)}
+                      onBlur={handlePhoneBlur}
+                      placeholder="1123456789"
+                      className="flex-1 px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all"
+                    />
+                  </div>
+                  {phoneError ? (
+                    <p className="text-xs text-danger mt-1.5">{phoneError}</p>
+                  ) : (
+                    <p className="text-xs text-muted mt-1.5">
+                      Tu número local, sin código de país
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Instagram
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.instagram}
+                    onChange={(e) => handleInstagramChange(e.target.value)}
+                    placeholder="tu_usuario"
+                    className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all"
+                  />
+                  {instagramError ? (
+                    <p className="text-xs text-danger mt-1.5">{instagramError}</p>
+                  ) : (
+                    <p className="text-xs text-muted mt-1.5">
+                      Opcional — solo tu nombre de usuario, sin @
+                    </p>
+                  )}
                 </div>
               </>
             )}
@@ -355,6 +524,28 @@ export default function ProfessionalRegistrationPage() {
                         onClick={() => toggleArrayField('style', s.value)}
                         className={`px-3 py-1.5 rounded-full text-sm transition-all ${
                           formData.style.includes(s.value)
+                            ? 'bg-brand text-white'
+                            : 'bg-surface border border-outline text-foreground hover:border-brand/50'
+                        }`}
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-3">
+                    Tipo de servicio
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {SERVICE_TYPES.map(s => (
+                      <button
+                        key={s.value}
+                        type="button"
+                        onClick={() => toggleArrayField('service_type', s.value)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                          formData.service_type.includes(s.value)
                             ? 'bg-brand text-white'
                             : 'bg-surface border border-outline text-foreground hover:border-brand/50'
                         }`}
@@ -440,14 +631,74 @@ export default function ProfessionalRegistrationPage() {
             {currentStep === 3 && (
               <>
                 <div>
+                  <label className="block text-sm font-medium text-foreground mb-3">
+                    Foto de perfil
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      {formData.profile_image ? (
+                        <img
+                          src={URL.createObjectURL(formData.profile_image)}
+                          alt="Vista previa"
+                          className="w-20 h-20 rounded-full object-cover shadow-soft border-2 border-white/60"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-brand-weak to-info-weak flex items-center justify-center shadow-soft border-2 border-white/60">
+                          <span className="text-2xl font-semibold text-brand">
+                            {formData.full_name.charAt(0) || '?'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <label className="inline-flex items-center px-4 py-2 bg-surface border border-outline rounded-full text-sm font-medium text-foreground hover:border-brand/50 transition-all cursor-pointer">
+                        {formData.profile_image ? 'Cambiar foto' : 'Elegir foto'}
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null
+                            if (file && file.size > 5 * 1024 * 1024) {
+                              setError('La imagen no puede pesar más de 5 MB')
+                              return
+                            }
+                            updateField('profile_image', file)
+                          }}
+                        />
+                      </label>
+                      <p className="text-xs text-muted mt-1.5">
+                        JPG, PNG o WebP. Máximo 5 MB.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Frase corta sobre vos
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.short_description}
+                    onChange={(e) => updateField('short_description', e.target.value)}
+                    placeholder="Ej: Psicóloga especializada en ansiedad y estrés laboral"
+                    className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all"
+                  />
+                  <p className="text-xs text-muted mt-1.5">
+                    Una línea que aparece debajo de tu nombre en el perfil
+                  </p>
+                </div>
+
+                <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
                     Sobre vos *
                   </label>
                   <textarea
                     value={formData.bio}
                     onChange={(e) => updateField('bio', e.target.value)}
-                    placeholder="Contá un poco sobre tu experiencia, enfoque y cómo trabajás con tus pacientes..."
-                    rows={6}
+                    placeholder="Contá un poco sobre tu enfoque, cómo trabajás y qué pueden esperar tus pacientes..."
+                    rows={5}
                     className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all resize-none"
                   />
                   <p className={`text-xs mt-1.5 ${formData.bio.length >= 50 ? 'text-success' : 'text-muted'}`}>
@@ -455,9 +706,25 @@ export default function ProfessionalRegistrationPage() {
                   </p>
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Sobre tu experiencia
+                  </label>
+                  <textarea
+                    value={formData.experience_description}
+                    onChange={(e) => updateField('experience_description', e.target.value)}
+                    placeholder="Formación, años de experiencia, instituciones donde trabajaste, certificaciones..."
+                    rows={4}
+                    className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all resize-none"
+                  />
+                  <p className="text-xs text-muted mt-1.5">
+                    Opcional — ayuda a generar confianza en tu perfil
+                  </p>
+                </div>
+
                 <div className="bg-info-weak border border-info/20 rounded-xl p-4">
                   <p className="text-sm text-info">
-                    Tu perfil será revisado por nuestro equipo antes de ser publicado. 
+                    Tu perfil será revisado por nuestro equipo antes de ser publicado.
                     Te contactaremos por email cuando esté activo.
                   </p>
                 </div>

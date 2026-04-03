@@ -1,51 +1,69 @@
-// Hará UI v2 - Admin Layout
-// Functional admin frame with consistent spacing
+// Hará — Admin Layout
+// Shell for all admin pages: illustration background, glass nav, content area
+
+'use client'
 
 import { ReactNode } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { PageBackground } from '@/app/components/ui/PageBackground'
+import { GlassCard } from '@/app/components/ui/GlassCard'
+
+const ADMIN_BG = '/assets/illustrations/jo-yee-leong-8ekcOvJnLlo-unsplash.svg'
+
+const NAV_ITEMS = [
+  { href: '/admin/leads', label: 'Leads' },
+  { href: '/admin/professionals', label: 'Profesionales' },
+  { href: '/admin/pqls', label: 'PQLs' },
+]
 
 interface AdminLayoutProps {
   children: ReactNode
 }
 
 export function AdminLayout({ children }: AdminLayoutProps) {
+  const pathname = usePathname()
+
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      {/* Header */}
-      <header className="bg-surface border-b border-outline">
-        <div className="container-admin py-4">
-          <h1 className="text-xl font-semibold text-foreground mb-4">Administración</h1>
+    <div className="min-h-screen bg-background">
+      <PageBackground image={ADMIN_BG} />
 
-          {/* Navigation */}
-          <nav className="flex gap-1 overflow-x-auto -mx-1">
-            <Link
-              href="/admin/leads"
-              className="px-3 py-2 text-sm text-muted hover:text-foreground hover:bg-surface-2 rounded-lg transition-colors duration-150 whitespace-nowrap"
-            >
-              Leads
-            </Link>
-            <Link
-              href="/admin/professionals"
-              className="px-3 py-2 text-sm text-muted hover:text-foreground hover:bg-surface-2 rounded-lg transition-colors duration-150 whitespace-nowrap"
-            >
-              Profesionales
-            </Link>
-            <Link
-              href="/admin/pqls"
-              className="px-3 py-2 text-sm text-muted hover:text-foreground hover:bg-surface-2 rounded-lg transition-colors duration-150 whitespace-nowrap"
-            >
-              PQLs
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <div className="relative z-10 min-h-screen flex flex-col">
+        {/* Header */}
+        <header className="px-4 pt-8 pb-2">
+          <div className="max-w-3xl mx-auto">
+            <GlassCard>
+              <h1 className="text-lg font-semibold text-foreground mb-4">Administración</h1>
 
-      {/* Main Content */}
-      <main className="flex-1 section-admin">
-        <div className="container-admin">
-          {children}
-        </div>
-      </main>
+              <nav className="flex gap-2">
+                {NAV_ITEMS.map((item) => {
+                  const isActive = pathname.startsWith(item.href)
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`px-4 py-2 text-sm rounded-full transition-all ${
+                        isActive
+                          ? 'bg-brand text-white font-medium shadow-soft'
+                          : 'text-muted hover:text-foreground hover:bg-surface-2'
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  )
+                })}
+              </nav>
+            </GlassCard>
+          </div>
+        </header>
+
+        {/* Content */}
+        <main className="flex-1 px-4 py-6">
+          <div className="max-w-3xl mx-auto">
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   )
 }

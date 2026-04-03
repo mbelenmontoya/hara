@@ -11,7 +11,7 @@ export async function GET() {
   try {
     const { data, error } = await supabaseAdmin
       .from('professionals')
-      .select('id, slug, full_name, specialties, status')
+      .select('id, slug, full_name, specialties, status, country, city')
       .order('full_name', { ascending: true })
 
     if (error) {
@@ -20,12 +20,14 @@ export async function GET() {
     }
 
     // Transform to match UI expectations (rename full_name to name, pick first specialty)
-    const professionals = (data || []).map((p: any) => ({
+    const professionals = (data || []).map((p: Record<string, unknown>) => ({
       id: p.id,
       slug: p.slug,
       name: p.full_name,
-      specialty: Array.isArray(p.specialties) ? p.specialties[0] : null,
+      specialties: Array.isArray(p.specialties) ? p.specialties : [],
       status: p.status,
+      country: p.country,
+      city: p.city,
     }))
 
     return NextResponse.json({ professionals })

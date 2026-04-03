@@ -36,8 +36,14 @@ interface Props {
 }
 
 export function SpecialtySelector({ selected, onChange }: Props) {
-  const [customInputs, setCustomInputs] = useState<string[]>([])
-  const [customErrors, setCustomErrors] = useState<(string | null)[]>([])
+  // Initialize custom inputs from any non-curated entries already in selected
+  // (handles multi-step form navigation: going back to Step 1 preserves custom entries)
+  const [customInputs, setCustomInputs] = useState<string[]>(
+    () => selected.filter(s => !CURATED_SPECIALTY_KEYS.includes(s))
+  )
+  const [customErrors, setCustomErrors] = useState<(string | null)[]>(
+    () => selected.filter(s => !CURATED_SPECIALTY_KEYS.includes(s)).map(() => null)
+  )
 
   // Curated keys in the selected array
   const selectedCurated = selected.filter(s => CURATED_SPECIALTY_KEYS.includes(s))

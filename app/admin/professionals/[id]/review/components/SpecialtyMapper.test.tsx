@@ -39,6 +39,13 @@ describe('SpecialtyMapper — custom specialties', () => {
     expect(screen.getByRole('option', { name: 'Aprobar como está' })).toBeInTheDocument()
   })
 
+  it('calls onChange with unchanged array when admin selects "Aprobar como está"', async () => {
+    const onChange = vi.fn()
+    render(<SpecialtyMapper specialties={['Mindfulness']} onChange={onChange} />)
+    await userEvent.selectOptions(screen.getByRole('combobox'), 'Aprobar como está')
+    expect(onChange).toHaveBeenCalledWith(['Mindfulness'])
+  })
+
   it('calls onChange with curated key when admin maps custom to curated', async () => {
     const onChange = vi.fn()
     render(<SpecialtyMapper specialties={['Mindfulness']} onChange={onChange} />)

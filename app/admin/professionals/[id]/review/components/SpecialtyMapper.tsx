@@ -21,7 +21,8 @@ export function SpecialtyMapper({ specialties, onChange }: Props) {
   function handleMap(index: number, value: string) {
     const next = [...specialties]
     if (value === '__keep__') {
-      // Keep as-is — no change
+      // Signal to parent that admin reviewed and chose to keep as-is
+      onChange(next)
       return
     }
     next[index] = value

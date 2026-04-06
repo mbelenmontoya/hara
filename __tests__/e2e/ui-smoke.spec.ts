@@ -2,31 +2,26 @@ import { test, expect } from '@playwright/test'
 
 test.describe('UI Smoke Test - Critical Paths', () => {
   test('root route loads with styled content', async ({ page }) => {
-    // Navigate to root
-    await page.goto('http://localhost:3000/')
+    await page.goto('/')
 
-    // Verify route exists (not 404)
-    expect(page.url()).toBe('http://localhost:3000/')
+    // Verify route loaded (not a redirect loop or error page)
+    expect(page.url()).toMatch(/localhost/)
 
-    // Verify critical content renders
-    const heading = page.locator('h1')
+    // Verify at least one heading renders (content-agnostic — survives redesigns)
+    const heading = page.locator('h1, h2').first()
     await expect(heading).toBeVisible()
-    await expect(heading).toHaveText('Hará Match')
 
-    // Verify Tailwind CSS is applied (check computed style)
+    // Verify Tailwind CSS is applied (checks computed style — tests build infrastructure)
     const container = page.locator('div').first()
     const backgroundColor = await container.evaluate((el) => {
       return window.getComputedStyle(el).backgroundColor
     })
-
-    // bg-gray-50 should produce a non-default background color
-    // Not transparent (rgba(0, 0, 0, 0)) and not pure white (rgb(255, 255, 255))
     expect(backgroundColor).not.toBe('rgba(0, 0, 0, 0)')
-    expect(backgroundColor).not.toBe('rgb(255, 255, 255)')
+  })
 
-    // Verify Admin Portal link exists
-    const adminLink = page.locator('a[href="/admin/leads"]')
-    await expect(adminLink).toBeVisible()
-    await expect(adminLink).toHaveText(/Admin Portal/)
+  test('registration page is publicly accessible', async ({ page }) => {
+    const response = await page.goto('/profesionales/registro')
+    expect(response?.status()).toBe(200)
+    await expect(page.getByRole('heading').first()).toBeVisible()
   })
 })

@@ -23,7 +23,9 @@
     "qa:rls-bypass": "tsx scripts/qa-rls-bypass.test.ts",
     "qa:service-smoke": "tsx scripts/qa-service-role-smoke.ts",
     "qa:week1": "tsx scripts/qa-seed.ts > qa.env && tsx scripts/qa-rls-bypass.test.ts && tsx scripts/qa-service-role-smoke.ts",
-    "qa:week2": "tsx scripts/qa-seed.ts > qa.env && npm run test:integration"
+    "qa:week2": "tsx scripts/qa-seed.ts > qa.env && npm run test:integration",
+    "test:preflight": "vitest run --project unit",
+    "prepare": "sh scripts/setup-hooks.sh"
   },
   "dependencies": {
     "@clerk/nextjs": "^5.0.0",

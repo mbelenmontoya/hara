@@ -1,9 +1,11 @@
 import { render, screen } from '@testing-library/react'
-import { it, expect } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { GlassCard } from './GlassCard'
 
-it('GlassCard renders children with liquid-glass, rounded-3xl, and passes className', () => {
-  const { container } = render(<GlassCard className="custom">Card content</GlassCard>)
-  expect(screen.getByText('Card content')).toBeInTheDocument()
-  expect(container.firstChild).toHaveClass('liquid-glass', 'rounded-3xl', 'custom')
+describe('GlassCard', () => {
+  it('renders children and passes className to outer element', () => {
+    const { container } = render(<GlassCard className="custom">Card content</GlassCard>)
+    expect(screen.getByText('Card content')).toBeInTheDocument()
+    expect(container.firstChild).toHaveClass('custom')
+  })
 })

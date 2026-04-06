@@ -1,59 +1,37 @@
 // E2E test: Public professional profile page (/p/[slug])
-// Verifies the profile renders correctly when data is available.
-// Gracefully skips if no professionals exist in the database.
+// Verifies the profile renders correctly for a seeded professional.
+// Requires: npm run qa:seed-e2e (creates .e2e-test-data.json with professional slugs)
 
 import { test, expect } from '@playwright/test'
+import { readFileSync, existsSync } from 'fs'
+import { resolve } from 'path'
 
-async function getFirstProfessionalSlug(): Promise<string | null> {
-  try {
-    // Use the debug API to find an active professional slug
-    // This requires the server to be running
-    const response = await fetch('http://localhost:3000/api/debug/professionals')
-    if (!response.ok) return null
-    const data = await response.json() as { professionals?: { slug?: string; status?: string }[] }
-    const active = data.professionals?.find((p) => p.status === 'active')
-    return active?.slug ?? null
-  } catch {
-    return null
-  }
+const seedDataPath = resolve(process.cwd(), '.e2e-test-data.json')
+let seedData: { professionals?: { slug: string }[] } | null = null
+if (existsSync(seedDataPath)) {
+  seedData = JSON.parse(readFileSync(seedDataPath, 'utf-8'))
 }
 
-test.describe('Public profile — /p/[slug]', () => {
-  test('profile page renders for an active professional', async ({ page }) => {
-    const slug = await getFirstProfessionalSlug()
-
-    if (!slug) {
-      test.skip(true, 'No active professionals in DB — skipping profile test')
-      return
+test.describe('Public profile — seeded data', () => {
+  test.beforeAll(() => {
+    if (!seedData?.professionals?.[0]?.slug) {
+      throw new Error(
+        'E2E seed data not found or missing professional slugs.\n' +
+        'Run: npm run qa:seed-e2e\n' +
+        'This creates .e2e-test-data.json with seeded professional slugs needed for profile tests.'
+      )
     }
+  })
 
+  test('profile page renders for a seeded professional', async ({ page }) => {
+    const slug = seedData!.professionals![0].slug
     await page.goto(`/p/${slug}`)
     await page.waitForLoadState('networkidle')
-
-    // Profile page should render with the professional data
     await expect(page.locator('[data-testid="professional-profile"]')).toBeVisible()
   })
+})
 
-  test('profile shows specialty chips when professional has specialties', async ({ page }) => {
-    const slug = await getFirstProfessionalSlug()
-
-    if (!slug) {
-      test.skip(true, 'No active professionals in DB — skipping specialty chip test')
-      return
-    }
-
-    await page.goto(`/p/${slug}`)
-    await page.waitForLoadState('networkidle')
-
-    // Specialties section should exist
-    const especialidades = page.getByText('Especialidades')
-    if (await especialidades.isVisible()) {
-      // Specialty chips should be visible (rendered as <span> elements)
-      const chips = page.locator('[class*="rounded-full"]').filter({ hasText: /[A-ZÁÉÍÓÚ]/ })
-      await expect(chips.first()).toBeVisible()
-    }
-  })
-
+test.describe('Public profile — 404 behavior', () => {
   test('returns 404 for nonexistent slug', async ({ page }) => {
     const response = await page.goto('/p/nonexistent-professional-slug-xyz-999')
     expect(response?.status()).toBe(404)

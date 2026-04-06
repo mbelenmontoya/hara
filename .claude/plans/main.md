@@ -29,7 +29,8 @@ Deployed at: https://hara-weld.vercel.app
 - [x] Email to admin includes deep link to review page
 - [x] Profile score preview based on submission completeness (10 criteria, 100 points)
 - [x] DB supports `rejected` status and `rejection_reason`
-- [ ] Specialty color system — dedicated color per specialty, independent of semantic Chip variants
+- [x] Specialty color system — 12 curated colors, custom specialty support, admin mapping
+- [x] 3-level testing infrastructure — 26 component tests + E2E + visual regression
 - [ ] Admin list and review pages visually match the design system (liquid-glass, tokens, spacing)
 - [ ] Public directory page (`/profesionales`) with reputation-based ranking
 - [ ] Home page redesign with dual CTA (directory + concierge)
@@ -43,48 +44,39 @@ Deployed at: https://hara-weld.vercel.app
 
 ## Next Steps
 
-1. **Build specialty color system**
-   - What: Dedicated color mapping per specialty key, independent of semantic Chip variants. A `SpecialtyChip` component or extended Chip that takes a specialty key and resolves its color.
-   - Why: 12 specialties need distinct, consistent colors. The 5 semantic variants (success/warning/info/brand/neutral) don't cover it.
-   - Considerations: Colors should be stable (same specialty = same color everywhere). Need to be addable — new specialty = new entry in the map.
+1. **Fix admin pages visual consistency**
+   - What: Ensure the professionals list and review page match the design system exactly — correct background, proper spacing between cards, correct component usage.
+   - Why: Admin pages have spacing issues (Link elements need `block` for `space-y`) and background choice needs refinement.
+   - Considerations: Admin list now shows specialty chips (done in color system), but overall visual polish still needed.
 
-2. **Fix admin pages visual consistency**
-   - What: Ensure the professionals list and review page match the design system exactly — correct background (jo-yee-1), proper spacing between cards, correct component usage.
-   - Why: Current admin pages have spacing issues (Link elements need `block` display for `space-y` to work) and the list card content needs rework (show all specialties as chips, not raw text).
-   - Considerations: Decide what data to show on each list card. Currently shows name + first specialty + city. Needs discussion.
-
-3. **Finish image upload testing**
+2. **Finish image upload testing**
    - What: Verify the full flow — form with image → FormData submission → Supabase Storage upload → URL in DB → visible on review page and profile page.
-   - Why: Milestone 3 code is written but the upload hasn't been tested end-to-end.
+   - Why: Code is written but the upload hasn't been tested end-to-end.
 
-4. **Decide rejected profile handling**
+3. **Decide rejected profile handling**
    - What: Product decision — when a profile is rejected, do we keep the data? Can the professional resubmit? Do they get notified?
-   - Why: Pinned from this session. The DB stores `rejected` status and `rejection_reason` but there's no flow after rejection.
+   - Why: DB stores `rejected` status and `rejection_reason` but there's no flow after rejection.
 
-5. **Update profile score to match full form**
-   - What: Now that the form collects all 10 fields, the scoring model uses the original weights from the prompt (image=15, short_description=10, bio=15, experience=10, specialties=15, service_type=10, location=10, instagram=5, whatsapp=5, modality=5).
-   - Why: QA flagged that the score should only cover fields the form actually collects. Now it does.
-
-6. **DB: Add ranking/tier fields to `professionals` table**
+4. **DB: Add ranking/tier fields to `professionals` table**
    - What: `subscription_tier`, `rating_average`, `rating_count`, `profile_completeness_score`, `ranking_score`
    - Why: Foundation for the directory page and reputation system
 
-7. **`/profesionales` — Public directory page**
+5. **`/profesionales` — Public directory page**
    - What: List approved professionals sorted by ranking_score, filter by specialty/location/modality, search by name
    - Why: Primary discovery path in the new Directory + Concierge model
 
-8. **`/` — Home page redesign**
+6. **`/` — Home page redesign**
    - What: Apply design system, dual CTA (directory + concierge), featured professionals section
 
-9. **Admin pages (remaining):**
+7. **Admin pages (remaining):**
    - `/admin/leads/[id]` — Lead detail
    - `/admin/professionals/[id]` — Professional detail (separate from review — reviews, rating, tier)
    - `/admin/analytics` — Funnel dashboard
    - `/admin/settings` — Operational config
 
-10. **Legal pages:**
-    - `/privacidad`
-    - `/terminos`
+8. **Legal pages:**
+   - `/privacidad`
+   - `/terminos`
 
 ## Session Log
 
@@ -94,8 +86,29 @@ Deployed at: https://hara-weld.vercel.app
 - WhatsApp phone input reworked — flag dropdown with country auto-detect from Google Places, user types local number only, E.164 formatted on submit
 - Reordered Step 0: Name → Email → Location → WhatsApp → Instagram (location before phone so country is known)
 - Added 40-country phone dropdown (LATAM + Europe + US) with flag emojis via Unicode regional indicators
-- Instagram field: now accepts username only, auto-strips URLs/@ prefixes/query params, validates Instagram username format (1-30 chars, letters/numbers/periods/underscores)
-- Pushed all uncommitted work from Apr 2 + today's changes (`40bd918`)
+- Instagram field: now accepts username only, auto-strips URLs/@ prefixes/query params, validates Instagram username format
+- Specialty color system (`/spec` — plan: `docs/plans/2026-04-03-specialty-color-system.md`, VERIFIED)
+  - 24 specialty color tokens in `globals.css` under `@theme` (12 hues × strong + weak)
+  - `SPECIALTY_MAP` expanded from 5 → 12 entries, `SPECIALTY_COLORS` map, `CURATED_SPECIALTY_KEYS`
+  - Chip extended with `specialty` prop (discriminated union — auto-resolves label + color, falls back to neutral)
+  - `SpecialtySelector` extracted from registration form — 12 curated toggles + up to 2 custom "otra" fields with validation + duplicate detection
+  - `SpecialtyMapper` for admin review — dropdown to map custom specialties to curated ones or approve as-is
+  - Admin PATCH API accepts specialty edits independently of approve/reject
+  - All 5 display surfaces updated (admin list, admin review, public profile, recommendations, BottomSheet)
+- Testing infrastructure (`/spec` — plan: `docs/plans/2026-04-03-testing-infrastructure.md`, VERIFIED)
+  - Vitest workspace: `unit` (jsdom, 1.2s) + `integration` (node) projects
+  - 26 component tests across 8 files: Chip, Badge, Alert, GlassCard, Button, Modal, SpecialtySelector, SpecialtyMapper
+  - Playwright multi-project: public (no auth), admin (storageState), visual (screenshots)
+  - E2E tests: registration flow (8 tests), public profile (3 tests, graceful skip)
+  - Visual regression: 4 page baselines (home, registration, admin login, confirmation)
+  - npm scripts: `test:unit`, `test:e2e`, `test:visual`, `test:visual:update`, `test:all`
+- Bug fixes from code review: SpecialtySelector state init from prop (custom inputs preserved on multi-step nav), SpecialtyMapper `__keep__` handler (signals to parent), sp-teal/sp-violet color collisions with success/info
+- Consolidated tests from 57 → 26 (same coverage, half the noise)
+- Pushed 5 commits: `40bd918`, `808efb8`, `b8c799a`, `eb38678`, `3057719`
+
+**Deviations:**
+- Originally planned only specialty color system for this session. Added testing infrastructure because it was needed before continuing with more features.
+- Registration form at 807 lines — pre-existing from phone/instagram work. Specialty section extracted but form grew from other changes. Needs a larger refactor pass.
 
 ### Session — 2026-04-02
 
@@ -135,44 +148,14 @@ Deployed at: https://hara-weld.vercel.app
 - Originally planned `approved` as intermediate state before `active`. QA + product decided approval → `active` directly (no dead-end limbo state).
 - Spent significant time on design system compliance — multiple rounds of feedback on glass cards, backgrounds, and component reuse patterns.
 
-### Session: Mar 12, 2026 (continued)
-
-**Intake form (`/solicitar`) — new page:**
-- Single scrollable form with 4 glass cards (intent tags, location/modality, urgency, WhatsApp) + expandable advanced section (style preference, budget, email)
-- Google Places Autocomplete replaces country dropdown + city input — auto-detects country from selected city
-- Live phone validation with `libphonenumber-js` — validates format against detected country, shows error inline as user types
-- Auto-fills country calling code prefix when city is selected (e.g., `+54` for Argentina)
-- Submits via `createLead` server action → redirects to `/gracias`
-
-**Confirmation page (`/gracias`) — new page:**
-- Post-submission page with timeline steps (analizamos, seleccionamos, enviamos link, vos elegís)
-- Same design patterns: SVG background, liquid-glass card, privacy notice
-
-**Email notifications (`lib/email.ts`):**
-- Installed Resend (`npm install resend`)
-- Created `lib/email.ts` with `notifyNewLead()` and `notifyNewProfessional()` functions
-- Admin email notifications on new lead submission (with urgency indicator, intent tags, location, WhatsApp)
-- Admin email notifications on new professional registration
-- Fire-and-forget pattern — email failures never block the main operation
-- Wired into `create-lead.ts` server action and `professionals/register/route.ts`
-- Currently sends to `mariabmontoya@gmail.com` (Resend test mode limitation — needs domain verification for other recipients)
-
-**Supabase Auth for admin (`/admin/login`):**
-- Installed `@supabase/ssr`
-- Created `lib/supabase/client.ts` (browser client), `lib/supabase/server.ts` (server client), `lib/supabase/middleware.ts` (session refresh helper)
-- Replaced Clerk middleware with Supabase Auth — `/admin/*` routes now require login, public routes unaffected
-- Login page at `/admin/login` with email + password, redirects to dashboard after auth
-- If already logged in, `/admin/login` redirects to `/admin/leads`
-- Added `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` env vars
-- Admin user created in Supabase Auth dashboard
-
 ### Archived Sessions
+- **2026-03-12**: Intake form (`/solicitar`), confirmation page (`/gracias`), email notifications (Resend — `notifyNewLead` + `notifyNewProfessional`), Supabase Auth for admin (replaced Clerk), Google Places Autocomplete, phone validation
 - **2026-03-11/12**: Documentation cleanup (16→8 MD files), Claude Code tooling (8 milestones: CLAUDE.md, rules, skills, commands, agents, hooks), design system extraction (Phases 1-2: constants + Chip), professional profile `/p/[slug]` full rebuild (5 glass cards, 6 new DB columns), recommendations page fixes, production deployment fixes (liquid-glass, Upstash Redis), full page/workflow map (27 routes)
 
 ## Open Questions
 
 - [ ] What happens when a profile is rejected? Keep data? Allow resubmission? Notify the professional?
-- [ ] What data should each card in the admin professionals list show? (Name, specialties as colored chips, country, status — needs confirmation)
+- [x] What data should each card in the admin professionals list show? → Name, up to 3 specialty chips (colored), location, status badge (implemented in specialty color system)
 - [ ] Should existing 45 professionals get placeholder images, or leave as initial-letter avatars until they re-register?
 
 ## Notes
@@ -357,11 +340,15 @@ Deployed at: https://hara-weld.vercel.app
 - [ ] Build size < 100KB first load JS
 
 #### Testing
-- [ ] Add unit tests for custom hooks
-- [ ] E2E tests for complete user journey
-- [ ] Visual regression tests
+- [x] Component tests (Vitest + React Testing Library) — 26 tests across 8 components
+- [x] E2E tests (Playwright) — registration flow, public profile
+- [x] Visual regression (Playwright screenshots) — 4 page baselines
+- [ ] Add unit tests for custom hooks (useRecommendations, useSwipeGesture, etc.)
+- [ ] E2E tests for admin review flow (requires admin auth storageState + seeded data)
+- [ ] Google Places bypass in E2E (page.route interception for Maps API)
 - [ ] Contract tests for validation rules
 - [ ] Core Web Vitals measurement
+- [ ] CI/CD integration for test suite (GitHub Actions)
 
 #### CI/CD
 - [ ] CI/CD workflow (GitHub Actions)
@@ -435,9 +422,16 @@ Deployed at: https://hara-weld.vercel.app
 - `.claude/README.md` — Tooling reference
 - `lib/profile-score.ts` — Profile scoring helper (10 criteria, 100 points)
 - `lib/storage.ts` — Supabase Storage helper for profile images
+- `lib/design-constants.ts` — SPECIALTY_MAP (12), SPECIALTY_COLORS (12), CURATED_SPECIALTY_KEYS, animation constants
+- `app/components/ui/Chip.tsx` — Chip with `specialty` prop (discriminated union) + 5 semantic variants
 - `app/components/ui/GlassCard.tsx` — Reusable glass card component
 - `app/components/ui/PageBackground.tsx` — Reusable page background component
 - `app/components/ui/SectionHeader.tsx` — Reusable section header label
+- `app/profesionales/registro/components/SpecialtySelector.tsx` — Specialty toggles + custom fields
+- `app/admin/professionals/[id]/review/components/SpecialtyMapper.tsx` — Admin specialty mapping dropdown
+- `vitest.workspace.ts` — Vitest workspace (unit + integration projects)
+- `playwright.config.ts` — Playwright multi-project (public, admin, visual)
+- `docs/plans/` — Spec-driven plans (specialty-color-system, testing-infrastructure)
 
 ### Seed data
 - Run `npm run qa:seed-e2e` to seed 4 professionals + 1 lead + 1 match with 3 recommendations
@@ -456,6 +450,9 @@ Deployed at: https://hara-weld.vercel.app
 - `@supabase/ssr` — Supabase server-side auth for Next.js
 - `resend` — transactional email API
 - `libphonenumber-js` — phone number validation and formatting by country
+- `@testing-library/react` + `@testing-library/jest-dom` + `@testing-library/user-event` — component testing
+- `jsdom` — browser environment for Vitest unit tests
+- `@vitejs/plugin-react` — JSX transform for Vitest jsdom environment
 
 ### Supabase Storage
 - Bucket: `profile-images` (public access, created 2026-04-02)

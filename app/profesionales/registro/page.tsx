@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { AsYouType, isValidPhoneNumber, parsePhoneNumberFromString, getCountryCallingCode, type CountryCode } from 'libphonenumber-js'
 import { PlacesAutocomplete } from '@/app/components/PlacesAutocomplete'
 import { SpecialtySelector } from '@/app/profesionales/registro/components/SpecialtySelector'
+import { PageBackground } from '@/app/components/ui/PageBackground'
 
 // Form steps
 const STEPS = [
@@ -297,22 +298,12 @@ export default function ProfessionalRegistrationPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Background */}
-      <div
-        className="fixed inset-0 z-0"
-        style={{
-          backgroundColor: '#FBF7F2',
-          backgroundImage: backgroundPath ? `url(${backgroundPath})` : 'none',
-          backgroundSize: 'cover',
-          backgroundPosition: 'bottom',
-          backgroundRepeat: 'no-repeat',
-        }}
-      />
+      <PageBackground image={backgroundPath} />
 
       {/* Content */}
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-start pt-8 pb-12 px-4">
+      <div className="relative z-10 max-w-md mx-auto px-4 pt-8 pb-12">
         {/* Progress */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex justify-center gap-2 mb-6">
           {STEPS.map((step, idx) => (
             <div
               key={step.id}
@@ -324,10 +315,10 @@ export default function ProfessionalRegistrationPage() {
         </div>
 
         {/* Step title */}
-        <h1 className="text-2xl font-semibold text-foreground mb-2">
+        <h1 className="text-2xl font-semibold text-foreground mb-2 text-center">
           {STEPS[currentStep].title}
         </h1>
-        <p className="text-sm text-muted mb-6">
+        <p className="text-sm text-muted mb-6 text-center">
           Paso {currentStep + 1} de {STEPS.length}
         </p>
 

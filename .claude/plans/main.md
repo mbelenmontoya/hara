@@ -31,9 +31,9 @@ Deployed at: https://hara-weld.vercel.app
 - [x] DB supports `rejected` status and `rejection_reason`
 - [x] Specialty color system — 12 curated colors, custom specialty support, admin mapping
 - [x] 3-level testing infrastructure — 26 component tests + E2E + visual regression
-- [ ] Admin list and review pages visually match the design system (liquid-glass, tokens, spacing)
+- [ ] All pages visually match the design system (liquid-glass, tokens, pill buttons, identical page shells) — first pass done, needs visual testing
 - [ ] Public directory page (`/profesionales`) with reputation-based ranking
-- [ ] Home page redesign with dual CTA (directory + concierge)
+- [x] Home page redesign with dual CTA (directory + concierge)
 
 ## Constraints
 
@@ -44,10 +44,10 @@ Deployed at: https://hara-weld.vercel.app
 
 ## Next Steps
 
-1. **Fix admin pages visual consistency**
-   - What: Ensure the professionals list and review page match the design system exactly — correct background, proper spacing between cards, correct component usage.
-   - Why: Admin pages have spacing issues (Link elements need `block` for `space-y`) and background choice needs refinement.
-   - Considerations: Admin list now shows specialty chips (done in color system), but overall visual polish still needed.
+1. **Visual test design system sweep**
+   - What: Open every page in the browser and verify visual consistency — background, glass cards, pill buttons, title hierarchy, spacing. The code changes are done but not visually verified.
+   - Why: First pass was token-only. Second pass aligned components (Button → rounded-full, Home → glass cards, Leads → GlassCard, identical DOM shells). Needs eyes on it.
+   - Considerations: Check `/`, `/solicitar`, `/gracias`, `/profesionales/registro`, `/profesionales/registro/confirmacion`, `/p/[slug]`, `/admin/leads`, `/admin/pqls`, `/admin/leads/[id]/match`, `/admin/professionals`, `/admin/professionals/[id]/review`
 
 2. **Finish image upload testing**
    - What: Verify the full flow — form with image → FormData submission → Supabase Storage upload → URL in DB → visible on review page and profile page.
@@ -65,20 +65,50 @@ Deployed at: https://hara-weld.vercel.app
    - What: List approved professionals sorted by ranking_score, filter by specialty/location/modality, search by name
    - Why: Primary discovery path in the new Directory + Concierge model
 
-6. **`/` — Home page redesign**
-   - What: Apply design system, dual CTA (directory + concierge), featured professionals section
-
-7. **Admin pages (remaining):**
+6. **Admin pages (remaining):**
    - `/admin/leads/[id]` — Lead detail
    - `/admin/professionals/[id]` — Professional detail (separate from review — reviews, rating, tier)
    - `/admin/analytics` — Funnel dashboard
    - `/admin/settings` — Operational config
 
-8. **Legal pages:**
+7. **Legal pages:**
    - `/privacidad`
    - `/terminos`
 
 ## Session Log
+
+### Session — 2026-04-07
+
+**Completed:**
+- Design system sweep — two passes (`/spec` — plan: `docs/plans/2026-04-06-design-system-sweep.md`)
+  - **Pass 1 (token replacement):** Extracted shared label maps (MODALITY_MAP, STYLE_MAP, STATUS_CONFIG, SERVICE_TYPE_MAP) to `lib/design-constants.ts`. Extracted ScoreRing + ScoreBreakdown from review page → `ScoreDisplay.tsx` (522 → 423 lines). Added profile image avatar to admin review header. PQL ledger and match creation pages fully rewritten (AdminLayout, GlassCard, Modal, Button, Alert, Spanish copy, logError). All `#FBF7F2` replaced with `PageBackground` (7 files). All `border-white/30` → `border-outline/30`. E2E test `admin-match-flow.spec.ts` updated (dialog → React Alert assertions, English → Spanish text).
+  - **Pass 2 (real visual patterns):** Button component — all sizes `rounded-lg`/`rounded-xl` → `rounded-full` (pill shape matches actual finished pages). Home page full rework — removed PublicLayout, added PageBackground + glass card "Cómo funciona" + pill CTAs + privacy footer. Admin leads page — `Card` → `GlassCard`, "Leads" → "Solicitudes". Cleaned up redundant `rounded-full` overrides on review and match pages.
+- DOM structure alignment — all standalone public pages now share identical wrapper: `relative z-10 max-w-md mx-auto px-4 pt-8 pb-12`
+- Design system pattern catalog built — audited every finished page and cataloged: page shell, title hierarchy, glass card, section headers, button shapes (pill CTAs, chip toggles, option toggles), form inputs, privacy footer, back navigation, avatar, timeline steps
+
+**Deviations:**
+- First `/spec` attempt treated design system as "token replacement" only — swapped CSS class names without addressing actual visual patterns (button shapes, card types, page structure). User pushed back: "you clearly did not understand what a design system is." Second pass audited finished pages and applied the real patterns.
+- Original plan had "Home page redesign" as a future next step (step 6). Moved it up because the home page was the most visually broken page — it used `PublicLayout` (flat header/footer) while every other page uses standalone glass-card layout.
+
+**Blockers:**
+- All changes are code-complete but NOT visually verified — user will test next session
+- Admin pages behind auth can't be E2E tested without `E2E_ADMIN_EMAIL`/`E2E_ADMIN_PASSWORD` env vars
+
+### Session — 2026-04-06
+
+**Completed:**
+- Test suite hardening (`/spec` — plan: `docs/plans/2026-04-06-test-suite-hardening.md`, VERIFIED)
+  - Rewrote Badge, Alert, GlassCard tests to assert behavior/rendering instead of CSS classes
+  - Removed Clerk reference from admin-auth-gating E2E, now tests Supabase Auth redirect
+  - Made ui-smoke content-agnostic (no specific heading text or link href)
+  - Replaced silent `test.skip` with `beforeAll` throws on missing seed data
+  - Replaced `waitForTimeout` with condition-based polling (`expect.poll`)
+  - Fixed dialog listener race condition in admin-match-flow E2E
+  - Used seed data slugs for public-profile instead of auth-gated API
+  - Added pre-push hook (`scripts/hooks/pre-push`) that runs unit tests
+  - Added `scripts/setup-hooks.sh`, auto-installs via `npm prepare` script
+  - Added `test:preflight` npm script
+- Pushed 1 commit: `d6e1c6f`
 
 ### Session — 2026-04-03
 
@@ -209,7 +239,7 @@ Deployed at: https://hara-weld.vercel.app
 
 | # | Route | Status | Notes |
 |---|-------|--------|-------|
-| 1 | `/` | Exists — redesign | Home page, needs design system + dual CTA |
+| 1 | `/` | **Done** | Home page — glass card, pill CTAs, PageBackground, dual CTA |
 | 2 | `/r/[tracking_code]` | Exists | Concierge recommendations (kept for concierge flow) |
 | 3 | `/solicitar` | **Done** | Concierge intake form |
 | 4 | `/gracias` | **Done** | Confirmation post-solicitud |
@@ -228,15 +258,15 @@ Deployed at: https://hara-weld.vercel.app
 
 | # | Route | Status | Notes |
 |---|-------|--------|-------|
-| 1 | `/admin/leads` | Exists — modify | Bandeja de solicitudes |
+| 1 | `/admin/leads` | **Done** | Bandeja de solicitudes — GlassCard, Spanish copy |
 | 2 | `/admin/leads/[id]` | **New — Phase 3** | Detalle de solicitud |
-| 3 | `/admin/leads/[id]/match` | Exists | Crear match (concierge flow) |
+| 3 | `/admin/leads/[id]/match` | **Done** | Crear match — GlassCard, Spanish copy, AdminLayout |
 | 4 | `/admin/professionals` | **Done** | Listado profesionales grouped by status |
 | 5 | `/admin/professionals/[id]/review` | **Done** | Admin review page with score + approve/reject |
 | 6 | `/admin/professionals/[id]` | **New — Phase 3** | Professional detail (reviews, rating, tier) |
 | 7 | `/admin/analytics` | **New — Phase 3** | Dashboard: funnel + directory metrics |
 | 8 | `/admin/settings` | **New — Phase 3** | Configuración operativa |
-| 9 | `/admin/pqls` | Exists | Ledger PQL (kept for concierge billing) |
+| 9 | `/admin/pqls` | **Done** | Ledger PQL — GlassCard, Modal, Spanish copy, AdminLayout |
 | 10 | `/admin/matches` | Deprioritized (pivot) | Listado de matches / tokens — may revisit for concierge |
 | 11 | `/admin/matches/[id]` | Deprioritized (pivot) | Detalle de match: link, estado, vencimiento, timeline |
 | 12 | `/admin/events` | Deprioritized (pivot) | Eventos crudos / auditoría (contact_click, etc.) |
@@ -259,7 +289,7 @@ Deployed at: https://hara-weld.vercel.app
 ### Pending Tasks (Backlog)
 
 #### Known Bugs
-- [ ] Hardcoded `#FBF7F2` in 3 pages instead of using `var(--color-background)` or `bg-background`
+- [x] Hardcoded `#FBF7F2` in 3 pages instead of using `var(--color-background)` or `bg-background` — **fixed in design system sweep (2026-04-07)**
 - [ ] BottomSheet has no backdrop animation (no dimming overlay behind sheet)
 - [ ] Backdrop-filter blur delay on card swipe (Chrome bug — documented in KNOWN_ISSUES.md)
 
@@ -271,7 +301,7 @@ Deployed at: https://hara-weld.vercel.app
 - [ ] Phase 5: PrivacyNotice component
 - [x] Phase 6: SectionHeader component — **done this session**
 - [ ] Phase 7: FormField component
-- [ ] Phase 8: Sweep + document
+- [ ] Phase 8: Sweep + document — **partially done: all pages migrated to PageBackground, GlassCard, pill buttons, shared maps. Needs visual QA.**
 
 #### UI / UX — High Priority
 - [ ] WhatsApp button redesign (add icon, pulse animation)
@@ -422,7 +452,8 @@ Deployed at: https://hara-weld.vercel.app
 - `.claude/README.md` — Tooling reference
 - `lib/profile-score.ts` — Profile scoring helper (10 criteria, 100 points)
 - `lib/storage.ts` — Supabase Storage helper for profile images
-- `lib/design-constants.ts` — SPECIALTY_MAP (12), SPECIALTY_COLORS (12), CURATED_SPECIALTY_KEYS, animation constants
+- `lib/design-constants.ts` — SPECIALTY_MAP (12), SPECIALTY_COLORS (12), CURATED_SPECIALTY_KEYS, animation constants, MODALITY_MAP, STYLE_MAP, STATUS_CONFIG, SERVICE_TYPE_MAP
+- `app/admin/professionals/[id]/review/components/ScoreDisplay.tsx` — ScoreRing + ScoreBreakdown (extracted from review page)
 - `app/components/ui/Chip.tsx` — Chip with `specialty` prop (discriminated union) + 5 semantic variants
 - `app/components/ui/GlassCard.tsx` — Reusable glass card component
 - `app/components/ui/PageBackground.tsx` — Reusable page background component

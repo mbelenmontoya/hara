@@ -19,7 +19,10 @@ import {
   type ProfileScore,
   type ScorableProfile,
 } from '@/lib/profile-score'
+import { MODALITY_MAP, STYLE_MAP, STATUS_CONFIG } from '@/lib/design-constants'
+import { logError } from '@/lib/monitoring'
 import { SpecialtyMapper } from './components/SpecialtyMapper'
+import { ScoreRing, ScoreBreakdown } from './components/ScoreDisplay'
 
 // ============================================================================
 // TYPES
@@ -50,122 +53,6 @@ interface Professional {
   profile_image_url: string | null
   created_at: string
   rejection_reason: string | null
-}
-
-// ============================================================================
-// CONSTANTS
-// ============================================================================
-
-const MODALITY_MAP: Record<string, string> = {
-  online: 'Online',
-  presencial: 'Presencial',
-  ambos: 'Online y presencial',
-  'in-person': 'Presencial',
-  both: 'Online y presencial',
-}
-
-const STYLE_MAP: Record<string, string> = {
-  'cognitive-behavioral': 'Cognitivo-conductual',
-  psychoanalytic: 'Psicoanalítico',
-  humanistic: 'Humanista',
-  systemic: 'Sistémico',
-  gestalt: 'Gestalt',
-  integrative: 'Integrativo',
-  cbt: 'Cognitivo-conductual',
-  psychodynamic: 'Psicodinámica',
-}
-
-const STATUS_CONFIG: Record<string, { label: string; variant: 'new' | 'converted' | 'closed' | 'default' }> = {
-  submitted: { label: 'Pendiente de revisión', variant: 'new' },
-  active: { label: 'Activo', variant: 'converted' },
-  rejected: { label: 'Rechazado', variant: 'closed' },
-  draft: { label: 'Borrador', variant: 'default' },
-  paused: { label: 'Pausado', variant: 'default' },
-}
-
-const SCORE_THRESHOLDS = {
-  strong: 80,
-  acceptable: 50,
-} as const
-
-// ============================================================================
-// SCORE DISPLAY COMPONENTS
-// ============================================================================
-
-function ScoreRing({ score }: { score: number }) {
-  const circumference = 2 * Math.PI * 40
-  const filled = (score / 100) * circumference
-  const color =
-    score >= SCORE_THRESHOLDS.strong
-      ? 'text-success'
-      : score >= SCORE_THRESHOLDS.acceptable
-        ? 'text-warning'
-        : 'text-danger'
-
-  return (
-    <div className="relative w-28 h-28 mx-auto">
-      <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-        <circle
-          cx="50" cy="50" r="40"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="8"
-          className="text-surface-2"
-        />
-        <circle
-          cx="50" cy="50" r="40"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="8"
-          strokeDasharray={`${filled} ${circumference}`}
-          strokeLinecap="round"
-          className={color}
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className={`text-2xl font-bold ${color}`}>{score}</span>
-        <span className="text-xs text-muted">/ 100</span>
-      </div>
-    </div>
-  )
-}
-
-function ScoreBreakdown({ breakdown }: { breakdown: ProfileScore['breakdown'] }) {
-  return (
-    <div className="space-y-3">
-      {breakdown.map((criterion) => (
-        <div key={criterion.key} className="flex items-center gap-3">
-          <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-            criterion.met ? 'bg-success-weak text-success' : 'bg-danger-weak text-danger'
-          }`}>
-            {criterion.met ? (
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            ) : (
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-foreground">{criterion.label}</span>
-              <span className={`text-xs font-medium ${criterion.met ? 'text-success' : 'text-muted'}`}>
-                {criterion.earned}/{criterion.weight}
-              </span>
-            </div>
-            <div className="mt-1.5 h-1.5 bg-surface-2 rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all ${criterion.met ? 'bg-success' : 'bg-danger/30'}`}
-                style={{ width: `${(criterion.earned / criterion.weight) * 100}%` }}
-              />
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
 }
 
 // ============================================================================
@@ -214,6 +101,7 @@ export default function ProfessionalReviewPage() {
       }
       setScore(calculateProfileScore(scorable))
     } catch (err) {
+      logError(err instanceof Error ? err : new Error(String(err)), { source: 'ProfessionalReviewPage.fetchProfessional' })
       setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
       setLoading(false)
@@ -241,6 +129,7 @@ export default function ProfessionalReviewPage() {
       setActionResult({ type: 'success', message: `Perfil aprobado. Ya es visible en /p/${professional?.slug}` })
       setProfessional((prev) => prev ? { ...prev, status: 'active' } : prev)
     } catch (err) {
+      logError(err instanceof Error ? err : new Error(String(err)), { source: 'ProfessionalReviewPage.handleApprove' })
       setActionResult({ type: 'error', message: err instanceof Error ? err.message : 'Error desconocido' })
     } finally {
       setActionLoading(false)
@@ -264,6 +153,7 @@ export default function ProfessionalReviewPage() {
       setActionResult({ type: 'success', message: 'Perfil rechazado.' })
       setProfessional((prev) => prev ? { ...prev, status: 'rejected', rejection_reason: rejectionReason } : prev)
     } catch (err) {
+      logError(err instanceof Error ? err : new Error(String(err)), { source: 'ProfessionalReviewPage.handleReject' })
       setActionResult({ type: 'error', message: err instanceof Error ? err.message : 'Error desconocido' })
     } finally {
       setActionLoading(false)
@@ -322,11 +212,26 @@ export default function ProfessionalReviewPage() {
           </button>
 
           <div className="flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-semibold text-foreground">{professional.full_name}</h2>
-              <p className="text-xs text-muted mt-1.5">
-                Registrado el {registeredDate} · <span className="font-mono">{professional.slug}</span>
-              </p>
+            <div className="flex items-center gap-3">
+              {professional.profile_image_url ? (
+                <img
+                  src={professional.profile_image_url}
+                  alt={professional.full_name}
+                  className="w-14 h-14 rounded-full object-cover shadow-soft border-2 border-white/60 flex-shrink-0"
+                />
+              ) : (
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-brand-weak to-info-weak flex items-center justify-center shadow-soft border-2 border-white/60 flex-shrink-0">
+                  <span className="text-lg font-semibold text-brand">
+                    {professional.full_name.charAt(0)}
+                  </span>
+                </div>
+              )}
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">{professional.full_name}</h2>
+                <p className="text-xs text-muted mt-1.5">
+                  Registrado el {registeredDate} · <span className="font-mono">{professional.slug}</span>
+                </p>
+              </div>
             </div>
             <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
           </div>
@@ -451,7 +356,7 @@ export default function ProfessionalReviewPage() {
               <Button
                 variant="primary"
                 size="lg"
-                className="flex-1 rounded-full"
+                className="flex-1"
                 loading={actionLoading}
                 onClick={handleApprove}
               >
@@ -460,7 +365,7 @@ export default function ProfessionalReviewPage() {
               <Button
                 variant="secondary"
                 size="lg"
-                className="flex-1 rounded-full border-danger/30 text-danger hover:bg-danger-weak"
+                className="flex-1 border-danger/30 text-danger hover:bg-danger-weak"
                 loading={actionLoading}
                 onClick={() => setRejectModalOpen(true)}
               >
@@ -507,7 +412,7 @@ export default function ProfessionalReviewPage() {
               rows={4}
               className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all text-sm resize-none"
             />
-            {score && score.total < SCORE_THRESHOLDS.acceptable && (
+            {score && score.total < 50 && (
               <p className="text-xs text-muted">
                 El puntaje del perfil es {score.total}/100. Podés usar el desglose de arriba como referencia
                 para explicar qué falta.

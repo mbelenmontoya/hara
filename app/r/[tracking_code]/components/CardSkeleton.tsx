@@ -3,6 +3,8 @@
 
 'use client'
 
+import { PageBackground } from '@/app/components/ui/PageBackground'
+
 export function CardSkeleton() {
   return (
     <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 overflow-hidden animate-pulse">
@@ -40,11 +42,7 @@ export function CardSkeleton() {
 export function LoadingSkeleton() {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Background placeholder */}
-      <div
-        className="fixed inset-0 z-0"
-        style={{ backgroundColor: '#FBF7F2' }}
-      />
+      <PageBackground />
 
       {/* Content */}
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-start pt-12 px-4">

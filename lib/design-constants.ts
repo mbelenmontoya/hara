@@ -112,6 +112,42 @@ export const SPECIALTY_COLORS: Record<string, { bg: string; text: string; border
   children:         { bg: 'bg-sp-sky-weak',     text: 'text-sp-sky',     border: 'border-sp-sky/20' },
 }
 
+/** Modality key → Spanish display label (merged from all display surfaces) */
+export const MODALITY_MAP: Record<string, string> = {
+  online: 'Online',
+  presencial: 'Presencial',
+  ambos: 'Online y presencial',
+  'in-person': 'Presencial',
+  both: 'Online y presencial',
+}
+
+/** Therapeutic style key → Spanish display label */
+export const STYLE_MAP: Record<string, string> = {
+  'cognitive-behavioral': 'Cognitivo-conductual',
+  cbt: 'Cognitivo-conductual',
+  psychoanalytic: 'Psicoanalítico',
+  psychodynamic: 'Psicodinámica',
+  humanistic: 'Humanista',
+  systemic: 'Sistémico',
+  gestalt: 'Gestalt',
+  integrative: 'Integrativo',
+}
+
+/** Service type key → Spanish display label */
+export const SERVICE_TYPE_MAP: Record<string, string> = {
+  individual: 'Sesiones individuales',
+  grupal: 'Sesiones grupales',
+}
+
+/** Professional status → badge label + variant */
+export const STATUS_CONFIG: Record<string, { label: string; variant: 'new' | 'converted' | 'closed' | 'default' }> = {
+  submitted: { label: 'Pendiente de revisión', variant: 'new' },
+  active:    { label: 'Activo', variant: 'converted' },
+  rejected:  { label: 'Rechazado', variant: 'closed' },
+  draft:     { label: 'Borrador', variant: 'default' },
+  paused:    { label: 'Pausado', variant: 'default' },
+}
+
 /** Rank number → Spanish label for recommendations */
 export const RANK_LABELS: Record<number, string> = {
   1: 'Mejor ajuste para vos',

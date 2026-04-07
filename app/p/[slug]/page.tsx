@@ -6,6 +6,8 @@ import { notFound } from 'next/navigation'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { ContactButton } from '@/app/components/ContactButton'
 import { Chip } from '@/app/components/ui/Chip'
+import { MODALITY_MAP, STYLE_MAP, SERVICE_TYPE_MAP } from '@/lib/design-constants'
+import { PageBackground } from '@/app/components/ui/PageBackground'
 
 interface Professional {
   slug: string
@@ -31,24 +33,6 @@ interface Professional {
   profile_image_url: string | null
 }
 
-const MODALITY_MAP: Record<string, string> = {
-  online: 'Online',
-  'in-person': 'Presencial',
-  both: 'Online y presencial',
-}
-
-const STYLE_MAP: Record<string, string> = {
-  cbt: 'Cognitivo-conductual',
-  psychodynamic: 'Psicodinámica',
-  humanistic: 'Humanista',
-  systemic: 'Sistémica',
-  integrative: 'Integrativa',
-}
-
-const SERVICE_TYPE_MAP: Record<string, string> = {
-  individual: 'Sesiones individuales',
-  grupal: 'Sesiones grupales',
-}
 
 async function getProfessional(slug: string): Promise<Professional | null> {
   const { data, error } = await supabaseAdmin
@@ -126,18 +110,7 @@ export default async function ProfessionalProfilePage({
 
   return (
     <div className="min-h-screen bg-background" data-testid="professional-profile">
-
-      {/* Illustration background — same pattern as /r/ and /profesionales/registro */}
-      <div
-        className="fixed inset-0 z-0"
-        style={{
-          backgroundColor: '#FBF7F2',
-          backgroundImage: 'url(/assets/illustrations/rizki-kurniawan-SSp6eC-LKBU-unsplash.svg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'bottom',
-          backgroundRepeat: 'no-repeat',
-        }}
-      />
+      <PageBackground />
 
       {/* Content */}
       <div className="relative z-10 max-w-md mx-auto px-4 pt-8 pb-12 space-y-4">
@@ -145,7 +118,7 @@ export default async function ProfessionalProfilePage({
         {/* Back button */}
         <a
           href={backHref}
-          className="inline-flex items-center gap-2 px-4 py-2 liquid-glass rounded-full shadow-soft border border-white/30 text-sm text-foreground hover:shadow-elevated transition-shadow"
+          className="inline-flex items-center gap-2 px-4 py-2 liquid-glass rounded-full shadow-soft border border-outline/30 text-sm text-foreground hover:shadow-elevated transition-shadow"
           aria-label={backLabel}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -155,7 +128,7 @@ export default async function ProfessionalProfilePage({
         </a>
 
         {/* Card 1: Identity — "Who is this person?" */}
-        <div className="liquid-glass rounded-3xl shadow-elevated border border-white/30 p-6">
+        <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6">
 
           {/* Avatar */}
           <div className="flex justify-center mb-4">
@@ -204,7 +177,7 @@ export default async function ProfessionalProfilePage({
         </div>
 
         {/* Card 2: Expertise — "Can they help me?" */}
-        <div className="liquid-glass rounded-3xl shadow-elevated border border-white/30 p-6">
+        <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6">
           <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">Especialidades</h2>
 
           <div className="flex flex-wrap gap-2 mb-4">
@@ -230,7 +203,7 @@ export default async function ProfessionalProfilePage({
 
         {/* Card 3: About — "What's their approach?" */}
         {(professional.bio || professional.experience_description) && (
-          <div className="liquid-glass rounded-3xl shadow-elevated border border-white/30 p-6">
+          <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6">
 
             {professional.bio && (
               <div className={professional.experience_description ? 'mb-6' : ''}>
@@ -249,7 +222,7 @@ export default async function ProfessionalProfilePage({
         )}
 
         {/* Card 4: Logistics — "How do I see them?" */}
-        <div className="liquid-glass rounded-3xl shadow-elevated border border-white/30 p-6">
+        <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6">
           <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">Modalidad</h2>
 
           <div className="flex flex-wrap gap-2 mb-4">
@@ -288,7 +261,7 @@ export default async function ProfessionalProfilePage({
         </div>
 
         {/* Card 5: Contact — "How do I reach them?" */}
-        <div className="liquid-glass rounded-3xl shadow-elevated border border-white/30 p-6">
+        <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6">
           <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">Contacto</h2>
 
           <div className="space-y-3 mb-6">

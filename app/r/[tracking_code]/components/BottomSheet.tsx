@@ -62,7 +62,7 @@ export function BottomSheet({
       
       {/* Sheet content - iOS liquid glass style */}
       <div
-        className="relative liquid-glass border-t border-white/30 rounded-t-[32px] shadow-strong w-full"
+        className="relative liquid-glass border-t border-outline/30 rounded-t-[32px] shadow-strong w-full"
         style={{
           transform: isVisible ? 'translateY(0)' : 'translateY(100%)',
           transition: `transform ${SHEET_ANIMATION_MS}ms ${EASING}`,

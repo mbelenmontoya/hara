@@ -12,6 +12,7 @@ import { SectionHeader } from '@/app/components/ui/SectionHeader'
 import { EmptyState } from '@/app/components/ui/EmptyState'
 import { Chip } from '@/app/components/ui/Chip'
 import { logError } from '@/lib/monitoring'
+import { STATUS_CONFIG } from '@/lib/design-constants'
 
 interface Professional {
   id: string
@@ -23,14 +24,6 @@ interface Professional {
   city: string | null
 }
 
-const STATUS_BADGE: Record<string, { label: string; variant: 'new' | 'converted' | 'closed' | 'default' }> = {
-  submitted: { label: 'Pendiente', variant: 'new' },
-  active: { label: 'Activo', variant: 'converted' },
-  rejected: { label: 'Rechazado', variant: 'closed' },
-  draft: { label: 'Borrador', variant: 'default' },
-  paused: { label: 'Pausado', variant: 'default' },
-}
-
 export default function ProfessionalsPage() {
   const [professionals, setProfessionals] = useState<Professional[]>([])
   const [loading, setLoading] = useState(true)
@@ -39,7 +32,7 @@ export default function ProfessionalsPage() {
     async function fetchProfessionals() {
       try {
         const res = await fetch('/api/debug/professionals')
-        if (!res.ok) throw new Error('Failed to fetch professionals')
+        if (!res.ok) throw new Error('Error al cargar los profesionales')
         const data = await res.json()
         setProfessionals(data.professionals || [])
       } catch (err) {
@@ -109,7 +102,7 @@ export default function ProfessionalsPage() {
 }
 
 function ProfessionalRow({ professional }: { professional: Professional }) {
-  const badge = STATUS_BADGE[professional.status] || STATUS_BADGE.draft
+  const badge = STATUS_CONFIG[professional.status] || STATUS_CONFIG.draft
   const location = [professional.city, professional.country].filter(Boolean).join(', ')
   const visibleSpecialties = professional.specialties.slice(0, 3)
   const overflow = professional.specialties.length - visibleSpecialties.length

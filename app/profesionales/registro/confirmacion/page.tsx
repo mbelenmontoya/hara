@@ -1,29 +1,21 @@
 // Professional Registration Confirmation Page
 // Shown after successful form submission
 
+import { PageBackground } from '@/app/components/ui/PageBackground'
+
 export default function ConfirmationPage() {
   return (
     <div className="min-h-screen bg-background">
-      {/* Background */}
-      <div
-        className="fixed inset-0 z-0"
-        style={{
-          backgroundColor: '#FBF7F2',
-          backgroundImage: 'url(/assets/illustrations/rizki-kurniawan-SSp6eC-LKBU-unsplash.svg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'bottom',
-          backgroundRepeat: 'no-repeat',
-        }}
-      />
+      <PageBackground />
 
       {/* Content - aligned to top */}
-      <div className="relative z-10 min-h-screen flex flex-col items-center pt-12 px-4">
+      <div className="relative z-10 max-w-md mx-auto px-4 pt-8 pb-12">
         {/* Title and description outside the card */}
         <h1 className="text-2xl font-semibold text-foreground mb-3 text-center">
           ¡Solicitud enviada!
         </h1>
         
-        <p className="text-muted leading-relaxed mb-8 text-center max-w-sm">
+        <p className="text-muted leading-relaxed mb-8 text-center max-w-sm mx-auto">
           Recibimos tu información. Nuestro equipo revisará tu perfil y te contactaremos 
           por email en las próximas 24-48 horas.
         </p>

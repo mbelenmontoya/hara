@@ -49,9 +49,6 @@ test.describe('Admin Match Creation Flow', () => {
       (response) => response.url().includes('/api/admin/matches') && response.status() === 200
     )
 
-    // Register dialog listener BEFORE click to avoid race condition
-    const dialogPromise = page.waitForEvent('dialog', { timeout: 10000 })
-
     await page.getByTestId('submit-match-button').click()
 
     const response = await responsePromise
@@ -69,11 +66,9 @@ test.describe('Admin Match Creation Flow', () => {
       expect(rec.attribution_token).toBeDefined()
     }
 
-    // Verify dialog message and accept
-    const dialog = await dialogPromise
-    expect(dialog.message()).toContain('Match created!')
-    expect(dialog.message()).toContain(data.tracking_code)
-    await dialog.accept()
+    // Verify success Alert renders with tracking code (replaced window.alert)
+    await expect(page.getByText('Match creado')).toBeVisible()
+    await expect(page.getByText(data.tracking_code)).toBeVisible()
   })
 
   test('should reject duplicate professionals', async ({ page }) => {
@@ -93,6 +88,6 @@ test.describe('Admin Match Creation Flow', () => {
     await page.getByTestId('reason-3-0').fill('Reason 3')
 
     await page.getByTestId('submit-match-button').click()
-    await expect(page.locator('text=3 DISTINCT professionals')).toBeVisible()
+    await expect(page.getByText('Los 3 profesionales deben ser distintos')).toBeVisible()
   })
 })

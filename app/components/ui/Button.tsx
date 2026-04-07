@@ -32,9 +32,9 @@ export function Button({
   }
 
   const sizeStyles = {
-    default: 'px-5 py-3 text-base rounded-lg min-h-[44px]',
-    sm: 'px-4 py-2 text-sm rounded-lg min-h-[36px]',
-    lg: 'px-6 py-4 text-lg rounded-xl min-h-[52px]',
+    default: 'px-5 py-3 text-base rounded-full min-h-[44px]',
+    sm: 'px-4 py-2 text-sm rounded-full min-h-[36px]',
+    lg: 'px-6 py-4 text-lg rounded-full min-h-[52px]',
   }
 
   return (

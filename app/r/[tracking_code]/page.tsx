@@ -15,6 +15,7 @@ import { useIsDesktop } from './hooks/useMediaQuery'
 import { BottomSheet } from './components/BottomSheet'
 import { BackgroundPicker } from './components/BackgroundPicker'
 import { LoadingSkeleton } from './components/CardSkeleton'
+import { PageBackground } from '@/app/components/ui/PageBackground'
 import {
   CARD_SPACING_PERCENT, CARD_HEIGHT_VH, CARD_MIN_HEIGHT_VH, CARD_MIN_HEIGHT_PX,
   ACTIVE_CARD_SCALE, PEEK_CARD_SCALE, FAR_CARD_SCALE,
@@ -84,17 +85,7 @@ export default function RecommendationsPage() {
       className="min-h-screen bg-background relative overflow-hidden"
       data-testid="recommendations-page"
     >
-      {/* Illustration background */}
-      <div
-        className="fixed inset-0 z-0"
-        style={{
-          backgroundColor: '#FBF7F2',
-          backgroundImage: backgroundPath ? `url(${backgroundPath})` : 'none',
-          backgroundSize: 'cover',
-          backgroundPosition: 'bottom',
-          backgroundRepeat: 'no-repeat',
-        }}
-      />
+      <PageBackground image={backgroundPath} />
 
       {/* Reveal screen (exit animation on transition) - Mobile only */}
       {(shouldShowReveal || isTransitioning) && (

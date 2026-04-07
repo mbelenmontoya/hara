@@ -1,30 +1,21 @@
 // Hará Match — Post-solicitud confirmation
 // Shown after successful intake form submission
 
+import { PageBackground } from '@/app/components/ui/PageBackground'
+
 export default function GraciasPage() {
   return (
     <div className="min-h-screen bg-background">
-
-      {/* Background */}
-      <div
-        className="fixed inset-0 z-0"
-        style={{
-          backgroundColor: '#FBF7F2',
-          backgroundImage: 'url(/assets/illustrations/rizki-kurniawan-SSp6eC-LKBU-unsplash.svg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'bottom',
-          backgroundRepeat: 'no-repeat',
-        }}
-      />
+      <PageBackground />
 
       {/* Content */}
-      <div className="relative z-10 min-h-screen flex flex-col items-center pt-12 px-4">
+      <div className="relative z-10 max-w-md mx-auto px-4 pt-8 pb-12">
 
         <h1 className="text-2xl font-semibold text-foreground mb-3 text-center">
           ¡Recibimos tu solicitud!
         </h1>
 
-        <p className="text-muted leading-relaxed mb-8 text-center max-w-sm">
+        <p className="text-muted leading-relaxed mb-8 text-center max-w-sm mx-auto">
           Vamos a buscar profesionales que se ajusten a lo que nos contaste.
           Te contactamos por WhatsApp con tus 3 recomendaciones.
         </p>

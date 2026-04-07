@@ -8,6 +8,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createLead } from '@/app/actions/create-lead'
 import { PlacesAutocomplete } from '@/app/components/PlacesAutocomplete'
+import { Alert } from '@/app/components/ui/Alert'
+import { PageBackground } from '@/app/components/ui/PageBackground'
 import { isValidPhoneNumber, getCountryCallingCode, type CountryCode } from 'libphonenumber-js'
 
 const INTENT_OPTIONS = [
@@ -198,18 +200,7 @@ export default function SolicitarPage() {
 
   return (
     <div className="min-h-screen bg-background">
-
-      {/* Background */}
-      <div
-        className="fixed inset-0 z-0"
-        style={{
-          backgroundColor: '#FBF7F2',
-          backgroundImage: 'url(/assets/illustrations/rizki-kurniawan-SSp6eC-LKBU-unsplash.svg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'bottom',
-          backgroundRepeat: 'no-repeat',
-        }}
-      />
+      <PageBackground />
 
       {/* Content */}
       <div className="relative z-10 max-w-md mx-auto px-4 pt-8 pb-12">
@@ -224,7 +215,7 @@ export default function SolicitarPage() {
         <form onSubmit={handleSubmit}>
 
           {/* Card: What are you looking for */}
-          <div className="liquid-glass rounded-3xl shadow-elevated border border-white/30 p-6 mb-4">
+          <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6 mb-4">
             <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">
               ¿En qué necesitás ayuda? *
             </h2>
@@ -247,7 +238,7 @@ export default function SolicitarPage() {
           </div>
 
           {/* Card: Location + modality */}
-          <div className="liquid-glass rounded-3xl shadow-elevated border border-white/30 p-6 mb-4">
+          <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6 mb-4">
             <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">
               ¿Dónde estás? *
             </h2>
@@ -289,7 +280,7 @@ export default function SolicitarPage() {
           </div>
 
           {/* Card: Urgency */}
-          <div className="liquid-glass rounded-3xl shadow-elevated border border-white/30 p-6 mb-4">
+          <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6 mb-4">
             <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">
               ¿Qué tan urgente es?
             </h2>
@@ -312,7 +303,7 @@ export default function SolicitarPage() {
           </div>
 
           {/* Card: WhatsApp */}
-          <div className="liquid-glass rounded-3xl shadow-elevated border border-white/30 p-6 mb-4">
+          <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6 mb-4">
             <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">
               ¿Cómo te contactamos? *
             </h2>
@@ -355,7 +346,7 @@ export default function SolicitarPage() {
 
           {/* Advanced fields */}
           {showAdvanced && (
-            <div className="liquid-glass rounded-3xl shadow-elevated border border-white/30 p-6 mb-4">
+            <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6 mb-4">
               <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">
                 Opciones adicionales
               </h2>
@@ -429,9 +420,7 @@ export default function SolicitarPage() {
 
           {/* Submit error */}
           {submitError && (
-            <div className="p-4 bg-danger-weak border border-danger/20 rounded-xl text-sm text-danger mb-4">
-              {submitError}
-            </div>
+            <Alert variant="error">{submitError}</Alert>
           )}
 
           {/* Submit */}

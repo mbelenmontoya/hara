@@ -1,10 +1,18 @@
-// Hará Match - Admin PQL Ledger Page
-// Purpose: View ledger entries and make adjustments
+// Hará Match — Admin PQL Ledger
+// Purpose: View PQL ledger entries and make balance adjustments
 // Security: Admin-only via middleware
 
 'use client'
 
 import { useState, useEffect } from 'react'
+import { AdminLayout } from '@/app/components/AdminLayout'
+import { GlassCard } from '@/app/components/ui/GlassCard'
+import { Button } from '@/app/components/ui/Button'
+import { Alert } from '@/app/components/ui/Alert'
+import { Modal } from '@/app/components/ui/Modal'
+import { SectionHeader } from '@/app/components/ui/SectionHeader'
+import { EmptyState } from '@/app/components/ui/EmptyState'
+import { logError } from '@/lib/monitoring'
 
 interface PQLEntry {
   id: string
@@ -24,6 +32,8 @@ export default function PQLsPage() {
   const [adjusting, setAdjusting] = useState<string | null>(null)
   const [adjustAmount, setAdjustAmount] = useState(0)
   const [adjustReason, setAdjustReason] = useState('')
+  const [reasonError, setReasonError] = useState<string | null>(null)
+  const [actionResult, setActionResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
   useEffect(() => {
     fetchEntries()
@@ -32,154 +42,162 @@ export default function PQLsPage() {
   async function fetchEntries() {
     try {
       const res = await fetch('/api/debug/pqls')
-      if (!res.ok) throw new Error('Failed to fetch PQLs')
+      if (!res.ok) throw new Error('Error al cargar el registro PQL')
       const data = await res.json()
       setEntries(data.entries || [])
     } catch (err) {
-      console.error('Failed to load PQL entries:', err)
+      logError(err instanceof Error ? err : new Error(String(err)), { source: 'PQLsPage.fetchEntries' })
     } finally {
       setLoading(false)
     }
   }
 
-  async function handleAdjust(entryId: string) {
+  function openModal(entryId: string) {
+    setAdjusting(entryId)
+    setAdjustAmount(0)
+    setAdjustReason('')
+    setReasonError(null)
+    setActionResult(null)
+  }
+
+  function closeModal() {
+    setAdjusting(null)
+    setAdjustAmount(0)
+    setAdjustReason('')
+    setReasonError(null)
+  }
+
+  async function handleAdjust() {
     if (!adjustReason.trim()) {
-      alert('Please provide a reason')
+      setReasonError('Ingresá un motivo para el ajuste')
       return
     }
+    if (!adjusting) return
 
     try {
-      const res = await fetch(`/api/admin/pqls/${entryId}/adjust`, {
+      const res = await fetch(`/api/admin/pqls/${adjusting}/adjust`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: adjustAmount,
-          reason: adjustReason,
-        }),
+        body: JSON.stringify({ amount: adjustAmount, reason: adjustReason }),
       })
 
       if (!res.ok) {
         const data = await res.json()
-        throw new Error(data.error || 'Failed to adjust')
+        throw new Error(data.error || 'Error al ajustar el saldo')
       }
 
-      alert('Adjustment successful')
-      setAdjusting(null)
-      setAdjustAmount(0)
-      setAdjustReason('')
+      closeModal()
+      setActionResult({ type: 'success', message: 'Ajuste registrado correctamente.' })
       fetchEntries()
-    } catch (err: any) {
-      alert(err.message)
+    } catch (err: unknown) {
+      logError(err instanceof Error ? err : new Error(String(err)), { source: 'PQLsPage.handleAdjust' })
+      setActionResult({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Error al ajustar el saldo',
+      })
     }
   }
 
-  if (loading) return <div className="p-8">Loading...</div>
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center py-20 text-muted">Cargando...</div>
+      </AdminLayout>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4" data-testid="pqls-page">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">PQL Ledger</h1>
-
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Professional
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Month
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Balance
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {entries.map((entry) => (
-                <tr key={entry.id} data-testid={`pql-entry-${entry.id}`}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {entry.professionals.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {entry.month}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {entry.balance}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <button
-                      onClick={() => setAdjusting(entry.id)}
-                      data-testid={`adjust-button-${entry.id}`}
-                      className="text-blue-600 hover:text-blue-900"
-                    >
-                      Adjust
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    <AdminLayout>
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-2xl font-semibold text-foreground">Registro PQL</h2>
+          <p className="text-sm text-muted mt-1">{entries.length} entradas en el registro</p>
         </div>
 
-        {/* Adjustment Modal */}
-        {adjusting && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white rounded-lg p-6 w-96" data-testid="adjustment-modal">
-              <h2 className="text-xl font-semibold mb-4">Adjust PQL Balance</h2>
+        {actionResult && (
+          <Alert variant={actionResult.type === 'success' ? 'success' : 'error'}>
+            {actionResult.message}
+          </Alert>
+        )}
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Amount
-                </label>
-                <input
-                  type="number"
-                  value={adjustAmount}
-                  onChange={(e) => setAdjustAmount(Number(e.target.value))}
-                  data-testid="adjust-amount-input"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                />
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Reason
-                </label>
-                <textarea
-                  value={adjustReason}
-                  onChange={(e) => setAdjustReason(e.target.value)}
-                  data-testid="adjust-reason-input"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleAdjust(adjusting)}
-                  data-testid="submit-adjustment-button"
-                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
-                >
-                  Submit
-                </button>
-                <button
-                  onClick={() => {
-                    setAdjusting(null)
-                    setAdjustAmount(0)
-                    setAdjustReason('')
-                  }}
-                  className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
+        {entries.length === 0 ? (
+          <GlassCard>
+            <EmptyState
+              title="Sin entradas PQL"
+              description="Las entradas del registro aparecerán aquí cuando se generen eventos de contacto."
+            />
+          </GlassCard>
+        ) : (
+          <GlassCard>
+            <table className="min-w-full" data-testid="pqls-page">
+              <thead>
+                <tr className="border-b border-outline">
+                  <th className="pb-3 text-left text-xs font-semibold text-muted uppercase tracking-wide">Profesional</th>
+                  <th className="pb-3 text-left text-xs font-semibold text-muted uppercase tracking-wide">Mes</th>
+                  <th className="pb-3 text-left text-xs font-semibold text-muted uppercase tracking-wide">Saldo</th>
+                  <th className="pb-3 text-left text-xs font-semibold text-muted uppercase tracking-wide">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-outline">
+                {entries.map((entry) => (
+                  <tr key={entry.id} data-testid={`pql-entry-${entry.id}`}>
+                    <td className="py-3.5 pr-4 text-sm text-foreground">{entry.professionals.name}</td>
+                    <td className="py-3.5 pr-4 text-sm text-muted">{entry.month}</td>
+                    <td className="py-3.5 pr-4 text-sm text-foreground font-medium">{entry.balance}</td>
+                    <td className="py-3.5">
+                      <button
+                        onClick={() => openModal(entry.id)}
+                        data-testid={`adjust-button-${entry.id}`}
+                        className="text-sm text-brand hover:text-brand/80 font-medium transition-colors"
+                      >
+                        Ajustar
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </GlassCard>
         )}
       </div>
-    </div>
+
+      <Modal
+        open={!!adjusting}
+        onClose={closeModal}
+        title="Ajustar saldo PQL"
+        footer={
+          <div className="flex gap-3 justify-end">
+            <Button variant="ghost" onClick={closeModal}>Cancelar</Button>
+            <Button variant="primary" onClick={handleAdjust} data-testid="submit-adjustment-button">
+              Confirmar
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4" data-testid="adjustment-modal">
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">Monto</label>
+            <input
+              type="number"
+              value={adjustAmount}
+              onChange={(e) => setAdjustAmount(Number(e.target.value))}
+              data-testid="adjust-amount-input"
+              className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">Motivo</label>
+            <textarea
+              value={adjustReason}
+              onChange={(e) => { setAdjustReason(e.target.value); setReasonError(null) }}
+              data-testid="adjust-reason-input"
+              rows={3}
+              className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all resize-none"
+            />
+            {reasonError && <p className="text-xs text-danger mt-1.5">{reasonError}</p>}
+          </div>
+        </div>
+      </Modal>
+    </AdminLayout>
   )
 }

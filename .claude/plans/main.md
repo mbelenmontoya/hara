@@ -34,6 +34,8 @@ Deployed at: https://hara-weld.vercel.app
 - [ ] All pages visually match the design system (liquid-glass, tokens, pill buttons, identical page shells) — first pass done, needs visual testing
 - [ ] Public directory page (`/profesionales`) with reputation-based ranking
 - [x] Home page redesign with dual CTA (directory + concierge)
+- [x] Admin dashboard improvements — search + status filters on all 3 list pages, debug routes migrated to admin, inline match context on leads
+- [x] Registration full-flow E2E test — Playwright test covering 4-step form, image upload, DB verification, cleanup
 
 ## Constraints
 
@@ -76,6 +78,28 @@ Deployed at: https://hara-weld.vercel.app
    - `/terminos`
 
 ## Session Log
+
+### Session — 2026-04-08
+
+**Completed:**
+- Admin dashboard improvements (`/spec` — plan: `docs/plans/2026-04-08-admin-dashboard-improvements.md`, VERIFIED)
+  - Created shared `AdminFilterBar` component (`app/admin/components/AdminFilterBar.tsx`, 84 lines, 8 unit tests) — search input + status dropdown, reusable across all admin list pages
+  - Created 3 new admin API routes: `GET /api/admin/leads` (with Supabase join for match context: tracking code + professional names), `GET /api/admin/professionals`, `GET /api/admin/pqls`
+  - Rebuilt Leads page as client component — search by email/intent, status filter, inline match context for matched leads (tracking code + professional names), urgency badge
+  - Enhanced Professionals page — added filter bar (search by name/specialty + status filter), switched from debug to admin API, added registration date to cards
+  - Enhanced PQLs page — search by professional name + month dropdown (dynamically populated from data), tracking code column, fixed pre-existing field name bug (`professionals` → `professional` singular)
+  - Deleted debug routes: `/api/debug/professionals`, `/api/debug/pqls`
+  - Updated match creation page (`/admin/leads/[id]/match`) — API URL from debug→admin + fixed `specialty: string` → `specialties: string[]` field type (API contract drift from migration)
+  - Fixed build-time Supabase join type mismatch (Next.js strict mode caught `professionals` array vs object in leads API), wrapped `fetchEntries` in `useCallback` for PQLs page
+- Registration full-flow E2E test (`/spec` — plan: `docs/plans/2026-04-08-registration-full-flow-e2e.md`, VERIFIED)
+  - `__tests__/e2e/registration-full-flow.spec.ts` — complete 4-step form walkthrough with Google Maps mock, image upload via `setInputFiles`, API response interception, DB + Storage cleanup via Supabase service role client
+
+**Deviations:**
+- Code reviewer caught `specialty` field mismatch in match creation page — the old debug route transformed `specialties[0]` → `specialty`, but the new admin route returns the raw array. Fixed during verification phase.
+- PQL adjustment modal is broken (pre-existing: sends `{ amount, reason }` but API expects `{ adjustment_type, reason, billing_month }`). Documented as known issue, explicitly out of scope.
+
+**Blockers:**
+- E2E scenarios (TS-001/002/003) could not be browser-verified — admin login credentials not available in test session. All code statically verified (TypeScript clean, 35 tests pass, build succeeds).
 
 ### Session — 2026-04-07
 
@@ -140,45 +164,8 @@ Deployed at: https://hara-weld.vercel.app
 - Originally planned only specialty color system for this session. Added testing infrastructure because it was needed before continuing with more features.
 - Registration form at 807 lines — pre-existing from phone/instagram work. Specialty section extracted but form grew from other changes. Needs a larger refactor pass.
 
-### Session — 2026-04-02
-
-**Completed:**
-- Professional approval flow — full pipeline from registration to admin review
-  - `lib/profile-score.ts` — 10-criterion scoring model (image=15, short_desc=10, bio=15, experience=10, specialties=15, service_type=10, location=10, instagram=5, whatsapp=5, modality=5)
-  - `app/api/admin/professionals/[id]/route.ts` — GET (fetch by UUID) + PATCH (approve → `active`, reject → `rejected` + reason)
-  - `app/admin/professionals/[id]/review/page.tsx` — score ring, per-criterion breakdown, profile cards, approve/reject with modal for rejection reason
-  - `lib/email.ts` — `notifyNewProfessional()` now takes `id`, includes "Revisar perfil" button linking to `/admin/login?redirect=/admin/professionals/{id}/review`
-  - `app/api/professionals/register/route.ts` — passes `data.id` to email
-- Registration form expanded with 4 missing text fields
-  - `short_description` (Step 3 — one-liner tagline)
-  - `experience_description` (Step 3 — about experience)
-  - `instagram` (Step 0 — contact info)
-  - `service_type` (Step 1 — individual/grupal toggle)
-- Profile image upload (3 milestones)
-  - `lib/storage.ts` — Supabase Storage helper, uploads to `profile-images` bucket
-  - API switched from JSON to FormData to support file upload
-  - Image picker UI in Step 3 with circular preview matching `/p/[slug]` avatar style
-- Phone auto-formatting with `AsYouType` from `libphonenumber-js` — formats visually as user types, sends E.164 on submit
-- Live validation — email and WhatsApp validated inline, blocks step progression if invalid
-- DB changes — added `rejected` to status CHECK constraint, added `rejection_reason TEXT` column
-- Extracted 3 reusable UI components: `GlassCard`, `PageBackground`, `SectionHeader`
-- Admin professionals list rebuilt — grouped by status (pendientes/revisados), Badge components, chevron navigation
-- Admin login page updated to use `GlassCard` and `PageBackground` components
-- Removed protected files guard (hook file deleted, settings cleaned, CLAUDE.md and api-routes.md sections removed) — was from another repo, not tailored to Hará
-- Set all 45 existing professionals to `submitted` status for testing (`scripts/migrate-review-flow.mjs`)
-
-**Blockers:**
-- Admin pages visual polish incomplete — spacing issues discovered (Link elements need `block` for `space-y`), background choice needs refinement, list card content needs discussion
-- Specialty color system not built — blocked on design decision (need dedicated colors, not semantic Chip variants)
-- 45 existing professionals have no images — old WordPress site and DNS are down, images unrecoverable. New registrations will have upload capability.
-- Rejected profile handling punted to future conversation
-
-**Deviations:**
-- Originally planned to score only 5 fields (what the form collected). QA pushed back — expanded the form instead so the full 10-criterion model is honest.
-- Originally planned `approved` as intermediate state before `active`. QA + product decided approval → `active` directly (no dead-end limbo state).
-- Spent significant time on design system compliance — multiple rounds of feedback on glass cards, backgrounds, and component reuse patterns.
-
 ### Archived Sessions
+- **2026-04-02**: Professional approval flow (score model, approve/reject API+UI), registration form expanded (short_description, experience_description, instagram, service_type), profile image upload (Storage helper, FormData, circular preview), phone auto-formatting, live validation, GlassCard/PageBackground/SectionHeader components extracted, admin professionals list rebuilt
 - **2026-03-12**: Intake form (`/solicitar`), confirmation page (`/gracias`), email notifications (Resend — `notifyNewLead` + `notifyNewProfessional`), Supabase Auth for admin (replaced Clerk), Google Places Autocomplete, phone validation
 - **2026-03-11/12**: Documentation cleanup (16→8 MD files), Claude Code tooling (8 milestones: CLAUDE.md, rules, skills, commands, agents, hooks), design system extraction (Phases 1-2: constants + Chip), professional profile `/p/[slug]` full rebuild (5 glass cards, 6 new DB columns), recommendations page fixes, production deployment fixes (liquid-glass, Upstash Redis), full page/workflow map (27 routes)
 
@@ -292,6 +279,7 @@ Deployed at: https://hara-weld.vercel.app
 - [x] Hardcoded `#FBF7F2` in 3 pages instead of using `var(--color-background)` or `bg-background` — **fixed in design system sweep (2026-04-07)**
 - [ ] BottomSheet has no backdrop animation (no dimming overlay behind sheet)
 - [ ] Backdrop-filter blur delay on card swipe (Chrome bug — documented in KNOWN_ISSUES.md)
+- [ ] PQL adjustment modal sends `{ amount, reason }` but API expects `{ adjustment_type, reason, billing_month }` — pre-existing, documented in admin dashboard plan
 
 #### Design System Extraction
 - [x] Phase 1: Shared constants file (`lib/design-constants.ts`)
@@ -375,7 +363,8 @@ Deployed at: https://hara-weld.vercel.app
 - [x] Visual regression (Playwright screenshots) — 4 page baselines
 - [ ] Add unit tests for custom hooks (useRecommendations, useSwipeGesture, etc.)
 - [ ] E2E tests for admin review flow (requires admin auth storageState + seeded data)
-- [ ] Google Places bypass in E2E (page.route interception for Maps API)
+- [x] Google Places bypass in E2E (page.route interception for Maps API) — done in registration-full-flow E2E
+- [x] Registration full-flow E2E test (`__tests__/e2e/registration-full-flow.spec.ts`)
 - [ ] Contract tests for validation rules
 - [ ] Core Web Vitals measurement
 - [ ] CI/CD integration for test suite (GitHub Actions)
@@ -462,7 +451,12 @@ Deployed at: https://hara-weld.vercel.app
 - `app/admin/professionals/[id]/review/components/SpecialtyMapper.tsx` — Admin specialty mapping dropdown
 - `vitest.workspace.ts` — Vitest workspace (unit + integration projects)
 - `playwright.config.ts` — Playwright multi-project (public, admin, visual)
-- `docs/plans/` — Spec-driven plans (specialty-color-system, testing-infrastructure)
+- `app/admin/components/AdminFilterBar.tsx` — Shared search + status filter component for admin list pages
+- `app/api/admin/leads/route.ts` — Leads list API with match context joins
+- `app/api/admin/professionals/route.ts` — Professionals list API (replaced debug route)
+- `app/api/admin/pqls/route.ts` — PQLs list API (replaced debug route)
+- `__tests__/e2e/registration-full-flow.spec.ts` — Full 4-step registration E2E with Google Maps mock + image upload + DB cleanup
+- `docs/plans/` — Spec-driven plans (specialty-color-system, testing-infrastructure, design-system-sweep, test-suite-hardening, registration-full-flow-e2e, admin-dashboard-improvements)
 
 ### Seed data
 - Run `npm run qa:seed-e2e` to seed 4 professionals + 1 lead + 1 match with 3 recommendations

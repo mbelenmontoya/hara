@@ -17,7 +17,7 @@ interface Professional {
   id: string
   slug: string
   name: string
-  specialty: string
+  specialties: string[]
   status: string
 }
 
@@ -47,7 +47,7 @@ export default function CreateMatchPage({ params }: { params: { id: string } }) 
 
   async function fetchProfessionals() {
     try {
-      const res = await fetch('/api/debug/professionals')
+      const res = await fetch('/api/admin/professionals')
       if (!res.ok) throw new Error('Error al cargar profesionales')
       const data = await res.json()
       setProfessionals(data.professionals || [])
@@ -180,7 +180,7 @@ export default function CreateMatchPage({ params }: { params: { id: string } }) 
                       .filter((p) => p.status === 'active')
                       .map((p) => (
                         <option key={p.id} value={p.id}>
-                          {p.name} ({p.specialty})
+                          {p.name} ({p.specialties?.[0] ?? 'General'})
                         </option>
                       ))}
                   </select>

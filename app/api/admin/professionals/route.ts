@@ -1,9 +1,10 @@
-// Hará Match - Debug Professionals List
-// Purpose: Helper endpoint for admin UI to list professionals
-// Security: Should be gated by middleware in production
+// Admin API — Professionals List
+// GET: Fetch all professionals for admin list view
+// Security: Gated by middleware (requires admin session)
 
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { logError } from '@/lib/monitoring'
 
 export const runtime = 'nodejs'
 
@@ -11,16 +12,15 @@ export async function GET() {
   try {
     const { data, error } = await supabaseAdmin
       .from('professionals')
-      .select('id, slug, full_name, specialties, status, country, city')
-      .order('full_name', { ascending: true })
+      .select('id, slug, full_name, specialties, status, country, city, email, created_at')
+      .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Professionals fetch error:', error)
+      logError(new Error(error.message), { source: 'GET /api/admin/professionals' })
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Transform to match UI expectations (rename full_name to name, pick first specialty)
-    const professionals = (data || []).map((p: Record<string, unknown>) => ({
+    const professionals = (data || []).map((p) => ({
       id: p.id,
       slug: p.slug,
       name: p.full_name,
@@ -28,11 +28,13 @@ export async function GET() {
       status: p.status,
       country: p.country,
       city: p.city,
+      email: p.email,
+      created_at: p.created_at,
     }))
 
     return NextResponse.json({ professionals })
-  } catch (error) {
-    console.error('Debug professionals error:', error)
+  } catch (err) {
+    logError(err instanceof Error ? err : new Error(String(err)), { source: 'GET /api/admin/professionals' })
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })
   }
 }

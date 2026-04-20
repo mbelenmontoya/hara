@@ -36,6 +36,7 @@ Deployed at: https://hara-weld.vercel.app
 - [x] Home page redesign with dual CTA (directory + concierge)
 - [x] Admin dashboard improvements — search + status filters on all 3 list pages, debug routes migrated to admin, inline match context on leads
 - [x] Registration full-flow E2E test — Playwright test covering 4-step form, image upload, DB verification, cleanup
+- [x] Unified legal page at `/terminosyprivacidad` with collapsible terms/privacy content and form links
 
 ## Constraints
 
@@ -73,11 +74,24 @@ Deployed at: https://hara-weld.vercel.app
    - `/admin/analytics` — Funnel dashboard
    - `/admin/settings` — Operational config
 
-7. **Legal pages:**
-   - `/privacidad`
-   - `/terminos`
-
 ## Session Log
+
+### Session — 2026-04-20
+
+**Completed:**
+- Legal/trust page (`docs/plans/2026-04-20-legal-pages.md`)
+  - Replaced the split legal routes with a unified `/terminosyprivacidad` page
+  - Structured the page as two glass cards (`Términos` and `Privacidad`) with lightweight top anchor links outside the cards
+  - Implemented transparent collapsible subsection titles with a left chevron inside each card
+  - Updated the registration and intake form footers to point to the unified legal route
+  - Preserved `/terminos` and `/privacidad` as redirects into the unified page anchors
+
+**Deviations:**
+- First pass overdesigned the legal content (split routes, extra card treatment, wrong interaction style). Reworked after review to match the design-system constraints and the simpler unified-page approach.
+- A stale dev server held deleted-module references and served a broken page state; restarted cleanly and verified the route on a single server instance.
+
+**Blockers:**
+- None. Route builds and serves correctly; any remaining work is visual follow-up based on review.
 
 ### Session — 2026-04-08
 
@@ -262,8 +276,9 @@ Deployed at: https://hara-weld.vercel.app
 
 | # | Route | Status | Notes |
 |---|-------|--------|-------|
-| 1 | `/privacidad` | **New — Phase 3** | |
-| 2 | `/terminos` | **New — Phase 3** | |
+| 1 | `/terminosyprivacidad` | **Done** | Página legal unificada con secciones de términos y privacidad |
+| 2 | `/privacidad` | Redirect | Redirige al ancla de privacidad en `/terminosyprivacidad` |
+| 3 | `/terminos` | Redirect | Redirige al ancla de términos en `/terminosyprivacidad` |
 
 #### Futuro (Phase 4)
 

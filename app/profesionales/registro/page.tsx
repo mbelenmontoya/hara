@@ -4,6 +4,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { AsYouType, isValidPhoneNumber, parsePhoneNumberFromString, getCountryCallingCode, type CountryCode } from 'libphonenumber-js'
 import { PlacesAutocomplete } from '@/app/components/PlacesAutocomplete'
@@ -738,7 +739,11 @@ export default function ProfessionalRegistrationPage() {
 
         {/* Footer */}
         <p className="text-xs text-muted mt-6 text-center max-w-sm">
-          Al enviar este formulario, aceptás nuestros términos de servicio y política de privacidad.
+          Al enviar este formulario, aceptás nuestros{' '}
+          <Link href="/terminosyprivacidad" className="text-brand hover:underline">
+            términos y privacidad
+          </Link>
+          .
         </p>
       </div>
 

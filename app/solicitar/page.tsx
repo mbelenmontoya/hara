@@ -5,6 +5,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createLead } from '@/app/actions/create-lead'
 import { PlacesAutocomplete } from '@/app/components/PlacesAutocomplete'
@@ -434,6 +435,14 @@ export default function SolicitarPage() {
 
           <p className="text-xs text-muted text-center mt-4">
             Tu privacidad primero: nadie recibe tus datos hasta que vos escribas.
+          </p>
+
+          <p className="text-xs text-muted text-center mt-2">
+            Al enviarnos tu solicitud, aceptás nuestros{' '}
+            <Link href="/terminosyprivacidad" className="text-brand hover:underline">
+              términos y privacidad
+            </Link>
+            .
           </p>
 
         </form>

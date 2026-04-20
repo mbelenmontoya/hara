@@ -61,3 +61,4 @@ Desktop.ini
 *.tmp
 *.temp
 .cache/
+.omx/

@@ -1,8 +1,4 @@
-// Admin API — Leads List
-// GET: Fetch all leads with match context (tracking code + matched professionals)
-// Security: Gated by middleware (requires admin session)
-
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { logError } from '@/lib/monitoring'
 
@@ -13,7 +9,7 @@ interface MatchRecommendation {
   professionals: { full_name: string; slug: string }[]
 }
 
-interface Match {
+interface MatchRow {
   id: string
   tracking_code: string
   created_at: string
@@ -30,10 +26,19 @@ interface LeadRow {
   status: string
   urgency: string | null
   created_at: string
-  matches: Match[]
+  matches: MatchRow[]
 }
 
-export async function GET() {
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const { id } = params
+
+  if (!id) {
+    return NextResponse.json({ error: 'ID requerido' }, { status: 400 })
+  }
+
   try {
     const { data, error } = await supabaseAdmin
       .from('leads')
@@ -49,30 +54,31 @@ export async function GET() {
           )
         )
       `)
-      .order('created_at', { ascending: false })
+      .eq('id', id)
+      .single()
 
-    if (error) {
-      logError(new Error(error.message), { source: 'GET /api/admin/leads' })
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error || !data) {
+      return NextResponse.json({ error: 'Solicitud no encontrada' }, { status: 404 })
     }
 
-    const leads = ((data as unknown as LeadRow[]) || []).map((lead) => {
-      const matches = (lead.matches ?? [])
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .map((match) => ({
-          id: match.id,
-          tracking_code: match.tracking_code,
-          created_at: match.created_at,
-          professionals: (match.match_recommendations ?? [])
-            .sort((a, b) => a.rank - b.rank)
-            .map((rec) => ({
-              rank: rec.rank,
-              name: rec.professionals?.[0]?.full_name ?? 'Desconocido',
-              slug: rec.professionals?.[0]?.slug ?? '',
-            })),
-        }))
+    const lead = data as unknown as LeadRow
+    const matches = (lead.matches ?? [])
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .map((match) => ({
+        id: match.id,
+        tracking_code: match.tracking_code,
+        created_at: match.created_at,
+        professionals: (match.match_recommendations ?? [])
+          .sort((a, b) => a.rank - b.rank)
+          .map((rec) => ({
+            rank: rec.rank,
+            name: rec.professionals?.[0]?.full_name ?? 'Desconocido',
+            slug: rec.professionals?.[0]?.slug ?? '',
+          })),
+      }))
 
-      return {
+    return NextResponse.json({
+      lead: {
         id: lead.id,
         email: lead.email,
         whatsapp: lead.whatsapp,
@@ -84,12 +90,10 @@ export async function GET() {
         created_at: lead.created_at,
         latest_match: matches[0] ?? null,
         match_count: matches.length,
-      }
+      },
     })
-
-    return NextResponse.json({ leads })
   } catch (err) {
-    logError(err instanceof Error ? err : new Error(String(err)), { source: 'GET /api/admin/leads' })
+    logError(err instanceof Error ? err : new Error(String(err)), { source: 'GET /api/admin/leads/[id]' })
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })
   }
 }

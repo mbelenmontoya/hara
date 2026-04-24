@@ -11,57 +11,13 @@ import { Button } from '@/app/components/ui/Button'
 import { Badge } from '@/app/components/ui/Badge'
 import { EmptyState } from '@/app/components/ui/EmptyState'
 import { AdminFilterBar } from '@/app/admin/components/AdminFilterBar'
+import {
+  type Lead,
+  LEAD_STATUS_OPTIONS,
+  LEAD_STATUS_VARIANT,
+  LEAD_URGENCY_LABEL,
+} from '@/app/admin/leads/shared'
 import { logError } from '@/lib/monitoring'
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface MatchedProfessional {
-  rank: number
-  name: string
-  slug: string
-}
-
-interface LeadMatch {
-  tracking_code: string
-  professionals: MatchedProfessional[]
-}
-
-interface Lead {
-  id: string
-  email: string | null
-  whatsapp: string | null
-  country: string
-  city: string | null
-  intent_tags: string[]
-  status: string
-  urgency: string | null
-  created_at: string
-  match: LeadMatch | null
-}
-
-// ─── Status config ────────────────────────────────────────────────────────────
-
-const STATUS_OPTIONS = [
-  { value: 'new', label: 'Nuevo' },
-  { value: 'matched', label: 'Matcheado' },
-  { value: 'contacted', label: 'Contactado' },
-  { value: 'converted', label: 'Convertido' },
-  { value: 'closed', label: 'Cerrado' },
-]
-
-const STATUS_VARIANT: Record<string, 'new' | 'matched' | 'contacted' | 'converted' | 'closed' | 'default'> = {
-  new: 'new',
-  matched: 'matched',
-  contacted: 'contacted',
-  converted: 'converted',
-  closed: 'closed',
-}
-
-const URGENCY_LABEL: Record<string, string> = {
-  high: 'Urgente',
-  medium: 'Pronto',
-  low: 'Sin prisa',
-}
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
@@ -119,7 +75,7 @@ export default function AdminLeadsPage() {
           searchPlaceholder="Buscar por email o necesidad..."
           searchValue={searchValue}
           onSearchChange={setSearchValue}
-          statusOptions={STATUS_OPTIONS}
+          statusOptions={LEAD_STATUS_OPTIONS}
           statusValue={statusValue}
           onStatusChange={setStatusValue}
           resultCount={filteredLeads.length}
@@ -165,10 +121,10 @@ function LeadCard({ lead }: { lead: Lead }) {
         <div className="flex-1 min-w-0 space-y-2">
           {/* Row 1: identifier + status + date */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-foreground text-sm truncate">
+            <Link href={`/admin/leads/${lead.id}`} className="font-semibold text-foreground text-sm truncate hover:underline">
               {lead.email ?? `Solicitud ${lead.id.slice(0, 8)}`}
-            </span>
-            <Badge variant={STATUS_VARIANT[lead.status] ?? 'default'}>{lead.status}</Badge>
+            </Link>
+            <Badge variant={LEAD_STATUS_VARIANT[lead.status] ?? 'default'}>{lead.status}</Badge>
             <time className="text-xs text-muted ml-auto">{date}</time>
           </div>
 
@@ -176,9 +132,9 @@ function LeadCard({ lead }: { lead: Lead }) {
           <div className="flex items-center gap-1.5 text-xs text-muted flex-wrap">
             {location && <span>{location}</span>}
             {location && <span className="text-outline">·</span>}
-            {lead.urgency && URGENCY_LABEL[lead.urgency] && (
+            {lead.urgency && LEAD_URGENCY_LABEL[lead.urgency] && (
               <>
-                <span className="text-warning font-medium">{URGENCY_LABEL[lead.urgency]}</span>
+                <span className="text-warning font-medium">{LEAD_URGENCY_LABEL[lead.urgency]}</span>
                 <span className="text-outline">·</span>
               </>
             )}
@@ -186,26 +142,33 @@ function LeadCard({ lead }: { lead: Lead }) {
           </div>
 
           {/* Row 3: match context (if matched) */}
-          {lead.match && (
+          {lead.latest_match && (
             <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-outline/40">
               <span className="font-mono text-xs bg-brand-weak text-brand px-2 py-0.5 rounded-md">
-                {lead.match.tracking_code}
+                {lead.latest_match.tracking_code}
               </span>
               <span className="text-xs text-muted">
-                {lead.match.professionals.map((p) => p.name).join(', ')}
+                {lead.latest_match.professionals.map((p) => p.name).join(', ')}
               </span>
             </div>
           )}
         </div>
 
         {/* Action */}
-        {isNew && (
-          <Link href={`/admin/leads/${lead.id}/match`} className="flex-shrink-0">
-            <Button variant="primary" size="sm">
-              Crear match
+        <div className="flex-shrink-0 flex flex-col gap-2">
+          <Link href={`/admin/leads/${lead.id}`}>
+            <Button variant="secondary" size="sm">
+              Ver detalle
             </Button>
           </Link>
-        )}
+          {isNew && (
+            <Link href={`/admin/leads/${lead.id}/match`}>
+              <Button variant="primary" size="sm">
+                Crear match
+              </Button>
+            </Link>
+          )}
+        </div>
       </div>
     </GlassCard>
   )

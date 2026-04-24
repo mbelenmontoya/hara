@@ -12,7 +12,7 @@ export default defineWorkspace([
     test: {
       name: 'unit',
       environment: 'jsdom',
-      include: ['app/**/*.test.{ts,tsx}'],
+      include: ['app/**/*.test.{ts,tsx}', 'lib/**/*.test.ts'],
       setupFiles: ['__tests__/setup/component-setup.ts'],
       globals: true,
       env: {

@@ -32,8 +32,8 @@ Deployed at: https://hara-weld.vercel.app
 - [x] Specialty color system — 12 curated colors, custom specialty support, admin mapping
 - [x] 3-level testing infrastructure — 26 component tests + E2E + visual regression
 - [ ] All pages visually match the design system (liquid-glass, tokens, pill buttons, identical page shells) — first pass done, needs visual testing
-- [ ] Public directory page (`/profesionales`) with reputation-based ranking
-- [x] Home page redesign with dual CTA (directory + concierge)
+- [x] Public directory page (`/profesionales`) with reputation-based ranking — shipped 2026-04-24 (migration 004: ranking columns + trigger; /profesionales server component; home page 3rd CTA)
+- [x] Home page redesign with dual CTA (concierge + directory) — "Ver profesionales" CTA added 2026-04-24
 - [x] Admin dashboard improvements — search + status filters on all 3 list pages, debug routes migrated to admin, inline match context on leads
 - [x] Registration full-flow E2E test — Playwright test covering 4-step form, image upload, DB verification, cleanup
 - [x] Unified legal page at `/terminosyprivacidad` with collapsible terms/privacy content and form links
@@ -51,6 +51,7 @@ Deployed at: https://hara-weld.vercel.app
    - What: Open every page in the browser and verify visual consistency — background, glass cards, pill buttons, title hierarchy, spacing. The code changes are done but not visually verified.
    - Why: First pass was token-only. Second pass aligned components (Button → rounded-full, Home → glass cards, Leads → GlassCard, identical DOM shells). Needs eyes on it.
    - Considerations: Check `/`, `/solicitar`, `/gracias`, `/profesionales/registro`, `/profesionales/registro/confirmacion`, `/p/[slug]`, `/admin/leads`, `/admin/pqls`, `/admin/leads/[id]/match`, `/admin/professionals`, `/admin/professionals/[id]/review`
+   - Note for next session: treat this as manual browser QA first, not just screenshot comparison. After the manual sweep, update or expand the Playwright visual baselines only for the pages that are meant to stay visually locked.
 
 2. **Finish image upload testing**
    - What: Verify the full flow — form with image → FormData submission → Supabase Storage upload → URL in DB → visible on review page and profile page.
@@ -60,21 +61,72 @@ Deployed at: https://hara-weld.vercel.app
    - What: Product decision — when a profile is rejected, do we keep the data? Can the professional resubmit? Do they get notified?
    - Why: DB stores `rejected` status and `rejection_reason` but there's no flow after rejection.
 
-4. **DB: Add ranking/tier fields to `professionals` table**
-   - What: `subscription_tier`, `rating_average`, `rating_count`, `profile_completeness_score`, `ranking_score`
-   - Why: Foundation for the directory page and reputation system
+4. **Review collection system PRD**
+   - What: Post-contact review link (email/WhatsApp), `reviews` table, submission page (no login), display on `/p/[slug]`. Also fixes the `ContactButton.tsx:43` directory-contact tracking bug.
+   - Why: Reputation comes from real interactions — this closes the loop on the ranking model
+   - PRD: `docs/prd/` (to be written)
 
-5. **`/profesionales` — Public directory page**
-   - What: List approved professionals sorted by ranking_score, filter by specialty/location/modality, search by name
-   - Why: Primary discovery path in the new Directory + Concierge model
+5. **Payments + subscription tiers PRD**
+   - What: MercadoPago (LATAM) or Stripe integration, checkout, tier state on professionals, webhooks
+   - Why: Monetization — `subscription_tier` column exists, just needs payment wiring
+   - PRD: `docs/prd/` (to be written)
 
-6. **Admin pages (remaining):**
-   - `/admin/leads/[id]` — Lead detail
+6. **Directory filters + search PRD**
+   - What: Specialty / location / modality filters, name search, pagination
+   - Why: Directory is live but only shows a flat sorted list — filtering is next
+   - PRD: `docs/prd/` (to be written)
+
+7. **Apply migration 004 to Supabase** *(immediate action)*
+   - What: Run `node scripts/apply-ranking-migration.mjs` or paste `migrations/004_ranking_foundation.sql` in the Supabase SQL Editor
+   - Why: Migration is written but not yet applied — integration/E2E parity tests need it to pass
+
+8. **Admin pages (remaining):**
    - `/admin/professionals/[id]` — Professional detail (separate from review — reviews, rating, tier)
    - `/admin/analytics` — Funnel dashboard
    - `/admin/settings` — Operational config
 
 ## Session Log
+
+### Session — 2026-04-24
+
+**Completed:**
+- Directory + Ranking Foundation (`/spec` — plan: `docs/plans/2026-04-24-directory-ranking-foundation.md`, PRD: `docs/prd/2026-04-24-directory-ranking-foundation.md`)
+  - `migrations/004_ranking_foundation.sql` — 5 new columns (`profile_completeness_score`, `rating_average`, `rating_count`, `subscription_tier`, `ranking_score`) + `recompute_ranking()` trigger function (mirrors `lib/profile-score.ts` exactly, NULL-safe) + directory index + backfill
+  - `lib/ranking.ts` + `lib/ranking.test.ts` — TS ranking helper with 18 unit tests; `vitest.workspace.ts` expanded to discover `lib/**/*.test.ts`
+  - `__tests__/integration/ranking-parity.test.ts` — DB-backed parity test (8 fixture scenarios including NULL-array and NULL-online_only edge cases)
+  - `app/profesionales/page.tsx` — server-rendered directory page sorted by `ranking_score DESC`, uses liquid-glass cards, specialty chips, avatar fallback, `data-testid` attributes
+  - `app/page.tsx` — added "Ver profesionales" pill CTA between the two existing CTAs
+  - `__tests__/e2e/directory.spec.ts` — Playwright E2E (TS-001/002/003/004); home CTA test verified green; DB-dependent tests skip cleanly until migration applied
+  - `__tests__/e2e/visual/pages.spec.ts` — added `/profesionales` visual baseline
+  - `scripts/apply-ranking-migration.mjs` — helper script to apply the migration
+  - `docs/prd/2026-04-24-directory-ranking-foundation.md` — PRD for this feature
+  - Gap analysis performed before PRD: identified that the April 2026 Directory + Concierge pivot had not been implemented in code; this session closes the primary gap
+
+**Deviations:**
+- Supabase network is unreachable from the dev sandbox (same infrastructure isolation as Apr 22). Migration not applied during this session. Impact: integration parity tests and DB-dependent E2E tests skip cleanly (they verify correctly when run locally with network access). TS-004 (home CTA) confirmed green via Playwright.
+- The Apr 22 admin lead detail work (`app/admin/leads/[id]/`, `app/api/admin/leads/[id]/`) remains uncommitted alongside these new changes — both are on `main`, staged independently.
+
+**Blockers:**
+- Migration `004_ranking_foundation.sql` must be applied to Supabase before integration tests and E2E parity tests go green. Run: `node scripts/apply-ranking-migration.mjs` or use the Supabase SQL Editor.
+- Unit tests: 55/55 pass. Build: compiles cleanly. TS-004 Playwright test: green.
+
+### Session — 2026-04-22
+
+**Completed:**
+- Admin lead detail page (`.omx/plans/prd-admin-lead-detail.md`)
+  - Added `/admin/leads/[id]` as an admin-only lead detail route
+  - Added a single-lead admin API at `/api/admin/leads/[id]`
+  - Reused shared lead status/urgency/match semantics across the leads list and the new detail page
+  - Updated the leads list to link into the detail page while preserving the `Crear match` path
+  - Added unit coverage for the new page and verified TypeScript, unit tests, build, and live route/login redirect behavior
+
+**Deviations:**
+- Initial verification tried a DB-backed integration test, but the current environment could not reliably reach Supabase. Replaced that with a focused page-level unit test so the new route still has stable automated coverage.
+- Build/test verification needed to be rerun with clean sequencing and a live local server to separate real issues from sandbox/network noise.
+
+**Blockers:**
+- Work is code-complete and documented, but still pending final review + commit/push.
+- The broader visual sweep is still outstanding and should happen after the current coding tasks are closed.
 
 ### Session — 2026-04-20
 
@@ -244,7 +296,7 @@ Deployed at: https://hara-weld.vercel.app
 | 2 | `/r/[tracking_code]` | Exists | Concierge recommendations (kept for concierge flow) |
 | 3 | `/solicitar` | **Done** | Concierge intake form |
 | 4 | `/gracias` | **Done** | Confirmation post-solicitud |
-| 5 | `/profesionales` | **New — Phase 1** | Public directory ranked by reputation |
+| 5 | `/profesionales` | **Done** | Public directory ranked by ranking_score DESC — shipped 2026-04-24 |
 | 6 | `/ayuda` | **New — Phase 3** | Soporte / recuperación de link / errores comunes |
 
 #### Público (Profesional)
@@ -260,7 +312,7 @@ Deployed at: https://hara-weld.vercel.app
 | # | Route | Status | Notes |
 |---|-------|--------|-------|
 | 1 | `/admin/leads` | **Done** | Bandeja de solicitudes — GlassCard, Spanish copy |
-| 2 | `/admin/leads/[id]` | **New — Phase 3** | Detalle de solicitud |
+| 2 | `/admin/leads/[id]` | **Done** | Detalle de solicitud con contacto, contexto, needs y match actual |
 | 3 | `/admin/leads/[id]/match` | **Done** | Crear match — GlassCard, Spanish copy, AdminLayout |
 | 4 | `/admin/professionals` | **Done** | Listado profesionales grouped by status |
 | 5 | `/admin/professionals/[id]/review` | **Done** | Admin review page with score + approve/reject |
@@ -471,7 +523,13 @@ Deployed at: https://hara-weld.vercel.app
 - `app/api/admin/professionals/route.ts` — Professionals list API (replaced debug route)
 - `app/api/admin/pqls/route.ts` — PQLs list API (replaced debug route)
 - `__tests__/e2e/registration-full-flow.spec.ts` — Full 4-step registration E2E with Google Maps mock + image upload + DB cleanup
-- `docs/plans/` — Spec-driven plans (specialty-color-system, testing-infrastructure, design-system-sweep, test-suite-hardening, registration-full-flow-e2e, admin-dashboard-improvements)
+- `docs/plans/` — Spec-driven plans (specialty-color-system, testing-infrastructure, design-system-sweep, test-suite-hardening, registration-full-flow-e2e, admin-dashboard-improvements, directory-ranking-foundation)
+- `lib/ranking.ts` — TS ranking formula helper (`computeRankingScore`) — must stay in sync with `migrations/004_ranking_foundation.sql`
+- `migrations/004_ranking_foundation.sql` — Ranking columns + `recompute_ranking()` trigger — **apply to Supabase before running integration tests**
+- `app/profesionales/page.tsx` — Public directory page (server component, sorted by `ranking_score DESC`)
+- `__tests__/integration/ranking-parity.test.ts` — DB-backed parity test (TS ↔ SQL formula equivalence)
+- `scripts/apply-ranking-migration.mjs` — Apply migration 004 to Supabase
+- `docs/prd/` — Product Requirements Documents (directory-ranking-foundation + future PRDs)
 
 ### Seed data
 - Run `npm run qa:seed-e2e` to seed 4 professionals + 1 lead + 1 match with 3 recommendations

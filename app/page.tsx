@@ -28,6 +28,12 @@ export default function HomePage() {
             Solicitar recomendaciones
           </Link>
           <Link
+            href="/profesionales"
+            className="block w-full px-6 py-3.5 bg-surface border border-outline text-foreground font-semibold rounded-full shadow-soft hover:shadow-elevated hover:border-muted transition-all text-center"
+          >
+            Ver profesionales
+          </Link>
+          <Link
             href="/profesionales/registro"
             className="block w-full px-6 py-3.5 bg-surface border border-outline text-foreground font-semibold rounded-full shadow-soft hover:shadow-elevated hover:border-muted transition-all text-center"
           >

@@ -58,4 +58,17 @@ test.describe('Visual regression — key pages', () => {
       maxDiffPixelRatio: 0.02,
     })
   })
+
+  test('/profesionales directory — empty state or with professionals', async ({ page }) => {
+    await page.goto('/profesionales')
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(500)
+
+    // Baseline captures the current state (empty state if DB unreachable, list if live).
+    // Update baseline after applying migration 004 + seeding:
+    //   npm run test:visual:update
+    await expect(page).toHaveScreenshot('profesionales-directory.png', {
+      maxDiffPixelRatio: 0.02,
+    })
+  })
 })

@@ -62,3 +62,4 @@ Desktop.ini
 *.temp
 .cache/
 .omx/
+.codegraph/

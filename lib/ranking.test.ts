@@ -6,6 +6,7 @@ import {
   computeRankingScore,
   computeRatingContribution,
   computeTierContribution,
+  isEffectivelyDestacado,
   COMPLETENESS_WEIGHT,
   RATING_WEIGHT,
   TIER_WEIGHT,
@@ -48,6 +49,54 @@ describe('computeTierContribution', () => {
 
   it('returns 0 for basico tier', () => {
     expect(computeTierContribution('basico')).toBe(0)
+  })
+
+  // Expiry-aware cases (migration 005)
+  it('returns 100 for destacado with no expiry (backward compat, legacy rows)', () => {
+    expect(computeTierContribution('destacado', null)).toBe(100)
+  })
+
+  it('returns 100 for destacado with future expiry', () => {
+    const future = new Date(Date.now() + 30 * 86400000)
+    expect(computeTierContribution('destacado', future)).toBe(100)
+  })
+
+  it('returns 0 for destacado with past expiry', () => {
+    const past = new Date(Date.now() - 86400000)
+    expect(computeTierContribution('destacado', past)).toBe(0)
+  })
+
+  it('returns 0 for basico regardless of expiry (basico never gets tier boost)', () => {
+    const future = new Date(Date.now() + 86400000)
+    const past   = new Date(Date.now() - 86400000)
+    expect(computeTierContribution('basico', null)).toBe(0)
+    expect(computeTierContribution('basico', future)).toBe(0)
+    expect(computeTierContribution('basico', past)).toBe(0)
+  })
+})
+
+describe('isEffectivelyDestacado', () => {
+  it('destacado + future expiry → true', () => {
+    expect(isEffectivelyDestacado('destacado', new Date(Date.now() + 86400000))).toBe(true)
+  })
+
+  it('destacado + past expiry → false', () => {
+    expect(isEffectivelyDestacado('destacado', new Date(Date.now() - 86400000))).toBe(false)
+  })
+
+  it('destacado + null expiry → true (backward compat — legacy destacado rows)', () => {
+    expect(isEffectivelyDestacado('destacado', null)).toBe(true)
+  })
+
+  it('basico + future expiry → false (tier wins, not expiry)', () => {
+    expect(isEffectivelyDestacado('basico', new Date(Date.now() + 86400000))).toBe(false)
+  })
+
+  it('accepts ISO string expiry (Supabase returns strings)', () => {
+    const futureISO = new Date(Date.now() + 86400000).toISOString()
+    const pastISO   = new Date(Date.now() - 86400000).toISOString()
+    expect(isEffectivelyDestacado('destacado', futureISO)).toBe(true)
+    expect(isEffectivelyDestacado('destacado', pastISO)).toBe(false)
   })
 })
 
@@ -97,5 +146,17 @@ describe('computeRankingScore', () => {
   it('full scenario: completeness=70, rating=4.0 (count=5), basico', () => {
     // 0.7*70 + 0.2*LEAST(4*20,100) + 0 = 49 + 0.2*80 = 49 + 16 = 65.00
     expect(computeRankingScore({ completeness: 70, ratingAverage: 4.0, ratingCount: 5, tier: 'basico' })).toBe(65.00)
+  })
+
+  // Expiry-aware cases (migration 005)
+  it('destacado + past expiry → tier contribution is 0, score = 70.00 (completeness only)', () => {
+    const past = new Date(Date.now() - 86400000)
+    expect(computeRankingScore({ completeness: 100, ratingAverage: 0, ratingCount: 0, tier: 'destacado', tierExpiresAt: past })).toBe(70.00)
+  })
+
+  it('destacado + future expiry → tier contribution is 10, score = 80.00', () => {
+    const future = new Date(Date.now() + 30 * 86400000)
+    // 0.7*100 + 0.2*0 + 0.1*100 = 70 + 0 + 10 = 80.00
+    expect(computeRankingScore({ completeness: 100, ratingAverage: 0, ratingCount: 0, tier: 'destacado', tierExpiresAt: future })).toBe(80.00)
   })
 })

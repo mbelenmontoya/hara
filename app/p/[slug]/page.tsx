@@ -8,6 +8,7 @@ import { ContactButton } from '@/app/components/ContactButton'
 import { Chip } from '@/app/components/ui/Chip'
 import { MODALITY_MAP, STYLE_MAP, SERVICE_TYPE_MAP } from '@/lib/design-constants'
 import { PageBackground } from '@/app/components/ui/PageBackground'
+import { isEffectivelyDestacado } from '@/lib/ranking'
 
 interface Professional {
   slug: string
@@ -31,13 +32,15 @@ interface Professional {
   currency: string
   accepting_new_clients: boolean
   profile_image_url: string | null
+  subscription_tier: string | null
+  tier_expires_at: string | null
 }
 
 
 async function getProfessional(slug: string): Promise<Professional | null> {
   const { data, error } = await supabaseAdmin
     .from('professionals')
-    .select('slug, full_name, specialties, modality, style, bio, short_description, experience_description, instagram, service_type, offers_courses_online, courses_presencial_location, whatsapp, country, city, online_only, price_range_min, price_range_max, currency, accepting_new_clients, profile_image_url')
+    .select('slug, full_name, specialties, modality, style, bio, short_description, experience_description, instagram, service_type, offers_courses_online, courses_presencial_location, whatsapp, country, city, online_only, price_range_min, price_range_max, currency, accepting_new_clients, profile_image_url, subscription_tier, tier_expires_at')
     .eq('slug', slug)
     .eq('status', 'active')
     .single()
@@ -66,6 +69,8 @@ async function getProfessional(slug: string): Promise<Professional | null> {
     currency: data.currency ?? 'USD',
     accepting_new_clients: data.accepting_new_clients,
     profile_image_url: data.profile_image_url,
+    subscription_tier: data.subscription_tier ?? null,
+    tier_expires_at: data.tier_expires_at ?? null,
   }
 }
 
@@ -151,6 +156,15 @@ export default async function ProfessionalProfilePage({
           <h1 className="text-2xl font-bold text-foreground text-center mb-1">
             {professional.name}
           </h1>
+
+          {/* Destacado badge — visible when tier is active and not expired */}
+          {isEffectivelyDestacado(professional.subscription_tier, professional.tier_expires_at) && (
+            <div className="flex justify-center mb-2">
+              <span data-testid="destacado-chip">
+                <Chip variant="brand" label="Destacado" />
+              </span>
+            </div>
+          )}
 
           {/* Short description */}
           {professional.short_description && (

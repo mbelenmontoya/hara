@@ -9,6 +9,7 @@ import { GlassCard } from '@/app/components/ui/GlassCard'
 import { EmptyState } from '@/app/components/ui/EmptyState'
 import { Chip } from '@/app/components/ui/Chip'
 import { logError } from '@/lib/monitoring'
+import { isEffectivelyDestacado } from '@/lib/ranking'
 
 interface DirectoryProfessional {
   slug: string
@@ -18,6 +19,8 @@ interface DirectoryProfessional {
   country: string
   online_only: boolean
   profile_image_url: string | null
+  subscription_tier: string | null
+  tier_expires_at: string | null
 }
 
 function formatLocation(pro: DirectoryProfessional): string {
@@ -28,7 +31,7 @@ function formatLocation(pro: DirectoryProfessional): string {
 async function getProfessionals(): Promise<DirectoryProfessional[]> {
   const { data, error } = await supabaseAdmin
     .from('professionals')
-    .select('slug, full_name, specialties, city, country, online_only, profile_image_url')
+    .select('slug, full_name, specialties, city, country, online_only, profile_image_url, subscription_tier, tier_expires_at')
     .eq('status', 'active')
     .eq('accepting_new_clients', true)
     .order('ranking_score', { ascending: false })
@@ -108,12 +111,19 @@ function ProfessionalCard({ professional: pro }: { professional: DirectoryProfes
 
             {/* Info column */}
             <div className="min-w-0 flex-1">
-              <h3
-                data-testid="professional-name"
-                className="text-sm font-semibold text-foreground truncate mb-1"
-              >
-                {pro.full_name}
-              </h3>
+              <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                <h3
+                  data-testid="professional-name"
+                  className="text-sm font-semibold text-foreground truncate"
+                >
+                  {pro.full_name}
+                </h3>
+                {isEffectivelyDestacado(pro.subscription_tier, pro.tier_expires_at) && (
+                  <span data-testid="destacado-chip">
+                    <Chip variant="brand" label="Destacado" className="text-[10px] px-2 py-0.5" />
+                  </span>
+                )}
+              </div>
 
               {visibleSpecialties.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5 mb-1">

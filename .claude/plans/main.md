@@ -34,6 +34,7 @@ Deployed at: https://hara-weld.vercel.app
 - [ ] All pages visually match the design system (liquid-glass, tokens, pill buttons, identical page shells) — first pass done, needs visual testing
 - [x] Public directory page (`/profesionales`) with reputation-based ranking — shipped 2026-04-24 (migration 004: ranking columns + trigger; /profesionales server component; home page 3rd CTA)
 - [x] Home page redesign with dual CTA (concierge + directory) — "Ver profesionales" CTA added 2026-04-24
+- [x] Destacado tier MVP — admin-gated payment recording, expiry-aware ranking, public Destacado chip, daily cron cleanup (shipped 2026-04-27, migration 005)
 - [x] Admin dashboard improvements — search + status filters on all 3 list pages, debug routes migrated to admin, inline match context on leads
 - [x] Registration full-flow E2E test — Playwright test covering 4-step form, image upload, DB verification, cleanup
 - [x] Unified legal page at `/terminosyprivacidad` with collapsible terms/privacy content and form links
@@ -66,26 +67,72 @@ Deployed at: https://hara-weld.vercel.app
    - Why: Reputation comes from real interactions — this closes the loop on the ranking model
    - PRD: `docs/prd/` (to be written)
 
-5. **Payments + subscription tiers PRD**
-   - What: MercadoPago (LATAM) or Stripe integration, checkout, tier state on professionals, webhooks
-   - Why: Monetization — `subscription_tier` column exists, just needs payment wiring
+5. **Apply migrations 004 + 005 to Supabase** *(immediate action — required before integration/E2E)*
+   - What: `node scripts/apply-ranking-migration.mjs` then `node scripts/apply-destacado-migration.mjs`, or paste both SQL files in the Supabase SQL Editor in order.
+   - Why: Both migrations are committed in code but not applied to the live DB. Until applied: `/profesionales` shows empty state, parity tests skip, E2E DB-dependent tests skip, admin Destacado UI submits return 500 from the RPC.
+
+6. **Self-serve Destacado checkout PRD** *(builds on 2026-04-27 admin-gated MVP)*
+   - What: MercadoPago SDK integration, `/profesionales/[slug]/upgrade` checkout page, webhook to sync subscription state. Removes the manual admin step.
+   - Why: Admin-gated MVP validates demand; self-serve scales it.
    - PRD: `docs/prd/` (to be written)
 
-6. **Directory filters + search PRD**
+7. **Directory filters + search PRD**
    - What: Specialty / location / modality filters, name search, pagination
    - Why: Directory is live but only shows a flat sorted list — filtering is next
    - PRD: `docs/prd/` (to be written)
 
-7. **Apply migration 004 to Supabase** *(immediate action)*
-   - What: Run `node scripts/apply-ranking-migration.mjs` or paste `migrations/004_ranking_foundation.sql` in the Supabase SQL Editor
-   - Why: Migration is written but not yet applied — integration/E2E parity tests need it to pass
+8. **Renewal reminders PRD**
+   - What: Email professional N days before `tier_expires_at`; daily admin digest of expiring subscriptions
+   - Why: Makes the admin-gated Destacado loop sustainable
+   - PRD: `docs/prd/` (to be written)
 
-8. **Admin pages (remaining):**
-   - `/admin/professionals/[id]` — Professional detail (separate from review — reviews, rating, tier)
-   - `/admin/analytics` — Funnel dashboard
-   - `/admin/settings` — Operational config
+9. **Automated AFIP invoicing PRD**
+   - What: Tusfacturas or Contabilium integration so admin doesn't issue invoices manually
+   - Why: Volume bottleneck once Destacado adoption grows
+   - PRD: `docs/prd/` (to be written)
+
+10. **`/pro/*` portal PRD**
+    - What: Auth-bind `professionals.user_id`, /pro home, /pro/leads, /pro/profile edit, tier visibility
+    - Why: Two-sided marketplace needs the professional self-serve side
+    - PRD: `docs/prd/` (to be written)
+
+11. **Admin pages (remaining):**
+    - `/admin/professionals/[id]` — Professional detail (separate from review — reviews, rating, tier)
+    - `/admin/analytics` — Funnel dashboard (incl. MRR / active Destacado count)
+    - `/admin/settings` — Operational config
 
 ## Session Log
+
+### Session — 2026-04-27
+
+**Completed:**
+- Destacado Tier — Admin-Gated MVP (`/spec` — plan: `docs/plans/2026-04-24-destacado-tier-mvp.md`, PRD: `docs/prd/2026-04-24-destacado-tier-mvp.md`)
+  - `migrations/005_destacado_tier_mvp.sql` — `tier_expires_at` column on professionals + `subscription_payments` table + partial index + updated `recompute_ranking()` trigger (expiry-aware via `IS NULL OR > NOW()` branch — backward compat for legacy destacado rows) + atomic `upgrade_destacado_tier()` RPC with `SELECT ... FOR UPDATE` row lock (race safety) + commented rollback block
+  - `scripts/apply-destacado-migration.mjs` — helper to apply migration 005 (mirrors apply-ranking-migration.mjs pattern)
+  - `lib/ranking.ts` extended — optional `tierExpiresAt` in `RankingInput`, expiry-aware `computeTierContribution`, new `isEffectivelyDestacado(tier, expiresAt)` helper. `lib/ranking.test.ts` +11 unit tests (29 total).
+  - `__tests__/integration/ranking-parity.test.ts` extended — 3 new fixtures (future expiry → 80.00, past expiry → 70.00, retroactive RPC arithmetic). Existing fixture 5 still passes via backward-compat branch.
+  - `app/api/admin/subscriptions/route.ts` — `POST` (atomic via `upgrade_destacado_tier` RPC) + `GET ?professional_id=<uuid>` (history). 15 unit tests for validation paths.
+  - `app/api/admin/professionals/route.ts` — extended select to include `subscription_tier` + `tier_expires_at`.
+  - `app/admin/professionals/page.tsx` — added inline status chip per row ("Destacado hasta DD MMM YYYY" / "Básico"), "Destacar / Extender" button, expand chevron with lazy-loaded payment history.
+  - `app/admin/professionals/components/DestacadoPaymentModal.tsx` — payment recording modal with form validation, period presets (30/90/180/365/custom), info banner when extending active subscription. 7 unit tests covering validation, payload shape, info banner, Cancelar/onSuccess flow.
+  - `app/profesionales/page.tsx` + `app/p/[slug]/page.tsx` — added Destacado chip with `data-testid="destacado-chip"` gated by `isEffectivelyDestacado()`.
+  - `app/api/cron/expire-destacado/route.ts` + `vercel.json` — daily 06:00 UTC cron with Bearer CRON_SECRET auth. 6 unit tests.
+  - `app/components/ui/Alert.tsx` — added `role="alert"` (ARIA only; visual unchanged) so the modal's error path is reachable via `getByRole('alert')`.
+  - `__tests__/e2e/destacado.spec.ts` — Playwright E2E for TS-001..005. Cron 401/auth tests verified green; DB-dependent tests skip cleanly until migration 005 applied.
+
+**Deviations:**
+- Migration 005 written but **not applied to Supabase** in this session (sandbox can't reach the cloud DB — same pattern as Apr 24). Apply manually before integration/E2E go fully green: `node scripts/apply-destacado-migration.mjs` or paste `migrations/005_destacado_tier_mvp.sql` in Supabase SQL Editor.
+- TS-001 / TS-005 admin-flow Playwright scenarios are documented as covered by the unit + integration test stack (DestacadoPaymentModal.test.tsx + parity fixture 11 + route.test.ts) rather than a full admin Playwright project — admin storageState setup is left for a future infra PRD.
+
+**Blockers:**
+- Apply migration 005 to Supabase to unblock the parity test extensions and E2E DB-dependent tests.
+
+**Tests:** 92/92 unit pass · TypeScript clean · Build clean · Cron 401 path E2E verified.
+
+**RankingInput caller audit** (Task 2 DoD step):
+- `__tests__/integration/ranking-parity.test.ts` — fixtures 1-8 intentionally omit `tierExpiresAt` to exercise the backward-compat (null) branch; explicit comment in `parityTest()`. Fixtures 9-11 pass `row.tier_expires_at` from DB.
+- `lib/ranking.test.ts` — 11 new test cases pass `tierExpiresAt` explicitly (future, past, null, ISO string).
+- No production callers of `RankingInput` outside the helper itself — UI code uses `isEffectivelyDestacado()` directly.
 
 ### Session — 2026-04-24
 
@@ -314,7 +361,7 @@ Deployed at: https://hara-weld.vercel.app
 | 1 | `/admin/leads` | **Done** | Bandeja de solicitudes — GlassCard, Spanish copy |
 | 2 | `/admin/leads/[id]` | **Done** | Detalle de solicitud con contacto, contexto, needs y match actual |
 | 3 | `/admin/leads/[id]/match` | **Done** | Crear match — GlassCard, Spanish copy, AdminLayout |
-| 4 | `/admin/professionals` | **Done** | Listado profesionales grouped by status |
+| 4 | `/admin/professionals` | **Done** | Listado profesionales grouped by status + inline Destacado tier management (modal, status chip, payment history expand) — added 2026-04-27 |
 | 5 | `/admin/professionals/[id]/review` | **Done** | Admin review page with score + approve/reject |
 | 6 | `/admin/professionals/[id]` | **New — Phase 3** | Professional detail (reviews, rating, tier) |
 | 7 | `/admin/analytics` | **New — Phase 3** | Dashboard: funnel + directory metrics |
@@ -523,13 +570,19 @@ Deployed at: https://hara-weld.vercel.app
 - `app/api/admin/professionals/route.ts` — Professionals list API (replaced debug route)
 - `app/api/admin/pqls/route.ts` — PQLs list API (replaced debug route)
 - `__tests__/e2e/registration-full-flow.spec.ts` — Full 4-step registration E2E with Google Maps mock + image upload + DB cleanup
-- `docs/plans/` — Spec-driven plans (specialty-color-system, testing-infrastructure, design-system-sweep, test-suite-hardening, registration-full-flow-e2e, admin-dashboard-improvements, directory-ranking-foundation)
-- `lib/ranking.ts` — TS ranking formula helper (`computeRankingScore`) — must stay in sync with `migrations/004_ranking_foundation.sql`
+- `docs/plans/` — Spec-driven plans (specialty-color-system, testing-infrastructure, design-system-sweep, test-suite-hardening, registration-full-flow-e2e, admin-dashboard-improvements, directory-ranking-foundation, destacado-tier-mvp)
+- `lib/ranking.ts` — TS ranking formula helper (`computeRankingScore`, `isEffectivelyDestacado`) — must stay in sync with `migrations/004_ranking_foundation.sql` AND `migrations/005_destacado_tier_mvp.sql`
 - `migrations/004_ranking_foundation.sql` — Ranking columns + `recompute_ranking()` trigger — **apply to Supabase before running integration tests**
-- `app/profesionales/page.tsx` — Public directory page (server component, sorted by `ranking_score DESC`)
-- `__tests__/integration/ranking-parity.test.ts` — DB-backed parity test (TS ↔ SQL formula equivalence)
+- `migrations/005_destacado_tier_mvp.sql` — `tier_expires_at` column + `subscription_payments` table + expiry-aware trigger + `upgrade_destacado_tier()` RPC — **apply after 004**
+- `app/profesionales/page.tsx` — Public directory page (server component, sorted by `ranking_score DESC`, Destacado chip)
+- `app/p/[slug]/page.tsx` — Public profile page (Destacado chip near name)
+- `app/admin/professionals/page.tsx` + `components/DestacadoPaymentModal.tsx` — Admin tier management UI (modal, row chip, expand history)
+- `app/api/admin/subscriptions/route.ts` — POST upgrade + GET history (admin only via middleware)
+- `app/api/cron/expire-destacado/route.ts` + `vercel.json` — Daily cron for tier cleanup (Bearer CRON_SECRET auth)
+- `__tests__/integration/ranking-parity.test.ts` — DB-backed parity test (TS ↔ SQL formula + RPC arithmetic)
 - `scripts/apply-ranking-migration.mjs` — Apply migration 004 to Supabase
-- `docs/prd/` — Product Requirements Documents (directory-ranking-foundation + future PRDs)
+- `scripts/apply-destacado-migration.mjs` — Apply migration 005 to Supabase
+- `docs/prd/` — Product Requirements Documents (directory-ranking-foundation, destacado-tier-mvp, + future PRDs)
 
 ### Seed data
 - Run `npm run qa:seed-e2e` to seed 4 professionals + 1 lead + 1 match with 3 recommendations

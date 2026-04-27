@@ -42,7 +42,7 @@ export function Alert({ variant = 'info', title, children, className = '' }: Ale
   }
 
   return (
-    <div className={`p-4 rounded-lg border ${variantStyles[variant]} ${className} animate-in fade-in slide-in-from-top-1 duration-200`}>
+    <div role="alert" className={`p-4 rounded-lg border ${variantStyles[variant]} ${className} animate-in fade-in slide-in-from-top-1 duration-200`}>
       <div className="flex gap-3">
         {icons[variant]}
         <div className="flex-1">

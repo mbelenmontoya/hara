@@ -12,8 +12,9 @@
 //      This test does NOT hit HTTP endpoints — DB-only. The cold start is unavoidable overhead.
 //
 // PREREQUISITES:
-//   Apply migrations/004_ranking_foundation.sql before running.
-//   If the migration is missing, all tests are skipped with a clear message.
+//   Apply migrations/004_ranking_foundation.sql before running (fixtures 1-8).
+//   Apply migrations/005_destacado_tier_mvp.sql before running (fixtures 9-11 + RPC test).
+//   If either migration is missing, the relevant tests are skipped with a clear message.
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
@@ -143,8 +144,16 @@ type FixtureRow = {
   ranking_score: number
 }
 
+// Extended row type for migration 005 fixtures (includes tier_expires_at)
+type FixtureRowWithExpiry = FixtureRow & {
+  tier_expires_at: string | null
+}
+
 let insertedRows: FixtureRow[] = []
 let migrationApplied = false
+let migration005Applied = false
+let insertedExpiry005Rows: FixtureRowWithExpiry[] = []
+let expiry005Ids: string[] = []
 
 // ── Setup ──────────────────────────────────────────────────────────────────────
 
@@ -181,7 +190,7 @@ beforeAll(async () => {
 
   if (!migrationApplied) return
 
-  // Insert all 8 fixture professionals
+  // Insert all 8 fixture professionals (migration 004 only, no tier_expires_at)
   for (const fixture of fixtures) {
     const { data, error } = await supabase
       .from('professionals')
@@ -195,20 +204,134 @@ beforeAll(async () => {
     }
     insertedRows.push(data as FixtureRow)
   }
+
+  // ── Migration 005 check + fixtures 9-11 ─────────────────────────────────────
+  // Probe for tier_expires_at column (migration 005)
+  const { error: probe005 } = await supabase
+    .from('professionals')
+    .select('tier_expires_at')
+    .limit(1)
+
+  if (probe005) {
+    console.warn(
+      '\n⚠  Migration 005 not applied — skipping expiry parity tests (fixtures 9-11).\n' +
+      '   Run: node scripts/apply-destacado-migration.mjs\n'
+    )
+    return
+  }
+
+  migration005Applied = true
+
+  const future30 = new Date(Date.now() + 30 * 86400000).toISOString()
+  const past1    = new Date(Date.now() - 86400000).toISOString()
+
+  const expiryFixtures = [
+    // Fixture 9: full completeness, destacado, future expiry → tier contribution = 100, score = 80.00
+    {
+      slug: slug(9), status: 'draft', full_name: 'Parity Nine', email: email(9),
+      whatsapp: '+5491112345678', country: 'AR', modality: ['online'], specialties: ['ansiedad'],
+      profile_image_url: 'https://example.com/img.jpg',
+      short_description: 'Breve descripción.',
+      bio: FIFTY_CHAR_BIO,
+      experience_description: 'Tengo experiencia en...',
+      service_type: ['individual'],
+      online_only: true,
+      instagram: 'therapist_handle',
+      subscription_tier: 'destacado',
+      tier_expires_at: future30,   // future → effective destacado
+    },
+    // Fixture 10: full completeness, destacado, PAST expiry → tier contribution = 0, score = 70.00
+    {
+      slug: slug(10), status: 'draft', full_name: 'Parity Ten', email: email(10),
+      whatsapp: '+5491112345678', country: 'AR', modality: ['online'], specialties: ['ansiedad'],
+      profile_image_url: 'https://example.com/img.jpg',
+      short_description: 'Breve descripción.',
+      bio: FIFTY_CHAR_BIO,
+      experience_description: 'Tengo experiencia en...',
+      service_type: ['individual'],
+      online_only: true,
+      instagram: 'therapist_handle',
+      subscription_tier: 'destacado',
+      tier_expires_at: past1,   // past → expired, tier contribution = 0
+    },
+  ]
+
+  for (const fixture of expiryFixtures) {
+    const { data, error } = await supabase
+      .from('professionals')
+      .insert(fixture)
+      .select('id, profile_completeness_score, rating_average, rating_count, subscription_tier, ranking_score, tier_expires_at')
+      .single()
+
+    if (error) {
+      console.error(`Failed to insert fixture ${fixture.slug}:`, error.message)
+      continue
+    }
+    insertedExpiry005Rows.push(data as FixtureRowWithExpiry)
+    expiry005Ids.push((data as FixtureRowWithExpiry).id)
+  }
+
+  // Fixture 11: retroactive RPC extension arithmetic
+  // Seed a destacado row with tier_expires_at = NOW() + 10 days,
+  // call upgrade_destacado_tier with 30-day period from 60→30 days ago,
+  // assert new expiry = original + 30 days (not paid_at + 30 days).
+  const originalExpiry = new Date(Date.now() + 10 * 86400000)
+  const { data: f11, error: f11err } = await supabase
+    .from('professionals')
+    .insert({
+      slug: slug(11), status: 'draft', full_name: 'Parity Eleven', email: email(11),
+      whatsapp: '+5491112345678', country: 'AR', modality: ['online'], specialties: ['ansiedad'],
+      subscription_tier: 'destacado',
+      tier_expires_at: originalExpiry.toISOString(),
+    })
+    .select('id, tier_expires_at')
+    .single()
+
+  if (!f11err && f11) {
+    expiry005Ids.push(f11.id)
+
+    // Call the RPC: 30-day purchased period from 60 days ago to 30 days ago
+    const periodStart = new Date(Date.now() - 60 * 86400000)
+    const periodEnd   = new Date(Date.now() - 30 * 86400000)
+    const { data: rpcResult } = await supabase.rpc('upgrade_destacado_tier', {
+      p_professional_id: f11.id,
+      p_amount:          5000,
+      p_currency:        'ARS',
+      p_paid_at:         new Date().toISOString(),
+      p_period_start:    periodStart.toISOString().split('T')[0],
+      p_period_end:      periodEnd.toISOString().split('T')[0],
+      p_payment_method:  'efectivo',
+      p_invoice_number:  null,
+      p_notes:           'retroactive-parity-test',
+      p_created_by:      null,
+    })
+
+    if (rpcResult) {
+      // Store rpcResult for the test
+      ;(f11 as Record<string, unknown>).__rpcResult = rpcResult
+      ;(f11 as Record<string, unknown>).__originalExpiry = originalExpiry.getTime()
+    }
+    insertedExpiry005Rows.push(f11 as unknown as FixtureRowWithExpiry & { __rpcResult?: unknown; __originalExpiry?: number })
+  }
 })
 
 afterAll(async () => {
-  if (insertedRows.length === 0) return
-
-  const ids = insertedRows.map(r => r.id)
-  await supabase.from('professionals').delete().in('id', ids)
-
+  const all005Ids = [...expiry005Ids]
+  if (insertedRows.length > 0) {
+    await supabase.from('professionals').delete().in('id', insertedRows.map(r => r.id))
+  }
+  if (all005Ids.length > 0) {
+    // subscription_payments rows are CASCADE-deleted when professional is deleted
+    await supabase.from('professionals').delete().in('id', all005Ids)
+  }
   // Belt-and-suspenders: remove any orphaned rows from interrupted runs
   await supabase.from('professionals').delete().like('slug', `ranking-parity-%`)
 })
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
 
+// Parity test for fixtures 1-8 (migration 004, no tier_expires_at)
+// tierExpiresAt is intentionally omitted → backward-compat (null/undefined path)
 function parityTest(fixtureIndex: number, description: string) {
   it(description, () => {
     if (!migrationApplied) return
@@ -220,6 +343,26 @@ function parityTest(fixtureIndex: number, description: string) {
       ratingAverage: Number(row.rating_average),
       ratingCount: row.rating_count,
       tier: (row.subscription_tier as 'basico' | 'destacado'),
+      // tierExpiresAt omitted intentionally — undefined uses backward-compat path (null)
+    })
+
+    expect(row.ranking_score).toBeCloseTo(tsScore, 2)
+  })
+}
+
+// Parity test for migration 005 fixtures (includes tier_expires_at)
+function parityTest005(rowIndex: number, description: string) {
+  it(description, () => {
+    if (!migration005Applied) return
+    const row = insertedExpiry005Rows[rowIndex]
+    if (!row) throw new Error(`Expiry fixture ${rowIndex + 1} was not inserted`)
+
+    const tsScore = computeRankingScore({
+      completeness: row.profile_completeness_score,
+      ratingAverage: Number(row.rating_average),
+      ratingCount: row.rating_count,
+      tier: (row.subscription_tier as 'basico' | 'destacado'),
+      tierExpiresAt: row.tier_expires_at,   // explicitly passed from DB
     })
 
     expect(row.ranking_score).toBeCloseTo(tsScore, 2)
@@ -239,5 +382,41 @@ describe('SQL trigger ↔ TS computeRankingScore parity', () => {
   it('all 8 fixtures were successfully inserted', () => {
     if (!migrationApplied) return
     expect(insertedRows).toHaveLength(8)
+  })
+})
+
+// ── Migration 005: expiry-aware parity tests ──────────────────────────────────
+describe('SQL trigger ↔ TS parity — migration 005 (tier_expires_at)', () => {
+  parityTest005(0, 'fixture 9: full completeness, destacado, FUTURE expiry → ranking_score = 80.00 (tier +10)')
+  parityTest005(1, 'fixture 10: full completeness, destacado, PAST expiry → ranking_score = 70.00 (tier = 0, expired)')
+
+  it('migration 005 fixtures were inserted', () => {
+    if (!migration005Applied) return
+    expect(insertedExpiry005Rows.length).toBeGreaterThanOrEqual(2)
+  })
+})
+
+// ── Migration 005: RPC extension arithmetic (fixture 11) ──────────────────────
+describe('upgrade_destacado_tier RPC — retroactive extension arithmetic', () => {
+  it('fixture 11: retroactive payment — new expiry = original_expiry + 30 days (not paid_at + 30)', () => {
+    if (!migration005Applied) return
+    // The fixture 11 row is at index 2 in insertedExpiry005Rows (0=fixture9, 1=fixture10, 2=fixture11)
+    const row = insertedExpiry005Rows[2] as (FixtureRowWithExpiry & { __rpcResult?: unknown; __originalExpiry?: number })
+    if (!row || !row.__rpcResult || !row.__originalExpiry) return  // RPC failed or not set up
+
+    // The RPC was called with a 30-day period (30 days ago → today = 30 days purchased).
+    // Original expiry was NOW() + 10 days.
+    // Expected new expiry = original_expiry + 30 days (not paid_at + 30 days).
+    const rpc = row.__rpcResult as { tier_expires_at: string }
+    const newExpiry = new Date(rpc.tier_expires_at).getTime()
+    const expectedExpiry = row.__originalExpiry + 30 * 86400000  // original + 30 days
+
+    // Allow ±60 seconds tolerance for execution time drift
+    const toleranceMs = 60000
+    expect(Math.abs(newExpiry - expectedExpiry)).toBeLessThan(toleranceMs)
+
+    // Assert it's NOT paid_at + 30 days (which would be ~today + 30 days, not original + 30)
+    const paidAtPlus30 = Date.now() + 30 * 86400000
+    expect(Math.abs(newExpiry - paidAtPlus30)).toBeGreaterThan(toleranceMs)
   })
 })

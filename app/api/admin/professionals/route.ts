@@ -12,7 +12,7 @@ export async function GET() {
   try {
     const { data, error } = await supabaseAdmin
       .from('professionals')
-      .select('id, slug, full_name, specialties, status, country, city, email, created_at')
+      .select('id, slug, full_name, specialties, status, country, city, email, created_at, subscription_tier, tier_expires_at')
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -30,6 +30,8 @@ export async function GET() {
       city: p.city,
       email: p.email,
       created_at: p.created_at,
+      subscription_tier: p.subscription_tier ?? 'basico',
+      tier_expires_at: p.tier_expires_at ?? null,
     }))
 
     return NextResponse.json({ professionals })

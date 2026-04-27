@@ -9,8 +9,10 @@ import { Chip } from '@/app/components/ui/Chip'
 import { MODALITY_MAP, STYLE_MAP, SERVICE_TYPE_MAP } from '@/lib/design-constants'
 import { PageBackground } from '@/app/components/ui/PageBackground'
 import { isEffectivelyDestacado } from '@/lib/ranking'
+import { ReviewerEmailCapture } from '@/app/components/ReviewerEmailCapture'
 
 interface Professional {
+  id: string
   slug: string
   name: string
   specialties: string[]
@@ -34,13 +36,15 @@ interface Professional {
   profile_image_url: string | null
   subscription_tier: string | null
   tier_expires_at: string | null
+  rating_average: number
+  rating_count: number
 }
 
 
 async function getProfessional(slug: string): Promise<Professional | null> {
   const { data, error } = await supabaseAdmin
     .from('professionals')
-    .select('slug, full_name, specialties, modality, style, bio, short_description, experience_description, instagram, service_type, offers_courses_online, courses_presencial_location, whatsapp, country, city, online_only, price_range_min, price_range_max, currency, accepting_new_clients, profile_image_url, subscription_tier, tier_expires_at')
+    .select('id, slug, full_name, specialties, modality, style, bio, short_description, experience_description, instagram, service_type, offers_courses_online, courses_presencial_location, whatsapp, country, city, online_only, price_range_min, price_range_max, currency, accepting_new_clients, profile_image_url, subscription_tier, tier_expires_at, rating_average, rating_count')
     .eq('slug', slug)
     .eq('status', 'active')
     .single()
@@ -48,6 +52,7 @@ async function getProfessional(slug: string): Promise<Professional | null> {
   if (error || !data) return null
 
   return {
+    id: data.id,
     slug: data.slug,
     name: data.full_name,
     specialties: data.specialties,
@@ -71,7 +76,28 @@ async function getProfessional(slug: string): Promise<Professional | null> {
     profile_image_url: data.profile_image_url,
     subscription_tier: data.subscription_tier ?? null,
     tier_expires_at: data.tier_expires_at ?? null,
+    rating_average: Number(data.rating_average ?? 0),
+    rating_count: Number(data.rating_count ?? 0),
   }
+}
+
+interface Review {
+  id: string
+  rating: number
+  text: string | null
+  reviewer_name: string | null
+  submitted_at: string
+}
+
+async function getRecentReviews(professionalId: string): Promise<Review[]> {
+  const { data } = await supabaseAdmin
+    .from('reviews')
+    .select('id, rating, text, reviewer_name, submitted_at')
+    .eq('professional_id', professionalId)
+    .eq('is_hidden', false)
+    .order('submitted_at', { ascending: false })
+    .limit(5)
+  return (data ?? []) as Review[]
 }
 
 function formatPrice(min: number | null, max: number | null, currency: string): string | null {
@@ -100,6 +126,9 @@ export default async function ProfessionalProfilePage({
   if (!professional) {
     notFound()
   }
+
+  // Fetch recent reviews in parallel with nothing else — triggered after professional is confirmed active
+  const reviews = await getRecentReviews(professional.id)
 
   // Back link: if from recommendations, go back there. Otherwise go home.
   const fromPath = searchParams.from
@@ -235,6 +264,41 @@ export default async function ProfessionalProfilePage({
           </div>
         )}
 
+        {/* Card 3b: Reviews — hidden when no reviews yet */}
+        {professional.rating_count > 0 && (
+          <article
+            data-testid="reviews-card"
+            className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xs font-semibold text-muted uppercase tracking-wide">Reseñas</h2>
+              <span className="text-sm font-semibold text-foreground">
+                {professional.rating_average.toFixed(1)} ★ · {professional.rating_count} {professional.rating_count === 1 ? 'reseña' : 'reseñas'}
+              </span>
+            </div>
+            <div className="space-y-4">
+              {reviews.map((review) => (
+                <div key={review.id} className="border-t border-outline/40 pt-3 first:border-t-0 first:pt-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-medium text-foreground">
+                      {review.reviewer_name ?? 'Anónimo'}
+                    </span>
+                    <span className="text-xs text-muted">
+                      {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+                    </span>
+                  </div>
+                  {review.text && (
+                    <p className="text-sm text-muted italic">"{review.text}"</p>
+                  )}
+                  <p className="text-xs text-muted/60 mt-1">
+                    {new Date(review.submitted_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </article>
+        )}
+
         {/* Card 4: Logistics — "How do I see them?" */}
         <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6">
           <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">Modalidad</h2>
@@ -307,6 +371,11 @@ export default async function ProfessionalProfilePage({
             rank={0}
             className="w-full"
           />
+
+          {/* Email-capture for reviews — hidden in concierge flow (visitor has email in lead) */}
+          {!searchParams.from?.startsWith('/r/') && (
+            <ReviewerEmailCapture professionalSlug={professional.slug} />
+          )}
         </div>
 
         {/* Privacy */}

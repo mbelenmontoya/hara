@@ -35,6 +35,7 @@ Deployed at: https://hara-weld.vercel.app
 - [x] Public directory page (`/profesionales`) with reputation-based ranking — shipped 2026-04-24 (migration 004: ranking columns + trigger; /profesionales server component; home page 3rd CTA)
 - [x] Home page redesign with dual CTA (concierge + directory) — "Ver profesionales" CTA added 2026-04-24
 - [x] Destacado tier MVP — admin-gated payment recording, expiry-aware ranking, public Destacado chip, daily cron cleanup (shipped 2026-04-27, migration 005)
+- [x] Reviews collection system — post-contact email review request (7-day cron), no-login submission at /r/review/[token], reviews card on /p/[slug], admin /admin/reviews moderation, DB trigger updates rating_average + rating_count → ranking_score chain (shipped 2026-04-27, migration 006)
 - [x] Admin dashboard improvements — search + status filters on all 3 list pages, debug routes migrated to admin, inline match context on leads
 - [x] Registration full-flow E2E test — Playwright test covering 4-step form, image upload, DB verification, cleanup
 - [x] Unified legal page at `/terminosyprivacidad` with collapsible terms/privacy content and form links
@@ -62,46 +63,70 @@ Deployed at: https://hara-weld.vercel.app
    - What: Product decision — when a profile is rejected, do we keep the data? Can the professional resubmit? Do they get notified?
    - Why: DB stores `rejected` status and `rejection_reason` but there's no flow after rejection.
 
-4. **Review collection system PRD**
-   - What: Post-contact review link (email/WhatsApp), `reviews` table, submission page (no login), display on `/p/[slug]`. Also fixes the `ContactButton.tsx:43` directory-contact tracking bug.
-   - Why: Reputation comes from real interactions — this closes the loop on the ranking model
-   - PRD: `docs/prd/` (to be written)
+4. **Apply migrations 004 + 005 + 006 to Supabase** *(immediate — all three are committed but not applied)*
+   - What: `node scripts/apply-ranking-migration.mjs && node scripts/apply-destacado-migration.mjs && node scripts/apply-reviews-migration.mjs`
+   - Why: Until all three are applied: /profesionales shows empty state, Destacado admin modal fails, review emails never send, review form shows "invalid token" errors
+   - Also: Verify Resend domain is verified in dashboard (`FROM_EMAIL` in lib/email.ts is still `onboarding@resend.dev`)
 
-5. **Apply migrations 004 + 005 to Supabase** *(immediate action — required before integration/E2E)*
-   - What: `node scripts/apply-ranking-migration.mjs` then `node scripts/apply-destacado-migration.mjs`, or paste both SQL files in the Supabase SQL Editor in order.
-   - Why: Both migrations are committed in code but not applied to the live DB. Until applied: `/profesionales` shows empty state, parity tests skip, E2E DB-dependent tests skip, admin Destacado UI submits return 500 from the RPC.
-
-6. **Self-serve Destacado checkout PRD** *(builds on 2026-04-27 admin-gated MVP)*
+5. **Self-serve Destacado checkout PRD** *(builds on 2026-04-27 admin-gated MVP)*
    - What: MercadoPago SDK integration, `/profesionales/[slug]/upgrade` checkout page, webhook to sync subscription state. Removes the manual admin step.
    - Why: Admin-gated MVP validates demand; self-serve scales it.
    - PRD: `docs/prd/` (to be written)
 
-7. **Directory filters + search PRD**
+6. **Directory filters + search PRD**
    - What: Specialty / location / modality filters, name search, pagination
    - Why: Directory is live but only shows a flat sorted list — filtering is next
    - PRD: `docs/prd/` (to be written)
 
-8. **Renewal reminders PRD**
+7. **Renewal reminders PRD**
    - What: Email professional N days before `tier_expires_at`; daily admin digest of expiring subscriptions
    - Why: Makes the admin-gated Destacado loop sustainable
    - PRD: `docs/prd/` (to be written)
 
-9. **Automated AFIP invoicing PRD**
+8. **Automated AFIP invoicing PRD**
    - What: Tusfacturas or Contabilium integration so admin doesn't issue invoices manually
    - Why: Volume bottleneck once Destacado adoption grows
    - PRD: `docs/prd/` (to be written)
 
-10. **`/pro/*` portal PRD**
-    - What: Auth-bind `professionals.user_id`, /pro home, /pro/leads, /pro/profile edit, tier visibility
-    - Why: Two-sided marketplace needs the professional self-serve side
-    - PRD: `docs/prd/` (to be written)
+9. **`/pro/*` portal PRD**
+   - What: Auth-bind `professionals.user_id`, /pro home, /pro/leads, /pro/profile edit, tier visibility
+   - Why: Two-sided marketplace needs the professional self-serve side
+   - PRD: `docs/prd/` (to be written)
 
-11. **Admin pages (remaining):**
+10. **Admin pages (remaining):**
     - `/admin/professionals/[id]` — Professional detail (separate from review — reviews, rating, tier)
     - `/admin/analytics` — Funnel dashboard (incl. MRR / active Destacado count)
     - `/admin/settings` — Operational config
 
 ## Session Log
+
+### Session — 2026-04-27 (Reviews Collection System)
+
+**Completed:**
+- Reviews Collection System (`/spec` — plan: `docs/plans/2026-04-27-reviews-collection-system.md`, PRD: `docs/prd/2026-04-27-reviews-collection-system.md`)
+  - `migrations/006_reviews_collection.sql` — `reviews` + `review_requests` tables, `recompute_review_aggregates()` function, `submit_review()` atomic RPC (FOR UPDATE + friendly error mapping), `select_pending_review_events()` cron helper, trigger using `CASE TG_OP` (not COALESCE — avoids PL/pgSQL eager-eval on DELETE)
+  - `app/api/events/route.ts` extended — direct-contact branch accepts `professional_slug` (no token), generates `tracking_code = 'direct-{slug}-{nanoid(10)}'`. Returns 400 when both token + slug missing (was 403). Existing concierge path unchanged.
+  - `app/components/ContactButton.tsx` fixed — removes `if (attributionToken)` gate; direct contacts now fire `contact_click` events including `reviewer_email` from localStorage. `app/components/ReviewerEmailCapture.tsx` — optional inline email capture on `/p/[slug]` for direct flows.
+  - `app/api/contact-email/route.ts` — validates email + writes to recent contact_click event_data (handles post-click email capture).
+  - `app/api/cron/send-review-requests/route.ts` — daily 07:00 UTC cron, Bearer CRON_SECRET auth + misconfig guard, calls `select_pending_review_events()` RPC, generates 32-byte tokens, inserts `review_requests` rows, sends Resend email. Email failure = no DB row (cron retries).
+  - `lib/email.ts` — added `notifyReviewRequest({ to, professionalName, link })` template.
+  - `vercel.json` — added second cron entry `0 7 * * *` for review requests.
+  - `app/api/reviews/submit/route.ts` — POST with token validation, calls `submit_review` RPC, maps P0001 errors to friendly Spanish messages. Rate limit 5/hr per IP.
+  - `app/r/review/[token]/page.tsx` + `ReviewSubmitForm.tsx` — public no-login submission page with 3 states (valid/consumed/expired). Star picker, optional text + name, thank-you confirmation.
+  - `app/p/[slug]/page.tsx` — added `rating_average`, `rating_count`, `id` to interface + select; `getRecentReviews()` helper; Reviews card (hidden when count=0, `data-testid="reviews-card"`).
+  - `app/api/admin/reviews/route.ts` + `[id]/route.ts` — GET list with professional name joined; PATCH toggle `is_hidden` (trigger fires → aggregates recompute → ranking updates).
+  - `app/admin/reviews/page.tsx` — admin moderation list with search + visibility filter + toggle button.
+  - `__tests__/integration/reviews-flow.test.ts` — RPC round-trip: submit → token consumed → aggregates updated → ranking updated. Skips when migration 006 not applied.
+  - `__tests__/e2e/reviews.spec.ts` — TS-001 (form + thank-you + consumed), TS-004 cron auth. Cron 401 tests green; DB-dependent skip cleanly.
+  - 134/134 unit tests pass · TypeScript clean · Build clean · Cron 401 path E2E verified
+
+**Deviations:**
+- Migration 006 written but NOT applied to Supabase in this session (same network constraint as 004/005). Apply before reviews go live: `node scripts/apply-reviews-migration.mjs`.
+- TS-003 (admin hide → aggregate recompute) and TS-001 (token submission) require migration 006 + Supabase reachable — skip cleanly.
+
+**Blockers:**
+- Apply migration 006 to Supabase. Also apply 004 + 005 if not already done.
+- Resend verified domain required before review emails reach real users (`FROM_EMAIL` in `lib/email.ts` is `onboarding@resend.dev`).
 
 ### Session — 2026-04-27
 
@@ -582,7 +607,15 @@ Deployed at: https://hara-weld.vercel.app
 - `__tests__/integration/ranking-parity.test.ts` — DB-backed parity test (TS ↔ SQL formula + RPC arithmetic)
 - `scripts/apply-ranking-migration.mjs` — Apply migration 004 to Supabase
 - `scripts/apply-destacado-migration.mjs` — Apply migration 005 to Supabase
-- `docs/prd/` — Product Requirements Documents (directory-ranking-foundation, destacado-tier-mvp, + future PRDs)
+- `docs/prd/` — Product Requirements Documents (directory-ranking-foundation, destacado-tier-mvp, reviews-collection-system, + future PRDs)
+- `migrations/006_reviews_collection.sql` — reviews + review_requests + submit_review() RPC + aggregate trigger — **apply after 004 + 005**
+- `scripts/apply-reviews-migration.mjs` — apply migration 006 to Supabase
+- `app/components/ContactButton.tsx` — fixed: now fires events for direct contacts (was skipping)
+- `app/components/ReviewerEmailCapture.tsx` — optional email capture on /p/[slug]
+- `app/api/cron/send-review-requests/route.ts` — daily review request email cron (07:00 UTC)
+- `app/api/reviews/submit/route.ts` — token-gated review submission
+- `app/r/review/[token]/page.tsx` — public review form (no login required)
+- `app/admin/reviews/page.tsx` + `/api/admin/reviews/` — admin moderation with is_hidden toggle
 
 ### Seed data
 - Run `npm run qa:seed-e2e` to seed 4 professionals + 1 lead + 1 match with 3 recommendations

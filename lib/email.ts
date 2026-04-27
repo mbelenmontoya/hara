@@ -154,3 +154,41 @@ export async function notifyNewProfessional(professional: {
     `,
   })
 }
+
+// ─── Review request email ─────────────────────────────────────────────────────
+
+export async function notifyReviewRequest({
+  to,
+  professionalName,
+  link,
+}: {
+  to: string
+  professionalName: string
+  link: string
+}): Promise<boolean> {
+  return sendEmail({
+    to,
+    subject: `¿Qué tal tu experiencia con ${professionalName}?`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 16px; color: #1F1A24;">
+        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 12px;">
+          ¿Cómo te fue con ${professionalName}?
+        </h2>
+        <p style="font-size: 15px; color: #6B6374; margin-bottom: 24px; line-height: 1.6;">
+          Hace una semana contactaste a ${professionalName} a través de Hará Match.
+          Si tuviste una sesión, nos ayudaría mucho conocer tu experiencia.
+        </p>
+        <a href="${link}"
+           style="display: inline-block; padding: 14px 28px; background-color: #4B2BBF; color: #ffffff;
+                  text-decoration: none; border-radius: 9999px; font-size: 15px; font-weight: 600;">
+          Calificar mi experiencia
+        </a>
+        <p style="margin-top: 20px; font-size: 12px; color: #6B6374;">
+          Solo lleva un minuto. Si no tuviste una sesión, ignorá este mensaje.
+          <br />
+          O copiá el enlace: ${link}
+        </p>
+      </div>
+    `,
+  })
+}

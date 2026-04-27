@@ -57,7 +57,7 @@ The product ships in 4 phase gates. Each phase has a clear definition of done. *
 
 **Definition of done:** the product works on prod for one real professional + one real user, end-to-end.
 
-0. **🔴 Fix production: middleware is currently throwing on every route.** *(Discovered 2026-04-27 — `https://hara-weld.vercel.app` returns 500 `MIDDLEWARE_INVOCATION_FAILED` on every URL.)* Most likely cause: `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` not set in Vercel. Verify env vars in Vercel dashboard, redeploy, confirm `curl -I https://hara-weld.vercel.app` returns 200. Every other Phase 0 task is blocked until this is fixed.
+0. **Resume the Supabase database.** Free-tier auto-pause is the cause of prod's current 500s — middleware calls `supabase.auth.getUser()` on every request and fails when the DB is paused. Click Resume in the Supabase dashboard. (Long-term: budget for Pro plan or a keep-alive ping in Phase 1.)
 1. **Apply migrations 004 + 005 + 006 to Supabase**
    - Use Supabase SQL Editor (the apply scripts can't reach Supabase from sandbox — DNS NXDOMAIN — and `exec_sql` RPC isn't enabled by default).
    - Order matters: 004 → 005 → 006.

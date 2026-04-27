@@ -30,43 +30,18 @@ The product works on prod for one real professional + one real user, end-to-end.
 
 ## Tasks
 
-### Task 0 — Fix production: middleware is currently throwing on every route 🔴
+### Task 0 — Resume the Supabase database
 
-**Discovered during PRD writing (2026-04-27):** `https://hara-weld.vercel.app` returns `MIDDLEWARE_INVOCATION_FAILED` (500) on every route — public AND admin. Verified via:
+Prod is currently 500ing on every route (`MIDDLEWARE_INVOCATION_FAILED`) because the Supabase project is paused. Free-tier projects auto-pause after ~7 days of inactivity. The middleware calls `supabase.auth.getUser()` on every request; when the DB is paused, that call fails and the whole middleware throws.
 
-```
-curl -I https://hara-weld.vercel.app          → Status 500
-curl -I https://hara-weld.vercel.app/profesionales  → Status 500
-curl -I https://hara-weld.vercel.app/solicitar       → Status 500
-curl -I https://hara-weld.vercel.app/admin/leads     → Status 500
-```
-
-`middleware.ts` calls `updateSession(request)` from `lib/supabase/middleware.ts`, which calls `createServerClient(NEXT_PUBLIC_SUPABASE_URL!, NEXT_PUBLIC_SUPABASE_ANON_KEY!, ...)`. The `!` non-null assertion means missing/empty env vars hand `undefined` to `createServerClient` and the middleware throws.
-
-**Most likely cause:** `NEXT_PUBLIC_SUPABASE_URL` and/or `NEXT_PUBLIC_SUPABASE_ANON_KEY` not set on the Vercel project. The plan's Deployment notes already flagged this: *"New env vars needed in Vercel for latest deploy: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, RESEND_API_KEY."*
-
-**How:**
-
-1. Open Vercel dashboard → `hara` project → Settings → Environment Variables
-2. Verify these are set for the Production environment:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `UPSTASH_REDIS_REST_URL`
-   - `UPSTASH_REDIS_REST_TOKEN`
-   - `RESEND_API_KEY`
-   - `CRON_SECRET`
-3. If any are missing, add them (mirror values from `.env.local`)
-4. Trigger a fresh deploy: `vercel --prod` or push an empty commit
-5. Verify `curl -I https://hara-weld.vercel.app` returns 200
-
-**Why this is Task 0:** every other Phase 0 task (smoke tests, image upload, visual QA) requires the production site to load. None of them can start until this is resolved.
+**How:** Open the Supabase dashboard → project → click **Resume**. Wait ~30 seconds for the DB to come back online. Then `curl -I https://hara-weld.vercel.app` should return 200.
 
 **Verification:**
+- Supabase dashboard shows project status `Active`
 - `curl -I https://hara-weld.vercel.app` returns 200
-- `/profesionales` returns 200 (or shows expected empty-state UI)
-- `/admin/login` loads
-- `/solicitar` loads with form
+- `/profesionales` and `/solicitar` load
+
+**Note for Phase 1:** the auto-pause will keep happening on the free tier. Worth budgeting for the Pro plan (or a daily ping cron) once the product has real users — but it's not Phase 0 work.
 
 ### Task 1 — Apply migrations 004, 005, 006
 

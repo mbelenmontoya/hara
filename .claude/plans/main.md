@@ -53,10 +53,13 @@ The product ships in 4 phase gates. Each phase has a clear definition of done. *
 
 ### Phase 0 — ACTIVATE *(this week)*
 
+**PRD:** [`docs/prd/2026-04-27-phase-0-activation.md`](../docs/prd/2026-04-27-phase-0-activation.md)
+
 **Definition of done:** the product works on prod for one real professional + one real user, end-to-end.
 
+0. **🔴 Fix production: middleware is currently throwing on every route.** *(Discovered 2026-04-27 — `https://hara-weld.vercel.app` returns 500 `MIDDLEWARE_INVOCATION_FAILED` on every URL.)* Most likely cause: `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` not set in Vercel. Verify env vars in Vercel dashboard, redeploy, confirm `curl -I https://hara-weld.vercel.app` returns 200. Every other Phase 0 task is blocked until this is fixed.
 1. **Apply migrations 004 + 005 + 006 to Supabase**
-   - Use Supabase SQL Editor (the apply scripts will likely fall back to manual instructions; `exec_sql` RPC is not enabled by default).
+   - Use Supabase SQL Editor (the apply scripts can't reach Supabase from sandbox — DNS NXDOMAIN — and `exec_sql` RPC isn't enabled by default).
    - Order matters: 004 → 005 → 006.
 2. **Verify Resend domain** and swap `FROM_EMAIL` in `lib/email.ts` away from `onboarding@resend.dev`.
 3. **Smoke test 3 flows on prod:**

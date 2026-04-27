@@ -47,56 +47,51 @@ Deployed at: https://hara-weld.vercel.app
 - No broad DB schema changes — targeted additions only
 - Rejected profile handling is pinned for a future conversation (keep data? allow resubmit?)
 
-## Next Steps
+## Roadmap
 
-1. **Visual test design system sweep**
-   - What: Open every page in the browser and verify visual consistency — background, glass cards, pill buttons, title hierarchy, spacing. The code changes are done but not visually verified.
-   - Why: First pass was token-only. Second pass aligned components (Button → rounded-full, Home → glass cards, Leads → GlassCard, identical DOM shells). Needs eyes on it.
-   - Considerations: Check `/`, `/solicitar`, `/gracias`, `/profesionales/registro`, `/profesionales/registro/confirmacion`, `/p/[slug]`, `/admin/leads`, `/admin/pqls`, `/admin/leads/[id]/match`, `/admin/professionals`, `/admin/professionals/[id]/review`
-   - Note for next session: treat this as manual browser QA first, not just screenshot comparison. After the manual sweep, update or expand the Playwright visual baselines only for the pages that are meant to stay visually locked.
+The product ships in 4 phase gates. Each phase has a clear definition of done. **Don't start phase N+1 until phase N is done.** Items not in a phase are in `Notes → Deferred` — no commitment, revisit only on real-user signal.
 
-2. **Finish image upload testing**
-   - What: Verify the full flow — form with image → FormData submission → Supabase Storage upload → URL in DB → visible on review page and profile page.
-   - Why: Code is written but the upload hasn't been tested end-to-end.
+### Phase 0 — ACTIVATE *(this week)*
 
-3. **Decide rejected profile handling**
-   - What: Product decision — when a profile is rejected, do we keep the data? Can the professional resubmit? Do they get notified?
-   - Why: DB stores `rejected` status and `rejection_reason` but there's no flow after rejection.
+**Definition of done:** the product works on prod for one real professional + one real user, end-to-end.
 
-4. **Apply migrations 004 + 005 + 006 to Supabase** *(immediate — all three are committed but not applied)*
-   - What: `node scripts/apply-ranking-migration.mjs && node scripts/apply-destacado-migration.mjs && node scripts/apply-reviews-migration.mjs`
-   - Why: Until all three are applied: /profesionales shows empty state, Destacado admin modal fails, review emails never send, review form shows "invalid token" errors
-   - Also: Verify Resend domain is verified in dashboard (`FROM_EMAIL` in lib/email.ts is still `onboarding@resend.dev`)
+1. **Apply migrations 004 + 005 + 006 to Supabase**
+   - Use Supabase SQL Editor (the apply scripts will likely fall back to manual instructions; `exec_sql` RPC is not enabled by default).
+   - Order matters: 004 → 005 → 006.
+2. **Verify Resend domain** and swap `FROM_EMAIL` in `lib/email.ts` away from `onboarding@resend.dev`.
+3. **Smoke test 3 flows on prod:**
+   - Browse: `/profesionales` → profile → `Contactar por WhatsApp` → review email arrives 7 days later → `/r/review/[token]` submission.
+   - Concierge: `/solicitar` → admin matches → `/r/[code]` → contact → review.
+   - Onboarding: `/profesionales/registro` (4 steps + image) → admin review → approval → appears in directory.
+4. **Visual QA pass.** Open every route on a phone-sized viewport. Catalog any visual breaks. Update Playwright visual baselines only for routes meant to stay locked.
+5. **Image upload end-to-end verification.** Form → FormData → Supabase Storage → DB URL → visible on review page and `/p/[slug]`.
+6. **Decide rejected profile flow.** Product decision: keep data? Allow resubmit? Notify professional? (See `Open Questions`.) Then implement the decided flow.
 
-5. **Self-serve Destacado checkout PRD** *(builds on 2026-04-27 admin-gated MVP)*
-   - What: MercadoPago SDK integration, `/profesionales/[slug]/upgrade` checkout page, webhook to sync subscription state. Removes the manual admin step.
-   - Why: Admin-gated MVP validates demand; self-serve scales it.
-   - PRD: `docs/prd/` (to be written)
+### Phase 1 — OPEN FOR BUSINESS *(2–3 weeks)*
 
-6. **Directory filters + search PRD**
-   - What: Specialty / location / modality filters, name search, pagination
-   - Why: Directory is live but only shows a flat sorted list — filtering is next
-   - PRD: `docs/prd/` (to be written)
+**Definition of done:** 10 real professionals onboarded, 5 real concierge requests handled, basic monitoring catches errors before users report them.
 
-7. **Renewal reminders PRD**
-   - What: Email professional N days before `tier_expires_at`; daily admin digest of expiring subscriptions
-   - Why: Makes the admin-gated Destacado loop sustainable
-   - PRD: `docs/prd/` (to be written)
+1. **Sentry + Vercel Analytics** wired in. `lib/monitoring.ts` already isolates the integration point.
+2. **Schedule recurring jobs:** reconciliation (calls `check_pql_event_integrity()`), event purge (calls `purge_old_events()`), Destacado expiry (already wired). Verify all 3 cron entries fire on Vercel.
+3. **Onboard first 10 professionals** through real registration. Document friction.
+4. **Handle first 5 real `/solicitar` requests.** Document friction.
+5. **Fix only the issues that show up from real usage.** Do not pre-build polish.
 
-8. **Automated AFIP invoicing PRD**
-   - What: Tusfacturas or Contabilium integration so admin doesn't issue invoices manually
-   - Why: Volume bottleneck once Destacado adoption grows
-   - PRD: `docs/prd/` (to be written)
+### Phase 2 — UNBLOCK SCALE *(1–2 months)*
 
-9. **`/pro/*` portal PRD**
-   - What: Auth-bind `professionals.user_id`, /pro home, /pro/leads, /pro/profile edit, tier visibility
-   - Why: Two-sided marketplace needs the professional self-serve side
-   - PRD: `docs/prd/` (to be written)
+**Definition of done:** admin is no longer in the critical path for payments or directory navigation.
 
-10. **Admin pages (remaining):**
-    - `/admin/professionals/[id]` — Professional detail (separate from review — reviews, rating, tier)
-    - `/admin/analytics` — Funnel dashboard (incl. MRR / active Destacado count)
-    - `/admin/settings` — Operational config
+1. **Self-serve Destacado checkout** — MercadoPago integration, `/profesionales/[slug]/upgrade`, webhook → `upgrade_destacado_tier()`. (PRD: `docs/prd/` — to be written, builds on the 2026-04-27 admin-gated MVP.)
+2. **Directory filters + search** — specialty / location / modality filters, name search, pagination. (PRD: `docs/prd/` — to be written.)
+3. **Destacado renewal reminders** — email N days before `tier_expires_at`, daily admin digest. (PRD: `docs/prd/` — to be written.)
+4. **AFIP invoicing automation** — Tusfacturas or Contabilium integration. (PRD: `docs/prd/` — to be written.)
+
+### Phase 3 — TWO-SIDED MARKETPLACE *(2–3 months)*
+
+**Definition of done:** professionals can self-manage without admin involvement.
+
+1. **`/pro/*` portal** — auth-bind `professionals.user_id` to Supabase Auth, build `/pro` home, `/pro/leads`, `/pro/profile` edit, tier visibility. (PRD: `docs/prd/` — to be written.)
+2. **Admin detail pages** that depend on the portal: `/admin/professionals/[id]` (reviews, rating, tier history), `/admin/analytics` (funnel + MRR + active Destacado).
 
 ## Session Log
 
@@ -412,129 +407,52 @@ Deployed at: https://hara-weld.vercel.app
 | 2 | `/pro/leads` | **New** | Visibilidad de leads para el profesional |
 | 3 | `/pro/analytics` | **New** | Performance por profesional |
 
-### Pending Tasks (Backlog)
+### Real Backlog (folded into Roadmap phases)
 
-#### Known Bugs
-- [x] Hardcoded `#FBF7F2` in 3 pages instead of using `var(--color-background)` or `bg-background` — **fixed in design system sweep (2026-04-07)**
-- [ ] BottomSheet has no backdrop animation (no dimming overlay behind sheet)
-- [ ] Backdrop-filter blur delay on card swipe (Chrome bug — documented in KNOWN_ISSUES.md)
-- [ ] PQL adjustment modal sends `{ amount, reason }` but API expects `{ adjustment_type, reason, billing_month }` — pre-existing, documented in admin dashboard plan
+Items below are tracked in the Roadmap above. Listed here only for cross-reference and to record what's intentionally *not* committed.
 
-#### Design System Extraction
-- [x] Phase 1: Shared constants file (`lib/design-constants.ts`)
-- [x] Phase 2: Chip component
-- [ ] Phase 3: AvatarPlaceholder component
-- [x] Phase 4: GlassCard component — **done this session**
-- [ ] Phase 5: PrivacyNotice component
-- [x] Phase 6: SectionHeader component — **done this session**
-- [ ] Phase 7: FormField component
-- [ ] Phase 8: Sweep + document — **partially done: all pages migrated to PageBackground, GlassCard, pill buttons, shared maps. Needs visual QA.**
+**Phase 0 (this week):** apply migrations 004/005/006 · verify Resend domain · visual QA · image upload e2e · decide rejected profile flow · smoke test all 3 flows
 
-#### UI / UX — High Priority
-- [ ] WhatsApp button redesign (add icon, pulse animation)
-- [ ] Backdrop-filter blur delay — decide on fix approach (Option B: remove scale recommended)
+**Phase 1 (2–3 weeks):** Sentry + Vercel Analytics · cron jobs (reconciliation + event purge + destacado expiry) · onboard first 10 professionals · handle first 5 concierge requests
 
-#### UI / UX — Medium Priority
-- [ ] Progress indicator dot animations (transitions between cards)
-- [ ] Chips staggered entrance animation
-- [ ] Avatar/photo placeholders with initials fallback
-- [ ] Micro-animations (haptic feedback on buttons)
-- [ ] Staggered element reveals
-- [ ] Card deck depth shadows between cards
-- [ ] Spring physics for swipe (momentum, bounce)
-- [ ] Smoother drag resistance curve
-- [ ] More delightful entrance animation for reveal screen
-- [ ] Shimmer effect on loading elements
-- [ ] Text reveal animations
-- [ ] Better hierarchy on card typography
+**Phase 2 (1–2 months):** Self-serve Destacado checkout (MercadoPago) · directory filters + search · renewal reminders · AFIP invoicing automation
 
-#### UI / UX — Low Priority
-- [ ] Dark mode (define tokens, toggle, respect system preference)
-- [ ] Confetti on contact initiation
-- [ ] Success animation after WhatsApp opens
-- [ ] Document desktop-specific issues
-- [ ] Moonly-style card redesign exploration (text over image, no card container)
-- [ ] Design system component extraction (AnimatedIcon, enhanced GlassCard)
-- [ ] Background may need adjustment (currently SVG illustration)
-- [ ] Admin dashboard design polish
-- [ ] Hover states for desktop
+**Phase 3 (2–3 months):** /pro/* portal · admin detail pages
 
-#### Feature Work
-- [x] Email notifications (`lib/email.ts`) — `notifyNewLead()` and `notifyNewProfessional()` — **done**
-- [x] Resend installed and wired — **done**
-- [ ] Email: send copy to person who submitted (requires Resend domain verification)
-- [ ] Google Places Autocomplete refinement (feels "funky")
-- [ ] Reconciliation API endpoint (`/api/admin/reconciliation`) — for concierge flow
-- [x] Supabase Auth replaces Clerk — **done**
-- [x] Upstash Redis connected via Vercel Marketplace — **done**
-- [ ] Set production environment variables (verify all are in Vercel)
-- [ ] `NODE_ENV=production` configured
-- [ ] Rate limiting verified in production
-- [ ] CORS configured (if needed)
-- [ ] Enable Cloudflare proxy / DDoS protection
-- [ ] Advanced DDoS protection (Cloudflare WAF rules)
+### Deferred (no commitment — revisit only on real-user signal)
 
-#### Monitoring / Analytics
-- [ ] Add Sentry DSN + integration
-- [ ] Vercel Analytics integration
-- [ ] Uptime monitoring configured
-- [ ] Log aggregation set up
-- [ ] Monitor post-deploy error rates (first 48 hours)
-- [ ] Set up alerts for error spikes
-- [ ] Monitor Supabase query performance
-- [ ] Review user feedback channels
-- [ ] Check for unexpected traffic patterns
+The product is not yet live. The items below are speculative polish, pre-mature optimization, or low-impact bugs. They stay deferred until a real user reports specific friction or a phase-gate definition of done requires them.
 
-#### Performance Targets
-- [ ] Lighthouse score > 90
-- [ ] LCP < 2.5s
-- [ ] FID < 100ms
-- [ ] CLS < 0.1
-- [ ] TTFB < 800ms
-- [ ] API response times < 500ms
-- [ ] Page load < 3s on 3G
-- [ ] Time to interactive < 5s
-- [ ] Build size < 100KB first load JS
+**Known low-impact bugs** *(deferred)*
+- BottomSheet has no backdrop animation (no dimming overlay behind sheet)
+- Backdrop-filter blur delay on card swipe (Chrome bug — `KNOWN_ISSUES.md`)
+- PQL adjustment modal sends `{ amount, reason }` but API expects `{ adjustment_type, reason, billing_month }` (pre-existing — admin can adjust via DB if needed)
+- Google Places autocomplete arrow-key feel
 
-#### Testing
-- [x] Component tests (Vitest + React Testing Library) — 26 tests across 8 components
-- [x] E2E tests (Playwright) — registration flow, public profile
-- [x] Visual regression (Playwright screenshots) — 4 page baselines
-- [ ] Add unit tests for custom hooks (useRecommendations, useSwipeGesture, etc.)
-- [ ] E2E tests for admin review flow (requires admin auth storageState + seeded data)
-- [x] Google Places bypass in E2E (page.route interception for Maps API) — done in registration-full-flow E2E
-- [x] Registration full-flow E2E test (`__tests__/e2e/registration-full-flow.spec.ts`)
-- [ ] Contract tests for validation rules
-- [ ] Core Web Vitals measurement
-- [ ] CI/CD integration for test suite (GitHub Actions)
+**Animation / micro-interactions** *(deferred)* — confetti on contact, success animation after WhatsApp opens, spring physics on swipe, drag resistance curves, momentum/bounce, staggered chip entrances, progress dot animations, shimmer on loading, text reveal animations, card deck depth shadows, micro-haptics, more delightful entrance on reveal screen, better card typography hierarchy, WhatsApp button pulse animation.
 
-#### CI/CD
-- [ ] CI/CD workflow (GitHub Actions)
-- [ ] Lockfile verification in CI (`npm ci`)
+**Visual / theming** *(deferred)* — dark mode, hover states for desktop, Moonly-style card redesign exploration, background SVG adjustment, admin dashboard design polish, AnimatedIcon component.
 
-#### Accessibility
-- [ ] Focus trap for modals/bottom sheets
-- [ ] Skip navigation links
-- [ ] Screen reader announcements for swipe actions
-- [ ] High contrast mode support
-- [ ] WCAG AAA compliance (full)
+**Design system extraction (remaining)** *(do as needed, not as a sweep)* — AvatarPlaceholder, PrivacyNotice, FormField. Extract only when the next page that needs one shows up.
 
-#### Content / SEO
-- [ ] SEO meta tags verified in production
-- [ ] Open Graph images set
-- [ ] 404 page customized
-- [ ] Spanish copy reviewed (full audit)
+**Performance targets as a checklist** *(replaced by Phase 1 Lighthouse CI)* — Lighthouse > 90, LCP < 2.5s, FID < 100ms, CLS < 0.1, TTFB < 800ms, API < 500ms, page load < 3s on 3G, TTI < 5s, first-load JS < 100KB. **Action:** establish Lighthouse CI in Phase 1; address regressions when they appear, not as a checklist of targets up front.
 
-#### Operations
-- [ ] Schedule recurring reconciliation job (calls `check_pql_event_integrity()`)
-- [ ] Schedule recurring event purge job (calls `purge_old_events()`)
-- [ ] Pre-merge checklist: ensure all 7 QA rules pass
-- [ ] Drift prevention: update FINAL_SPEC.md before architecture changes
-- [ ] Lazy load BottomSheet if it grows >200 lines
+**Accessibility above WCAG AA** *(deferred)* — high contrast mode, full WCAG AAA. **Target stays AA.** Focus traps for modals + skip nav + screen reader announcements should land case-by-case during regular component work, not as a sweep.
 
-#### Documentation Cleanup
-- [ ] README references `CODE_QUALITY_AUDIT_2026-01-06.md` (deleted) — fix reference
-- [ ] README references week summary docs for DB setup (wrong path) — fix reference
+**Infra hardening** *(deferred unless concrete signal)* — Cloudflare proxy/WAF, advanced DDoS rules, log aggregation, uptime monitoring beyond Vercel built-in, contract tests for validation rules, CI/CD workflow (GitHub Actions), `npm ci` lockfile verification in CI. Vercel + Sentry + the existing pre-push hook covers the realistic threat model for a pre-launch product.
+
+**SEO / content polish** *(deferred until post-launch)* — meta tag audit in prod, Open Graph images, custom 404 page, full Spanish copy audit. Defer until there's traffic worth optimizing for.
+
+**Misc deferred items**
+- Email: send copy to person who submitted *(blocked on Resend domain — folded into Phase 0)*
+- Reconciliation API endpoint (`/api/admin/reconciliation`) — for concierge flow
+- Custom-hook unit tests (`useRecommendations`, `useSwipeGesture`, etc.)
+- E2E for admin review flow *(needs admin storageState — defer until admin auth stable)*
+- Pre-merge checklist for the 7 QA rules
+- `FINAL_SPEC.md` drift prevention discipline
+- Lazy-load BottomSheet if it grows past 200 lines
+- README reference cleanup (deleted `CODE_QUALITY_AUDIT_2026-01-06.md`, week-summary path)
+- Verify all production env vars set in Vercel *(redo Phase 0 step 3 will surface anything missing)*
 
 ### Working rules (from CLAUDE.md)
 1. Never delete information without preserving it first

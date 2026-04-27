@@ -98,6 +98,26 @@ The product ships in 4 phase gates. Each phase has a clear definition of done. *
 
 ## Session Log
 
+### Session — 2026-04-27 (Plan Restructure + Phase 0 PRD)
+
+**Completed:**
+- Committed and pushed Reviews Collection System (`cf2fc6d`) — 23 staged files (migration 006, 7 API routes, 4 UI components, 9 test files, PRD/plan/manual-testing docs). Pre-push hook ran 135 unit tests green.
+- Rewrote `.claude/plans/main.md` Roadmap (`48715d2`): replaced flat ~100-item `Pending Tasks (Backlog)` with 4 phase gates (Phase 0–3), each with explicit definition of done. Moved polish/animation/perf-target/WCAG AAA/infra hardening items to a single `Deferred (no commitment)` section with rationale. Net: −173/+91 lines.
+- Wrote `docs/prd/2026-04-27-phase-0-activation.md` (`61b5798`) — full PRD for Phase 0 covering 7 tasks (Task 0 prod fix + Tasks 1–6 from the plan). Each task has What/Why/How/Verification + slated manual-testing doc under `docs/manual-testing/`.
+- Discovered prod was 500ing on every route while writing the PRD (`MIDDLEWARE_INVOCATION_FAILED`). Initial diagnosis: Vercel env vars missing. User correction: Supabase free-tier auto-pause. Corrected PRD + plan in `2631b8f` — Task 0 reduced from a multi-step Vercel audit to "click Resume in Supabase dashboard."
+- Saved feedback memory `feedback_simplest_explanation_first.md` to anchor future debugging on simplest causes first and avoid escalating routine ops issues to "critical."
+
+**Deviations:**
+- Originally invoked as `/end-session` to close cleanly, then expanded into a multi-turn plan restructure when the user asked whether the plan reflected real shipping work. Three commits + one PRD followed.
+- Migration apply scripts blocked by sandbox network (DNS `NXDOMAIN` for `*.supabase.co`, confirmed via direct probe). Same pattern flagged in 04-22 / 04-24 sessions; documented in PRD Task 1 as "use Supabase SQL Editor."
+- Initial Task 0 framing for prod-down was overly dramatic (🔴 critical-incident PRD task about Vercel env vars). Corrected to the boring real cause (paused DB, one-click fix). Lesson saved as memory.
+
+**Blockers:**
+- Supabase database needs to be resumed before any Phase 0 work proceeds.
+- Migrations 004 / 005 / 006 still need to be applied via Supabase SQL Editor (sandbox can't reach Supabase from here — DNS NXDOMAIN).
+
+**Tests:** 135/135 unit pass · TypeScript clean · Build clean · Pre-push hook ran on every push.
+
 ### Session — 2026-04-27 (Reviews Collection System)
 
 **Completed:**
@@ -198,109 +218,12 @@ The product ships in 4 phase gates. Each phase has a clear definition of done. *
 - Work is code-complete and documented, but still pending final review + commit/push.
 - The broader visual sweep is still outstanding and should happen after the current coding tasks are closed.
 
-### Session — 2026-04-20
-
-**Completed:**
-- Legal/trust page (`docs/plans/2026-04-20-legal-pages.md`)
-  - Replaced the split legal routes with a unified `/terminosyprivacidad` page
-  - Structured the page as two glass cards (`Términos` and `Privacidad`) with lightweight top anchor links outside the cards
-  - Implemented transparent collapsible subsection titles with a left chevron inside each card
-  - Updated the registration and intake form footers to point to the unified legal route
-  - Preserved `/terminos` and `/privacidad` as redirects into the unified page anchors
-
-**Deviations:**
-- First pass overdesigned the legal content (split routes, extra card treatment, wrong interaction style). Reworked after review to match the design-system constraints and the simpler unified-page approach.
-- A stale dev server held deleted-module references and served a broken page state; restarted cleanly and verified the route on a single server instance.
-
-**Blockers:**
-- None. Route builds and serves correctly; any remaining work is visual follow-up based on review.
-
-### Session — 2026-04-08
-
-**Completed:**
-- Admin dashboard improvements (`/spec` — plan: `docs/plans/2026-04-08-admin-dashboard-improvements.md`, VERIFIED)
-  - Created shared `AdminFilterBar` component (`app/admin/components/AdminFilterBar.tsx`, 84 lines, 8 unit tests) — search input + status dropdown, reusable across all admin list pages
-  - Created 3 new admin API routes: `GET /api/admin/leads` (with Supabase join for match context: tracking code + professional names), `GET /api/admin/professionals`, `GET /api/admin/pqls`
-  - Rebuilt Leads page as client component — search by email/intent, status filter, inline match context for matched leads (tracking code + professional names), urgency badge
-  - Enhanced Professionals page — added filter bar (search by name/specialty + status filter), switched from debug to admin API, added registration date to cards
-  - Enhanced PQLs page — search by professional name + month dropdown (dynamically populated from data), tracking code column, fixed pre-existing field name bug (`professionals` → `professional` singular)
-  - Deleted debug routes: `/api/debug/professionals`, `/api/debug/pqls`
-  - Updated match creation page (`/admin/leads/[id]/match`) — API URL from debug→admin + fixed `specialty: string` → `specialties: string[]` field type (API contract drift from migration)
-  - Fixed build-time Supabase join type mismatch (Next.js strict mode caught `professionals` array vs object in leads API), wrapped `fetchEntries` in `useCallback` for PQLs page
-- Registration full-flow E2E test (`/spec` — plan: `docs/plans/2026-04-08-registration-full-flow-e2e.md`, VERIFIED)
-  - `__tests__/e2e/registration-full-flow.spec.ts` — complete 4-step form walkthrough with Google Maps mock, image upload via `setInputFiles`, API response interception, DB + Storage cleanup via Supabase service role client
-
-**Deviations:**
-- Code reviewer caught `specialty` field mismatch in match creation page — the old debug route transformed `specialties[0]` → `specialty`, but the new admin route returns the raw array. Fixed during verification phase.
-- PQL adjustment modal is broken (pre-existing: sends `{ amount, reason }` but API expects `{ adjustment_type, reason, billing_month }`). Documented as known issue, explicitly out of scope.
-
-**Blockers:**
-- E2E scenarios (TS-001/002/003) could not be browser-verified — admin login credentials not available in test session. All code statically verified (TypeScript clean, 35 tests pass, build succeeds).
-
-### Session — 2026-04-07
-
-**Completed:**
-- Design system sweep — two passes (`/spec` — plan: `docs/plans/2026-04-06-design-system-sweep.md`)
-  - **Pass 1 (token replacement):** Extracted shared label maps (MODALITY_MAP, STYLE_MAP, STATUS_CONFIG, SERVICE_TYPE_MAP) to `lib/design-constants.ts`. Extracted ScoreRing + ScoreBreakdown from review page → `ScoreDisplay.tsx` (522 → 423 lines). Added profile image avatar to admin review header. PQL ledger and match creation pages fully rewritten (AdminLayout, GlassCard, Modal, Button, Alert, Spanish copy, logError). All `#FBF7F2` replaced with `PageBackground` (7 files). All `border-white/30` → `border-outline/30`. E2E test `admin-match-flow.spec.ts` updated (dialog → React Alert assertions, English → Spanish text).
-  - **Pass 2 (real visual patterns):** Button component — all sizes `rounded-lg`/`rounded-xl` → `rounded-full` (pill shape matches actual finished pages). Home page full rework — removed PublicLayout, added PageBackground + glass card "Cómo funciona" + pill CTAs + privacy footer. Admin leads page — `Card` → `GlassCard`, "Leads" → "Solicitudes". Cleaned up redundant `rounded-full` overrides on review and match pages.
-- DOM structure alignment — all standalone public pages now share identical wrapper: `relative z-10 max-w-md mx-auto px-4 pt-8 pb-12`
-- Design system pattern catalog built — audited every finished page and cataloged: page shell, title hierarchy, glass card, section headers, button shapes (pill CTAs, chip toggles, option toggles), form inputs, privacy footer, back navigation, avatar, timeline steps
-
-**Deviations:**
-- First `/spec` attempt treated design system as "token replacement" only — swapped CSS class names without addressing actual visual patterns (button shapes, card types, page structure). User pushed back: "you clearly did not understand what a design system is." Second pass audited finished pages and applied the real patterns.
-- Original plan had "Home page redesign" as a future next step (step 6). Moved it up because the home page was the most visually broken page — it used `PublicLayout` (flat header/footer) while every other page uses standalone glass-card layout.
-
-**Blockers:**
-- All changes are code-complete but NOT visually verified — user will test next session
-- Admin pages behind auth can't be E2E tested without `E2E_ADMIN_EMAIL`/`E2E_ADMIN_PASSWORD` env vars
-
-### Session — 2026-04-06
-
-**Completed:**
-- Test suite hardening (`/spec` — plan: `docs/plans/2026-04-06-test-suite-hardening.md`, VERIFIED)
-  - Rewrote Badge, Alert, GlassCard tests to assert behavior/rendering instead of CSS classes
-  - Removed Clerk reference from admin-auth-gating E2E, now tests Supabase Auth redirect
-  - Made ui-smoke content-agnostic (no specific heading text or link href)
-  - Replaced silent `test.skip` with `beforeAll` throws on missing seed data
-  - Replaced `waitForTimeout` with condition-based polling (`expect.poll`)
-  - Fixed dialog listener race condition in admin-match-flow E2E
-  - Used seed data slugs for public-profile instead of auth-gated API
-  - Added pre-push hook (`scripts/hooks/pre-push`) that runs unit tests
-  - Added `scripts/setup-hooks.sh`, auto-installs via `npm prepare` script
-  - Added `test:preflight` npm script
-- Pushed 1 commit: `d6e1c6f`
-
-### Session — 2026-04-03
-
-**Completed:**
-- WhatsApp phone input reworked — flag dropdown with country auto-detect from Google Places, user types local number only, E.164 formatted on submit
-- Reordered Step 0: Name → Email → Location → WhatsApp → Instagram (location before phone so country is known)
-- Added 40-country phone dropdown (LATAM + Europe + US) with flag emojis via Unicode regional indicators
-- Instagram field: now accepts username only, auto-strips URLs/@ prefixes/query params, validates Instagram username format
-- Specialty color system (`/spec` — plan: `docs/plans/2026-04-03-specialty-color-system.md`, VERIFIED)
-  - 24 specialty color tokens in `globals.css` under `@theme` (12 hues × strong + weak)
-  - `SPECIALTY_MAP` expanded from 5 → 12 entries, `SPECIALTY_COLORS` map, `CURATED_SPECIALTY_KEYS`
-  - Chip extended with `specialty` prop (discriminated union — auto-resolves label + color, falls back to neutral)
-  - `SpecialtySelector` extracted from registration form — 12 curated toggles + up to 2 custom "otra" fields with validation + duplicate detection
-  - `SpecialtyMapper` for admin review — dropdown to map custom specialties to curated ones or approve as-is
-  - Admin PATCH API accepts specialty edits independently of approve/reject
-  - All 5 display surfaces updated (admin list, admin review, public profile, recommendations, BottomSheet)
-- Testing infrastructure (`/spec` — plan: `docs/plans/2026-04-03-testing-infrastructure.md`, VERIFIED)
-  - Vitest workspace: `unit` (jsdom, 1.2s) + `integration` (node) projects
-  - 26 component tests across 8 files: Chip, Badge, Alert, GlassCard, Button, Modal, SpecialtySelector, SpecialtyMapper
-  - Playwright multi-project: public (no auth), admin (storageState), visual (screenshots)
-  - E2E tests: registration flow (8 tests), public profile (3 tests, graceful skip)
-  - Visual regression: 4 page baselines (home, registration, admin login, confirmation)
-  - npm scripts: `test:unit`, `test:e2e`, `test:visual`, `test:visual:update`, `test:all`
-- Bug fixes from code review: SpecialtySelector state init from prop (custom inputs preserved on multi-step nav), SpecialtyMapper `__keep__` handler (signals to parent), sp-teal/sp-violet color collisions with success/info
-- Consolidated tests from 57 → 26 (same coverage, half the noise)
-- Pushed 5 commits: `40bd918`, `808efb8`, `b8c799a`, `eb38678`, `3057719`
-
-**Deviations:**
-- Originally planned only specialty color system for this session. Added testing infrastructure because it was needed before continuing with more features.
-- Registration form at 807 lines — pre-existing from phone/instagram work. Specialty section extracted but form grew from other changes. Needs a larger refactor pass.
-
 ### Archived Sessions
+- **2026-04-20**: Legal/trust page (`docs/plans/2026-04-20-legal-pages.md`) — unified `/terminosyprivacidad` with two glass cards (Términos + Privacidad), collapsible subsections, anchor links; `/terminos` + `/privacidad` kept as redirects; registration + intake form footers updated. First pass overdesigned (split routes), reworked to single page after review.
+- **2026-04-08**: Admin dashboard improvements (`/spec`, VERIFIED) — shared `AdminFilterBar` (search + status dropdown), 3 new admin API routes (`/api/admin/leads` with match-context joins, `/api/admin/professionals`, `/api/admin/pqls`), debug routes deleted, match creation page fixed for `specialties[]` field-type drift; registration full-flow E2E (`__tests__/e2e/registration-full-flow.spec.ts`) with Google Maps mock + image upload + DB cleanup.
+- **2026-04-07**: Design system sweep — two passes (`/spec`). Pass 1 (tokens): extracted MODALITY_MAP / STYLE_MAP / STATUS_CONFIG / SERVICE_TYPE_MAP to `lib/design-constants.ts`, ScoreRing + ScoreBreakdown extracted, all `#FBF7F2` → `PageBackground`, `border-white/30` → `border-outline/30`. Pass 2 (real patterns): all Buttons → `rounded-full` pills, home page rework (PageBackground + glass card + privacy footer), Admin leads `Card` → `GlassCard`, identical DOM shells across public pages. First pass criticized as token-only; second pass audited finished pages and built design pattern catalog.
+- **2026-04-06**: Test suite hardening (`/spec`, VERIFIED, commit `d6e1c6f`) — behavior-based component tests (Badge / Alert / GlassCard), Clerk removed from admin-auth-gating E2E, content-agnostic ui-smoke, condition-based polling (`expect.poll`) replacing `waitForTimeout`, dialog listener race fixed in admin-match-flow E2E, pre-push hook running unit tests, `test:preflight` script.
+- **2026-04-03**: WhatsApp flag dropdown (40-country auto-detect from Google Places, E.164 formatting) + Instagram username validation (auto-strips URLs/@ prefixes); Specialty color system (`/spec`, VERIFIED, 5 commits) — 24 color tokens in `@theme` (12 hues × strong/weak), `SPECIALTY_MAP` 5 → 12 entries, `SpecialtySelector` + `SpecialtyMapper` extracted, all 5 display surfaces updated; Testing infrastructure (`/spec`, VERIFIED) — Vitest workspace (unit + integration projects), 26 component tests across 8 files, Playwright multi-project (public / admin / visual), 4 visual regression baselines.
 - **2026-04-02**: Professional approval flow (score model, approve/reject API+UI), registration form expanded (short_description, experience_description, instagram, service_type), profile image upload (Storage helper, FormData, circular preview), phone auto-formatting, live validation, GlassCard/PageBackground/SectionHeader components extracted, admin professionals list rebuilt
 - **2026-03-12**: Intake form (`/solicitar`), confirmation page (`/gracias`), email notifications (Resend — `notifyNewLead` + `notifyNewProfessional`), Supabase Auth for admin (replaced Clerk), Google Places Autocomplete, phone validation
 - **2026-03-11/12**: Documentation cleanup (16→8 MD files), Claude Code tooling (8 milestones: CLAUDE.md, rules, skills, commands, agents, hooks), design system extraction (Phases 1-2: constants + Chip), professional profile `/p/[slug]` full rebuild (5 glass cards, 6 new DB columns), recommendations page fixes, production deployment fixes (liquid-glass, Upstash Redis), full page/workflow map (27 routes)

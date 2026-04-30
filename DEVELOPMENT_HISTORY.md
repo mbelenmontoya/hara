@@ -1,18 +1,20 @@
-# Hará Match - Development History
+# Hará Match — Development History (Pre-Pivot)
 
-**Project:** Performance-based lead marketplace for wellness professionals
-**Timeline:** December 2025 - January 2026
-**Status:** ✅ Production-Ready (Week 4 Complete + Code Quality Remediation)
+**Scope of this document:** The original PQL-only lead marketplace built Dec 2025 – Jan 2026. **The product pivoted on Apr 1, 2026** to a directory + concierge marketplace ("Spanish-speaking wellness trust layer"). For current product context see [`PRODUCT.md`](./PRODUCT.md); for current operational status see [`.claude/plans/main.md`](./.claude/plans/main.md).
+
+**Timeline covered:** December 2025 – January 2026 (Weeks 1–4 + early code quality remediation)
+**Status at end of period:** Production-ready PQL-only lead marketplace (Week 4 Complete)
+**Post-pivot state:** PQL infrastructure preserved as optional layer for the concierge flow; primary flow is now Browse + Concierge.
 
 ---
 
 ## Purpose of This Document
 
-This document provides a concise historical overview of the Hará Match development process. It captures key architectural decisions, implementation milestones, and lessons learned across 4 weeks of development plus quality improvements.
+This document captures the historical development of Hará Match through Week 4 (Jan 2026). It is **not** a current-state document — it explains the architecture choices that led to today's codebase, including the PQL system that was the original product.
 
-**For AI Assistants:** This context helps understand why certain architectural choices were made and what has already been implemented.
+**For AI Assistants:** Use this for context on *why* certain primitives exist (events table, attribution tokens, PQL ledger). For *what we're building now*, read `PRODUCT.md` and `.claude/plans/main.md` first.
 
-**For Developers:** Quick reference to understand the system's evolution and current state.
+**For Developers:** Quick reference to understand the system's evolution and the rationale for early architectural decisions.
 
 ---
 

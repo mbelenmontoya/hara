@@ -1,6 +1,6 @@
 # Hará Match
 
-> Performance-based lead marketplace connecting people with wellness professionals
+> The Spanish-speaking wellness trust layer — verified professionals, real-interaction reputation, human-curated concierge fallback.
 
 [![Next.js](https://img.shields.io/badge/Next.js-14.2-black)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)](https://www.typescriptlang.org/)
@@ -8,24 +8,35 @@
 
 ## Overview
 
-Hará Match is a performance-based marketplace that connects people seeking wellness services (therapy, coaching, etc.) with qualified professionals. Unlike traditional directories, professionals only pay when they receive qualified leads that match their expertise and availability.
+Hará Match is a curated wellness professional marketplace for Spanish-speaking markets (LATAM + Spain, Argentina home). It's a trust layer between people seeking wellness support (therapy, coaching, somatic practices) and the professionals who can provide it.
 
-### Key Features
+**📖 For the full product context — what we're building, who it's for, where, why, and how we measure success — read [`PRODUCT.md`](./PRODUCT.md).**
 
-- **Smart Matching Algorithm:** Matches users with 3 ranked professionals based on specialty, availability, and compatibility
-- **Performance-Based Billing:** PQL (Pay-per-Qualified-Lead) system with credit ledger
-- **Mobile-First Experience:** Premium mobile app-like interface for recommendation viewing
-- **Admin Dashboard:** Tools for managing leads, professionals, and billing
-- **Event Tracking:** Attribution system for contact tracking and billing
+Two ways in:
+
+- **Browse (Directory)** — `/profesionales`. Reputation-ranked discovery of verified professionals. Most users land here.
+- **Concierge (Solicitar)** — `/solicitar`. User describes what they need, admin hand-picks 3 recommendations delivered via tracking link `/r/[code]`. The "we pick for you" differentiator.
+
+Both paths end in a WhatsApp conversation between user and professional, on the user's terms.
+
+### Key Capabilities
+
+- **Verified-only directory** with reputation-based ranking (profile completeness + real-interaction reviews + paid Destacado boost)
+- **Human-curated concierge flow** for users who want a recommendation made for them
+- **Subscription tiers** for professional visibility (Básico free, Destacado paid)
+- **Real-interaction reviews** — review links sent only to users who actually contacted a professional
+- **Admin dashboard** for managing professionals, leads, matches, reviews, and Destacado tier payments
+- **WhatsApp-first contact** with attribution tracking preserved for optional concierge billing
 
 ## Tech Stack
 
 ### Core
 - **Framework:** Next.js 14.2 (App Router)
 - **Language:** TypeScript 5.3
-- **Styling:** Tailwind CSS v4
+- **Styling:** Tailwind CSS v4 (`@theme` directive in `app/globals.css`, NOT `theme.extend`)
 - **Database:** Supabase (PostgreSQL)
-- **Authentication:** Clerk (pending configuration)
+- **Authentication:** Supabase Auth (admin only — professional `/pro/*` portal is Phase 3)
+- **Email:** Resend (transactional)
 
 ### Infrastructure
 - **Rate Limiting:** Upstash Redis
@@ -101,13 +112,14 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 UPSTASH_REDIS_REST_URL=your_redis_url
 UPSTASH_REDIS_REST_TOKEN=your_redis_token
 
-# Clerk Authentication (Optional - defaults to disabled)
-CLERK_SECRET_KEY=your_clerk_secret
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+# Resend (Transactional Email)
+RESEND_API_KEY=your_resend_key
+
+# Cron auth (for scheduled jobs)
+CRON_SECRET=your_cron_secret
 
 # Development Options
 NODE_ENV=development
-REQUIRE_ADMIN_AUTH=false  # Set true to test auth gating
 ```
 
 ### 3. Database Setup
@@ -160,32 +172,27 @@ npm run qa:seed-e2e      # Generate E2E test data
 
 ### Development Workflow
 
-1. **Create Feature Branch**
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
+Solo-dev workflow: work directly on `main`, push when ready. The pre-push hook runs unit tests; CI runs on Vercel preview/prod deploys.
 
-2. **Make Changes**
+1. **Make Changes** on `main`
    - Write code
-   - Add tests
-   - Update documentation
+   - Add tests (TDD preferred — see CLAUDE.md and `.claude/rules/`)
+   - Update documentation if affected
 
-3. **Test Locally**
+2. **Test Locally**
    ```bash
    npm run qa:week4:dev  # Run full test suite
    npm run build         # Verify build succeeds
    ```
 
-4. **Commit**
+3. **Commit + Push**
    ```bash
    git add .
-   git commit -m "feat: your feature description"
+   git commit -m "feat(scope): your change"
+   git push  # pre-push hook runs unit tests
    ```
 
-5. **Push and Create PR**
-   ```bash
-   git push origin feature/your-feature-name
-   ```
+For larger work, use the `/spec` workflow (see `.claude/skills/`) which produces a plan + PRD + manual-testing doc and runs verification gates.
 
 ## Testing
 
@@ -231,43 +238,57 @@ See examples in:
 
 ## Architecture
 
-### Data Flow
+### Data Flows
+
+**Browse (Directory) — primary path:**
 
 ```
-User → /r/[tracking_code]
-  → GET /api/public/recommendations
-    → Supabase (service role)
-      → Returns 3 ranked professionals
+User → /profesionales
+  → server-rendered list, sorted by ranking_score DESC
+  → User opens /p/[slug]
   → User clicks WhatsApp button
-    → ContactButton component
-      → navigator.sendBeacon(/api/events)
-        → Event stored for billing
-      → Opens WhatsApp (new tab)
+    → ContactButton fires /api/events (direct contact, no token)
+    → Opens WhatsApp (new tab)
+  → 7 days later: cron sends review request → /r/review/[token]
+```
+
+**Concierge (Solicitar) — high-trust path:**
+
+```
+User → /solicitar
+  → POST /api/leads (intake form)
+  → Admin reviews lead at /admin/leads/[id]
+  → Admin creates match with 3 ranked recommendations → tracking_code generated
+  → User receives /r/[tracking_code] link via WhatsApp
+  → GET /api/public/recommendations
+    → Supabase (service role) → 3 ranked professionals
+  → User clicks WhatsApp → /api/events (with attribution token)
+  → 7 days later: cron sends review request
 ```
 
 ### Key Concepts
 
-**Tracking Code:**
-- Format: `M-{timestamp}-{6-char-id}`
-- Example: `M-1704067200000-A1B2C3`
-- Used to identify matches and attribute contacts
+**Ranking Score:** Computed in `lib/ranking.ts` and mirrored in the `recompute_ranking()` SQL trigger. Inputs: profile completeness (0–100), rating average + count, subscription tier (Básico / Destacado), tier expiry. Directory sorts by `ranking_score DESC`.
 
-**Attribution Token:**
-- JWT containing: `match_id`, `professional_slug`, `rank`, `event_type`
-- Signs events to prevent tampering
-- Verified by `/api/events` endpoint
+**Tracking Code:** Identifies a concierge match. Format: `M-{timestamp}-{6-char-id}`. Direct (browse) contacts use `direct-{slug}-{nanoid(10)}`.
 
-**PQL (Pay-per-Qualified-Lead):**
-- Credit-based system for billing professionals
-- Ledger tracks credits, debits, adjustments
-- Partitioned by month for performance
+**Attribution Token:** JWT containing `match_id`, `professional_slug`, `rank`, `event_type`. Signs concierge contact events to prevent tampering. Direct (browse) contacts skip the token and pass `professional_slug` directly.
+
+**Review Request:** After a contact event, a daily cron picks events 7 days old and emails the user a one-time `/r/review/[token]` link. Reviews are tied to a real interaction — no anonymous spam.
+
+**PQL (Pay-per-Qualified-Lead):** Original billing system, preserved as optional infrastructure for the concierge flow. Credit-based ledger, partitioned by month. Not the primary revenue model post-pivot — see `PRODUCT.md`.
+
+**Destacado Tier:** Paid visibility tier for professionals. Admin records payment via `/admin/professionals` modal → `upgrade_destacado_tier()` RPC → ranking trigger boosts the professional → public Destacado chip shows on `/profesionales` and `/p/[slug]`. Daily cron expires lapsed tiers.
 
 ### Security Model
 
 **Public Routes:**
-- `/r/[tracking_code]` - Recommendations page
-- `/p/[slug]` - Professional profiles
-- Rate limited (30 req/5min)
+- `/profesionales` — directory
+- `/p/[slug]` — professional profile
+- `/solicitar` — concierge intake form
+- `/r/[tracking_code]` — concierge recommendations
+- `/r/review/[token]` — review submission (no login)
+- Rate limited (30 req/5min on read paths, tighter on writes)
 
 **Protected Routes:**
 - `/admin/*` - Admin dashboard
@@ -301,10 +322,11 @@ Before deploying:
 - [ ] `npm run build` succeeds
 - [ ] `npm run qa:week4` all tests pass
 - [ ] Environment variables configured
-- [ ] Database migrations applied
-- [ ] Rate limiting configured
-- [ ] Clerk authentication configured
-- [ ] Error monitoring setup (Sentry)
+- [ ] Database migrations applied (currently 001 → 006)
+- [ ] Rate limiting configured (Upstash Redis)
+- [ ] Supabase Auth admin user provisioned
+- [ ] Resend domain verified (so emails reach real users)
+- [ ] Error monitoring setup (Sentry — Phase 1)
 
 ### Post-Deployment
 
@@ -341,7 +363,14 @@ Before deploying:
 - Adjusts PQL balance for a professional
 - Requires reason and amount
 
-See WEEK_3_FINAL.md for complete API specs.
+**POST `/api/admin/subscriptions`**
+- Records a Destacado tier payment for a professional (admin-gated)
+- Atomic via `upgrade_destacado_tier()` RPC
+
+**POST `/api/admin/reviews/[id]`**
+- Toggle `is_hidden` on a review (moderation)
+
+See `FINAL_SPEC.md` for the database schema and `docs/prd/` for feature-level API specs.
 
 ## Contributing
 
@@ -350,7 +379,7 @@ See WEEK_3_FINAL.md for complete API specs.
 This project follows strict production quality standards:
 
 - ✅ **Production Quality:** Code must compile, tests must pass
-- ✅ **Maintainable:** Components ≤300 lines, functions ≤50 lines
+- ✅ **Maintainable:** Components ≤440 lines, functions ≤50 lines
 - ✅ **Sustainable:** DRY principle, reusable components, type-safe
 - ✅ **Scalable:** Optimized assets, efficient queries, proper caching
 - ✅ **Not Over-Engineered:** Use platform features, avoid premature abstraction
@@ -414,10 +443,9 @@ MIT
 
 For issues or questions:
 - Open GitHub issue
-- Review session summaries for context
-- Check CODE_QUALITY_AUDIT for known issues
+- Review `.claude/plans/main.md` for current work and session log
+- Check `KNOWN_ISSUES.md` for documented issues
 
 ---
 
-**Last Updated:** 2026-01-06
-**Version:** 1.0.0
+**Last Updated:** 2026-04-30

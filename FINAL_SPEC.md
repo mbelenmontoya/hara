@@ -1,9 +1,10 @@
-# Hará Match - Production Specification (SINGLE SOURCE OF TRUTH)
+# Hará Match — Database & API Specification (Source of Truth)
 
 **Stack:** Next.js 14 + Supabase PostgreSQL + Vercel
-**Write Path:** /api/events (service role) → events table → trigger → pqls
-**Status:** Production-ready ✅
-**This document supersedes:** All ARCHITECTURE_*.md, PRODUCTION_*.md, SECURITY_*.md documents
+**Scope:** Database schema and API contracts. **For product context (what we're building, who it's for, why) see [`PRODUCT.md`](./PRODUCT.md).**
+**This document supersedes:** All older `ARCHITECTURE_*.md`, `PRODUCTION_*.md`, `SECURITY_*.md` documents.
+
+> **Note (2026-04):** Schema below reflects the original migration 001. The product has since pivoted from PQL-only billing to a directory + concierge marketplace (Apr 1, 2026), and migrations 004 (ranking foundation), 005 (Destacado tier), and 006 (reviews collection) extend the schema. PQL infrastructure is preserved as an optional layer for the concierge flow. See `migrations/004_*.sql`, `005_*.sql`, `006_*.sql` for current additive changes; the base tables documented here remain accurate.
 
 ---
 

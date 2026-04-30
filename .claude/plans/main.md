@@ -1,8 +1,10 @@
 # Plan: main
 
+> **Product context:** see [`PRODUCT.md`](../../PRODUCT.md) (canonical answer to "what is this product?"). This file is the operational plan — phases, sessions, work-in-flight. Update PRODUCT.md when the product evolves; update this file when work moves.
+
 ## Overview
 
-Hará Match is a curated wellness professional marketplace for Latin America and Spain. It combines two modes:
+Hará Match is **the Spanish-speaking wellness trust layer** — a curated marketplace for Spanish-speaking markets (LATAM + Spain), with Argentina as the home/proving ground. It combines two modes:
 
 1. **Browse mode (Directory):** Users browse professionals ranked by reputation (stars, profile completeness). Professionals can pay for visibility (subscription tiers, boosts). This is the primary discovery path.
 2. **Concierge mode (Solicitar):** Users describe what they need → admin reviews → sends personalized recommendations via tracking link. This is the high-trust differentiator — "we pick for you."

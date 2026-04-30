@@ -1,8 +1,9 @@
-# Production Readiness Checklist
+# Production Readiness Checklist (Historical — Week 4 Snapshot)
 
-**Status:** 🟢 **READY FOR PRODUCTION**
-**Last Updated:** 2026-01-06
-**Deployment Readiness:** 95%
+**Status at snapshot:** 🟢 **READY FOR PRODUCTION** (Week 4 PQL-only product, Jan 2026)
+**Snapshot Date:** 2026-01-06
+
+> **Note (2026-04):** This checklist reflects readiness for the original PQL-only lead marketplace (pre-pivot). For current product context see [`PRODUCT.md`](./PRODUCT.md). Current activation/launch readiness for the post-pivot directory + concierge product lives in [`docs/prd/2026-04-27-phase-0-activation.md`](./docs/prd/2026-04-27-phase-0-activation.md). The infrastructure validated below (build, tests, RLS, monitoring hooks) carries forward; the product surface has expanded.
 
 ---
 

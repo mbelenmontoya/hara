@@ -2,7 +2,9 @@
 
 ## What Is This
 
-Performance-based lead marketplace for wellness professionals (therapy, coaching). Users get 3 ranked recommendations via `/r/{tracking_code}` and contact via WhatsApp. Professionals register at `/profesionales/registro`. Billing happens automatically on contact events (PQL system).
+Curated wellness professional marketplace for Spanish-speaking markets (LATAM + Spain, Argentina home base). Two ways in: **Browse** (`/profesionales` — directory ranked by reputation, primary path) and **Concierge** (`/solicitar` — admin hand-picks 3 recommendations delivered via `/r/{tracking_code}`). Professionals register at `/profesionales/registro`. Revenue is supply-funded via subscription tiers (Básico free, Destacado paid). Concierge leads (PQL infra) are preserved as an optional premium layer after the Apr 2026 pivot away from PQL-only billing.
+
+**📖 Read [`PRODUCT.md`](./PRODUCT.md) for the full product context — what we're building, who it's for, why it exists, and how we measure success.** This file (CLAUDE.md) is engineering context only; PRODUCT.md is the canonical answer to "what is this product?"
 
 **Personality:** Calm, warm, trustworthy, premium. Think "therapy app designed by Apple."
 

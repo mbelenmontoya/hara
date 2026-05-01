@@ -100,6 +100,36 @@ The product ships in 4 phase gates. Each phase has a clear definition of done. *
 
 ## Session Log
 
+### Session — 2026-05-01 (Doc alignment + Cron PRD + Migrations 004/005 applied)
+
+**Completed:**
+- Created `PRODUCT.md` at repo root (`a670736`) — canonical product context, vision = "Spanish-speaking wellness trust layer" (Argentina home, expand pan-Spanish). CLAUDE.md "What Is This" rewritten + pointer to PRODUCT.md.
+- Aligned all top-level docs (`eb16d0f`) with post-pivot product: README.md (Browse + Concierge data flows, Supabase Auth instead of Clerk, push-to-main workflow), FINAL_SPEC.md (scoped to DB+API spec), DEVELOPMENT_HISTORY.md + PRODUCTION_READINESS.md (marked as pre-pivot historical snapshots), main.md (PRODUCT.md pointer + Spanish-speaking framing).
+- Wrote `docs/prd/2026-05-01-cron-infrastructure-n8n.md` (`9caae6d`) — six-task PRD routing scheduled jobs through user's self-hosted n8n at `https://n8n.greenbit.info` (Hetzner + Coolify) instead of Vercel crons. Decision matrix vs Pro Vercel/Pro Supabase/DB migration. Existing `expire-destacado` cron's `UPDATE professionals` query doubles as keep-alive heartbeat.
+- **Discovered** the existing crons in `vercel.json` (`expire-destacado`, `send-review-requests`, both committed 2026-04-27) **never fired in prod**. Three failures stacked: Vercel Hobby doesn't fire `vercel.json` crons (route comments warn this), Supabase free-tier paused, migrations 005/006 not applied so the RPCs the crons call don't exist.
+- Migration 004 applied via Supabase SQL Editor (you), verified via apply script (`✓ Migration already applied`) and live REST query: ranking_score values match `0.7 * profile_completeness_score` for all 5 rows.
+- Codex review of migrations 005/006 surfaced 4 issues I missed/flagged. Fixed in-place (`448ab3c`) since migrations not yet deployed:
+  - 005: RLS + `Deny all` on `subscription_payments` (was missing — anon could read/write payment records)
+  - 005: off-by-one in `upgrade_destacado_tier()` extension branch (extension lost 1 day vs cold renewal because it computed `period_end - period_start` exclusive while cold renewal treats `period_end` as inclusive end-of-day). Fix: `+ 1` for inclusive math, with matching update to DestacadoPaymentModal preset arithmetic and parity test fixture 11.
+  - 006: RLS + `Deny all` on `reviews` and `review_requests` (review_requests holds plaintext one-time tokens + reviewer emails — without RLS anon could scrape and consume).
+  - 006: `trigger_recompute_review_aggregates()` now recomputes both OLD and NEW `professional_id` on UPDATE (previously only NEW — admin reassignment would leave old professional with stale aggregates).
+- Migration 005 applied (you), verified end-to-end: `subscription_payments` table empty, `tier_expires_at` column populated NULL across all 5 rows, anon SELECT returns `[]` (RLS active), `upgrade_destacado_tier()` RPC raises P0001 on invalid period as designed.
+
+**Deviations:**
+- Sandbox network changed since prior sessions — `*.supabase.co` resolves and is reachable now. The apply scripts can verify migrations via column-existence checks but still cannot push DDL (Supabase doesn't enable the `exec_sql` RPC by default). SQL Editor remains the right tool for applying migrations.
+- Misread one of the user's messages early in the session — assumed Vercel env had `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` based on what they pasted, when they were actually showing me what Supabase calls the var in their dashboard. User flagged the assumption + scope creep in my proposed code rename (was about to rename `SUPABASE_URL` → `NEXT_PUBLIC_SUPABASE_URL` in `lib/supabase-admin.ts` — that's an intentional server-only/client-safe split, not a bug).
+
+**Blockers / open follow-ups:**
+- **Migration 006 NOT YET APPLIED.** Next step on resume: paste `migrations/006_reviews_collection.sql` in Supabase SQL Editor, then I'll re-run apply script to verify.
+- **Prod still 500ing** with `MIDDLEWARE_INVOCATION_FAILED` on every route. Root cause: `lib/supabase/{client,server,middleware}.ts` and `lib/env.ts` read `NEXT_PUBLIC_SUPABASE_ANON_KEY` (old Supabase naming) but Vercel env has `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (new Supabase naming). Fix: update the 4 code files to read the new name. Separate task — does NOT block migration 006.
+- Cron PRD remaining tasks (after 006): Task 3 set `CRON_SECRET` in Vercel, Task 4 build 2 n8n workflows, Task 5 remove dead `crons` block from `vercel.json`, Task 6 update plan + Phase 0 PRD pointer.
+- Resend domain verification still pending (Phase 0 Task 2 in the activation PRD).
+- Smoke tests, visual QA, image upload e2e, rejected profile flow decision (Phase 0 Tasks 3-6) still pending.
+
+**Tests:** 135/135 unit pass · pre-push hook ran on both commits (`448ab3c`, `9caae6d`).
+
+**Resume here:** apply migration 006 in Supabase SQL Editor → tell Claude "done" → I verify with apply script + REST checks → continue with cron PRD Task 3.
+
 ### Session — 2026-04-27 (Plan Restructure + Phase 0 PRD)
 
 **Completed:**

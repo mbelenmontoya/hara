@@ -11,6 +11,7 @@ import { GlassCard } from '@/app/components/ui/GlassCard'
 import { Badge } from '@/app/components/ui/Badge'
 import { Chip } from '@/app/components/ui/Chip'
 import { Button } from '@/app/components/ui/Button'
+import { Modal } from '@/app/components/ui/Modal'
 import { SectionHeader } from '@/app/components/ui/SectionHeader'
 import { EmptyState } from '@/app/components/ui/EmptyState'
 import { AdminFilterBar } from '@/app/admin/components/AdminFilterBar'
@@ -75,6 +76,9 @@ export default function ProfessionalsPage() {
 
   // Modal + expand state
   const [upgradeTarget,  setUpgradeTarget]  = useState<Professional | null>(null)
+  const [deleteTarget,   setDeleteTarget]   = useState<Professional | null>(null)
+  const [deleting,       setDeleting]       = useState(false)
+  const [deleteError,    setDeleteError]    = useState<string | null>(null)
   const [expandedId,     setExpandedId]     = useState<string | null>(null)
   const [paymentsCache,  setPaymentsCache]  = useState<Record<string, Payment[]>>({})
 
@@ -111,6 +115,27 @@ export default function ProfessionalsPage() {
     } else {
       setExpandedId(id)
       loadPayments(id)
+    }
+  }
+
+  async function handleConfirmDelete() {
+    if (!deleteTarget) return
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      const res = await fetch(`/api/admin/professionals/${deleteTarget.id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const body = await res.json().catch(() => null)
+        setDeleteError(body?.error ?? 'No pudimos eliminar el perfil. Intentá de nuevo.')
+        return
+      }
+      setDeleteTarget(null)
+      await fetchProfessionals()
+    } catch (err) {
+      logError(err instanceof Error ? err : new Error(String(err)), { source: 'ProfessionalsPage.delete' })
+      setDeleteError('No pudimos eliminar el perfil. Intentá de nuevo.')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -182,6 +207,7 @@ export default function ProfessionalsPage() {
                       payments={paymentsCache[pro.id]}
                       onToggleExpand={handleToggleExpand}
                       onUpgrade={setUpgradeTarget}
+                      onDelete={setDeleteTarget}
                     />
                   ))}
                 </div>
@@ -202,6 +228,7 @@ export default function ProfessionalsPage() {
                       payments={paymentsCache[pro.id]}
                       onToggleExpand={handleToggleExpand}
                       onUpgrade={setUpgradeTarget}
+                      onDelete={setDeleteTarget}
                     />
                   ))}
                 </div>
@@ -223,6 +250,47 @@ export default function ProfessionalsPage() {
           professional={upgradeTarget}
         />
       )}
+
+      {/* Delete confirmation modal */}
+      {deleteTarget && (
+        <Modal
+          open
+          onClose={() => { if (!deleting) { setDeleteTarget(null); setDeleteError(null) } }}
+          title="Eliminar profesional"
+          footer={
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => { setDeleteTarget(null); setDeleteError(null) }}
+                disabled={deleting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleConfirmDelete}
+                disabled={deleting}
+                className="bg-danger hover:bg-danger/90"
+              >
+                {deleting ? 'Eliminando…' : 'Eliminar'}
+              </Button>
+            </div>
+          }
+        >
+          <p className="text-sm text-foreground mb-2">
+            Vas a eliminar a <span className="font-semibold">{deleteTarget.name}</span> y
+            todos sus datos asociados (pagos, reseñas, recomendaciones, eventos vinculados).
+          </p>
+          <p className="text-sm text-muted">
+            Esta acción no se puede deshacer.
+          </p>
+          {deleteError && (
+            <p role="alert" className="text-sm text-danger mt-3">{deleteError}</p>
+          )}
+        </Modal>
+      )}
     </AdminLayout>
   )
 }
@@ -235,9 +303,10 @@ interface ProfessionalRowProps {
   payments: Payment[] | undefined
   onToggleExpand: (id: string) => void
   onUpgrade: (pro: Professional) => void
+  onDelete: (pro: Professional) => void
 }
 
-function ProfessionalRow({ professional: pro, expanded, payments, onToggleExpand, onUpgrade }: ProfessionalRowProps) {
+function ProfessionalRow({ professional: pro, expanded, payments, onToggleExpand, onUpgrade, onDelete }: ProfessionalRowProps) {
   const badge = STATUS_CONFIG[pro.status] || STATUS_CONFIG.draft
   const location = [pro.city, pro.country].filter(Boolean).join(', ')
   const visibleSpecialties = (pro.specialties ?? []).slice(0, 3)
@@ -291,6 +360,19 @@ function ProfessionalRow({ professional: pro, expanded, payments, onToggleExpand
           >
             {effective ? 'Extender' : 'Destacar'}
           </Button>
+
+          {/* Delete button — destructive, requires confirmation */}
+          <button
+            type="button"
+            onClick={() => onDelete(pro)}
+            className="text-muted hover:text-danger transition-colors p-1"
+            aria-label={`Eliminar a ${pro.name}`}
+            title="Eliminar profesional"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3" />
+            </svg>
+          </button>
 
           {/* Link to review page */}
           <Link

@@ -1,12 +1,17 @@
 // Admin API — Single Professional
-// GET: Fetch professional by UUID (all fields for review)
-// PATCH: Update status (approve → 'active', reject → 'rejected' + reason)
-//        Accepts optional `specialties` array for editing before/alongside approval.
-//        Specialty-only updates (no `action`) work regardless of profile status.
+// GET:    Fetch professional by UUID (all fields for review)
+// PATCH:  Update status (approve → 'active', reject → 'rejected' + reason)
+//         Accepts optional `specialties` array for editing before/alongside approval.
+//         Specialty-only updates (no `action`) work regardless of profile status.
+// DELETE: Permanently remove the professional and dependent rows.
+//         Order: pqls (FK without cascade — must go first) → professional
+//         (cascade clears match_recommendations, subscription_payments, reviews,
+//         review_requests). events have no FK so they remain as orphan analytics.
 // Security: Gated by middleware (requires admin session)
 
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { logError } from '@/lib/monitoring'
 
 export const runtime = 'nodejs'
 
@@ -164,4 +169,44 @@ export async function PATCH(
   }
 
   return NextResponse.json({ success: true, status: 'active' })
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const { id } = params
+
+  if (!id) {
+    return NextResponse.json({ error: 'ID requerido' }, { status: 400 })
+  }
+
+  // Confirm the professional exists before doing destructive work.
+  const { data: existing, error: fetchError } = await supabaseAdmin
+    .from('professionals').select('id').eq('id', id).single()
+
+  if (fetchError || !existing) {
+    return NextResponse.json({ error: 'Profesional no encontrado' }, { status: 404 })
+  }
+
+  // 1. pqls — FK without ON DELETE CASCADE, must be removed first.
+  const { error: pqlsError } = await supabaseAdmin
+    .from('pqls').delete().eq('professional_id', id)
+
+  if (pqlsError) {
+    logError(new Error(pqlsError.message), { source: 'DELETE /api/admin/professionals/[id]', step: 'pqls', id })
+    return NextResponse.json({ error: 'Error al eliminar pqls del profesional' }, { status: 500 })
+  }
+
+  // 2. professional — cascade handles match_recommendations, subscription_payments,
+  //    reviews, review_requests via ON DELETE CASCADE FKs.
+  const { error: deleteError } = await supabaseAdmin
+    .from('professionals').delete().eq('id', id)
+
+  if (deleteError) {
+    logError(new Error(deleteError.message), { source: 'DELETE /api/admin/professionals/[id]', step: 'professional', id })
+    return NextResponse.json({ error: 'Error al eliminar el profesional' }, { status: 500 })
+  }
+
+  return NextResponse.json({ success: true })
 }

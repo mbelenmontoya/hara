@@ -114,21 +114,22 @@ The product ships in 4 phase gates. Each phase has a clear definition of done. *
   - 006: RLS + `Deny all` on `reviews` and `review_requests` (review_requests holds plaintext one-time tokens + reviewer emails — without RLS anon could scrape and consume).
   - 006: `trigger_recompute_review_aggregates()` now recomputes both OLD and NEW `professional_id` on UPDATE (previously only NEW — admin reassignment would leave old professional with stale aggregates).
 - Migration 005 applied (you), verified end-to-end: `subscription_payments` table empty, `tier_expires_at` column populated NULL across all 5 rows, anon SELECT returns `[]` (RLS active), `upgrade_destacado_tier()` RPC raises P0001 on invalid period as designed.
+- Migration 006 applied (you), verified end-to-end: `reviews` + `review_requests` tables empty, anon SELECT returns `[]` on both (RLS active — no token leak surface), `submit_review()` RPC raises P0001 `invalid_token` on bogus token, `select_pending_review_events()` returns `[]` (no events from 7 days ago — correct).
+- **All three migrations now applied and verified.**
 
 **Deviations:**
 - Sandbox network changed since prior sessions — `*.supabase.co` resolves and is reachable now. The apply scripts can verify migrations via column-existence checks but still cannot push DDL (Supabase doesn't enable the `exec_sql` RPC by default). SQL Editor remains the right tool for applying migrations.
 - Misread one of the user's messages early in the session — assumed Vercel env had `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` based on what they pasted, when they were actually showing me what Supabase calls the var in their dashboard. User flagged the assumption + scope creep in my proposed code rename (was about to rename `SUPABASE_URL` → `NEXT_PUBLIC_SUPABASE_URL` in `lib/supabase-admin.ts` — that's an intentional server-only/client-safe split, not a bug).
 
 **Blockers / open follow-ups:**
-- **Migration 006 NOT YET APPLIED.** Next step on resume: paste `migrations/006_reviews_collection.sql` in Supabase SQL Editor, then I'll re-run apply script to verify.
-- **Prod still 500ing** with `MIDDLEWARE_INVOCATION_FAILED` on every route. Root cause: `lib/supabase/{client,server,middleware}.ts` and `lib/env.ts` read `NEXT_PUBLIC_SUPABASE_ANON_KEY` (old Supabase naming) but Vercel env has `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (new Supabase naming). Fix: update the 4 code files to read the new name. Separate task — does NOT block migration 006.
-- Cron PRD remaining tasks (after 006): Task 3 set `CRON_SECRET` in Vercel, Task 4 build 2 n8n workflows, Task 5 remove dead `crons` block from `vercel.json`, Task 6 update plan + Phase 0 PRD pointer.
+- **Prod still 500ing** with `MIDDLEWARE_INVOCATION_FAILED` on every route. Suspected root cause (unverified — needs user to check Vercel dashboard): code reads `NEXT_PUBLIC_SUPABASE_ANON_KEY`; if Vercel env has `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (new Supabase naming) instead, middleware crashes. Fix path TBD pending verification of actual Vercel env var names. Migrations now applied so the only remaining cause for prod 500 is auth/env wiring.
+- Cron PRD remaining tasks: Task 3 set `CRON_SECRET` in Vercel, Task 4 build 2 n8n workflows at `https://n8n.greenbit.info`, Task 5 remove dead `crons` block from `vercel.json`, Task 6 update plan + Phase 0 PRD pointer.
 - Resend domain verification still pending (Phase 0 Task 2 in the activation PRD).
 - Smoke tests, visual QA, image upload e2e, rejected profile flow decision (Phase 0 Tasks 3-6) still pending.
 
-**Tests:** 135/135 unit pass · pre-push hook ran on both commits (`448ab3c`, `9caae6d`).
+**Tests:** 135/135 unit pass · pre-push hook ran on every push.
 
-**Resume here:** apply migration 006 in Supabase SQL Editor → tell Claude "done" → I verify with apply script + REST checks → continue with cron PRD Task 3.
+**Resume here:** all three migrations applied + verified. Next priorities (your call): (a) fix prod 500 by verifying/updating env var names, (b) continue cron PRD Task 3 (CRON_SECRET in Vercel + n8n workflows), or (c) Resend domain verification. Each is independent.
 
 ### Session — 2026-04-27 (Plan Restructure + Phase 0 PRD)
 

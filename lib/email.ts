@@ -4,8 +4,9 @@
 
 import { Resend } from 'resend'
 
-const ADMIN_EMAIL = 'mariabmontoya@gmail.com'
-const FROM_EMAIL = 'onboarding@resend.dev' // Change to your domain after verification
+const ADMIN_EMAIL = 'centrovitalhara@gmail.com'
+const FROM_EMAIL = 'Hará Match <hola@haravital.app>'
+const REPLY_TO   = 'centrovitalhara@gmail.com'
 
 let resend: Resend | null = null
 
@@ -33,10 +34,11 @@ async function sendEmail(options: EmailOptions): Promise<boolean> {
 
   try {
     await client.emails.send({
-      from: FROM_EMAIL,
-      to: options.to,
+      from:    FROM_EMAIL,
+      to:      options.to,
+      replyTo: REPLY_TO,
       subject: options.subject,
-      html: options.html,
+      html:    options.html,
     })
     return true
   } catch (error) {

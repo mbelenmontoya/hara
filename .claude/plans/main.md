@@ -403,6 +403,7 @@ The product is not yet live. The items below are speculative polish, pre-mature 
 **SEO / content polish** *(deferred until post-launch)* — meta tag audit in prod, Open Graph images, custom 404 page, full Spanish copy audit. Defer until there's traffic worth optimizing for.
 
 **Misc deferred items**
+- "Próximamente" homepage variant — same aesthetic, swaps the directory + concierge CTAs for a "lanzamos pronto" message + email capture, so visitors don't see a half-empty directory or hit broken flows during pre-launch. Toggle via env var or simple route flag. *(do before sharing the URL with anyone outside the team)*
 - Email: send copy to person who submitted *(blocked on Resend domain — folded into Phase 0)*
 - Reconciliation API endpoint (`/api/admin/reconciliation`) — for concierge flow
 - Custom-hook unit tests (`useRecommendations`, `useSwipeGesture`, etc.)

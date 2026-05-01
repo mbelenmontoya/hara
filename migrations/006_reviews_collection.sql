@@ -53,6 +53,32 @@ CREATE INDEX IF NOT EXISTS idx_review_requests_token_state
   ON review_requests (consumed_at, expires_at)
   WHERE consumed_at IS NULL;
 
+-- ─── 2b. RLS — fail-closed (mirrors 001_schema.sql pattern) ───────────────────
+-- reviews and review_requests are sensitive:
+--   - review_requests stores plaintext one-time tokens + reviewer emails.
+--     Public access would let anyone scrape pending tokens and consume them.
+--   - reviews are read on /p/[slug] BUT that page uses supabaseAdmin (service role),
+--     so RLS does not block legitimate reads. Public submissions go through the
+--     submit_review() RPC which has SECURITY DEFINER.
+-- Both tables: deny all anon/authenticated access. Service role bypasses RLS.
+
+ALTER TABLE reviews          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE review_requests  ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Deny all" ON reviews;
+CREATE POLICY "Deny all" ON reviews
+  FOR ALL
+  TO anon, authenticated
+  USING (false)
+  WITH CHECK (false);
+
+DROP POLICY IF EXISTS "Deny all" ON review_requests;
+CREATE POLICY "Deny all" ON review_requests
+  FOR ALL
+  TO anon, authenticated
+  USING (false)
+  WITH CHECK (false);
+
 -- ─── 3. Aggregate function ───────────────────────────────────────────────────
 --
 -- Recomputes professionals.rating_average and rating_count for all non-hidden reviews.
@@ -105,15 +131,22 @@ SECURITY DEFINER
 SET search_path = public
 LANGUAGE plpgsql
 AS $$
-DECLARE
-  v_professional_id UUID;
 BEGIN
-  v_professional_id := CASE TG_OP
-    WHEN 'DELETE' THEN OLD.professional_id
-    ELSE NEW.professional_id
-  END;
-  PERFORM recompute_review_aggregates(v_professional_id);
-  RETURN CASE TG_OP WHEN 'DELETE' THEN OLD ELSE NEW END;
+  -- DELETE: only OLD row exists.
+  -- INSERT: only NEW row exists.
+  -- UPDATE: if professional_id was reassigned, BOTH must be recomputed
+  --   (the old professional's aggregates would otherwise stay stale).
+  IF TG_OP = 'DELETE' THEN
+    PERFORM recompute_review_aggregates(OLD.professional_id);
+    RETURN OLD;
+  END IF;
+
+  IF TG_OP = 'UPDATE' AND OLD.professional_id IS DISTINCT FROM NEW.professional_id THEN
+    PERFORM recompute_review_aggregates(OLD.professional_id);
+  END IF;
+
+  PERFORM recompute_review_aggregates(NEW.professional_id);
+  RETURN NEW;
 END;
 $$;
 

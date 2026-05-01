@@ -52,7 +52,9 @@ export function DestacadoPaymentModal({ open, onClose, onSuccess, professional }
   const [paidAt,        setPaidAt]        = useState(today)
   const [periodPreset,  setPeriodPreset]  = useState<PeriodPreset>(30)
   const [customStart,   setCustomStart]   = useState(today)
-  const [customEnd,     setCustomEnd]     = useState(addDays(today, 30))
+  // period_start..period_end are INCLUSIVE on both ends — a "30-day" period from
+  // today is today..(today + 29). Matches the RPC's duration math.
+  const [customEnd,     setCustomEnd]     = useState(addDays(today, 29))
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('mp_link')
   const [invoiceNumber, setInvoiceNumber] = useState('')
   const [notes,         setNotes]         = useState('')
@@ -71,7 +73,7 @@ export function DestacadoPaymentModal({ open, onClose, onSuccess, professional }
     setPaidAt(today)
     setPeriodPreset(30)
     setCustomStart(today)
-    setCustomEnd(addDays(today, 30))
+    setCustomEnd(addDays(today, 29))
     setPaymentMethod('mp_link')
     setInvoiceNumber('')
     setNotes('')
@@ -84,8 +86,9 @@ export function DestacadoPaymentModal({ open, onClose, onSuccess, professional }
   // Computed period dates from preset or custom inputs.
   // Preset anchors to paidAt (the recorded payment date), not today, so backdated
   // payments still produce a coherent audit trail in subscription_payments.
+  // INCLUSIVE semantics: a "30-day" preset from paidAt yields paidAt..(paidAt+29).
   const periodStart = periodPreset === 'custom' ? customStart : paidAt
-  const periodEnd   = periodPreset === 'custom' ? customEnd   : addDays(paidAt, periodPreset)
+  const periodEnd   = periodPreset === 'custom' ? customEnd   : addDays(paidAt, periodPreset - 1)
 
   // ── Validation ─────────────────────────────────────────────────────────────
   function validate(): boolean {
@@ -262,7 +265,7 @@ export function DestacadoPaymentModal({ open, onClose, onSuccess, professional }
               </div>
               <div>
                 <label htmlFor="period-end" className="block text-xs text-muted mb-1">
-                  Fin del período
+                  Fin del período <span className="text-muted">(último día incluido)</span>
                 </label>
                 <input
                   id="period-end"

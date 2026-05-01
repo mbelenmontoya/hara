@@ -273,8 +273,9 @@ beforeAll(async () => {
 
   // Fixture 11: retroactive RPC extension arithmetic
   // Seed a destacado row with tier_expires_at = NOW() + 10 days,
-  // call upgrade_destacado_tier with 30-day period from 60→30 days ago,
-  // assert new expiry = original + 30 days (not paid_at + 30 days).
+  // call upgrade_destacado_tier with a 31-day inclusive period from 60→30 days ago,
+  // assert new expiry = original + 31 days (not paid_at + 31 days).
+  // (period_end - period_start + 1 = 30 - 0 + 1 in DATE arithmetic = 31 days inclusive.)
   const originalExpiry = new Date(Date.now() + 10 * 86400000)
   const { data: f11, error: f11err } = await supabase
     .from('professionals')
@@ -398,25 +399,26 @@ describe('SQL trigger ↔ TS parity — migration 005 (tier_expires_at)', () => 
 
 // ── Migration 005: RPC extension arithmetic (fixture 11) ──────────────────────
 describe('upgrade_destacado_tier RPC — retroactive extension arithmetic', () => {
-  it('fixture 11: retroactive payment — new expiry = original_expiry + 30 days (not paid_at + 30)', () => {
+  it('fixture 11: retroactive payment — new expiry = original_expiry + 31 days (not paid_at + 31)', () => {
     if (!migration005Applied) return
     // The fixture 11 row is at index 2 in insertedExpiry005Rows (0=fixture9, 1=fixture10, 2=fixture11)
     const row = insertedExpiry005Rows[2] as (FixtureRowWithExpiry & { __rpcResult?: unknown; __originalExpiry?: number })
     if (!row || !row.__rpcResult || !row.__originalExpiry) return  // RPC failed or not set up
 
-    // The RPC was called with a 30-day period (30 days ago → today = 30 days purchased).
+    // The RPC was called with period_start = 60 days ago, period_end = 30 days ago.
+    // INCLUSIVE math: period_end - period_start + 1 = 31 days purchased.
     // Original expiry was NOW() + 10 days.
-    // Expected new expiry = original_expiry + 30 days (not paid_at + 30 days).
+    // Expected new expiry = original_expiry + 31 days (not paid_at + 31 days).
     const rpc = row.__rpcResult as { tier_expires_at: string }
     const newExpiry = new Date(rpc.tier_expires_at).getTime()
-    const expectedExpiry = row.__originalExpiry + 30 * 86400000  // original + 30 days
+    const expectedExpiry = row.__originalExpiry + 31 * 86400000  // original + 31 days
 
     // Allow ±60 seconds tolerance for execution time drift
     const toleranceMs = 60000
     expect(Math.abs(newExpiry - expectedExpiry)).toBeLessThan(toleranceMs)
 
-    // Assert it's NOT paid_at + 30 days (which would be ~today + 30 days, not original + 30)
-    const paidAtPlus30 = Date.now() + 30 * 86400000
-    expect(Math.abs(newExpiry - paidAtPlus30)).toBeGreaterThan(toleranceMs)
+    // Assert it's NOT paid_at + 31 days (which would be ~today + 31 days, not original + 31)
+    const paidAtPlus31 = Date.now() + 31 * 86400000
+    expect(Math.abs(newExpiry - paidAtPlus31)).toBeGreaterThan(toleranceMs)
   })
 })

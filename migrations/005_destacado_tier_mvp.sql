@@ -26,9 +26,11 @@ CREATE TABLE IF NOT EXISTS subscription_payments (
   amount            NUMERIC(10,2) NOT NULL CHECK (amount > 0),
   currency          TEXT        NOT NULL CHECK (currency IN ('ARS', 'USD')),
   paid_at           TIMESTAMPTZ NOT NULL,
+  -- period_start..period_end are INCLUSIVE on both ends.
+  -- A "Jun 1 to Jun 30" purchase = 30 days of service.
+  -- Duration is computed as (period_end - period_start + 1) — see upgrade_destacado_tier().
   period_start      DATE        NOT NULL,
   period_end        DATE        NOT NULL,
-  -- period_end > period_start enforced below (deferred check — compatible with all Pg versions)
   payment_method    TEXT        NOT NULL CHECK (payment_method IN ('mp_link', 'transferencia', 'efectivo', 'otro')),
   invoice_number    TEXT,
   notes             TEXT,
@@ -39,6 +41,19 @@ CREATE TABLE IF NOT EXISTS subscription_payments (
 
 CREATE INDEX IF NOT EXISTS idx_subscription_payments_professional
   ON subscription_payments (professional_id, paid_at DESC);
+
+-- ─── 2b. RLS — fail-closed (mirrors 001_schema.sql pattern for billing tables) ─
+-- subscription_payments holds private financial data. Only service_role writes
+-- (via /api/admin/subscriptions). All anon/authenticated access is denied.
+
+ALTER TABLE subscription_payments ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Deny all" ON subscription_payments;
+CREATE POLICY "Deny all" ON subscription_payments
+  FOR ALL
+  TO anon, authenticated
+  USING (false)
+  WITH CHECK (false);
 
 -- ─── 3. Updated recompute_ranking() — expiry-aware tier contribution ─────────
 --
@@ -204,8 +219,12 @@ BEGIN
     RAISE EXCEPTION 'Professional not found: %', p_professional_id;
   END IF;
 
-  -- Compute purchased duration in days
-  v_period_days := p_period_end - p_period_start;
+  -- Compute purchased duration in days.
+  -- INCLUSIVE on both ends: period_start..period_end where Jun 1..Jun 30 = 30 days.
+  -- The +1 is REQUIRED for parity with the cold-renewal branch below, which treats
+  -- period_end as the last day of service (expiry = midnight ART on period_end + 1).
+  -- Without +1, active-tier renewals lose one day per renewal vs cold renewals.
+  v_period_days := (p_period_end - p_period_start) + 1;
 
   -- Silent extension: if currently active (expiry in future), extend from there.
   -- Otherwise, set expiry to end-of-day on period_end in Argentina time

@@ -105,8 +105,8 @@ Create `.env.local` in the root directory:
 ```bash
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxx  # browser-safe; from Supabase Settings → API
+SUPABASE_SERVICE_ROLE_KEY=sb_secret_xxx                  # server only; never expose to browser
 
 # Upstash Redis (Rate Limiting)
 UPSTASH_REDIS_REST_URL=your_redis_url

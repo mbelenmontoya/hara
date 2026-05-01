@@ -1,11 +1,15 @@
 // Hará Match - Rate Limiting
-// Purpose: Prevent PQL spam via Upstash Redis
-// Security: Two-tier (IP + fingerprint) with fallbacks
-// Production: REQUIRED (fail-closed) - server won't start without it
-// Development: Permissive (fail-open with warning)
+// Purpose: Anti-spam on public endpoints via Upstash Redis (sliding window per IP).
+// Behavior: FAIL OPEN — when Redis is unavailable or misconfigured, requests are
+// allowed through and the failure is logged. Rationale: pre-launch the cost of a
+// rare flooded endpoint is far smaller than the cost of an Upstash hiccup taking
+// every public POST down. The loud log gives us visibility to fix the root cause.
+// (Legacy: this used to fail closed in production for PQL billing fraud concerns;
+// PQL is now optional infrastructure post-pivot, so the calculus changed.)
 
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
+import { logError } from '@/lib/monitoring'
 
 interface RateLimitOptions {
   limit: number
@@ -20,14 +24,6 @@ function getRedis(): Redis {
     const url = process.env.UPSTASH_REDIS_REST_URL
     const token = process.env.UPSTASH_REDIS_REST_TOKEN
 
-    // Production: FAIL-CLOSED (required)
-    if (process.env.NODE_ENV === 'production') {
-      if (!url || !token) {
-        throw new Error('PRODUCTION ERROR: Rate limiting not configured. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN')
-      }
-    }
-
-    // Dev/test: Check for missing or placeholder
     if (!url || !token || url.includes('your-redis') || token.includes('your-token')) {
       throw new Error('Upstash Redis not configured')
     }
@@ -57,21 +53,17 @@ export const ratelimit = {
 
       return await limiter.limit(namespacedKey)
     } catch (err) {
-      // Production: FAIL-CLOSED (propagate error, /api/events returns 500)
-      if (process.env.NODE_ENV === 'production') {
-        throw new Error('Rate limiting failure: ' + (err as Error).message)
-      }
+      // FAIL OPEN: rate limiter unavailable → allow the request, log loudly so
+      // the root cause (Redis down, env vars missing, network blip) is visible.
+      // The handler that called us treats success=true as "let through".
+      logError(err instanceof Error ? err : new Error(String(err)), {
+        source: 'lib/rate-limit',
+        key,
+        note:   'Rate limiter failed; failing open (request allowed)',
+      })
 
-      // Development: FAIL-OPEN (permissive with loud warning once)
-      if (!configWarningShown) {
-        console.warn('\n⚠️  ⚠️  ⚠️  RATE LIMITING DISABLED ⚠️  ⚠️  ⚠️')
-        console.warn('Configure Upstash Redis to enable rate limiting:')
-        console.warn('1. Create account at https://upstash.com (free tier)')
-        console.warn('2. Create Redis database (REST API mode)')
-        console.warn('3. Copy REST URL and token to .env.local:')
-        console.warn('   UPSTASH_REDIS_REST_URL=https://...')
-        console.warn('   UPSTASH_REDIS_REST_TOKEN=...')
-        console.warn('See WEEK_2_SUMMARY.md "Local Setup" for details\n')
+      if (!configWarningShown && process.env.NODE_ENV !== 'production') {
+        console.warn('⚠️  Rate limiting disabled (Upstash unreachable). See logs.')
         configWarningShown = true
       }
 

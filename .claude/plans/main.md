@@ -131,6 +131,28 @@ The product ships in 4 phase gates. Each phase has a clear definition of done. *
 
 **Resume here:** all three migrations applied + verified. Next priorities (your call): (a) fix prod 500 by verifying/updating env var names, (b) continue cron PRD Task 3 (CRON_SECRET in Vercel + n8n workflows), or (c) Resend domain verification. Each is independent.
 
+### Session — 2026-05-01 → 2026-05-03 (Phase 0 push: domain, homepage, cleanup)
+
+**Completed:**
+- Fixed prod 500 — Vercel was missing `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Code now reads the new Supabase publishable-key naming (`f654181`).
+- Resend domain verified (`haravital.app`) and `lib/email.ts` updated: `FROM_EMAIL = 'Hará Match <hola@haravital.app>'`, `ADMIN_EMAIL = 'centrovitalhara@gmail.com'`, `replyTo` header on every send (`226774f`).
+- Pre-launch homepage shipped (`6c548ef`): `/` → "Próximamente" with email capture; existing directory home moved to `/preview`. Migration 007 created `waitlist` table with RLS deny-all + idempotent insert.
+- Test data cleanup: deleted 23 orphan test professionals + 59 pqls via service role. 45 real submitted professionals remain.
+- Admin delete-professional flow (`2ec2e5f`): `DELETE /api/admin/professionals/[id]` handles cascade ordering (pqls → professional with FK cascade). Trash icon + confirmation modal added to `/admin/professionals` rows. Replaces manual SQL flow.
+- Rate limiter changed to fail-open in production (`987b40e`). Removed legacy fail-closed branch from `lib/rate-limit.ts`. Means Upstash flakes log loudly but don't break public endpoints. Documented in Notes → Infrastructure decisions.
+- Upstash free-tier DB was deleted by inactivity, restore stuck "pending" 2+ days. Decided to defer — fail-open keeps the site working. Documented as deferred with reactivation note.
+
+**Deviations:**
+- Misread user intent twice early in this stretch: assumed Vercel had `_PUBLISHABLE_KEY` (didn't — it had no `NEXT_PUBLIC_*` Supabase vars at all), and proposed renaming `SUPABASE_URL` → `NEXT_PUBLIC_SUPABASE_URL` in `supabase-admin.ts` (would break the intentional server-only/client-safe split). Both flagged by user, both fixed.
+- Codex review surfaced 4 bugs in migrations 005/006 before they were applied: missing RLS on 3 tables (subscription_payments, reviews, review_requests), off-by-one in `upgrade_destacado_tier()` extension branch, OLD/NEW professional_id stale-aggregate bug in reviews trigger. All fixed in-place (`448ab3c`) before applying.
+
+**Blockers / open follow-ups:**
+- Upstash reactivation before public launch (deferred; tracked in Misc).
+- Infrastructure heartbeat workflow in n8n (deferred; tracked in Misc).
+- Phase 0 Tasks 3 + 4 + 5 + 6 still pending (smoke tests, visual QA, image upload e2e, rejected profile flow).
+
+**Tests:** 147/147 unit pass · pre-push hook ran on every push · prod verified live (haravital.app/, /preview, /api/waitlist all return success).
+
 ### Session — 2026-04-27 (Plan Restructure + Phase 0 PRD)
 
 **Completed:**
@@ -403,8 +425,9 @@ The product is not yet live. The items below are speculative polish, pre-mature 
 **SEO / content polish** *(deferred until post-launch)* — meta tag audit in prod, Open Graph images, custom 404 page, full Spanish copy audit. Defer until there's traffic worth optimizing for.
 
 **Misc deferred items**
-- "Próximamente" homepage variant — same aesthetic, swaps the directory + concierge CTAs for a "lanzamos pronto" message + email capture, so visitors don't see a half-empty directory or hit broken flows during pre-launch. Toggle via env var or simple route flag. *(do before sharing the URL with anyone outside the team)*
-- Email: send copy to person who submitted *(blocked on Resend domain — folded into Phase 0)*
+- **Infrastructure heartbeats (n8n)** — daily workflow that pings `/api/cron/heartbeat` (TODO: build) which touches Supabase + Upstash. Prevents free-tier auto-pause/auto-delete on both. Folds in beside the existing Destacado + review-request workflows. *(Build alongside cron PRD Task 4; without this, both DBs will degrade again.)*
+- **Reactivate Upstash before public launch** — currently in stuck "pending restore" state, not blocking thanks to fail-open. Either wait it out, create a fresh free-tier DB, or upgrade to paid. *(Decide before public launch when rate-limit protection becomes meaningful.)*
+- Email: send copy to person who submitted *(unblocked now that Resend domain is verified — implement when needed)*
 - Reconciliation API endpoint (`/api/admin/reconciliation`) — for concierge flow
 - Custom-hook unit tests (`useRecommendations`, `useSwipeGesture`, etc.)
 - E2E for admin review flow *(needs admin storageState — defer until admin auth stable)*
@@ -412,7 +435,6 @@ The product is not yet live. The items below are speculative polish, pre-mature 
 - `FINAL_SPEC.md` drift prevention discipline
 - Lazy-load BottomSheet if it grows past 200 lines
 - README reference cleanup (deleted `CODE_QUALITY_AUDIT_2026-01-06.md`, week-summary path)
-- Verify all production env vars set in Vercel *(redo Phase 0 step 3 will surface anything missing)*
 
 ### Working rules (from CLAUDE.md)
 1. Never delete information without preserving it first
@@ -438,10 +460,18 @@ The product is not yet live. The items below are speculative polish, pre-mature 
 - Middleware changed from fail-closed-503 to redirect-to-login pattern
 - Admin user created manually in Supabase Auth dashboard for now
 
+### Infrastructure decisions
+
+**Rate limiting (Upstash Redis) — fail open by design.** The original `lib/rate-limit.ts` was fail-closed in production for PQL billing fraud concerns. Post-pivot PQL is optional infrastructure, so the calculus flipped: a Redis hiccup taking down every public POST endpoint is far worse than a brief unprotected window. As of `987b40e` (2026-05-01) the limiter logs and returns `{success: true}` on any Redis error — endpoint behavior is unchanged when Redis is healthy, and a noisy log when it's not. The 4 callsites (`/api/waitlist`, `/api/events`, `/api/reviews/submit`, `/api/public/recommendations`) need no per-route try/catch.
+
+**Upstash free-tier auto-deletion (2026-05-01 incident).** Free-tier Redis DBs are deleted after extended inactivity, and a "Restore" can sit pending indefinitely. We hit this; rather than wait, the plan is: stay on free tier through pre-launch (zero traffic = no rate-limit value lost), then either (a) add a daily heartbeat workflow in n8n that does `INCR` on a sentinel key to keep the DB warm, or (b) move to Upstash paid (~$0.20/100k req). Same pattern applies to the Supabase free-tier auto-pause we already documented — both should share a single "infrastructure heartbeats" workflow in n8n alongside the Destacado-expiry + review-request crons.
+
+**The fail-open behavior also means we can defer reconnecting Upstash entirely.** The site works in both states; only rate-limit protection is gone when Redis is down. Fix for real before we have traffic worth protecting from.
+
 ### Email decisions
 - Resend chosen for simplicity (one API call, good Next.js integration, free tier 3,000/month)
-- Test mode only sends to the account owner email (`mariabmontoya@gmail.com`)
-- To send to other recipients (e.g., centrovitalhara@gmail.com, or copy to the person who submitted): need to verify a domain in Resend dashboard
+- Production sender = `Hará Match <hola@haravital.app>` with `replyTo: centrovitalhara@gmail.com` (verified 2026-05-01). No mailbox needed at haravital.app — replies route via gmail. Cloudflare email forwarding considered and skipped (rare for users to compose fresh emails to a domain address; reply path covers ~all cases).
+- Admin notifications (`notifyNewLead`, `notifyNewProfessional`) go to `centrovitalhara@gmail.com` (was `mariabmontoya@gmail.com` while domain was unverified).
 - `lib/email.ts` has both `notifyNewLead()` and `notifyNewProfessional()` ready
 - `create-lead.ts` server action has `additional_context` field but it doesn't exist in DB schema — skipped for now
 - Email now includes deep link to admin review page (added 2026-04-02)

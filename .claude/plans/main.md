@@ -53,24 +53,22 @@ Deployed at: https://hara-weld.vercel.app
 
 The product ships in 4 phase gates. Each phase has a clear definition of done. **Don't start phase N+1 until phase N is done.** Items not in a phase are in `Notes → Deferred` — no commitment, revisit only on real-user signal.
 
-### Phase 0 — ACTIVATE *(this week)*
+### Phase 0 — ACTIVATE *(in progress)*
 
 **PRD:** [`docs/prd/2026-04-27-phase-0-activation.md`](../docs/prd/2026-04-27-phase-0-activation.md)
 
 **Definition of done:** the product works on prod for one real professional + one real user, end-to-end.
 
-0. **Resume the Supabase database.** Free-tier auto-pause is the cause of prod's current 500s — middleware calls `supabase.auth.getUser()` on every request and fails when the DB is paused. Click Resume in the Supabase dashboard. (Long-term: budget for Pro plan or a keep-alive ping in Phase 1.)
-1. **Apply migrations 004 + 005 + 006 to Supabase**
-   - Use Supabase SQL Editor (the apply scripts can't reach Supabase from sandbox — DNS NXDOMAIN — and `exec_sql` RPC isn't enabled by default).
-   - Order matters: 004 → 005 → 006.
-2. **Verify Resend domain** and swap `FROM_EMAIL` in `lib/email.ts` away from `onboarding@resend.dev`.
-3. **Smoke test 3 flows on prod:**
+0. ~~**Resume the Supabase database.**~~ ✅ Done 2026-05-01.
+1. ~~**Apply migrations 004 + 005 + 006 to Supabase.**~~ ✅ Done 2026-05-01 via SQL Editor. All three verified end-to-end (RLS active, RPCs functional, triggers chaining correctly).
+2. ~~**Verify Resend domain + swap `FROM_EMAIL`.**~~ ✅ Done 2026-05-01. `haravital.app` verified, `lib/email.ts` updated to `Hará Match <hola@haravital.app>` with `replyTo: centrovitalhara@gmail.com`.
+3. **Smoke test 3 flows on prod:** *(pending)*
    - Browse: `/profesionales` → profile → `Contactar por WhatsApp` → review email arrives 7 days later → `/r/review/[token]` submission.
    - Concierge: `/solicitar` → admin matches → `/r/[code]` → contact → review.
    - Onboarding: `/profesionales/registro` (4 steps + image) → admin review → approval → appears in directory.
-4. **Visual QA pass.** Open every route on a phone-sized viewport. Catalog any visual breaks. Update Playwright visual baselines only for routes meant to stay locked.
-5. **Image upload end-to-end verification.** Form → FormData → Supabase Storage → DB URL → visible on review page and `/p/[slug]`.
-6. **Decide rejected profile flow.** Product decision: keep data? Allow resubmit? Notify professional? (See `Open Questions`.) Then implement the decided flow.
+4. **Visual QA pass.** *(pending)* Open every route on a phone-sized viewport. Catalog any visual breaks. Update Playwright visual baselines only for routes meant to stay locked.
+5. **Image upload end-to-end verification.** *(pending)* Form → FormData → Supabase Storage → DB URL → visible on review page and `/p/[slug]`.
+6. **Decide rejected profile flow.** *(pending)* Product decision: keep data? Allow resubmit? Notify professional? (See `Open Questions`.) Then implement the decided flow.
 
 ### Phase 1 — OPEN FOR BUSINESS *(2–3 weeks)*
 
@@ -99,6 +97,31 @@ The product ships in 4 phase gates. Each phase has a clear definition of done. *
 2. **Admin detail pages** that depend on the portal: `/admin/professionals/[id]` (reviews, rating, tier history), `/admin/analytics` (funnel + MRR + active Destacado).
 
 ## Session Log
+
+### Session — 2026-05-01 → 2026-05-03 (Phase 0 push: domain, homepage, cleanup)
+
+**Completed:**
+- Fixed prod 500 — Vercel was missing `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Code now reads the new Supabase publishable-key naming (`f654181`).
+- Resend domain verified (`haravital.app`) and `lib/email.ts` updated: `FROM_EMAIL = 'Hará Match <hola@haravital.app>'`, `ADMIN_EMAIL = 'centrovitalhara@gmail.com'`, `replyTo` header on every send (`226774f`).
+- Pre-launch homepage shipped (`6c548ef`): `/` → "Próximamente" with email capture; existing directory home moved to `/preview`. Migration 007 created `waitlist` table with RLS deny-all + idempotent insert.
+- Test data cleanup: deleted 23 orphan test professionals + 59 pqls via service role. 45 real submitted professionals remain.
+- Admin delete-professional flow (`2ec2e5f`): `DELETE /api/admin/professionals/[id]` handles cascade ordering (pqls → professional with FK cascade). Trash icon + confirmation modal added to `/admin/professionals` rows. Replaces manual SQL flow.
+- Rate limiter changed to fail-open in production (`987b40e`). Removed legacy fail-closed branch from `lib/rate-limit.ts`. Means Upstash flakes log loudly but don't break public endpoints. Documented in Notes → Infrastructure decisions.
+- Upstash free-tier DB was deleted by inactivity, restore stuck "pending" 2+ days. Decided to defer — fail-open keeps the site working. Documented as deferred with reactivation note.
+- Documented infrastructure decisions in Notes (rate limiter rationale, Upstash deletion incident, Resend sender + replyTo pattern) and added "n8n heartbeat workflow" + "reactivate Upstash before launch" to Misc deferred items (`5e1ea13`).
+
+**Deviations:**
+- Misread user intent twice early in this stretch: assumed Vercel had `_PUBLISHABLE_KEY` (didn't — it had no `NEXT_PUBLIC_*` Supabase vars at all), and proposed renaming `SUPABASE_URL` → `NEXT_PUBLIC_SUPABASE_URL` in `supabase-admin.ts` (would break the intentional server-only/client-safe split). Both flagged by user, both fixed.
+- Codex review surfaced 4 bugs in migrations 005/006 before they were applied: missing RLS on 3 tables (subscription_payments, reviews, review_requests), off-by-one in `upgrade_destacado_tier()` extension branch, OLD/NEW professional_id stale-aggregate bug in reviews trigger. All fixed in-place (`448ab3c`) before applying.
+
+**Blockers / open follow-ups:**
+- Upstash reactivation before public launch (deferred; tracked in Misc).
+- Infrastructure heartbeat workflow in n8n (deferred; tracked in Misc).
+- Phase 0 Tasks 3 + 4 + 5 + 6 still pending (smoke tests, visual QA, image upload e2e, rejected profile flow).
+
+**Tests:** 147/147 unit pass · pre-push hook ran on every push · prod verified live (haravital.app/, /preview, /api/waitlist all return success).
+
+**Resume here:** Phase 0 Tasks 0/1/2 complete. Remaining: smoke test the 3 flows, visual QA pass, image upload e2e, decide rejected profile flow. Each is independent.
 
 ### Session — 2026-05-01 (Doc alignment + Cron PRD + Migrations 004/005 applied)
 
@@ -130,28 +153,6 @@ The product ships in 4 phase gates. Each phase has a clear definition of done. *
 **Tests:** 135/135 unit pass · pre-push hook ran on every push.
 
 **Resume here:** all three migrations applied + verified. Next priorities (your call): (a) fix prod 500 by verifying/updating env var names, (b) continue cron PRD Task 3 (CRON_SECRET in Vercel + n8n workflows), or (c) Resend domain verification. Each is independent.
-
-### Session — 2026-05-01 → 2026-05-03 (Phase 0 push: domain, homepage, cleanup)
-
-**Completed:**
-- Fixed prod 500 — Vercel was missing `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Code now reads the new Supabase publishable-key naming (`f654181`).
-- Resend domain verified (`haravital.app`) and `lib/email.ts` updated: `FROM_EMAIL = 'Hará Match <hola@haravital.app>'`, `ADMIN_EMAIL = 'centrovitalhara@gmail.com'`, `replyTo` header on every send (`226774f`).
-- Pre-launch homepage shipped (`6c548ef`): `/` → "Próximamente" with email capture; existing directory home moved to `/preview`. Migration 007 created `waitlist` table with RLS deny-all + idempotent insert.
-- Test data cleanup: deleted 23 orphan test professionals + 59 pqls via service role. 45 real submitted professionals remain.
-- Admin delete-professional flow (`2ec2e5f`): `DELETE /api/admin/professionals/[id]` handles cascade ordering (pqls → professional with FK cascade). Trash icon + confirmation modal added to `/admin/professionals` rows. Replaces manual SQL flow.
-- Rate limiter changed to fail-open in production (`987b40e`). Removed legacy fail-closed branch from `lib/rate-limit.ts`. Means Upstash flakes log loudly but don't break public endpoints. Documented in Notes → Infrastructure decisions.
-- Upstash free-tier DB was deleted by inactivity, restore stuck "pending" 2+ days. Decided to defer — fail-open keeps the site working. Documented as deferred with reactivation note.
-
-**Deviations:**
-- Misread user intent twice early in this stretch: assumed Vercel had `_PUBLISHABLE_KEY` (didn't — it had no `NEXT_PUBLIC_*` Supabase vars at all), and proposed renaming `SUPABASE_URL` → `NEXT_PUBLIC_SUPABASE_URL` in `supabase-admin.ts` (would break the intentional server-only/client-safe split). Both flagged by user, both fixed.
-- Codex review surfaced 4 bugs in migrations 005/006 before they were applied: missing RLS on 3 tables (subscription_payments, reviews, review_requests), off-by-one in `upgrade_destacado_tier()` extension branch, OLD/NEW professional_id stale-aggregate bug in reviews trigger. All fixed in-place (`448ab3c`) before applying.
-
-**Blockers / open follow-ups:**
-- Upstash reactivation before public launch (deferred; tracked in Misc).
-- Infrastructure heartbeat workflow in n8n (deferred; tracked in Misc).
-- Phase 0 Tasks 3 + 4 + 5 + 6 still pending (smoke tests, visual QA, image upload e2e, rejected profile flow).
-
-**Tests:** 147/147 unit pass · pre-push hook ran on every push · prod verified live (haravital.app/, /preview, /api/waitlist all return success).
 
 ### Session — 2026-04-27 (Plan Restructure + Phase 0 PRD)
 
@@ -232,48 +233,9 @@ The product ships in 4 phase gates. Each phase has a clear definition of done. *
 - `lib/ranking.test.ts` — 11 new test cases pass `tierExpiresAt` explicitly (future, past, null, ISO string).
 - No production callers of `RankingInput` outside the helper itself — UI code uses `isEffectivelyDestacado()` directly.
 
-### Session — 2026-04-24
-
-**Completed:**
-- Directory + Ranking Foundation (`/spec` — plan: `docs/plans/2026-04-24-directory-ranking-foundation.md`, PRD: `docs/prd/2026-04-24-directory-ranking-foundation.md`)
-  - `migrations/004_ranking_foundation.sql` — 5 new columns (`profile_completeness_score`, `rating_average`, `rating_count`, `subscription_tier`, `ranking_score`) + `recompute_ranking()` trigger function (mirrors `lib/profile-score.ts` exactly, NULL-safe) + directory index + backfill
-  - `lib/ranking.ts` + `lib/ranking.test.ts` — TS ranking helper with 18 unit tests; `vitest.workspace.ts` expanded to discover `lib/**/*.test.ts`
-  - `__tests__/integration/ranking-parity.test.ts` — DB-backed parity test (8 fixture scenarios including NULL-array and NULL-online_only edge cases)
-  - `app/profesionales/page.tsx` — server-rendered directory page sorted by `ranking_score DESC`, uses liquid-glass cards, specialty chips, avatar fallback, `data-testid` attributes
-  - `app/page.tsx` — added "Ver profesionales" pill CTA between the two existing CTAs
-  - `__tests__/e2e/directory.spec.ts` — Playwright E2E (TS-001/002/003/004); home CTA test verified green; DB-dependent tests skip cleanly until migration applied
-  - `__tests__/e2e/visual/pages.spec.ts` — added `/profesionales` visual baseline
-  - `scripts/apply-ranking-migration.mjs` — helper script to apply the migration
-  - `docs/prd/2026-04-24-directory-ranking-foundation.md` — PRD for this feature
-  - Gap analysis performed before PRD: identified that the April 2026 Directory + Concierge pivot had not been implemented in code; this session closes the primary gap
-
-**Deviations:**
-- Supabase network is unreachable from the dev sandbox (same infrastructure isolation as Apr 22). Migration not applied during this session. Impact: integration parity tests and DB-dependent E2E tests skip cleanly (they verify correctly when run locally with network access). TS-004 (home CTA) confirmed green via Playwright.
-- The Apr 22 admin lead detail work (`app/admin/leads/[id]/`, `app/api/admin/leads/[id]/`) remains uncommitted alongside these new changes — both are on `main`, staged independently.
-
-**Blockers:**
-- Migration `004_ranking_foundation.sql` must be applied to Supabase before integration tests and E2E parity tests go green. Run: `node scripts/apply-ranking-migration.mjs` or use the Supabase SQL Editor.
-- Unit tests: 55/55 pass. Build: compiles cleanly. TS-004 Playwright test: green.
-
-### Session — 2026-04-22
-
-**Completed:**
-- Admin lead detail page (`.omx/plans/prd-admin-lead-detail.md`)
-  - Added `/admin/leads/[id]` as an admin-only lead detail route
-  - Added a single-lead admin API at `/api/admin/leads/[id]`
-  - Reused shared lead status/urgency/match semantics across the leads list and the new detail page
-  - Updated the leads list to link into the detail page while preserving the `Crear match` path
-  - Added unit coverage for the new page and verified TypeScript, unit tests, build, and live route/login redirect behavior
-
-**Deviations:**
-- Initial verification tried a DB-backed integration test, but the current environment could not reliably reach Supabase. Replaced that with a focused page-level unit test so the new route still has stable automated coverage.
-- Build/test verification needed to be rerun with clean sequencing and a live local server to separate real issues from sandbox/network noise.
-
-**Blockers:**
-- Work is code-complete and documented, but still pending final review + commit/push.
-- The broader visual sweep is still outstanding and should happen after the current coding tasks are closed.
-
 ### Archived Sessions
+- **2026-04-24**: Directory + Ranking Foundation (`/spec`, plan `docs/plans/2026-04-24-directory-ranking-foundation.md`, PRD `docs/prd/2026-04-24-directory-ranking-foundation.md`) — `migrations/004_ranking_foundation.sql` (5 ranking columns + `recompute_ranking()` trigger NULL-safe + directory index + backfill), `lib/ranking.ts` + 18 unit tests, `__tests__/integration/ranking-parity.test.ts` (8-fixture DB-backed parity), `app/profesionales/page.tsx` server-rendered directory sorted by `ranking_score DESC`, "Ver profesionales" CTA on home, Playwright directory.spec + visual baseline. Sandbox unreachable to Supabase → migration applied later via SQL Editor. Closed the April pivot implementation gap.
+- **2026-04-22**: Admin lead detail page (`.omx/plans/prd-admin-lead-detail.md`) — `/admin/leads/[id]` admin-only route + single-lead API at `/api/admin/leads/[id]`, reused status/urgency/match semantics, leads list links into detail while preserving "Crear match" path, unit coverage for the new page. Replaced DB-backed integration test with page-level unit test due to sandbox/Supabase isolation.
 - **2026-04-20**: Legal/trust page (`docs/plans/2026-04-20-legal-pages.md`) — unified `/terminosyprivacidad` with two glass cards (Términos + Privacidad), collapsible subsections, anchor links; `/terminos` + `/privacidad` kept as redirects; registration + intake form footers updated. First pass overdesigned (split routes), reworked to single page after review.
 - **2026-04-08**: Admin dashboard improvements (`/spec`, VERIFIED) — shared `AdminFilterBar` (search + status dropdown), 3 new admin API routes (`/api/admin/leads` with match-context joins, `/api/admin/professionals`, `/api/admin/pqls`), debug routes deleted, match creation page fixed for `specialties[]` field-type drift; registration full-flow E2E (`__tests__/e2e/registration-full-flow.spec.ts`) with Google Maps mock + image upload + DB cleanup.
 - **2026-04-07**: Design system sweep — two passes (`/spec`). Pass 1 (tokens): extracted MODALITY_MAP / STYLE_MAP / STATUS_CONFIG / SERVICE_TYPE_MAP to `lib/design-constants.ts`, ScoreRing + ScoreBreakdown extracted, all `#FBF7F2` → `PageBackground`, `border-white/30` → `border-outline/30`. Pass 2 (real patterns): all Buttons → `rounded-full` pills, home page rework (PageBackground + glass card + privacy footer), Admin leads `Card` → `GlassCard`, identical DOM shells across public pages. First pass criticized as token-only; second pass audited finished pages and built design pattern catalog.

@@ -42,9 +42,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Fetch eligible contact_click events (7-day window, has email, no existing review_request)
+  // Fetch eligible contact_click events (delay window, has email, no existing review_request).
+  // REVIEW_DELAY_DAYS env var defaults to 7. Set to 0 in dev for instant testing.
+  const delayDays = Number.parseInt(process.env.REVIEW_DELAY_DAYS ?? '7', 10)
   const { data: events, error: rpcErr } = await supabaseAdmin
-    .rpc('select_pending_review_events') as { data: PendingEvent[] | null; error: unknown }
+    .rpc('select_pending_review_events', { delay_days: delayDays }) as { data: PendingEvent[] | null; error: unknown }
 
   if (rpcErr) {
     logError(rpcErr instanceof Error ? rpcErr : new Error(String(rpcErr)), {

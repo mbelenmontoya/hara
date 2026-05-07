@@ -1,7 +1,9 @@
 // Hará Match - Professional Profile Page
 // Purpose: Public profile view for professionals
 // Design: 5 glass cards grouping info by user questions
-// force-dynamic: calls getActivePractices() at render time; must not be statically prerendered.
+// force-dynamic: calls getAllPractices() at render time; must not be statically prerendered.
+// Uses getAllPractices (not getActivePractices) so deactivated practices on
+// existing pros still render with their human label, not the raw key.
 
 export const dynamic = 'force-dynamic'
 
@@ -10,7 +12,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { ContactButton } from '@/app/components/ContactButton'
 import { Chip } from '@/app/components/ui/Chip'
 import { MODALITY_MAP, SERVICE_TYPE_MAP } from '@/lib/design-constants'
-import { getActivePractices } from '@/lib/practices'
+import { getAllPractices } from '@/lib/practices'
 import { PageBackground } from '@/app/components/ui/PageBackground'
 import { isEffectivelyDestacado } from '@/lib/ranking'
 import { ReviewerEmailCapture } from '@/app/components/ReviewerEmailCapture'
@@ -140,7 +142,7 @@ export default async function ProfessionalProfilePage({
   const backLabel = fromPath && fromPath.startsWith('/r/') ? 'Volver a recomendaciones' : 'Ir al inicio'
 
 
-  const catalogPractices = await getActivePractices()
+  const catalogPractices = await getAllPractices()
   const practiceLabelMap = Object.fromEntries(catalogPractices.map(p => [p.key, p.label]))
   const modalityLabels = professional.modality.map(m => MODALITY_MAP[m] || m)
   const practiceLabels = professional.practices.map(k => practiceLabelMap[k] ?? k)

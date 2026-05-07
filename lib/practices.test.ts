@@ -23,11 +23,31 @@ const MOCK_PRACTICES = [
   { key: 'astrologia', label: 'Astrología', slug: 'astrologia', sort_order: 110, active: true },
 ]
 
-function setupSupabaseMock(returnData = MOCK_PRACTICES, error: unknown = null) {
-  mockOrder.mockResolvedValueOnce({ data: returnData, error })
-  mockEq.mockReturnValue({ order: mockOrder })
-  mockSelect.mockReturnValue({ eq: mockEq })
-  mockFrom.mockReturnValue({ select: mockSelect })
+const MOCK_PRACTICES_INCL_INACTIVE = [
+  ...MOCK_PRACTICES,
+  { key: 'old-practice', label: 'Old Practice', slug: 'old-practice', sort_order: 200, active: false },
+]
+
+// Builds a chainable thenable that supports `.order(...).order(...)` and
+// awaits to `{ data, error }`. Mirrors how Supabase's PostgrestFilterBuilder
+// chains: each .order() returns the same builder, awaiting it resolves.
+function chainableResult(data: unknown, error: unknown = null) {
+  const chain: { order: (...args: unknown[]) => typeof chain; then: PromiseLike<unknown>['then'] } = {
+    order: (..._args: unknown[]) => chain,
+    then: (onFulfilled, onRejected) =>
+      Promise.resolve({ data, error }).then(onFulfilled, onRejected),
+  }
+  return chain
+}
+
+function setupSupabaseMock(returnData: unknown = MOCK_PRACTICES, error: unknown = null) {
+  const chain = chainableResult(returnData, error)
+  // For loadCache: from → select → eq(active) → order().order() → resolves
+  mockEq.mockReturnValueOnce(chain)
+  // For getAllPractices: from → select → order().order() → resolves (no eq)
+  // mockSelect responds to either .eq or .order on the returned object
+  mockSelect.mockReturnValueOnce({ eq: mockEq, order: chain.order })
+  mockFrom.mockReturnValueOnce({ select: mockSelect })
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -35,8 +55,10 @@ function setupSupabaseMock(returnData = MOCK_PRACTICES, error: unknown = null) {
 describe('lib/practices cache behavior', () => {
   beforeEach(async () => {
     vi.resetModules()
-    vi.clearAllMocks()
-    vi.restoreAllMocks()
+    mockFrom.mockReset()
+    mockSelect.mockReset()
+    mockEq.mockReset()
+    mockOrder.mockReset()
   })
 
   it('should call Supabase exactly once for two consecutive getActivePractices() calls', async () => {
@@ -88,10 +110,7 @@ describe('lib/practices cache behavior', () => {
   })
 
   it('should throw when Supabase returns an error', async () => {
-    mockOrder.mockResolvedValueOnce({ data: null, error: { message: 'DB error' } })
-    mockEq.mockReturnValue({ order: mockOrder })
-    mockSelect.mockReturnValue({ eq: mockEq })
-    mockFrom.mockReturnValue({ select: mockSelect })
+    setupSupabaseMock(null, { message: 'DB error' })
 
     const { getActivePractices } = await import('@/lib/practices')
     await expect(getActivePractices()).rejects.toThrow('Failed to load practices catalog')
@@ -101,7 +120,10 @@ describe('lib/practices cache behavior', () => {
 describe('validatePracticeKeys — logic', () => {
   beforeEach(async () => {
     vi.resetModules()
-    vi.clearAllMocks()
+    mockFrom.mockReset()
+    mockSelect.mockReset()
+    mockEq.mockReset()
+    mockOrder.mockReset()
   })
 
   it('should return ok:true for empty array without calling Supabase', async () => {
@@ -128,5 +150,113 @@ describe('validatePracticeKeys — logic', () => {
     if (!result.ok) {
       expect(result.invalidKey).toBe('bad-key')
     }
+  })
+})
+
+describe('bustPracticesCache', () => {
+  beforeEach(async () => {
+    vi.resetModules()
+    mockFrom.mockReset()
+    mockSelect.mockReset()
+    mockEq.mockReset()
+    mockOrder.mockReset()
+  })
+
+  it('forces the next getActivePractices() call to re-fetch from Supabase', async () => {
+    setupSupabaseMock()
+    setupSupabaseMock() // second fetch
+    const { getActivePractices, bustPracticesCache } = await import('@/lib/practices')
+
+    await getActivePractices()
+    expect(mockFrom).toHaveBeenCalledTimes(1)
+
+    bustPracticesCache()
+    await getActivePractices()
+    expect(mockFrom).toHaveBeenCalledTimes(2)
+  })
+
+  it('also clears the getAllPractices cache (both caches busted on every write)', async () => {
+    setupSupabaseMock(MOCK_PRACTICES_INCL_INACTIVE)
+    setupSupabaseMock(MOCK_PRACTICES_INCL_INACTIVE) // post-bust refetch
+    const { getAllPractices, bustPracticesCache } = await import('@/lib/practices')
+
+    await getAllPractices()
+    expect(mockFrom).toHaveBeenCalledTimes(1)
+
+    // Without bust, the cache hit means no second fetch.
+    await getAllPractices()
+    expect(mockFrom).toHaveBeenCalledTimes(1)
+
+    bustPracticesCache()
+    await getAllPractices()
+    expect(mockFrom).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('getAllPractices', () => {
+  beforeEach(async () => {
+    vi.resetModules()
+    mockFrom.mockReset()
+    mockSelect.mockReset()
+    mockEq.mockReset()
+    mockOrder.mockReset()
+  })
+
+  it('returns active + inactive rows', async () => {
+    setupSupabaseMock(MOCK_PRACTICES_INCL_INACTIVE)
+    const { getAllPractices } = await import('@/lib/practices')
+
+    const result = await getAllPractices()
+
+    expect(result).toHaveLength(3)
+    expect(result.find(p => p.key === 'old-practice')?.active).toBe(false)
+  })
+
+  it('does NOT populate the active-only cache', async () => {
+    setupSupabaseMock(MOCK_PRACTICES_INCL_INACTIVE) // for getAllPractices
+    setupSupabaseMock() // for the subsequent getActivePractices
+    const { getAllPractices, getActivePractices } = await import('@/lib/practices')
+
+    await getAllPractices()
+    await getActivePractices()
+
+    // Both calls should hit Supabase — getAllPractices must not seed the active cache
+    expect(mockFrom).toHaveBeenCalledTimes(2)
+  })
+
+  it('does NOT read from the active-only cache', async () => {
+    setupSupabaseMock() // for getActivePractices (warms cache)
+    setupSupabaseMock(MOCK_PRACTICES_INCL_INACTIVE) // for getAllPractices
+    const { getActivePractices, getAllPractices } = await import('@/lib/practices')
+
+    await getActivePractices() // populates cache with active-only rows
+    expect(mockFrom).toHaveBeenCalledTimes(1)
+
+    const result = await getAllPractices()
+    expect(mockFrom).toHaveBeenCalledTimes(2) // separate query
+    expect(result).toHaveLength(3) // includes inactive
+  })
+
+  it('queries with sort_order ASC then key ASC tiebreaker', async () => {
+    // Test asserts the query calls .order twice in sequence: sort_order, then key.
+    const orderCalls: Array<[string, unknown]> = []
+    const trackingChain: any = {
+      order: (col: string, opts: unknown) => {
+        orderCalls.push([col, opts])
+        return trackingChain
+      },
+      then: (onFulfilled: any, onRejected: any) =>
+        Promise.resolve({ data: MOCK_PRACTICES_INCL_INACTIVE, error: null }).then(onFulfilled, onRejected),
+    }
+    mockSelect.mockReturnValueOnce({ eq: mockEq, order: trackingChain.order })
+    mockFrom.mockReturnValueOnce({ select: mockSelect })
+
+    const { getAllPractices } = await import('@/lib/practices')
+    await getAllPractices()
+
+    expect(orderCalls).toEqual([
+      ['sort_order', { ascending: true }],
+      ['key', { ascending: true }],
+    ])
   })
 })

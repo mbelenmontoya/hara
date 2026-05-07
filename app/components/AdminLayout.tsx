@@ -14,6 +14,7 @@ const ADMIN_BG = '/assets/illustrations/jo-yee-leong-8ekcOvJnLlo-unsplash.svg'
 const NAV_ITEMS = [
   { href: '/admin/leads', label: 'Leads' },
   { href: '/admin/professionals', label: 'Profesionales' },
+  { href: '/admin/practices', label: 'Prácticas' },
   { href: '/admin/pqls', label: 'PQLs' },
 ]
 

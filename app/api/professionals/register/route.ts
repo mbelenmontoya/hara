@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { notifyNewProfessional } from '@/lib/email'
 import { uploadProfileImage } from '@/lib/storage'
+import { validatePracticeKeys } from '@/lib/practices'
 
 // Validation
 function validateEmail(email: string): boolean {
@@ -54,7 +55,7 @@ async function parseBody(request: NextRequest): Promise<{ fields: Record<string,
       online_only: formData.get('online_only') === 'true',
       modality: parseJsonArray(formData.get('modality')),
       specialties: parseJsonArray(formData.get('specialties')),
-      style: parseJsonArray(formData.get('style')),
+      practices: parseJsonArray(formData.get('practices')),
       service_type: parseJsonArray(formData.get('service_type')),
       price_range_min: formData.get('price_range_min') && formData.get('price_range_min') !== '' ? parseInt(formData.get('price_range_min') as string) : null,
       price_range_max: formData.get('price_range_max') && formData.get('price_range_max') !== '' ? parseInt(formData.get('price_range_max') as string) : null,
@@ -125,6 +126,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const practices = (fields.practices as string[]) || []
+    if (practices.length > 0) {
+      const validation = await validatePracticeKeys(practices)
+      if (!validation.ok) {
+        return NextResponse.json(
+          { error: `Práctica inválida: ${validation.invalidKey}` },
+          { status: 400 }
+        )
+      }
+    }
+
     // Generate unique slug
     let slug = generateSlug(full_name)
 
@@ -151,7 +163,7 @@ export async function POST(request: NextRequest) {
         online_only: (fields.online_only as boolean) || false,
         modality,
         specialties,
-        style: (fields.style as string[]) || [],
+        practices: (fields.practices as string[]) || [],
         service_type: (fields.service_type as string[]) || [],
         price_range_min: (fields.price_range_min as number) || null,
         price_range_max: (fields.price_range_max as number) || null,

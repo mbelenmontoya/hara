@@ -6,6 +6,7 @@
 
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { notifyNewLead } from '@/lib/email'
+import { validatePracticeKeys } from '@/lib/practices'
 
 export interface CreateLeadInput {
   country: string
@@ -16,7 +17,7 @@ export interface CreateLeadInput {
   budget_min?: number
   budget_max?: number
   currency?: string
-  style_preference?: string[]
+  practice_preference?: string[]
   urgency?: string
   email?: string
   whatsapp?: string
@@ -24,9 +25,15 @@ export interface CreateLeadInput {
 }
 
 export async function createLead(input: CreateLeadInput) {
-  // Validate required fields
   if (!input.country || !input.intent_tags || input.intent_tags.length === 0) {
     throw new Error('Country and intent tags are required')
+  }
+
+  if (input.practice_preference && input.practice_preference.length > 0) {
+    const validation = await validatePracticeKeys(input.practice_preference)
+    if (!validation.ok) {
+      throw new Error(`Práctica inválida: ${validation.invalidKey}`)
+    }
   }
 
   const { data, error } = await supabaseAdmin.from('leads').insert({
@@ -38,7 +45,7 @@ export async function createLead(input: CreateLeadInput) {
     budget_max: input.budget_max,
     currency: input.currency || 'USD',
     intent_tags: input.intent_tags,
-    style_preference: input.style_preference,
+    practice_preference: input.practice_preference,
     urgency: input.urgency,
     email: input.email,
     whatsapp: input.whatsapp,
@@ -51,7 +58,6 @@ export async function createLead(input: CreateLeadInput) {
     throw new Error('Failed to create lead')
   }
 
-  // Notify admin — fire and forget, never block the response
   notifyNewLead({
     intent_tags: input.intent_tags,
     country: input.country,
@@ -59,7 +65,7 @@ export async function createLead(input: CreateLeadInput) {
     whatsapp: input.whatsapp || '',
     urgency: input.urgency,
     modality_preference: input.modality_preference,
-  }).catch(() => {}) // Swallow errors — email failure must not affect lead creation
+  }).catch(() => {})
 
   return { lead_id: data.id }
 }

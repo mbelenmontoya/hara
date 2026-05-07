@@ -1,12 +1,16 @@
 // Hará Match - Professional Profile Page
 // Purpose: Public profile view for professionals
 // Design: 5 glass cards grouping info by user questions
+// force-dynamic: calls getActivePractices() at render time; must not be statically prerendered.
+
+export const dynamic = 'force-dynamic'
 
 import { notFound } from 'next/navigation'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { ContactButton } from '@/app/components/ContactButton'
 import { Chip } from '@/app/components/ui/Chip'
-import { MODALITY_MAP, STYLE_MAP, SERVICE_TYPE_MAP } from '@/lib/design-constants'
+import { MODALITY_MAP, SERVICE_TYPE_MAP } from '@/lib/design-constants'
+import { getActivePractices } from '@/lib/practices'
 import { PageBackground } from '@/app/components/ui/PageBackground'
 import { isEffectivelyDestacado } from '@/lib/ranking'
 import { ReviewerEmailCapture } from '@/app/components/ReviewerEmailCapture'
@@ -17,7 +21,7 @@ interface Professional {
   name: string
   specialties: string[]
   modality: string[]
-  style: string[] | null
+  practices: string[]
   bio: string | null
   short_description: string | null
   experience_description: string | null
@@ -44,7 +48,7 @@ interface Professional {
 async function getProfessional(slug: string): Promise<Professional | null> {
   const { data, error } = await supabaseAdmin
     .from('professionals')
-    .select('id, slug, full_name, specialties, modality, style, bio, short_description, experience_description, instagram, service_type, offers_courses_online, courses_presencial_location, whatsapp, country, city, online_only, price_range_min, price_range_max, currency, accepting_new_clients, profile_image_url, subscription_tier, tier_expires_at, rating_average, rating_count')
+    .select('id, slug, full_name, specialties, modality, practices, bio, short_description, experience_description, instagram, service_type, offers_courses_online, courses_presencial_location, whatsapp, country, city, online_only, price_range_min, price_range_max, currency, accepting_new_clients, profile_image_url, subscription_tier, tier_expires_at, rating_average, rating_count')
     .eq('slug', slug)
     .eq('status', 'active')
     .single()
@@ -57,7 +61,7 @@ async function getProfessional(slug: string): Promise<Professional | null> {
     name: data.full_name,
     specialties: data.specialties,
     modality: data.modality,
-    style: data.style,
+    practices: data.practices ?? [],
     bio: data.bio,
     short_description: data.short_description,
     experience_description: data.experience_description,
@@ -136,8 +140,10 @@ export default async function ProfessionalProfilePage({
   const backLabel = fromPath && fromPath.startsWith('/r/') ? 'Volver a recomendaciones' : 'Ir al inicio'
 
 
+  const catalogPractices = await getActivePractices()
+  const practiceLabelMap = Object.fromEntries(catalogPractices.map(p => [p.key, p.label]))
   const modalityLabels = professional.modality.map(m => MODALITY_MAP[m] || m)
-  const styleLabels = (professional.style || []).map(s => STYLE_MAP[s] || s)
+  const practiceLabels = professional.practices.map(k => practiceLabelMap[k] ?? k)
   const serviceTypeLabels = professional.service_type.map(s => SERVICE_TYPE_MAP[s] || s)
   const location = formatLocation(professional.country, professional.city, professional.online_only)
   const priceRange = formatPrice(professional.price_range_min, professional.price_range_max, professional.currency)
@@ -147,7 +153,7 @@ export default async function ProfessionalProfilePage({
       <PageBackground />
 
       {/* Content */}
-      <div className="relative z-10 max-w-md mx-auto px-4 pt-8 pb-12 space-y-4">
+      <div className="relative z-10 max-w-md md:max-w-[960px] mx-auto px-4 pt-8 pb-12 space-y-4">
 
         {/* Back button */}
         <a
@@ -229,10 +235,10 @@ export default async function ProfessionalProfilePage({
             ))}
           </div>
 
-          {styleLabels.length > 0 && (
+          {practiceLabels.length > 0 && (
             <div className="mb-4">
-              <h3 className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Enfoque terapéutico</h3>
-              <p className="text-sm text-foreground">{styleLabels.join(', ')}</p>
+              <h3 className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Prácticas</h3>
+              <p className="text-sm text-foreground">{practiceLabels.join(', ')}</p>
             </div>
           )}
 

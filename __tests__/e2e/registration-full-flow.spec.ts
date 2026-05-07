@@ -276,6 +276,15 @@ test.describe('Professional Registration — Full Flow', () => {
     await expect(ansiedadBtn).toHaveAttribute('aria-pressed', 'true')
     await expect(autoestimaBtn).toHaveAttribute('aria-pressed', 'true')
 
+    // TS-001 step 3: Select practice chips (catalog-driven)
+    // Practice picker chips render from the practices DB table — requires migration 010 applied.
+    const reikiChip = page.getByRole('button', { name: 'Reiki' })
+    const meditacionChip = page.getByRole('button', { name: 'Meditación y mindfulness' })
+    await reikiChip.click()
+    await meditacionChip.click()
+    await expect(reikiChip).toHaveAttribute('aria-pressed', 'true')
+    await expect(meditacionChip).toHaveAttribute('aria-pressed', 'true')
+
     // Screenshot: Step 1 filled
     await page.screenshot({
       path: `${screenshotDir()}/02-step-1-filled.png`,
@@ -365,6 +374,17 @@ test.describe('Professional Registration — Full Flow', () => {
         createdId = data.id
         expect(data.status).toBe('submitted')
       }
+
+      // TS-001 step 5: Verify selected practices landed in the DB row
+      const { data: practicesRow } = await supabase
+        .from('professionals')
+        .select('practices')
+        .eq('slug', createdSlug)
+        .single()
+      expect(practicesRow).not.toBeNull()
+      expect(practicesRow!.practices).toEqual(
+        expect.arrayContaining(['reiki', 'meditacion-mindfulness'])
+      )
     }
 
     // ── Confirmation page ────────────────────────────────────────────────────

@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { logError } from '@/lib/monitoring'
+import { getActivePractices, validatePracticeKeys } from '@/lib/practices'
 
 export const runtime = 'nodejs'
 
@@ -48,7 +49,8 @@ export async function GET(
     )
   }
 
-  return NextResponse.json({ professional: data })
+  const practices = await getActivePractices()
+  return NextResponse.json({ professional: data, practices })
 }
 
 export async function PATCH(
@@ -62,10 +64,11 @@ export async function PATCH(
   }
 
   const body = await request.json()
-  const { action, rejection_reason, specialties } = body as {
+  const { action, rejection_reason, specialties, practices } = body as {
     action?: string
     rejection_reason?: string
     specialties?: unknown
+    practices?: unknown
   }
 
   // Validate specialties if provided
@@ -74,6 +77,46 @@ export async function PATCH(
     if (specialtiesError) {
       return NextResponse.json({ error: specialtiesError }, { status: 400 })
     }
+  }
+
+  // Practices-only update — no action, parallel to specialty-only path
+  if (!action && practices !== undefined) {
+    if (!Array.isArray(practices) || practices.length === 0) {
+      return NextResponse.json(
+        { error: 'Seleccioná al menos una práctica' },
+        { status: 400 }
+      )
+    }
+
+    if (!practices.every((k: unknown) => typeof k === 'string')) {
+      return NextResponse.json({ error: 'Las prácticas deben ser strings' }, { status: 400 })
+    }
+
+    const validation = await validatePracticeKeys(practices as string[])
+    if (!validation.ok) {
+      return NextResponse.json(
+        { error: `Práctica inválida: ${validation.invalidKey}` },
+        { status: 400 }
+      )
+    }
+
+    // Single query: update + select to avoid TOCTOU. Returns null data if row not found.
+    const { data: updated, error: updateError } = await supabaseAdmin
+      .from('professionals')
+      .update({
+        practices: practices as string[],
+        needs_practice_review: false,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select('id')
+      .single()
+
+    if (updateError || !updated) {
+      return NextResponse.json({ error: 'Profesional no encontrado o error al actualizar' }, { status: updateError ? 500 : 404 })
+    }
+
+    return NextResponse.json({ success: true })
   }
 
   // Specialty-only update — no action, bypass status check

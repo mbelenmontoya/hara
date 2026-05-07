@@ -19,10 +19,12 @@ import {
   type ProfileScore,
   type ScorableProfile,
 } from '@/lib/profile-score'
-import { MODALITY_MAP, STYLE_MAP, STATUS_CONFIG } from '@/lib/design-constants'
+import { MODALITY_MAP, STATUS_CONFIG } from '@/lib/design-constants'
 import { logError } from '@/lib/monitoring'
 import { SpecialtyMapper } from './components/SpecialtyMapper'
 import { ScoreRing, ScoreBreakdown } from './components/ScoreDisplay'
+import { PracticeReclassificationBanner } from './components/PracticeReclassificationBanner'
+import type { Practice } from '@/lib/practices'
 
 // ============================================================================
 // TYPES
@@ -40,7 +42,8 @@ interface Professional {
   online_only: boolean
   modality: string[]
   specialties: string[]
-  style: string[] | null
+  practices: string[]
+  needs_practice_review: boolean
   bio: string | null
   short_description: string | null
   experience_description: string | null
@@ -65,6 +68,7 @@ export default function ProfessionalReviewPage() {
   const id = params.id as string
 
   const [professional, setProfessional] = useState<Professional | null>(null)
+  const [catalogPractices, setCatalogPractices] = useState<Practice[]>([])
   const [score, setScore] = useState<ProfileScore | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -83,8 +87,9 @@ export default function ProfessionalReviewPage() {
         const body = await res.json().catch(() => ({}))
         throw new Error(body.error || 'Error al cargar el profesional')
       }
-      const { professional: data } = await res.json()
+      const { professional: data, practices: catalogData } = await res.json()
       setProfessional(data)
+      if (Array.isArray(catalogData)) setCatalogPractices(catalogData)
 
       const scorable: ScorableProfile = {
         profile_image_url: data.profile_image_url,
@@ -185,7 +190,8 @@ export default function ProfessionalReviewPage() {
   const isReviewable = professional.status === 'submitted'
 
   const modalityLabels = professional.modality.map((m) => MODALITY_MAP[m] || m)
-  const styleLabels = (professional.style || []).map((s) => STYLE_MAP[s] || s)
+  const practiceLabelMap = Object.fromEntries(catalogPractices.map(p => [p.key, p.label]))
+  const practiceLabels = professional.practices.map(k => practiceLabelMap[k] ?? k)
   const location = professional.online_only
     ? 'Solo online'
     : [professional.city, professional.country].filter(Boolean).join(', ')
@@ -250,6 +256,15 @@ export default function ProfessionalReviewPage() {
             {professional.rejection_reason}
           </Alert>
         )}
+
+        {/* Re-classification banner — shown when needs_practice_review */}
+        <PracticeReclassificationBanner
+          professionalId={id}
+          practices={catalogPractices}
+          needsReview={professional.needs_practice_review}
+          initialSelected={professional.practices}
+          onSaved={fetchProfessional}
+        />
 
         {/* Score card */}
         {score && (
@@ -316,10 +331,10 @@ export default function ProfessionalReviewPage() {
               </div>
             </div>
 
-            {styleLabels.length > 0 && (
+            {practiceLabels.length > 0 && (
               <div>
-                <p className="text-xs text-muted mb-1">Enfoque terapéutico</p>
-                <p className="text-sm text-foreground">{styleLabels.join(', ')}</p>
+                <p className="text-xs text-muted mb-1">Prácticas</p>
+                <p className="text-sm text-foreground">{practiceLabels.join(', ')}</p>
               </div>
             )}
 

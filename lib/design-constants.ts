@@ -121,18 +121,6 @@ export const MODALITY_MAP: Record<string, string> = {
   both: 'Online y presencial',
 }
 
-/** Therapeutic style key → Spanish display label */
-export const STYLE_MAP: Record<string, string> = {
-  'cognitive-behavioral': 'Cognitivo-conductual',
-  cbt: 'Cognitivo-conductual',
-  psychoanalytic: 'Psicoanalítico',
-  psychodynamic: 'Psicodinámica',
-  humanistic: 'Humanista',
-  systemic: 'Sistémico',
-  gestalt: 'Gestalt',
-  integrative: 'Integrativo',
-}
-
 /** Service type key → Spanish display label */
 export const SERVICE_TYPE_MAP: Record<string, string> = {
   individual: 'Sesiones individuales',

@@ -10,7 +10,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <PageBackground />
 
-      <div className="relative z-10 max-w-md mx-auto px-4 pt-16 pb-12 min-h-screen flex flex-col">
+      <div className="relative z-10 max-w-md md:max-w-[960px] mx-auto px-4 pt-16 pb-12 min-h-screen flex flex-col">
 
         <div className="text-center mb-10">
           <p className="text-xs font-semibold text-brand uppercase tracking-[0.2em] mb-3">

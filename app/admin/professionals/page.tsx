@@ -198,7 +198,7 @@ export default function ProfessionalsPage() {
                 <SectionHeader className="mb-3 px-1">
                   {`Pendientes de revisión (${submitted.length})`}
                 </SectionHeader>
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
                   {submitted.map((pro) => (
                     <ProfessionalRow
                       key={pro.id}
@@ -219,7 +219,7 @@ export default function ProfessionalsPage() {
                 <SectionHeader className="mb-3 px-1">
                   {`Revisados (${others.length})`}
                 </SectionHeader>
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
                   {others.map((pro) => (
                     <ProfessionalRow
                       key={pro.id}

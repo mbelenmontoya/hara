@@ -70,7 +70,7 @@ export default async function ReviewPage({ params }: { params: { token: string }
     <div className="min-h-screen bg-background">
       <PageBackground />
 
-      <div className="relative z-10 max-w-md mx-auto px-4 pt-8 pb-12">
+      <div className="relative z-10 max-w-md md:max-w-[960px] mx-auto px-4 pt-8 pb-12">
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold text-foreground">Tu reseña</h1>
           {state === 'valid' && request && (

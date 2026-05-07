@@ -11,14 +11,24 @@ import { Chip } from '@/app/components/ui/Chip'
 import { logError } from '@/lib/monitoring'
 import { isEffectivelyDestacado } from '@/lib/ranking'
 
+// Always render fresh — directory ranking + Destacado expiry change behind the scenes.
+export const dynamic = 'force-dynamic'
+
 interface DirectoryProfessional {
   slug: string
   full_name: string
-  specialties: string[] | null  // null-safe: DB arrays may be null even when typed non-nullable in schema
+  specialties: string[] | null
+  modality: string[] | null
+  short_description: string | null
   city: string | null
   country: string
   online_only: boolean
   profile_image_url: string | null
+  price_range_min: number | null
+  price_range_max: number | null
+  currency: string | null
+  rating_average: number | null
+  rating_count: number | null
   subscription_tier: string | null
   tier_expires_at: string | null
 }
@@ -28,10 +38,28 @@ function formatLocation(pro: DirectoryProfessional): string {
   return [pro.city, pro.country].filter(Boolean).join(', ')
 }
 
+function formatPrice(pro: DirectoryProfessional): string | null {
+  const { price_range_min: min, price_range_max: max, currency } = pro
+  if (min == null && max == null) return null
+  const cur = currency ?? 'USD'
+  const fmt = (n: number) => `${cur === 'ARS' ? '$' : 'US$'}${n.toLocaleString('es-AR')}`
+  if (min != null && max != null) return `${fmt(min)}–${fmt(max)}`
+  if (min != null) return `desde ${fmt(min)}`
+  return `hasta ${fmt(max!)}`
+}
+
+function formatModality(pro: DirectoryProfessional): string | null {
+  if (pro.online_only) return null // already shown as location
+  const mods = pro.modality ?? []
+  if (mods.length === 0) return null
+  const labels = mods.map((m) => (m === 'online' ? 'Online' : m === 'presencial' ? 'Presencial' : m))
+  return labels.join(' · ')
+}
+
 async function getProfessionals(): Promise<DirectoryProfessional[]> {
   const { data, error } = await supabaseAdmin
     .from('professionals')
-    .select('slug, full_name, specialties, city, country, online_only, profile_image_url, subscription_tier, tier_expires_at')
+    .select('slug, full_name, specialties, modality, short_description, city, country, online_only, profile_image_url, price_range_min, price_range_max, currency, rating_average, rating_count, subscription_tier, tier_expires_at')
     .eq('status', 'active')
     .eq('accepting_new_clients', true)
     .order('ranking_score', { ascending: false })
@@ -52,7 +80,7 @@ export default async function DirectoryPage() {
     <div className="min-h-screen bg-background">
       <PageBackground />
 
-      <div className="relative z-10 max-w-md mx-auto px-4 pt-8 pb-12 space-y-4">
+      <div className="relative z-10 max-w-md md:max-w-[960px] mx-auto px-4 pt-8 pb-12 space-y-4">
 
         {/* Header */}
         <div>
@@ -69,7 +97,7 @@ export default async function DirectoryPage() {
             />
           </GlassCard>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
             {professionals.map((pro) => (
               <ProfessionalCard key={pro.slug} professional={pro} />
             ))}
@@ -85,14 +113,21 @@ function ProfessionalCard({ professional: pro }: { professional: DirectoryProfes
   const visibleSpecialties = (pro.specialties ?? []).slice(0, 3)
   const overflow = (pro.specialties?.length ?? 0) - visibleSpecialties.length
   const location = formatLocation(pro)
+  const price = formatPrice(pro)
+  const modality = formatModality(pro)
+  const rating = Number(pro.rating_average ?? 0)
+  const ratingCount = Number(pro.rating_count ?? 0)
+  const isDestacado = isEffectivelyDestacado(pro.subscription_tier, pro.tier_expires_at)
 
   return (
-    <article data-testid="professional-card">
-      <Link href={`/p/${pro.slug}`} className="block">
-        <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-5 hover:shadow-strong transition-shadow">
-          <div className="flex items-center gap-4">
+    <article data-testid="professional-card" className="h-full">
+      <Link href={`/p/${pro.slug}`} className="block h-full">
+        <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-5 hover:shadow-strong transition-shadow h-full flex flex-col">
 
-            {/* Avatar — 56×56, mirrors /p/[slug]/page.tsx:135-148 scaled down */}
+          {/* Top: avatar + identity */}
+          <div className="flex items-start gap-3 mb-3">
+
+            {/* Avatar */}
             <div className="flex-shrink-0">
               {pro.profile_image_url ? (
                 <img
@@ -109,49 +144,69 @@ function ProfessionalCard({ professional: pro }: { professional: DirectoryProfes
               )}
             </div>
 
-            {/* Info column */}
+            {/* Identity column */}
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <h3
                   data-testid="professional-name"
                   className="text-sm font-semibold text-foreground truncate"
                 >
                   {pro.full_name}
                 </h3>
-                {isEffectivelyDestacado(pro.subscription_tier, pro.tier_expires_at) && (
+                {isDestacado && (
                   <span data-testid="destacado-chip">
                     <Chip variant="brand" label="Destacado" className="text-[10px] px-2 py-0.5" />
                   </span>
                 )}
               </div>
 
-              {visibleSpecialties.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                  {visibleSpecialties.map((s) => (
-                    <Chip key={s} specialty={s} className="text-[11px] px-2 py-1" />
-                  ))}
-                  {overflow > 0 && (
-                    <span className="text-xs text-muted">+{overflow}</span>
-                  )}
-                </div>
+              {ratingCount > 0 && (
+                <p className="text-xs text-muted mt-0.5">
+                  {rating.toFixed(1)} ★ · {ratingCount} {ratingCount === 1 ? 'reseña' : 'reseñas'}
+                </p>
               )}
-
-              <p className="text-xs text-muted">{location}</p>
             </div>
-
-            {/* Chevron — visual affordance for clickability */}
-            <svg
-              className="w-4 h-4 text-muted flex-shrink-0"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-              aria-hidden="true"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-
           </div>
+
+          {/* Short description */}
+          {pro.short_description && (
+            <p className="text-xs text-muted leading-relaxed mb-3 line-clamp-3">
+              {pro.short_description}
+            </p>
+          )}
+
+          {/* Specialty chips */}
+          {visibleSpecialties.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 mb-3">
+              {visibleSpecialties.map((s) => (
+                <Chip key={s} specialty={s} className="text-[11px] px-2 py-1" />
+              ))}
+              {overflow > 0 && (
+                <span className="text-xs text-muted">+{overflow}</span>
+              )}
+            </div>
+          )}
+
+          {/* Bottom meta — pinned to bottom for visual alignment across cards */}
+          <div className="mt-auto pt-2 space-y-1 text-xs text-muted">
+            <p className="flex items-center gap-1.5">
+              <span aria-hidden>📍</span>
+              <span className="truncate">{location}</span>
+            </p>
+            {modality && (
+              <p className="flex items-center gap-1.5">
+                <span aria-hidden>💻</span>
+                <span className="truncate">{modality}</span>
+              </p>
+            )}
+            {price && (
+              <p className="flex items-center gap-1.5">
+                <span aria-hidden>💰</span>
+                <span className="truncate">{price}</span>
+              </p>
+            )}
+          </div>
+
         </div>
       </Link>
     </article>

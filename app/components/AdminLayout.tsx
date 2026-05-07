@@ -31,7 +31,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       <div className="relative z-10 min-h-screen flex flex-col">
         {/* Header */}
         <header className="px-4 pt-8 pb-2">
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-[960px] mx-auto">
             <GlassCard>
               <h1 className="text-lg font-semibold text-foreground mb-4">Administración</h1>
 
@@ -59,7 +59,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
         {/* Content */}
         <main className="flex-1 px-4 py-6">
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-[960px] mx-auto">
             {children}
           </div>
         </main>

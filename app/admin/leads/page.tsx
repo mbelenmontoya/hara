@@ -93,7 +93,7 @@ export default function AdminLeadsPage() {
             />
           </GlassCard>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
             {filteredLeads.map((lead) => (
               <LeadCard key={lead.id} lead={lead} />
             ))}

@@ -110,7 +110,7 @@ export default function AdminReviewsPage() {
             />
           </GlassCard>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
             {filteredReviews.map(review => (
               <GlassCard key={review.id}>
                 <div className="flex items-start gap-4">

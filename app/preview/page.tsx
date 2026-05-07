@@ -10,7 +10,7 @@ export default function HomePreviewPage() {
     <div className="min-h-screen bg-background">
       <PageBackground />
 
-      <div className="relative z-10 max-w-md mx-auto px-4 pt-8 pb-12">
+      <div className="relative z-10 max-w-md md:max-w-[960px] mx-auto px-4 pt-8 pb-12">
 
         {/* Hero */}
         <h1 className="text-3xl font-semibold text-foreground mb-3 text-center leading-tight">

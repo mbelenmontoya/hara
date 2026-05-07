@@ -93,7 +93,7 @@ export function TermsAndPrivacyPage({
     <div className="min-h-screen bg-background">
       <PageBackground />
 
-      <div className="relative z-10 max-w-md mx-auto px-4 pt-8 pb-12">
+      <div className="relative z-10 max-w-md md:max-w-[960px] mx-auto px-4 pt-8 pb-12">
         <Link
           href="/"
           className="inline-flex items-center text-sm text-muted hover:text-foreground transition-colors mb-6"

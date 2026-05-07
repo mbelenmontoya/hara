@@ -8,7 +8,7 @@
 
 ## Overview
 
-Hará Match is a curated wellness professional marketplace for Spanish-speaking markets (LATAM + Spain, Argentina home). It's a trust layer between people seeking wellness support (therapy, coaching, somatic practices) and the professionals who can provide it.
+Hará Match is a curated marketplace for **terapias alternativas y bienestar holístico** in Spanish-speaking markets (LATAM + Spain, Argentina home) — reiki, masajes terapéuticos, constelaciones familiares, diseño humano, registros akáshicos, terapia floral, terapia energética, meditación, and related holistic practices. It's a trust layer between people navigating something specific (ansiedad, insomnio, duelo, estrés, búsqueda de claridad) and the holistic practitioners who can accompany them.
 
 **📖 For the full product context — what we're building, who it's for, where, why, and how we measure success — read [`PRODUCT.md`](./PRODUCT.md).**
 

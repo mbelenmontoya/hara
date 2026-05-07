@@ -599,8 +599,8 @@ async function seed() {
       email: `test${i}@qa.com`,
       whatsapp: `+549111234567${i}`,
       country: 'AR',
-      modality: ['therapy'],
-      specialties: ['anxiety'],
+      modality: ['reiki'],
+      specialties: ['ansiedad'],
       status: 'active',
     }).select().single()
     pros.push(data)

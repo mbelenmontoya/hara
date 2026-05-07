@@ -5,7 +5,7 @@ description: Hará Match design system knowledge — tokens, liquid-glass patter
 
 # Hará Match Design System
 
-Wellness-focused design language. Think "therapy app designed by Apple" — calm, warm, trustworthy, premium.
+Holistic-wellness design language for a marketplace of terapias alternativas (reiki, masajes, constelaciones familiares, diseño humano, registros akáshicos, terapia floral/energética). Think *"holistic-wellness app designed by Apple"* — calm, warm, trustworthy, premium.
 
 ## Color Palette (from `app/globals.css` `@theme`)
 

@@ -21,7 +21,7 @@ The architecture is multi-tenant from day one because the long-term vision is a 
 1. Bel visits the admin app URL
 2. Enters email, receives magic link via Supabase Auth
 3. Clicks link, session established with JWT carrying `account_id` claim
-4. Redirected to default account dashboard (Hará in v1)
+4. Redirected to default account dashboard (Hara in v1)
 
 ### Flow 2: Review monthly strategies
 
@@ -53,7 +53,7 @@ The architecture is multi-tenant from day one because the long-term vision is a 
 ### In Scope
 
 - Next.js 16 App Router app deployed on Vercel free tier
-- TypeScript, Tailwind v4, shadcn/ui (matches Hará's stack)
+- TypeScript, Tailwind v4, shadcn/ui (matches Hara's stack)
 - Supabase Auth with magic-link email login
 - Single user (Bel) in v1; schema and JWT structure ready for additional users
 - Path-based routing: `/account/[account_id]/...` (multi-tenant ready, single account hardcoded in UI)
@@ -81,7 +81,7 @@ The architecture is multi-tenant from day one because the long-term vision is a 
 - **Mobile-optimized UI** — desktop-only; responsive layout is a future feature
 - **Analytics dashboards** — no metrics views in v1
 - **Notification preferences** — Telegram notification config stays in n8n
-- **Internationalization** — Spanish-only UI strings (Argentine voice, matches Hará)
+- **Internationalization** — Spanish-only UI strings (Argentine voice, matches Hara)
 - **Admin app for clients to log in themselves** — future PRD when first paying client signs up
 - **Visual brand preview** — "see how AI would use your brand" preview is post-MVP
 
@@ -90,7 +90,7 @@ The architecture is multi-tenant from day one because the long-term vision is a 
 - **Framework:** Next.js 16 App Router, React 19, TypeScript
 - **Styling:** Tailwind v4 (`@theme` directive), shadcn/ui components
 - **Auth:** Supabase Auth (magic link), JWT custom claim `account_id` set via Auth Hook
-- **Database:** Same Supabase `automations` project as the strategist workflow (separate from Hará's app)
+- **Database:** Same Supabase `automations` project as the strategist workflow (separate from Hara's app)
 - **Database client:** `@supabase/ssr` for server components, `@supabase/supabase-js` for client where needed
 - **Service role:** stored in `SUPABASE_SERVICE_ROLE_KEY` env var, used only in server actions and Route Handlers
 - **n8n webhook:** URL stored in `N8N_REGEN_WEBHOOK_URL` env var
@@ -105,19 +105,19 @@ The architecture is multi-tenant from day one because the long-term vision is a 
 | Auth provider | Supabase Auth (magic link) | Free up to 50K MAU, deep RLS integration, no extra service to manage, JWT custom claims drive multi-tenant isolation |
 | Routing strategy | Path-based (`/account/[id]/...`) | Vercel-friendly out of the box, no DNS/SSL config, simpler local dev, multi-tenant ready |
 | V1 scope | Review + rejection + regen only | Smallest valuable UI surface; Supabase Studio handles brand/pillar editing for now |
-| Component library | shadcn/ui + Tailwind v4 | 2026 default for Next.js admin dashboards; matches Hará stack so mental model carries over |
+| Component library | shadcn/ui + Tailwind v4 | 2026 default for Next.js admin dashboards; matches Hara stack so mental model carries over |
 | Account creation | Manual via Supabase Studio | Defers signup UX until real second client; saves weeks of UI work |
 | API key storage | n8n credentials (no UI) | Multi-tenant Vault pattern is real work; deferred until needed |
 | Multi-tenant model | Schema-ready, UI single-user | Sellable later (no migration), simple now |
 | Hosting | Vercel free tier | One user, modest traffic — well within limits |
 | Service role usage | Server-only, never exposed to client | Standard Supabase security pattern; bypasses RLS for admin ops |
 | Database for dev/staging | Same `automations` project, separate account row | Avoids cost/complexity of separate Supabase project; risk: dev work touches prod data, mitigated by `account_id` scoping |
-| UI language | Spanish (Argentine voice) | Matches Hará's positioning; future clients in same market |
+| UI language | Spanish (Argentine voice) | Matches Hara's positioning; future clients in same market |
 
 ## Success Criteria
 
 - Bel can log in with magic link in under 30 seconds
-- Bel can see all monthly strategies for Hará in a sortable list
+- Bel can see all monthly strategies for Hara in a sortable list
 - Bel can drill into a strategy and read every brief field without copy-pasting from Supabase Studio
 - Rejection form writes `rejection_reason` correctly to the database (verified by reading row back)
 - Regen trigger fires n8n webhook successfully (verified by Telegram notification arriving)
@@ -164,4 +164,4 @@ These are spec-level details, not PRD-blocking:
 
 - The Monthly Social Strategist Workflow (PRD: `2026-05-01-monthly-social-strategist.md`) must be implemented first or in parallel — this admin app reads its outputs and triggers its regeneration webhook.
 - The Supabase `automations` project must be created and seeded with the schema from the strategist PRD (accounts, brand_context, content_pillars, monthly_strategies, post_slots, agent_runs, posting_benchmarks).
-- Hará account row must exist before this app is useful.
+- Hara account row must exist before this app is useful.

@@ -1,4 +1,4 @@
-// Hará Match - Supabase Admin Client
+// Hara Match - Supabase Admin Client
 // Purpose: Service role client for server-side operations
 // Security: NEVER expose service role key to client
 //

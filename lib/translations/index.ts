@@ -1,4 +1,4 @@
-// Translation system for Hará Match
+// Translation system for Hara Match
 // Currently Spanish-only, designed for easy multi-language expansion
 
 import { ES_TRANSLATIONS, type Translations } from './es'

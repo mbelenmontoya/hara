@@ -1,4 +1,4 @@
-// Hará Match - Billing Month Normalization
+// Hara Match - Billing Month Normalization
 // Accepts: YYYY-MM or YYYY-MM-DD
 // Returns: YYYY-MM-01 (first day of month)
 // No Date parsing (strict string validation)

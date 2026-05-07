@@ -1,4 +1,4 @@
-// Hará Match — Admin Practices Catalog API
+// Hara Match — Admin Practices Catalog API
 // GET:  list all practices (active + inactive) with usage counts.
 // POST: create a new practice (validates kebab-case key/slug, pre-checks
 //       uniqueness, busts the in-process catalog cache on success).

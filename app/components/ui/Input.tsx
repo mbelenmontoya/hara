@@ -1,4 +1,4 @@
-// Hará UI - Input Components
+// Hara UI - Input Components
 // Purpose: Form inputs with label + helper/error pattern
 // Accessibility: labels, error messages, proper ARIA attributes
 

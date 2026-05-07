@@ -1,9 +1,9 @@
 ---
 name: tailwind-design-system
-description: Hará Match design system knowledge — tokens, liquid-glass patterns, animation easings, and UI conventions. Triggers on "style", "design", "component", "card", "button", "animation", "glass", "token", "color", "shadow", "UI".
+description: Hara Match design system knowledge — tokens, liquid-glass patterns, animation easings, and UI conventions. Triggers on "style", "design", "component", "card", "button", "animation", "glass", "token", "color", "shadow", "UI".
 ---
 
-# Hará Match Design System
+# Hara Match Design System
 
 Holistic-wellness design language for a marketplace of terapias alternativas (reiki, masajes, constelaciones familiares, diseño humano, registros akáshicos, terapia floral/energética). Think *"holistic-wellness app designed by Apple"* — calm, warm, trustworthy, premium.
 

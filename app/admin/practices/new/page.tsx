@@ -1,4 +1,4 @@
-// Hará Match — Admin Practices: Create
+// Hara Match — Admin Practices: Create
 // Server shell. Renders the shared <PracticeForm> in create mode.
 
 import Link from 'next/link'

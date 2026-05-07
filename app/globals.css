@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Hará UI v2 - Production Design Tokens */
+/* Hara UI v2 - Production Design Tokens */
 /* Brand personality: calm, warm, trustworthy, premium (wellness-focused) */
 /* Spacing rhythm: 8px base → 12/16/20/24/32/48 for consistent layout */
 
@@ -87,7 +87,7 @@
   --shadow-strong: 0 8px 24px rgb(31 26 36 / 0.12), 0 4px 8px rgb(31 26 36 / 0.06);
 }
 
-/* Typography - Hará brand voice */
+/* Typography - Hara brand voice */
 body {
   font-family: var(--font-body), system-ui, -apple-system, sans-serif;
   background-color: var(--color-background);

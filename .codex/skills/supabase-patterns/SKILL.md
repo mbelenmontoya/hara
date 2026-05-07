@@ -1,9 +1,9 @@
 ---
 name: supabase-patterns
-description: Hará Match Supabase patterns — service-role client, RLS policies, attribution tokens, event tracking, and PQL billing flow. Triggers on "supabase", "database", "query", "API route", "service role", "RLS", "attribution", "token", "event", "PQL", "billing".
+description: Hara Match Supabase patterns — service-role client, RLS policies, attribution tokens, event tracking, and PQL billing flow. Triggers on "supabase", "database", "query", "API route", "service role", "RLS", "attribution", "token", "event", "PQL", "billing".
 ---
 
-# Supabase Patterns for Hará Match
+# Supabase Patterns for Hara Match
 
 ## Architecture Overview
 

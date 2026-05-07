@@ -1,4 +1,4 @@
-// Hará UI v2 - Button Component
+// Hara UI v2 - Button Component
 // Purpose: Primary interactive element with tactile, accessible design
 // Brand: Warm, premium, trustworthy
 

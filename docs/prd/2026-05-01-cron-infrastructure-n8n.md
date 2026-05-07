@@ -7,18 +7,18 @@ Status: In Progress
 
 ## Problem Statement
 
-Hará Match has two scheduled jobs committed to the codebase that have **never run in production**:
+Hara Match has two scheduled jobs committed to the codebase that have **never run in production**:
 
 - `app/api/cron/expire-destacado/route.ts` — daily 06:00 UTC, expires lapsed Destacado tier subscriptions
 - `app/api/cron/send-review-requests/route.ts` — daily 07:00 UTC, sends review-request emails for contacts from 7 days ago
 
 Both routes are configured in `vercel.json` and protected by `CRON_SECRET` Bearer auth. Both were committed on **2026-04-27** (`5568bdb` and `cf2fc6d`). Investigation on **2026-05-01** confirmed they have never fired in production. Three independent failures stack:
 
-1. **Vercel Hobby plan does not fire `vercel.json` crons.** Both route files explicitly comment this: *"On Vercel Hobby, cron jobs do not fire and the Bearer header is NOT injected — use curl as a fallback."* Hará is on Hobby and not on Pro.
+1. **Vercel Hobby plan does not fire `vercel.json` crons.** Both route files explicitly comment this: *"On Vercel Hobby, cron jobs do not fire and the Bearer header is NOT injected — use curl as a fallback."* Hara is on Hobby and not on Pro.
 2. **Supabase free-tier auto-pauses after ~7 days of inactivity.** The DB has been paused since at least 2026-04-27 (the prod-down incident that opened Phase 0). Even if Vercel crons fired, they would hit a paused DB and silently fail.
 3. **Migrations 004 / 005 / 006 are not applied to the live DB.** Both crons call RPCs (`upgrade_destacado_tier`, `select_pending_review_events`) that don't exist yet — even on an unpaused DB, the crons would 500.
 
-The naive fix — *"upgrade Vercel to Pro"* — costs $20/mo for one feature (firing crons), and still leaves the Supabase auto-pause issue unsolved. The structurally correct fix uses infrastructure the user **already owns and runs**: a self-hosted n8n instance at `https://n8n.greenbit.info` (Hetzner + Coolify). n8n is purpose-built for scheduled HTTP requests and can hit Hará's existing cron endpoints with the existing Bearer auth. This is $0/mo of additional cost.
+The naive fix — *"upgrade Vercel to Pro"* — costs $20/mo for one feature (firing crons), and still leaves the Supabase auto-pause issue unsolved. The structurally correct fix uses infrastructure the user **already owns and runs**: a self-hosted n8n instance at `https://n8n.greenbit.info` (Hetzner + Coolify). n8n is purpose-built for scheduled HTTP requests and can hit Hara's existing cron endpoints with the existing Bearer auth. This is $0/mo of additional cost.
 
 This PRD defines the work to **make the cron infrastructure actually work** by routing scheduled invocations through n8n instead of Vercel.
 
@@ -34,7 +34,7 @@ This PRD defines the work to **make the cron infrastructure actually work** by r
 
 **n8n wins on three axes:** zero marginal cost, solves both problems with one change, and the user already operates the platform daily. The existing `expire-destacado` cron does a real `UPDATE professionals` query — it functions as a keep-alive heartbeat without needing a separate keep-alive endpoint.
 
-The DB-migration option is not the right answer for this problem. Hará uses Supabase Postgres + Auth + Storage; replacing the latter two would take 3–7 days of focused work plus regression risk on auth and image upload that just stabilized. Worth doing only if/when there is a different reason to leave Supabase entirely (cost at scale, vendor independence). It does not pay back as a fix for cron scheduling.
+The DB-migration option is not the right answer for this problem. Hara uses Supabase Postgres + Auth + Storage; replacing the latter two would take 3–7 days of focused work plus regression risk on auth and image upload that just stabilized. Worth doing only if/when there is a different reason to leave Supabase entirely (cost at scale, vendor independence). It does not pay back as a fix for cron scheduling.
 
 ## Definition of Done
 
@@ -56,7 +56,7 @@ The DB-migration option is not the right answer for this problem. Hará uses Sup
 **Why:** Every subsequent task depends on the DB being reachable. Migrations cannot be applied to a paused project; the cron endpoints will 500 against a paused DB; n8n cannot validate its workflows without a working DB.
 
 **How:**
-1. Open Supabase dashboard → select the Hará Match project
+1. Open Supabase dashboard → select the Hara Match project
 2. Click **Resume** (free-tier projects auto-pause; this is a single-click recovery)
 3. Wait ~30–60 seconds for the project status to flip to `Active`
 4. Confirm `curl -I https://hara-weld.vercel.app` returns `200` (middleware no longer crashes)
@@ -100,10 +100,10 @@ The apply scripts at `scripts/apply-*-migration.mjs` will fall back to printing 
    ```
    node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
    ```
-2. Vercel dashboard → Hará Match project → Settings → Environment Variables
+2. Vercel dashboard → Hara Match project → Settings → Environment Variables
 3. Add `CRON_SECRET` = `<generated value>` with scope **Production** (and optionally Preview)
 4. Trigger a redeploy so the env var is picked up: push a trivial commit, or use the Vercel UI's "Redeploy" button on the latest production deployment
-5. Save the value in 1Password as `Hará — CRON_SECRET` (n8n needs it in Task 4)
+5. Save the value in 1Password as `Hara — CRON_SECRET` (n8n needs it in Task 4)
 
 **Verification:**
 - `curl https://hara-weld.vercel.app/api/cron/expire-destacado` (no auth) → `401 Unauthorized`
@@ -203,7 +203,7 @@ Also update the comment block at the top of each cron route file to remove the "
 Explicitly **not** part of this PRD:
 
 - A dedicated `/api/cron/keep-alive` endpoint — the existing `expire-destacado` cron's `UPDATE` query is the keep-alive heartbeat. No new endpoint needed.
-- Migrating Hará off Supabase to self-hosted Postgres on Hetzner — separate decision, not the right answer for this problem
+- Migrating Hara off Supabase to self-hosted Postgres on Hetzner — separate decision, not the right answer for this problem
 - Upgrading Vercel to Pro — n8n removes the need
 - Upgrading Supabase to Pro — defer until Phase 1+ when there are real users and the cost of a 30-second pause-recovery wait actually matters to anyone
 - Structured cron-failure alerting (PagerDuty, Slack channels, escalation rules) — n8n's basic notification is enough for Phase 0; richer alerting is Phase 1 work
@@ -215,7 +215,7 @@ Explicitly **not** part of this PRD:
 2. **`CRON_SECRET` rotation drift.** If the secret changes in Vercel but not in n8n credentials, every cron starts returning 401. *Mitigation:* document the rotation procedure in the manual-testing doc; both places must be updated together.
 3. **Supabase pauses despite the daily heartbeat.** If the daily Destacado cron run somehow fails for 7 consecutive days, the DB pauses again. *Mitigation:* n8n notifications surface failures; the user can act before the 7-day window closes. Worst case, a manual Resume click is the recovery — same as today.
 4. **Migration apply blocked.** SQL Editor access is the assumed path; if the dashboard is unavailable, all subsequent tasks block. *Mitigation:* the Supabase dashboard is rarely down; this is a low-probability risk.
-5. **n8n schedule misalignment with Hará's UTC schedule expectations.** If n8n's timezone is set to anything other than UTC, the `06:00` and `07:00` triggers fire at the wrong time. *Mitigation:* explicitly select UTC in the Schedule Trigger node config; verify with a manual run.
+5. **n8n schedule misalignment with Hara's UTC schedule expectations.** If n8n's timezone is set to anything other than UTC, the `06:00` and `07:00` triggers fire at the wrong time. *Mitigation:* explicitly select UTC in the Schedule Trigger node config; verify with a manual run.
 
 ## Verification Plan
 

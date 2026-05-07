@@ -71,7 +71,7 @@ async function check009() {
 }
 
 async function run() {
-  console.log('Hará — verifying migrations 009 + 010\n')
+  console.log('Hara — verifying migrations 009 + 010\n')
 
   const m010 = await check010()
   const m009 = await check009()

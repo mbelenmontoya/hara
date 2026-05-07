@@ -108,7 +108,7 @@ export function TermsAndPrivacyPage({
           Términos y privacidad
         </h1>
         <p className="text-base text-muted leading-relaxed mb-4">
-          En esta página reunimos la información legal básica de Hará Match para que puedas revisar
+          En esta página reunimos la información legal básica de Hara Match para que puedas revisar
           cómo funciona la plataforma y cómo tratamos los datos que compartís.
         </p>
         <p className="text-sm text-muted mb-8">

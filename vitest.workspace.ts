@@ -1,4 +1,4 @@
-// Hará Match — Vitest Workspace
+// Hara Match — Vitest Workspace
 // Two projects: unit (jsdom for component tests) and integration (node for API tests)
 
 import { defineWorkspace } from 'vitest/config'

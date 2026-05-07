@@ -1,4 +1,4 @@
-// Hará Match - E2E Test: Public Contact Flow
+// Hara Match - E2E Test: Public Contact Flow
 // Purpose: Test contact button tracking + WhatsApp navigation
 // Validates: Event tracking, sendBeacon call, wa.me navigation
 // Requires: npm run qa:seed-e2e (creates .e2e-test-data.json)

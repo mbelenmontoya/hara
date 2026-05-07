@@ -8,11 +8,11 @@ Research: Standard
 
 ## Problem Statement
 
-Hará Match is a pre-launch wellness marketplace for Spanish-speaking markets, building credibility and curiosity on Instagram before launch. Manual content planning isn't sustainable — but bad strategy upstream poisons every downstream workflow (caption generation, image generation, publishing). The strategist agent must be solid, voice-consistent, and narratively coherent before any content production can be automated.
+Hara Match is a pre-launch wellness marketplace for Spanish-speaking markets, building credibility and curiosity on Instagram before launch. Manual content planning isn't sustainable — but bad strategy upstream poisons every downstream workflow (caption generation, image generation, publishing). The strategist agent must be solid, voice-consistent, and narratively coherent before any content production can be automated.
 
 This workflow generates the strategy layer only: a monthly content plan with ~20 post slots, each carrying enough strategic context for a downstream constructor workflow to execute. It does not write captions, generate media, or publish — those are separate workflows that consume this one's output.
 
-The architecture is multi-tenant from day one because the long-term vision is a sellable SaaS where Hará is account #1 of many.
+The architecture is multi-tenant from day one because the long-term vision is a sellable SaaS where Hara is account #1 of many.
 
 ## Core User Flows
 
@@ -20,7 +20,7 @@ The architecture is multi-tenant from day one because the long-term vision is a 
 
 1. n8n cron fires on the 1st of the month at 09:00 ART
 2. Workflow reads from Supabase `automations` project: `brand_context`, `content_pillars`, last 4 weeks of `post_slots` (anti-repetition), `posting_benchmarks`, prior rejected strategies (memory)
-3. Strategist agent (Claude Sonnet 4.6) runs with web search tool — fetches Argentine cultural/temporal context for the month (holidays, awareness/efemérides relevant to a holistic-wellness audience: lunaciones, equinoccios, fechas energéticas, mental-health awareness dates, plus news climate). Hará is a marketplace for **terapias alternativas y bienestar holístico** — the strategist speaks from inside that world.
+3. Strategist agent (Claude Sonnet 4.6) runs with web search tool — fetches Argentine cultural/temporal context for the month (holidays, awareness/efemérides relevant to a holistic-wellness audience: lunaciones, equinoccios, fechas energéticas, mental-health awareness dates, plus news climate). Hara is a marketplace for **terapias alternativas y bienestar holístico** — the strategist speaks from inside that world.
 4. Agent outputs structured JSON: monthly theme, narrative arc across 4 weeks, format distribution, ~20 post slots with full briefs
 5. Workflow validates JSON shape, writes `monthly_strategies` row + `post_slots` rows in single transaction
 6. Workflow logs to `agent_runs` (cost, duration, full I/O)
@@ -53,8 +53,8 @@ The architecture is multi-tenant from day one because the long-term vision is a 
 - Strategist agent (Claude Sonnet 4.6) with web search tool
 - Reads context from Supabase `automations` project: `brand_context`, `content_pillars`, last 4 weeks of `post_slots`, `posting_benchmarks`, prior rejected strategies for memory
 - Outputs validated JSON: monthly theme, narrative arc, format distribution, ~20 post slots with full briefs (pillar, format, theme/angle, emotional tone, narrative role, visual direction, caption brief, scheduled datetime, cta_type, risk_flags)
-- Writes to Supabase `automations` project, multi-tenant schema (`account_id` everywhere), Hará as account #1
-- Email notification via Resend with summary + Supabase Studio link (reuses Hará's existing RESEND_API_KEY)
+- Writes to Supabase `automations` project, multi-tenant schema (`account_id` everywhere), Hara as account #1
+- Email notification via Resend with summary + Supabase Studio link (reuses Hara's existing RESEND_API_KEY)
 - Manual regeneration with rejection feedback loop: Bel writes `rejection_reason`, triggers regen, strategist learns
 - All archived strategies retained as long-term memory across months
 - `agent_runs` log: model used, cost, duration, errors, full I/O for replay/debugging
@@ -74,7 +74,7 @@ The architecture is multi-tenant from day one because the long-term vision is a 
 - **Vector embeddings (pgvector) for semantic anti-repetition** — text comparison sufficient for v1; pgvector available when needed
 - **Real Meta analytics feedback loop** — first 2-3 months use LATAM benchmarks; analytics integration is post-MVP
 - **Content pillars definition** — deferred to a separate Claude conversation that benchmarks pillars as a community manager exercise
-- **Hará's existing Supabase project** — explicitly not used; `automations` is its own project
+- **Hara's existing Supabase project** — explicitly not used; `automations` is its own project
 
 ## Technical Context
 
@@ -82,10 +82,10 @@ The architecture is multi-tenant from day one because the long-term vision is a 
 - **Database:** New Supabase project named `automations`, free tier initially
   - Heartbeat cron required (project will pause after 7 days idle without it)
   - Upgrade to Supabase Pro ($25/mo) recommended once paying clients exist
-- **Schema:** Multi-tenant — `account_id` foreign key on every relevant table. Hará is the only seeded account in MVP. Schema organization (`public` vs domain-split) is a /spec decision.
+- **Schema:** Multi-tenant — `account_id` foreign key on every relevant table. Hara is the only seeded account in MVP. Schema organization (`public` vs domain-split) is a /spec decision.
 - **AI model:** Claude Sonnet 4.6 (~$0.50/run, $5/month cap, well under budget)
 - **Web search tool:** TBD in /spec — Anthropic native or Tavily
-- **Notification:** Email via Resend (reuses Hará's existing RESEND_API_KEY — decided in /spec; no bot required)
+- **Notification:** Email via Resend (reuses Hara's existing RESEND_API_KEY — decided in /spec; no bot required)
 - **Trigger for regeneration:** TBD in /spec — manual webhook URL vs Supabase database webhook on field change
 - **Budget cap:** $5/month total API costs
 
@@ -93,9 +93,9 @@ The architecture is multi-tenant from day one because the long-term vision is a 
 
 | Decision | Choice | Why |
 |---|---|---|
-| Database location | New Supabase project `automations` (not Hará's) | Clean separation; Hará is account #1, sellable as SaaS from day 1; no migration when second client added |
+| Database location | New Supabase project `automations` (not Hara's) | Clean separation; Hara is account #1, sellable as SaaS from day 1; no migration when second client added |
 | Pause mitigation | Heartbeat cron in n8n every 3 days | Free; `*/6` cron produces 7-day gap at month-end (exactly at pause threshold); `*/3` gives 4-day buffer |
-| Notification channel | Email via Resend (not Telegram) | Decided in /spec: simpler setup, no bot required, zero new credentials (reuses Hará's existing RESEND_API_KEY + mariabmontoya@gmail.com as recipient). Works immediately since recipient is the Resend account owner, bypassing unverified-domain limitation. |
+| Notification channel | Email via Resend (not Telegram) | Decided in /spec: simpler setup, no bot required, zero new credentials (reuses Hara's existing RESEND_API_KEY + mariabmontoya@gmail.com as recipient). Works immediately since recipient is the Resend account owner, bypassing unverified-domain limitation. |
 | Strategist model | Claude Sonnet 4.6, not Opus | EQ-Creative parity at 1/5 the cost (Sonnet 1991 vs Opus 2216) |
 | Validation in MVP | Manual review of briefs in Supabase Studio | No constructor exists yet; subjective is acceptable; admin app comes later |
 | Recovery from bad output | Manual regeneration with rejection feedback | One-shot too rigid for creative output; rejection signal is the cheapest form of long-term memory |
@@ -128,7 +128,7 @@ Standard tier research surfaced:
 - **2026 IG algorithmic edge: serialized storytelling** — micro-episodes across consecutive days outperform standalone posts. This sharpens the `narrative_arc` requirement from soft to load-bearing.
 - **Wellness audiences engage with 200-400 word captions.** Saves have eclipsed likes as the primary engagement signal. Strategist must prioritize save-worthy briefs.
 - **pgvector confirmed in Supabase** for v2 semantic anti-repetition.
-- **Argentina-specific posting time data is sparse.** Strategist defaults to global benchmarks (Wed noon, Thu 9am, evening 6-9pm) until Hará accumulates real data.
+- **Argentina-specific posting time data is sparse.** Strategist defaults to global benchmarks (Wed noon, Thu 9am, evening 6-9pm) until Hara accumulates real data.
 
 Sources:
 - [n8n template 6070 — Instagram + Gemini + Telegram + Apify](https://n8n.io/workflows/6070-instagram-content-and-dm-automation-with-gemini-telegram-and-apify/)

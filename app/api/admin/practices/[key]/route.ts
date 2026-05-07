@@ -1,4 +1,4 @@
-// Hará Match — Admin Practices Catalog API (single resource)
+// Hara Match — Admin Practices Catalog API (single resource)
 // PATCH: update label/slug/sort_order/active. `key` is immutable —
 //        any body.key that differs from params.key returns 400.
 // Security: Admin-only via getAdminUserId().

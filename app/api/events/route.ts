@@ -1,4 +1,4 @@
-// Hará Match - Event Ingestion API
+// Hara Match - Event Ingestion API
 // Purpose: THE ONLY PATH for billing-critical contact_click events
 // Security: Validates signed tokens (concierge) or professional slug (direct),
 //           bypasses RLS with service role.

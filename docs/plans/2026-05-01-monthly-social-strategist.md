@@ -10,27 +10,27 @@ Type: Feature
 
 ## Summary
 
-**Goal:** Build an n8n-hosted strategist agent that generates a monthly Instagram content strategy (theme, narrative arc, ~20 post slots with full briefs) for Hará Match using Claude Sonnet 4.6, persists to a new multi-tenant Supabase project (`automations`), notifies via email, and supports rejection-driven regeneration.
+**Goal:** Build an n8n-hosted strategist agent that generates a monthly Instagram content strategy (theme, narrative arc, ~20 post slots with full briefs) for Hara Match using Claude Sonnet 4.6, persists to a new multi-tenant Supabase project (`automations`), notifies via email, and supports rejection-driven regeneration.
 
 **Architecture:** Two n8n workflows on the existing Hetzner Coolify server: (1) **Generation** — webhook-triggered, reads context from `automations` Supabase project, calls Sonnet 4.6 with web search, validates JSON output, writes `monthly_strategies` + `post_slots`, logs to `agent_runs`, sends email; handles fresh generation and regeneration via conditional branching driven by `rejection_reason` presence. (2) **Heartbeat** — cron every 3 days, writes a row to keep the free-tier Supabase project warm.
 
-**Where artifacts live (important):** All implementation artifacts (SQL migrations, seed scripts, n8n workflow JSON exports, strategist prompt, README, manual testing doc) live in the **sibling `automation/` directory** at `/Users/belumontoya/Desktop/greenbit/automation/` — NOT inside this Hará repo. Reasoning: the workflow is multi-tenant from day 1 (Hará is account #1 of many); the implementation is product-agnostic and will be reused for additional clients. Plan paths in this document use `../automation/` relative to `hara/` for clarity. The plan file itself (this document) lives in `hara/docs/plans/` because that's where /spec was invoked. The PRD lives in `hara/docs/prd/` because Hará's product team owns it.
+**Where artifacts live (important):** All implementation artifacts (SQL migrations, seed scripts, n8n workflow JSON exports, strategist prompt, README, manual testing doc) live in the **sibling `automation/` directory** at `/Users/belumontoya/Desktop/greenbit/automation/` — NOT inside this Hara repo. Reasoning: the workflow is multi-tenant from day 1 (Hara is account #1 of many); the implementation is product-agnostic and will be reused for additional clients. Plan paths in this document use `../automation/` relative to `hara/` for clarity. The plan file itself (this document) lives in `hara/docs/plans/` because that's where /spec was invoked. The PRD lives in `hara/docs/prd/` because Hara's product team owns it.
 
-**Tech Stack:** n8n (existing Hetzner 4GB Coolify), Supabase Postgres (new project `automations`, free tier), Anthropic Claude Sonnet 4.6 with native web search tool, Resend (reusing Hará's existing account + API key), JSON Schema validation in n8n Code node.
+**Tech Stack:** n8n (existing Hetzner 4GB Coolify), Supabase Postgres (new project `automations`, free tier), Anthropic Claude Sonnet 4.6 with native web search tool, Resend (reusing Hara's existing account + API key), JSON Schema validation in n8n Code node.
 
 ## Scope
 
 ### In Scope
 
 - New Supabase project `automations` provisioning + schema migration committed in `../automation/migrations/001_initial_schema.sql`
-- One-time SQL seed script (`../automation/seed/001_initial_seed.sql`): Hará account, brand_context (incl. recipient email + locked voice rules from PRODUCT.md/globals.css), placeholder content_pillars, LATAM posting_benchmarks, heartbeat row
+- One-time SQL seed script (`../automation/seed/001_initial_seed.sql`): Hara account, brand_context (incl. recipient email + locked voice rules from PRODUCT.md/globals.css), placeholder content_pillars, LATAM posting_benchmarks, heartbeat row
 - Strategist system prompt at `../automation/prompts/strategist-system-prompt.md` with persona/context/rules/knowledge structure and the strict JSON output schema
 - Generation workflow JSON export at `../automation/workflows/monthly-strategist.json` — webhook-triggered (manual + cron-disabled), handles fresh generation and regeneration via branch on detected `rejection_reason`
 - Heartbeat workflow JSON export at `../automation/workflows/heartbeat.json` — cron every 3 days (safety margin against Supabase 7-day pause threshold), writes a heartbeat row
 - Setup README at `../automation/README.md` walking through Supabase project creation, migration apply, seed run, n8n credential setup, workflow import, and manual first-run steps
 - Anti-repetition v1: text comparison of generated `theme_angle` values vs the last 4 weeks of `post_slots`; retry once with stronger instruction if similarity exceeds threshold
 - Cost + duration + raw I/O logged to `agent_runs` for every run (success and failure)
-- PRD update: `docs/prd/2026-05-01-monthly-social-strategist.md` notification section changed from "Telegram" to "email via Resend (reuse Hará's existing credential)"
+- PRD update: `docs/prd/2026-05-01-monthly-social-strategist.md` notification section changed from "Telegram" to "email via Resend (reuse Hara's existing credential)"
 
 ### Out of Scope
 
@@ -43,7 +43,7 @@ Type: Feature
 - **Approval status lifecycle beyond `pending_construction`** — constructor's concern
 - **Hara's existing Supabase project** — explicitly not used; `automations` is its own project
 - **Cron activation** — generation cron stays disabled in v1; manual trigger only until Bel validates 1-2 outputs subjectively
-- **Resend domain verification** — handled by Hará Phase 0 Task 2; this plan uses `onboarding@resend.dev` from sender (works because recipient is the Resend account owner)
+- **Resend domain verification** — handled by Hara Phase 0 Task 2; this plan uses `onboarding@resend.dev` from sender (works because recipient is the Resend account owner)
 - **Real content pillars definition** — placeholder pillars seeded; replaced via separate Claude conversation later
 - **Approval/admin UI for strategy review** — Bel reads `monthly_strategies` + `post_slots` directly in Supabase Studio
 
@@ -60,8 +60,8 @@ Type: Feature
 **Key sub-decisions (locked):**
 - Web search tool: Anthropic native (built into Claude API; one credential to manage)
 - Regeneration trigger: manual webhook URL (Bel writes `rejection_reason` in Studio, then hits saved bookmark URL)
-- Notification channel: email via Resend, reusing Hará's existing `RESEND_API_KEY`
-- From address: `onboarding@resend.dev` (works in MVP because Bel is the Resend account owner; switches automatically once Hará Phase 0 Task 2 verifies `mail.hara.app`)
+- Notification channel: email via Resend, reusing Hara's existing `RESEND_API_KEY`
+- From address: `onboarding@resend.dev` (works in MVP because Bel is the Resend account owner; switches automatically once Hara Phase 0 Task 2 verifies `mail.hara.app`)
 - To address: stored in `automations.brand_context.notification_email` (per-account, swappable, multi-tenant ready)
 - Schema: single `public` schema on the new Supabase project (domain split is a mechanical migration later if needed)
 - Cold-start posture: workflow runs against empty memory (no prior `post_slots`, no rejected strategies) — strategist prompt acknowledges first-run state
@@ -71,10 +71,10 @@ Type: Feature
 
 > Write for an implementer who has never seen the codebase.
 
-- **Brand voice canonical sources** — `PRODUCT.md` (lines 92-97 "Voice and tone": Argentine informal — vos/querés/escribís, never tú; calm/warm/premium *"holistic-wellness app designed by Apple"*; privacy-forward; no FOMO/urgency. Hará is a marketplace for **terapias alternativas y bienestar holístico**: reikistas, masajistas terapéuticos, facilitadores de constelaciones familiares, expertos en diseño humano, lectores de registros akáshicos, terapeutas florales/energéticos, instructores de meditación. The strategist must speak from inside that world — its vocabulary, references, and aesthetic.) and `app/globals.css` (lines 7-88 `@theme` block: warm beige #FBF7F2 base, brand violet #4B2BBF, 12 specialty colors mapped to user-symptom/feeling domains — what the user is *atravesando*). The strategist prompt must inline relevant excerpts (not links) so the agent has them at inference time.
-- **Existing email utility** — `lib/email.ts` shows the established pattern: `Resend` SDK, hardcoded `ADMIN_EMAIL = 'mariabmontoya@gmail.com'`, `FROM_EMAIL = 'onboarding@resend.dev'`. n8n workflow does NOT import this file — it uses Resend's HTTP API directly via n8n credentials. Same API key value, same recipient, same from address as Hará's email infrastructure. Match the visual style of Hará's existing emails (system-ui sans-serif, table layout, brand violet button — see `lib/email.ts:69-99` for reference markup).
-- **Migration convention** — Hará uses sequential numeric migrations in `migrations/NNN_*.sql` (see Hará's `migrations/001_schema.sql` through `006_reviews_collection.sql`). Mirror this convention in the SIBLING directory: `../automation/migrations/NNN_*.sql` (i.e., `/Users/belumontoya/Desktop/greenbit/automation/migrations/`).
-- **Resend domain status** — Hará is currently on the unverified `onboarding@resend.dev` test domain, which only delivers to the Resend account owner. This is fine for automation notifications because the only recipient IS the account owner (Bel). When Hará Phase 0 Task 2 lands (`docs/prd/2026-04-27-phase-0-activation.md` Task 2), the verified domain (likely `hola@mail.hara.app`) becomes available; the n8n credential can switch over with a single config change.
+- **Brand voice canonical sources** — `PRODUCT.md` (lines 92-97 "Voice and tone": Argentine informal — vos/querés/escribís, never tú; calm/warm/premium *"holistic-wellness app designed by Apple"*; privacy-forward; no FOMO/urgency. Hara is a marketplace for **terapias alternativas y bienestar holístico**: reikistas, masajistas terapéuticos, facilitadores de constelaciones familiares, expertos en diseño humano, lectores de registros akáshicos, terapeutas florales/energéticos, instructores de meditación. The strategist must speak from inside that world — its vocabulary, references, and aesthetic.) and `app/globals.css` (lines 7-88 `@theme` block: warm beige #FBF7F2 base, brand violet #4B2BBF, 12 specialty colors mapped to user-symptom/feeling domains — what the user is *atravesando*). The strategist prompt must inline relevant excerpts (not links) so the agent has them at inference time.
+- **Existing email utility** — `lib/email.ts` shows the established pattern: `Resend` SDK, hardcoded `ADMIN_EMAIL = 'mariabmontoya@gmail.com'`, `FROM_EMAIL = 'onboarding@resend.dev'`. n8n workflow does NOT import this file — it uses Resend's HTTP API directly via n8n credentials. Same API key value, same recipient, same from address as Hara's email infrastructure. Match the visual style of Hara's existing emails (system-ui sans-serif, table layout, brand violet button — see `lib/email.ts:69-99` for reference markup).
+- **Migration convention** — Hara uses sequential numeric migrations in `migrations/NNN_*.sql` (see Hara's `migrations/001_schema.sql` through `006_reviews_collection.sql`). Mirror this convention in the SIBLING directory: `../automation/migrations/NNN_*.sql` (i.e., `/Users/belumontoya/Desktop/greenbit/automation/migrations/`).
+- **Resend domain status** — Hara is currently on the unverified `onboarding@resend.dev` test domain, which only delivers to the Resend account owner. This is fine for automation notifications because the only recipient IS the account owner (Bel). When Hara Phase 0 Task 2 lands (`docs/prd/2026-04-27-phase-0-activation.md` Task 2), the verified domain (likely `hola@mail.hara.app`) becomes available; the n8n credential can switch over with a single config change.
 - **Pillar definition is deferred** — `PRODUCT.md` and the PRD both note that real content pillars come from a separate Claude conversation later. Seed with **placeholder pillars** (4-5 inferred from PRODUCT.md sections like "Educación emocional", "Historias de la red profesional", "Recursos prácticos para usuarios", "Privacidad y confianza", "Cultura del cuidado") with `is_placeholder=true`. Strategist prompt acknowledges placeholders so the agent doesn't lock into generic angles. Replace via UPDATE when real pillars arrive.
 - **Specialty color tokens** — `app/globals.css:41-64` defines 12 specialty colors (ansiedad → teal `#1A7A65`, depresión → indigo `#4B5FC1`, estrés → amber `#C48A1A`, etc.). The strategist's `visual_direction` field for any post touching a specific specialty should reference the corresponding token. Inline this mapping in the prompt's "Knowledge" section.
 - **Hetzner Coolify n8n** — n8n is already running on the existing 4GB Hetzner Coolify server. Strategist alone doesn't justify upgrading to 8GB (revisit when constructor lands). Confirm n8n version supports Anthropic node natively, or fall back to HTTP Request node calling Anthropic's REST API directly.
@@ -101,7 +101,7 @@ CREATE TABLE _schema_version (
   description TEXT
 );
 
--- accounts: multi-tenant root (Hará is account #1)
+-- accounts: multi-tenant root (Hara is account #1)
 CREATE TABLE accounts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
@@ -296,7 +296,7 @@ On webhook hit:
 - n8n on Hetzner Coolify can reach Anthropic API, Supabase, and Resend (all standard outbound HTTPS) — Task 4 depends.
 - Bel has admin access to create new Supabase projects under the existing organization — Task 1 depends.
 - Resend account API key (`RESEND_API_KEY` in `.env.local`) is shareable for use in n8n credentials — Task 4 depends. (Same key, two consumers; Resend allows this.)
-- The `mariabmontoya@gmail.com` email is the correct recipient for Hará automation notifications — Task 2 (seed) depends. Stored in `brand_context.notification_email` so it's swappable.
+- The `mariabmontoya@gmail.com` email is the correct recipient for Hara automation notifications — Task 2 (seed) depends. Stored in `brand_context.notification_email` so it's swappable.
 - Single n8n run completes in <5 minutes (free n8n execution timeout) — Sonnet 4.6 typical run is 30-60s; budget cap of 5min has wide margin — Task 4 depends.
 - Specialty color mappings in `app/globals.css:41-64` are stable and the strategist can reference them in `visual_direction` — Task 3 (prompt) depends.
 
@@ -308,7 +308,7 @@ On webhook hit:
 | Free-tier Supabase pauses despite heartbeat | Low | High | Heartbeat fires every 3 days (4-day buffer before 7-day pause threshold; cron `*/3` avoids the month-end 7-day gap that `*/6` produces); after first month, verify heartbeat row count = expected |
 | Strategist outputs malformed JSON | Medium | High | Strict schema validation in Code node post-call; one retry with explicit format instruction; on second failure, log full raw output to `agent_runs.raw_output` for manual triage |
 | n8n workflow exceeds 5min timeout | Low | High | Sonnet 4.6 typical is 30-60s; alert if >4min via duration check in agent_runs; fall back to Opus or split into chained calls only if becomes recurring |
-| Email delivery fails (Resend rate limits, transient API error) | Low | Low | Resend account already battle-tested by Hará app; on email failure, do NOT fail the run — strategy is still in DB and Bel can read Studio directly; log the email failure in `agent_runs.error_message` |
+| Email delivery fails (Resend rate limits, transient API error) | Low | Low | Resend account already battle-tested by Hara app; on email failure, do NOT fail the run — strategy is still in DB and Bel can read Studio directly; log the email failure in `agent_runs.error_message` |
 | Cost per run exceeds $1 cap or monthly $5 cap | Low | Medium | Pre-flight cost cap node (Task 4) returns HTTP 402 if `SUM(cost_usd)` for current month ≥ $5 before any Anthropic call; `agent_runs.cost_usd` recorded per run via Compute cost node using documented pricing constants; bypassed only when `dry_run=true` |
 | Anti-repetition v1 (text comparison) misses semantic overlap | High | Low | Acceptable for MVP; retry logic catches blatant duplicates; Bel's manual review catches subtle ones; pgvector path documented for v2 |
 | Bel hits regen webhook without writing `rejection_reason` first | Medium | Low | Webhook trigger logic checks for `rejection_reason IS NOT NULL` on the active strategy; returns HTTP 409 with corrective message; no Anthropic call made |
@@ -337,7 +337,7 @@ On webhook hit:
 - `../automation/workflows/heartbeat.json` — n8n workflow export (heartbeat)
 - `../automation/README.md` — setup walkthrough
 - `../automation/docs/manual-testing/2026-05-01-monthly-social-strategist.md` — manual testing guide (lives in sibling automation directory, NOT hara)
-- `docs/prd/2026-05-01-monthly-social-strategist.md` — updated to reflect email (not Telegram); stays in hara because the PRD is owned by Hará's product team
+- `docs/prd/2026-05-01-monthly-social-strategist.md` — updated to reflect email (not Telegram); stays in hara because the PRD is owned by Hara's product team
 
 ## Progress Tracking
 
@@ -362,7 +362,7 @@ On webhook hit:
 - Create: `../automation/migrations/001_initial_schema.sql`
 
 **Key Decisions / Notes:**
-- Mirror Hará's migration convention (`migrations/NNN_*.sql` numeric prefix) — see `migrations/001_schema.sql` for reference style
+- Mirror Hara's migration convention (`migrations/NNN_*.sql` numeric prefix) — see `migrations/001_schema.sql` for reference style
 - All UUIDs default to `gen_random_uuid()` (pgcrypto extension; Supabase ships it)
 - All timestamps `TIMESTAMPTZ` with `DEFAULT now()`
 - RLS DISABLED on every table — service role only access in MVP
@@ -388,7 +388,7 @@ On webhook hit:
 
 ### Task 2: Initial seed script
 
-**Objective:** Populate the new `automations` project with Hará as account #1, brand voice rules extracted from `PRODUCT.md` + `app/globals.css`, placeholder content pillars, LATAM posting benchmarks, and a first heartbeat row.
+**Objective:** Populate the new `automations` project with Hara as account #1, brand voice rules extracted from `PRODUCT.md` + `app/globals.css`, placeholder content pillars, LATAM posting benchmarks, and a first heartbeat row.
 
 **Dependencies:** Task 1 (schema must exist).
 
@@ -396,9 +396,9 @@ On webhook hit:
 - Create: `../automation/seed/001_initial_seed.sql`
 
 **Key Decisions / Notes:**
-- Hard-code Hará's account UUID as a fixed value (e.g., `00000000-0000-0000-0000-000000000001`) so n8n credential references are stable across DB rebuilds. Document this in README.
+- Hard-code Hara's account UUID as a fixed value (e.g., `00000000-0000-0000-0000-000000000001`) so n8n credential references are stable across DB rebuilds. Document this in README.
 - `brand_context.voice_rules`: paste the exact text of PRODUCT.md "Voice and tone" section (lines 92-97) — vos/querés/escribís rule, "warm, clear, never clinical", privacy-forward language, no FOMO mechanics
-- `brand_context.tone_description`: paste "Calm, warm, trustworthy, premium. Holistic-wellness app designed by Apple. Hará is a marketplace for terapias alternativas y bienestar holístico — reiki, masajes terapéuticos, constelaciones familiares, diseño humano, registros akáshicos, terapia floral, terapia energética, meditación, y otras prácticas afines."
+- `brand_context.tone_description`: paste "Calm, warm, trustworthy, premium. Holistic-wellness app designed by Apple. Hara is a marketplace for terapias alternativas y bienestar holístico — reiki, masajes terapéuticos, constelaciones familiares, diseño humano, registros akáshicos, terapia floral, terapia energética, meditación, y otras prácticas afines."
 - `brand_context.visual_tokens`: JSONB containing key tokens from `globals.css:7-88` — at minimum `{ background, surface, brand, brand_weak, success, warning, danger, info, specialty: { ansiedad: '#1A7A65', depresion: '#4B5FC1', ... } }`
 - `brand_context.privacy_rules`: "Tu info se comparte recién cuando vos escribís" (load-bearing UX promise from PRODUCT.md)
 - `brand_context.forbidden_patterns`: `ARRAY['castilian_tu_pronoun', 'usted_pronoun', 'fomo_urgency', 'countdown_timers', 'growth_hacker_tone']` — explicit pronoun names disambiguate (Castilian "tú" forbidden, Argentine "vos" required; "usted" is the formal pronoun, also forbidden). Add an SQL comment in the seed file: `-- 'castilian_tu_pronoun' = the Spanish 'tú' pronoun used in Spain/most LATAM. Argentine voice uses 'vos' instead — see Task 3 strategist prompt.`
@@ -433,11 +433,11 @@ On webhook hit:
 
 **Key Decisions / Notes:**
 - Industry-standard 4-section structure: **Persona** → **Context** → **Rules** → **Knowledge** (per research findings; references included in PRD)
-- **Persona:** "You are an Argentine community manager for Hará Match, a curated wellness professional marketplace. Your tone is calm, warm, premium..."
+- **Persona:** "You are an Argentine community manager for Hara Match, a curated wellness professional marketplace. Your tone is calm, warm, premium..."
 - **Context:** placeholders for `{brand_context}`, `{content_pillars}`, `{recent_post_slots}` (last 4 weeks for anti-repetition), `{posting_benchmarks}`, `{prior_rejected_strategies}` (last 3 with rejection_reason), `{target_month}`, `{is_regeneration}`, `{rejection_reason}` (only if regen). The n8n Code node fills these from DB queries.
 - **Rules** (load-bearing, MUST appear verbatim in the prompt):
   - Use Argentine informal Spanish (vos/querés/escribís); never tú; never usted
-  - Tone: calm, warm, trustworthy, premium ("holistic-wellness app designed by Apple"). Hará is a marketplace for **terapias alternativas y bienestar holístico**: reikistas, masajistas terapéuticos, facilitadores de constelaciones familiares, expertos en diseño humano, lectores de registros akáshicos, terapeutas florales/energéticos, instructores de meditación. Speak from inside that world — its vocabulary, references, and aesthetic. Acknowledge user-side feelings (ansiedad, insomnio, duelo, búsqueda de claridad) as *experiences atravesadas*, in everyday language.
+  - Tone: calm, warm, trustworthy, premium ("holistic-wellness app designed by Apple"). Hara is a marketplace for **terapias alternativas y bienestar holístico**: reikistas, masajistas terapéuticos, facilitadores de constelaciones familiares, expertos en diseño humano, lectores de registros akáshicos, terapeutas florales/energéticos, instructores de meditación. Speak from inside that world — its vocabulary, references, and aesthetic. Acknowledge user-side feelings (ansiedad, insomnio, duelo, búsqueda de claridad) as *experiences atravesadas*, in everyday language.
   - Privacy-forward: include privacy reassurance language where relevant ("Tu info se comparte recién cuando vos escribís")
   - **No FOMO**: forbidden phrases include "solo quedan", "última oportunidad", "¡no te lo pierdas!", countdown framing, growth-hacker urgency
   - Save-priority over likes: `save_worthy_reason` must be specific and concrete
@@ -480,7 +480,7 @@ On webhook hit:
 - Create: `../automation/workflows/monthly-strategist.json` (n8n workflow export)
 
 **Key Decisions / Notes:**
-- **Trigger node:** Webhook (POST). Optional payload: `{ account_id?, target_month?, dry_run? }`. Defaults: account_id = Hará's seeded UUID; target_month = first day of following calendar month; dry_run = false.
+- **Trigger node:** Webhook (POST). Optional payload: `{ account_id?, target_month?, dry_run? }`. Defaults: account_id = Hara's seeded UUID; target_month = first day of following calendar month; dry_run = false.
 - **Dry-run mode (`dry_run=true`):** skips the Anthropic API call entirely and uses a hardcoded sample JSON response stored in the workflow as static data. All downstream validation, write, and email logic runs against the sample. This lets implementer verify everything except the LLM call without burning tokens (estimated saving: ~$0.50 per test cycle).
 - **Pre-flight cost cap check** (Code node, before mode detection): query `SELECT COALESCE(SUM(cost_usd),0) AS month_total FROM agent_runs WHERE account_id=$1 AND status='success' AND date_trunc('month', started_at)=date_trunc('month', now())`. If `month_total >= 5.00`, return HTTP 402 immediately with body `{ error: 'monthly_budget_exceeded', month_total }`; do not call Anthropic. Skipped when `dry_run=true`.
 - **Mode detection** (Code node): query latest `monthly_strategies` for `(account_id, target_month)`. Branch:
@@ -616,7 +616,7 @@ On webhook hit:
 - [ ] README at `../automation/README.md` walks through provisioning end-to-end with zero ambiguity (someone unfamiliar can stand up the system)
 - [ ] README includes credential safety line, regeneration URL handling section, heartbeat workflow/table disambiguation, cost monitoring section
 - [ ] Manual testing doc covers ≥8 scenarios with concrete pass/fail criteria (8 listed above)
-- [x] PRD updated: all notification-describing uses of Telegram replaced with email; 5 remaining "Telegram" occurrences are intentional ("not Telegram" decisions and historical research references — not notification claims). Notification line in Technical Context says "Email via Resend (reuses Hará's existing RESEND_API_KEY)"; Key Decisions table has new row "Notification channel | Email via Resend (not Telegram)"
+- [x] PRD updated: all notification-describing uses of Telegram replaced with email; 5 remaining "Telegram" occurrences are intentional ("not Telegram" decisions and historical research references — not notification claims). Notification line in Technical Context says "Email via Resend (reuses Hara's existing RESEND_API_KEY)"; Key Decisions table has new row "Notification channel | Email via Resend (not Telegram)"
 - [ ] All cross-references between files (README ↔ migrations ↔ workflows) use absolute paths from repo root
 - [ ] No literal API keys, webhook URLs, or other secrets in any file under `../automation/`
 
@@ -642,4 +642,4 @@ On webhook hit:
 - **Self-trigger on rejection** — Supabase database webhook on `rejection_reason` field update, replacing manual webhook hit
 - **Multi-tenant client onboarding** — adds account creation flow, billing tier, per-account credential isolation
 - **Cost cap auto-enforcement** — pre-flight aggregate query against `agent_runs.cost_usd` for current month; abort run if > $5/month already spent
-- **Multi-DB heartbeat** — extend the heartbeat workflow to also ping Hará's main Supabase project (currently it only pings `automations`). Both are free-tier and at risk of pause. Add a second Postgres node in `heartbeat.json` with credentials for Hará's main DB, connected in parallel from the cron trigger. Or: create a second heartbeat workflow if the credentials should stay isolated. Consider when to do this based on whether Hará's main project is actually idle long enough to risk pause. *(noted 2026-05-01)*
+- **Multi-DB heartbeat** — extend the heartbeat workflow to also ping Hara's main Supabase project (currently it only pings `automations`). Both are free-tier and at risk of pause. Add a second Postgres node in `heartbeat.json` with credentials for Hara's main DB, connected in parallel from the cron trigger. Or: create a second heartbeat workflow if the credentials should stay isolated. Consider when to do this based on whether Hara's main project is actually idle long enough to risk pause. *(noted 2026-05-01)*

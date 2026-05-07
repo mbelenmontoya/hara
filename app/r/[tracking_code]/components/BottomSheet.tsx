@@ -143,7 +143,7 @@ export function BottomSheet({
               Si querés, podés empezar con:
             </p>
             <p className="text-sm text-foreground leading-[1.7]">
-              "Hola{firstName ? ` ${firstName}` : ''}, me recomendaron por Hará.{' '}
+              "Hola{firstName ? ` ${firstName}` : ''}, me recomendaron por Hara.{' '}
               {professional.specialty
                 ? `Estoy buscando ayuda con ${
                     SPECIALTY_MAP[professional.specialty] ||

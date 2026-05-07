@@ -1,4 +1,4 @@
-// Hará Match - E2E Test Seed Script
+// Hara Match - E2E Test Seed Script
 // Purpose: Generate deterministic seed data for E2E test suite
 // Safety: Only operates on e2e-* prefixed test data, aborts in production
 

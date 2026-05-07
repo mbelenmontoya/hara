@@ -10,7 +10,7 @@ Type: Feature
 
 ## Summary
 
-**Goal:** Ship the minimum foundation for Hará's Directory + Concierge business model: add ranking columns to `professionals`, a SQL trigger that computes `ranking_score` from profile completeness (mirroring `lib/profile-score.ts`), and a server-rendered `/profesionales` list page sorted by ranking. Review and subscription tier inputs are wired in the formula but inactive at launch, so future PRDs plug in without a formula migration.
+**Goal:** Ship the minimum foundation for Hara's Directory + Concierge business model: add ranking columns to `professionals`, a SQL trigger that computes `ranking_score` from profile completeness (mirroring `lib/profile-score.ts`), and a server-rendered `/profesionales` list page sorted by ranking. Review and subscription tier inputs are wired in the formula but inactive at launch, so future PRDs plug in without a formula migration.
 
 **Architecture:** One DB migration bundles columns + trigger + backfill. A TS ranking helper lives alongside the SQL function and is held in sync by a DB-backed integration parity test. The `/profesionales` page is a Next.js server component that queries `supabaseAdmin` directly and renders cards that reuse the existing liquid-glass / specialty-chip design system. Home page gets a third CTA so the directory is reachable.
 

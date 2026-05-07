@@ -1,6 +1,6 @@
 ## Execution Plan
 
-**Goal:** Add the legal page planned in `.claude/plans/main.md` so Hará Match has a public `/terminosyprivacidad` route that matches the current design system, keeps the page manageable on mobile, and is linked from active data-collection flows.
+**Goal:** Add the legal page planned in `.claude/plans/main.md` so Hara Match has a public `/terminosyprivacidad` route that matches the current design system, keeps the page manageable on mobile, and is linked from active data-collection flows.
 
 **Steps:**
 1. Define the route scope and reuse strategy

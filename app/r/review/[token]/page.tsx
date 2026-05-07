@@ -96,7 +96,7 @@ export default async function ReviewPage({ params }: { params: { token: string }
         </GlassCard>
 
         <p className="text-xs text-muted text-center mt-6">
-          Hará Match — plataforma de profesionales de bienestar verificados.
+          Hara Match — plataforma de profesionales de bienestar verificados.
         </p>
       </div>
     </div>

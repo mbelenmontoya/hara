@@ -1,4 +1,4 @@
-// Hará Match — Public professional directory
+// Hara Match — Public professional directory
 // Server component — no client JS required.
 // Sorted by ranking_score DESC (computed by SQL trigger in migration 004).
 

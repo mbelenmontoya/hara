@@ -1,4 +1,4 @@
-// Hará Match - Recommendations (Premium Mobile App)
+// Hara Match - Recommendations (Premium Mobile App)
 // Refactored: Uses custom hooks and extracted components
 
 'use client'

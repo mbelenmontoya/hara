@@ -1,4 +1,4 @@
-// Hará UI - Alert Component
+// Hara UI - Alert Component
 // Purpose: Contextual messages for success/info/warning/error states
 
 import { ReactNode } from 'react'

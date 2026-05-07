@@ -1,4 +1,4 @@
-// Hará Match - PQL Adjustments API
+// Hara Match - PQL Adjustments API
 // Purpose: Waive/dispute/refund PQLs via append-only audit trail
 // Security: Admin-only (auth required), never mutates pqls table (append-only)
 // Auth: created_by extracted from session (NOT from request body)

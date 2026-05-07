@@ -1,4 +1,4 @@
-// Hará Match — Admin Practices Catalog (list)
+// Hara Match — Admin Practices Catalog (list)
 // Server component. Fetches all practices (active + inactive) with usage
 // counts via loadAdminPracticesView, renders the client list + toggle UI.
 

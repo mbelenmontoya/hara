@@ -1,4 +1,4 @@
-# Self-QA Rules for Hará Match
+# Self-QA Rules for Hara Match
 
 **Purpose:** Validate implementation against production requirements
 **Run:** After each milestone, before merge to main

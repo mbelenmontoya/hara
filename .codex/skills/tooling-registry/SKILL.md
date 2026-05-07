@@ -1,9 +1,9 @@
 ---
 name: tooling-registry
-description: Map Hará Match's Codex commands, including start-session/end-session, audits, bug hunts, feature starts, PR prep, and test scaffolding, so they trigger automatically from chat requests.
+description: Map Hara Match's Codex commands, including start-session/end-session, audits, bug hunts, feature starts, PR prep, and test scaffolding, so they trigger automatically from chat requests.
 ---
 
-# Hará Codex Tooling Registry
+# Hara Codex Tooling Registry
 
 Use this skill whenever a request matches any of the command phrases below or when a plan is required. It links natural-language triggers to the scripts/command docs we added under `.codex/` so Codex can respond like Claude.
 

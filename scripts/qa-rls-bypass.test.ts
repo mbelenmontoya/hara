@@ -1,4 +1,4 @@
-// Hará Match - QA RLS Bypass Test
+// Hara Match - QA RLS Bypass Test
 // Purpose: Verify RLS blocks anon writes to billing-critical tables
 // Usage: npx tsx scripts/qa-rls-bypass.test.ts
 // Exit: 0 if all inserts fail as expected, 1 if any bypass detected

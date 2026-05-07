@@ -1,4 +1,4 @@
-// Hará Match — E2E: Admin Practices Catalog Management
+// Hara Match — E2E: Admin Practices Catalog Management
 // TS-001: Create flow → new practice appears in admin list.
 // TS-002: Edit flow → label change reflected in admin list.
 // TS-003: Deactivate flow → confirm modal shows usage count, toggle state flips.

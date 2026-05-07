@@ -1,4 +1,4 @@
-// Hará Match — Pre-launch homepage ("Próximamente").
+// Hara Match — Pre-launch homepage ("Próximamente").
 // Replaces the post-launch home (which now lives at /preview) until the
 // directory and concierge flows are open to the public.
 
@@ -14,7 +14,7 @@ export default function HomePage() {
 
         <div className="text-center mb-10">
           <p className="text-xs font-semibold text-brand uppercase tracking-[0.2em] mb-3">
-            Hará Match
+            Hara Match
           </p>
           <h1 className="text-4xl font-semibold text-foreground leading-tight mb-4">
             Próximamente

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Install git hooks for Hará Match.
+# Install git hooks for Hara Match.
 # This script is run automatically by `npm install` via the prepare lifecycle script.
 
 HOOKS_DIR=".git/hooks"

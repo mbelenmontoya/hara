@@ -1,4 +1,4 @@
-// Hará UI - Table Component
+// Hara UI - Table Component
 // Purpose: Data display for admin lists
 // Accessibility: proper table markup, mobile horizontal scroll
 

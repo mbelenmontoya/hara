@@ -1,4 +1,4 @@
-// Hará UI v2 - Card Component
+// Hara UI v2 - Card Component
 // Purpose: Content container with warm, elevated feel
 
 import { ReactNode } from 'react'

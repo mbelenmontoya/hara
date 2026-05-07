@@ -1,4 +1,4 @@
-# Hará Match — Database & API Specification (Source of Truth)
+# Hara Match — Database & API Specification (Source of Truth)
 
 **Stack:** Next.js 14 + Supabase PostgreSQL + Vercel
 **Scope:** Database schema and API contracts. **For product context (what we're building, who it's for, why) see [`PRODUCT.md`](./PRODUCT.md).**

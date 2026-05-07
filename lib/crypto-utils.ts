@@ -1,4 +1,4 @@
-// Hará Match - Crypto Utilities (Client-Side)
+// Hara Match - Crypto Utilities (Client-Side)
 // Purpose: Client-side SHA256 hashing for fingerprints (privacy)
 // Security: Hash fingerprints before sending to server
 

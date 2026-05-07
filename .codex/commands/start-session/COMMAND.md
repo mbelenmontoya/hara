@@ -1,6 +1,6 @@
 ---
 name: start-session
-description: Load the active Hará plan, summarize recent work, and identify the next steps before coding.
+description: Load the active Hara plan, summarize recent work, and identify the next steps before coding.
 author: hara
 arguments:
   - name: plan

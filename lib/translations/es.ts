@@ -1,4 +1,4 @@
-// Spanish translations for Hará Match
+// Spanish translations for Hara Match
 // Central source of truth for all UI strings
 
 export const ES_TRANSLATIONS = {
@@ -52,7 +52,7 @@ export const ES_TRANSLATIONS = {
     openingWhatsApp: 'Abriendo WhatsApp...',
     suggestedMessagePrefix: 'Si querés, podés empezar con:',
     messageTemplate: (firstName: string, specialty: string) =>
-      `"Hola${firstName ? ` ${firstName}` : ''}, me recomendaron por Hará. ${
+      `"Hola${firstName ? ` ${firstName}` : ''}, me recomendaron por Hara. ${
         specialty
           ? `Estoy buscando ayuda con ${specialty}. ¿Tenés un espacio esta semana?`
           : 'Estoy buscando empezar terapia. ¿Tenés disponibilidad esta semana?'

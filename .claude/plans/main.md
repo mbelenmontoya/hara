@@ -4,12 +4,12 @@
 
 ## Overview
 
-Hará Match is **the Spanish-speaking holistic-wellness trust layer** — a curated marketplace for **terapias alternativas y bienestar holístico** (reiki, masajes, constelaciones familiares, diseño humano, registros akáshicos, terapia floral/energética, meditación, etc.) in Spanish-speaking markets (LATAM + Spain), with Argentina as the home/proving ground. It combines two modes:
+Hara Match is **the Spanish-speaking holistic-wellness trust layer** — a curated marketplace for **terapias alternativas y bienestar holístico** (reiki, masajes, constelaciones familiares, diseño humano, registros akáshicos, terapia floral/energética, meditación, etc.) in Spanish-speaking markets (LATAM + Spain), with Argentina as the home/proving ground. It combines two modes:
 
 1. **Browse mode (Directory):** Users browse professionals ranked by reputation (stars, profile completeness). Professionals can pay for visibility (subscription tiers, boosts). This is the primary discovery path.
 2. **Concierge mode (Solicitar):** Users describe what they need → admin reviews → sends personalized recommendations via tracking link. This is the high-trust differentiator — "we pick for you."
 
-**What makes Hará different from Google/directories:**
+**What makes Hara different from Google/directories:**
 - Professionals are verified — not everyone gets listed
 - Reputation comes from real interactions, not anonymous reviews
 - The concierge flow ("solicitar") provides personalized, human-curated recommendations
@@ -63,7 +63,7 @@ The product ships in 4 phase gates. Each phase has a clear definition of done. *
 
 0. ~~**Resume the Supabase database.**~~ ✅ Done 2026-05-01.
 1. ~~**Apply migrations 004 + 005 + 006 to Supabase.**~~ ✅ Done 2026-05-01 via SQL Editor. All three verified end-to-end (RLS active, RPCs functional, triggers chaining correctly).
-2. ~~**Verify Resend domain + swap `FROM_EMAIL`.**~~ ✅ Done 2026-05-01. `haravital.app` verified, `lib/email.ts` updated to `Hará Match <hola@haravital.app>` with `replyTo: centrovitalhara@gmail.com`.
+2. ~~**Verify Resend domain + swap `FROM_EMAIL`.**~~ ✅ Done 2026-05-01. `haravital.app` verified, `lib/email.ts` updated to `Hara Match <hola@haravital.app>` with `replyTo: centrovitalhara@gmail.com`.
 3. **Smoke test 3 flows on prod** — *Bel-tested in parallel.* Browse / Concierge / Onboarding flows. Bel runs on real device, surfaces specific bugs as they appear.
 4. **Visual QA pass** — *Bel-tested in parallel.* Mobile viewport sweep across all routes.
 5. **Image upload end-to-end verification** — *Bel-tested in parallel.*
@@ -79,11 +79,11 @@ The product ships in 4 phase gates. Each phase has a clear definition of done. *
 
 #### The 7 items — to PRD and ship one at a time
 
-1. ~~**Holistic modality catalog**~~ ✅ **Built 2026-05-05, pending live verification.** PRD `docs/prd/2026-05-05-holistic-modality-catalog.md` (Final) and plan `docs/plans/2026-05-05-holistic-modality-catalog.md` (COMPLETE, awaiting `VERIFIED` after Bel applies migration 010 + smoke tests). Final naming is `practices` / "Práctica" (NOT `modalities` — collision with existing `professionals.modality` field for online/presencial format). DB-driven catalog of 15 holistic practices, shared `<PracticePicker>` component, server-side validation, admin re-classification banner for the 45 existing pros. 184 unit tests pass. **Resume here** in the latest session log entry below for the migration-apply checklist.
-2. **Concierge link delivery** — When admin creates a match, automatically send the `/r/{tracking_code}` link to the user via WhatsApp link or email (depending on what they left in the `/solicitar` form). Today the admin sees the tracking code on a success screen and has to copy + WhatsApp it manually. The `/gracias` page already promises *"Te contactamos por WhatsApp con tus 3 recomendaciones"* — that promise needs to become real. Likely path: a "Send to user" button on the admin success screen that pre-fills a WhatsApp message and (optionally) fires a Resend email. Touches `app/admin/leads/[id]/match/page.tsx`, `app/api/admin/matches/route.ts`, new email template in `lib/email.ts`.
-3. **Professional approval/rejection emails** — When admin approves or rejects a registration, send the practitioner a Resend email. Approval: *"¡Tu perfil está activo!"* + link to `/p/{slug}`. Rejection: warm explanation + the `rejection_reason` + whatever the rejected-flow policy ends up being (item 5 below). Two new templates in `lib/email.ts`, two callsites in `/api/admin/professionals/[id]` PATCH branches.
+1. ~~**Holistic modality catalog**~~ ✅ **Built 2026-05-05, migrations 009 + 010 applied 2026-05-07.** 184/184 unit tests + 23/23 practices integration tests + public-side registration E2E all green. Final naming is `practices` / "Práctica" (NOT `modalities` — collision with existing `professionals.modality` field for online/presencial format). DB-driven catalog of 15 holistic practices, shared `<PracticePicker>` component, server-side validation, admin re-classification banner for the 45 existing pros. **Only remaining gate before VERIFIED:** admin-side eyeball of the re-classification banner at `/admin/professionals/50434fcc-1c5b-4e14-ba42-f33ba0de6cf6/review` (Bel's manual check).
+2. **Concierge link delivery — `/gracias` copy alignment** *(reframed 2026-05-07)* — Manual admin delivery (WhatsApp link or Instagram DM reply) is the intended flow, not a bug. The real gap was `/gracias` over-promising the channel. ✅ **Done 2026-05-07:** `/gracias` copy is now channel-agnostic ("Te escribimos cuando tengamos tus 3 opciones"). **Folded sub-items, deferred (await explicit go):** (a) user confirmation email after `/solicitar` submission, (b) `additional_context` dead-field cleanup in `app/actions/create-lead.ts:23`. **Out of scope:** auto-delivery automation, Instagram DM auto-reply (parked as a future n8n workflow, outside the codebase).
+3. **Professional approval/rejection emails** — When admin approves or rejects a registration, send the practitioner a Resend email. Approval: *"¡Tu perfil está activo!"* + link to `/p/{slug}`. Rejection: warm explanation + the `rejection_reason` + *"Podés volver a aplicar a partir del [fecha + 60 días]"* (per item 5 decision, 2026-05-07). Two new templates in `lib/email.ts`, two callsites in `/api/admin/professionals/[id]` PATCH branches, **migration 011** adding `resubmit_after TIMESTAMPTZ` to `professionals` (set on rejection), and registration handler updated to enforce the cooldown when an existing email reapplies.
 4. **Public home flip** — Decide what `/` should be once we're "open": dual-CTA home (current `/preview`) or directory-first home. Today `/` is the waitlist *Próximamente* page; `/preview` holds the post-launch home but its hero copy *"Te conectamos con tu terapeuta ideal"* is pre-pivot wording. This item is the moment we actually open the doors. Touches `app/page.tsx`, `app/preview/page.tsx` (probably becomes the new `/`).
-5. **Rejected-profile policy decision** — Open Question: when a pro is rejected, can they resubmit? Is the data kept? Notified? This needs a product call before the rejection email (item 3) can say anything useful next-step-wise. Implementation depends on the decision — likely small (a `resubmit_after` timestamp + UX copy + the email).
+5. **Rejected-profile policy decision** — ✅ **Decided 2026-05-07: Soft no with 60-day cooldown.** Rejected pros can reapply after 60 days. Implementation: `resubmit_after TIMESTAMPTZ` on `professionals` (set on rejection to `NOW() + INTERVAL '60 days'`), registration handler blocks re-registration with the same email until `resubmit_after` passes. Rejection email (item 3) says: warm explanation + `rejection_reason` + *"Podés volver a aplicar a partir del [fecha]"*. **Now unblocks Item 3.**
 6. **Desktop UI polish pass** — Mobile-first design works on phones; desktop "looks fine but that's it." Sweep every public + admin route at desktop widths (>= 1024px), catalog visual breaks, and tighten spacing/alignment/proportions for the 960px container. Bel runs Phase 0 mobile QA in parallel; this item is its desktop counterpart.
 7. **Final wording pass** — Single consolidated copy review across every user-facing surface (homepage, `/profesionales`, `/solicitar`, `/gracias`, `/p/[slug]`, `/profesionales/registro`, all admin emails, all confirmation pages, error states). Done at the end so we audit against final structure, not chase moving copy. The *"¿Querés saber cuando abramos?"* on the current `/` is one example of the kind of line this pass exists to fix.
 
@@ -95,15 +95,15 @@ Findings the 7 items address. Captured here so the rationale doesn't get lost be
 - ✅ Wired: `/profesionales` directory sorted by `ranking_score`, `/p/[slug]` profile, ContactButton fires `contact_click` for direct contacts, 7-day review-request cron, `/r/review/[token]` no-login submission, ranking auto-updates from reviews.
 - 🔴 Public `/` is *Próximamente* — directory unreachable except via `/preview` *(item 4)*.
 - 🔴 `/preview` hero says *"Te conectamos con tu terapeuta ideal"* — pre-pivot copy *(items 4 + 7)*.
-- 🟡 Migration 009 (review-delay parameterization) not yet applied — review cron's BETWEEN dropped-events bug remains until Bel applies it via SQL Editor *(carried from 2026-05-03 session, still on Bel's parallel track)*.
+- ✅ Migration 009 (review-delay parameterization) applied — confirmed 2026-05-07 via `select_pending_review_events(delay_days := 7)`. Was already in place; gap-analysis line was stale.
 - 🟡 Directory header copy generic *(item 7)*.
 
 **Workflow 2 — Concierge** *(user requests recommendations, admin curates)*
 - ✅ Wired: `/solicitar` form (intent + location + modality + urgency + WhatsApp + advanced), `createLead` → admin email, `/admin/leads/[id]` detail, `/admin/leads/[id]/match` creator, atomic match RPC with attribution tokens, `/r/[tracking_code]` recommendations view, ContactButton with attribution token.
 - 🔴 **`STYLE_OPTIONS` in `solicitar/page.tsx:43-51` is 100% traditional psychotherapy** *(item 1)*.
-- 🔴 **No automated delivery of the recommendation link to the user.** Admin sees tracking_code on success screen, must manually WhatsApp/email. `/gracias` line 20 promises automated delivery that doesn't exist *(item 2)*.
-- 🟡 No user confirmation email after `/solicitar` submission — only admin gets pinged *(could fold into item 2)*.
-- 🟡 `additional_context` in `app/actions/create-lead.ts:23` has no DB column and no form input — dead field, either wire or delete *(carry on housekeeping)*.
+- ✅ **`/gracias` copy aligned with manual delivery reality** *(item 2, done 2026-05-07)*. Admin still sends the link manually (WhatsApp link or Instagram DM reply) — that's the intended flow now.
+- 🟡 No user confirmation email after `/solicitar` submission — only admin gets pinged *(folded into item 2, deferred — awaits explicit go)*.
+- 🟡 `additional_context` in `app/actions/create-lead.ts:23` has no DB column and no form input — dead field, either wire or delete *(folded into item 2, deferred — awaits explicit go)*.
 
 **Workflow 3 — Admin approval** *(practitioner registers and gets verified)*
 - ✅ Wired: `/profesionales/registro` 4-step form + image upload, `/api/professionals/register` inserts with `status='submitted'`, admin gets `notifyNewProfessional` email, `/admin/professionals/[id]/review` with score + approve/reject, status flips to `active` (auto-appears in directory) or `rejected` + reason.
@@ -111,7 +111,7 @@ Findings the 7 items address. Captured here so the rationale doesn't get lost be
 - 🔴 **No email to the professional after approval** — they're live in the directory but never know *(item 3)*.
 - 🔴 **No email to the professional after rejection** — `rejection_reason` is captured but never reaches the pro *(item 3)*.
 - 🟡 No registration confirmation email to the pro (only admin gets pinged) *(could fold into item 3)*.
-- 🟡 Rejected-flow policy still undecided — Open Question *(item 5)*.
+- ✅ Rejected-flow policy: soft no with 60-day cooldown *(item 5, decided 2026-05-07)*.
 
 **Cross-cutting**
 - 🔴 Holistic modality vocabulary missing system-wide (registration, intake form, public profile rendering) *(item 1)*.
@@ -315,7 +315,7 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 **Tests:** No code changes — no test runs needed.
 
 **Completed — Workflow audit + plan reshape (the late part of the session):**
-- Bel asked: *"what is really missing to have these two workflows working and also the admin part where I get the therapist request to be added to Hará and I can approve or not? Leave Destacado for later."* Read the actual code for Browse, Concierge, and Admin Approval flows end-to-end. Surfaced 5 launch-blocking gaps + cross-cutting drift. The single biggest finding: the running app's vocabulary is still 100% traditional psychotherapy (`STYLE_MAP`, both forms), even though the docs are reframed.
+- Bel asked: *"what is really missing to have these two workflows working and also the admin part where I get the therapist request to be added to Hara and I can approve or not? Leave Destacado for later."* Read the actual code for Browse, Concierge, and Admin Approval flows end-to-end. Surfaced 5 launch-blocking gaps + cross-cutting drift. The single biggest finding: the running app's vocabulary is still 100% traditional psychotherapy (`STYLE_MAP`, both forms), even though the docs are reframed.
 - Captured the full audit in this plan under **Soft Launch Push — Launch-Readiness Items** above. That section now contains: the 7 items (modality catalog, concierge link delivery, pro approval/rejection emails, public home flip, rejected-policy decision, desktop UI polish, final wording pass), the per-workflow gap analysis, and the inline scope for item 1 (holistic modality catalog — including a proposed canonical list and the open product questions Bel needs to answer).
 - Decision: rather than fragment context across new PRD files, the modality catalog scope lives inline in this plan. Other items will be PRD'd inline here too as they come up. *(Bel's directive: "do not do a new file, update an existing file accordingly.")*
 
@@ -323,10 +323,10 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 ### Session — 2026-05-03 (Heartbeat extension + review-delay refactor + UI 960px pass)
 
-**Completed — Heartbeat to Hará main DB:**
-- Migration 008 (`migrations/008_heartbeat.sql`) added `heartbeat` table to Hará main DB. Mirrors `automation/migrations/001_initial_schema.sql` §9 exactly — single-row inserts, no RLS (service-role-only writes from n8n). Applied via SQL Editor + verified.
-- Extended n8n workflow `Hará — Heartbeat` (https://n8n.greenbit.info) with a parallel Postgres node fed by the same Cron trigger. New credential `hara-supabase (pooler)` (Supabase Transaction-mode pooler, port 6543, IPv4 — direct endpoint is IPv6-only and Coolify n8n can't reach it; `Ignore SSL Issues` on per pooler trust-chain quirk). Both Postgres Error outputs route to the existing Resend notification, so either DB failing pages an email.
-- Manual Execute Workflow verified — fresh `pinged_at` row in `heartbeat` on both Hará and automations DBs within seconds. Workflow published in n8n's new versioning model (Active toggle is gone), next auto-fire 2026-05-06 13:00 UTC.
+**Completed — Heartbeat to Hara main DB:**
+- Migration 008 (`migrations/008_heartbeat.sql`) added `heartbeat` table to Hara main DB. Mirrors `automation/migrations/001_initial_schema.sql` §9 exactly — single-row inserts, no RLS (service-role-only writes from n8n). Applied via SQL Editor + verified.
+- Extended n8n workflow `Hara — Heartbeat` (https://n8n.greenbit.info) with a parallel Postgres node fed by the same Cron trigger. New credential `hara-supabase (pooler)` (Supabase Transaction-mode pooler, port 6543, IPv4 — direct endpoint is IPv6-only and Coolify n8n can't reach it; `Ignore SSL Issues` on per pooler trust-chain quirk). Both Postgres Error outputs route to the existing Resend notification, so either DB failing pages an email.
+- Manual Execute Workflow verified — fresh `pinged_at` row in `heartbeat` on both Hara and automations DBs within seconds. Workflow published in n8n's new versioning model (Active toggle is gone), next auto-fire 2026-05-06 13:00 UTC.
 - Doc filed at `automation/docs/heartbeat.md` covering topology, credentials, verification queries, and that n8n is source of truth (not the stale `heartbeat.json`). Memory `project_heartbeat_extend_to_hara_db.md` removed (TODO done).
 
 **Completed — Upstash decision:**
@@ -335,7 +335,7 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 **Completed — Review-email delay parameterization (migration 009):**
 - Bel called out a real red flag I'd missed: 7-day delay was hardcoded in the SQL function `select_pending_review_events()` as `BETWEEN NOW() - INTERVAL '7 days' AND NOW() - INTERVAL '6 days'`. Two issues: magic number can't be tuned without a migration, AND the 24-hour BETWEEN window is a ticking bug — if the cron misses a single day (Vercel Hobby didn't run the cron until recently), events on day 7 fall to day 8 and exit the window forever, never triggering a review email.
 - Migration 009 (`migrations/009_review_delay_param.sql`) — RPC now takes `delay_days INT DEFAULT 7`, switched `BETWEEN` to `<` (the LEFT JOIN on `review_requests` was always what prevented duplicates, not the window). Old 0-arg signature dropped to avoid PostgREST overload ambiguity.
-- Route `app/api/cron/send-review-requests/route.ts` reads `REVIEW_DELAY_DAYS` env var (default 7), passes to RPC. Backwards-compatible: unset in prod = identical behavior. `.env.example` documents the new var. **Migration 009 NOT yet applied to Hará Supabase** — required before review-flow smoke test with `REVIEW_DELAY_DAYS=0` works.
+- Route `app/api/cron/send-review-requests/route.ts` reads `REVIEW_DELAY_DAYS` env var (default 7), passes to RPC. Backwards-compatible: unset in prod = identical behavior. `.env.example` documents the new var. **Migration 009 NOT yet applied to Hara Supabase** — required before review-flow smoke test with `REVIEW_DELAY_DAYS=0` works.
 
 **Completed — Local env-var rename fix:**
 - `.env.local` was still using legacy `SUPABASE_ANON_KEY` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` names while the source code reads `*_PUBLISHABLE_KEY` (renamed in `f654181` during May 1-3 session — prod was fixed via Vercel update, local was missed). Bel hit "Your project's URL and Key are required" error when starting `npm run dev`. Renamed both lines in `.env.local` to match (values were already in the new `sb_publishable_*` format).
@@ -355,11 +355,11 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 **Deviations:**
 - Got pulled into the review-delay refactor mid-smoke-test. Was supposed to be a quick "make 7 days into 0 days for testing" — turned into a real bug fix when the BETWEEN window came up. Worth it: the dropped-events bug was real, just hadn't bitten yet because the cron never fired in prod.
-- Considered `postgres_fdw` for cross-DB shared heartbeat table. Rejected: more setup, security cross-contamination (storing automations creds inside Hará's DB), and unverified Supabase auto-pause activity semantics. Two independent tables stayed simpler.
+- Considered `postgres_fdw` for cross-DB shared heartbeat table. Rejected: more setup, security cross-contamination (storing automations creds inside Hara's DB), and unverified Supabase auto-pause activity semantics. Two independent tables stayed simpler.
 - UI work happened in parallel with Bel running the smoke test — except she got blocked by stale Next.js dev cache + in-memory env vars from before the `.env.local` rename, before any actual smoke testing started. Fix: `rm -rf .next; npm run dev`.
 
 **Blockers / open follow-ups:**
-- Migration 009 needs to be applied to Hará Supabase via SQL Editor before the review-flow smoke test works locally (with `REVIEW_DELAY_DAYS=0`).
+- Migration 009 needs to be applied to Hara Supabase via SQL Editor before the review-flow smoke test works locally (with `REVIEW_DELAY_DAYS=0`).
 - Bel's dev server needs a clean restart to clear stale bundle that still references the old env-var names.
 - Phase 0 Task 3 smoke test was scoped but not started — Browse / Concierge / Onboarding flows all still pending.
 - Phase 0 Tasks 4 (visual QA — including how the 3-col grid + 960px container actually look on real desktop), 5 (image upload e2e), 6 (rejected profile flow) all still open.
@@ -370,7 +370,7 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 **Resume here:**
 1. `rm -rf .next; npm run dev` to clear stale dev bundle.
 2. Verify `/profesionales` renders the new richer cards with real DB data.
-3. Apply migration 009 in Hará Supabase SQL Editor.
+3. Apply migration 009 in Hara Supabase SQL Editor.
 4. Run Flow A smoke test (`/profesionales` → profile → contact → cron curl → email → review submit).
 5. Then Flow B (Concierge) + Flow C (Onboarding), then Tasks 4-6.
 
@@ -378,7 +378,7 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 **Completed:**
 - Fixed prod 500 — Vercel was missing `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Code now reads the new Supabase publishable-key naming (`f654181`).
-- Resend domain verified (`haravital.app`) and `lib/email.ts` updated: `FROM_EMAIL = 'Hará Match <hola@haravital.app>'`, `ADMIN_EMAIL = 'centrovitalhara@gmail.com'`, `replyTo` header on every send (`226774f`).
+- Resend domain verified (`haravital.app`) and `lib/email.ts` updated: `FROM_EMAIL = 'Hara Match <hola@haravital.app>'`, `ADMIN_EMAIL = 'centrovitalhara@gmail.com'`, `replyTo` header on every send (`226774f`).
 - Pre-launch homepage shipped (`6c548ef`): `/` → "Próximamente" with email capture; existing directory home moved to `/preview`. Migration 007 created `waitlist` table with RLS deny-all + idempotent insert.
 - Test data cleanup: deleted 23 orphan test professionals + 59 pqls via service role. 45 real submitted professionals remain.
 - Admin delete-professional flow (`2ec2e5f`): `DELETE /api/admin/professionals/[id]` handles cascade ordering (pqls → professional with FK cascade). Trash icon + confirmation modal added to `/admin/professionals` rows. Replaces manual SQL flow.
@@ -587,7 +587,7 @@ The product is not yet live. The items below are speculative polish, pre-mature 
 **SEO / content polish** *(deferred until post-launch)* — meta tag audit in prod, Open Graph images, custom 404 page, full Spanish copy audit. Defer until there's traffic worth optimizing for.
 
 **Misc deferred items**
-- ~~**Infrastructure heartbeats (n8n)** — Hará main DB.~~ ✅ Done 2026-05-03. Migration 008 added `heartbeat` table; n8n workflow `Hará — Heartbeat` (https://n8n.greenbit.info) now has a parallel Postgres node pinging Hará's pooler every 3 days at 13:00 UTC. Both Postgres nodes share the same trigger and route their Error outputs to the existing Resend notification, so any heartbeat failure (either DB) sends an email. Manual fire verified — fresh row in `heartbeat` on both DBs. *(Note: `automation/workflows/heartbeat.json` in the automation repo is now stale — n8n is source of truth. Re-export from n8n if reproducibility matters.)*
+- ~~**Infrastructure heartbeats (n8n)** — Hara main DB.~~ ✅ Done 2026-05-03. Migration 008 added `heartbeat` table; n8n workflow `Hara — Heartbeat` (https://n8n.greenbit.info) now has a parallel Postgres node pinging Hara's pooler every 3 days at 13:00 UTC. Both Postgres nodes share the same trigger and route their Error outputs to the existing Resend notification, so any heartbeat failure (either DB) sends an email. Manual fire verified — fresh row in `heartbeat` on both DBs. *(Note: `automation/workflows/heartbeat.json` in the automation repo is now stale — n8n is source of truth. Re-export from n8n if reproducibility matters.)*
 - **Upstash — deferred indefinitely** *(no action)*. Existing free-tier DB stuck in "pending restore" since 2026-05-01. Free tier only allows 1 DB so we can't create a new one until the stuck one clears. Site works without it (rate limiter is fail-open per `lib/rate-limit.ts`); pre-launch zero traffic means there's nothing to rate-limit anyway. **Revisit triggers:** (a) Upstash restore fails or completes (then delete + recreate, or just keep), (b) abuse signal appears in prod logs, (c) ready to switch providers (Vercel KV, Redis Cloud, or drop the limiter and use Cloudflare WAF at the edge). Until one of those: do nothing. Heartbeat for Upstash is moot until then.
 - Email: send copy to person who submitted *(unblocked now that Resend domain is verified — implement when needed)*
 - Reconciliation API endpoint (`/api/admin/reconciliation`) — for concierge flow
@@ -632,7 +632,7 @@ The product is not yet live. The items below are speculative polish, pre-mature 
 
 ### Email decisions
 - Resend chosen for simplicity (one API call, good Next.js integration, free tier 3,000/month)
-- Production sender = `Hará Match <hola@haravital.app>` with `replyTo: centrovitalhara@gmail.com` (verified 2026-05-01). No mailbox needed at haravital.app — replies route via gmail. Cloudflare email forwarding considered and skipped (rare for users to compose fresh emails to a domain address; reply path covers ~all cases).
+- Production sender = `Hara Match <hola@haravital.app>` with `replyTo: centrovitalhara@gmail.com` (verified 2026-05-01). No mailbox needed at haravital.app — replies route via gmail. Cloudflare email forwarding considered and skipped (rare for users to compose fresh emails to a domain address; reply path covers ~all cases).
 - Admin notifications (`notifyNewLead`, `notifyNewProfessional`) go to `centrovitalhara@gmail.com` (was `mariabmontoya@gmail.com` while domain was unverified).
 - `lib/email.ts` has both `notifyNewLead()` and `notifyNewProfessional()` ready
 - `create-lead.ts` server action has `additional_context` field but it doesn't exist in DB schema — skipped for now

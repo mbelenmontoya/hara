@@ -1,4 +1,4 @@
-// Hará Match — Post-solicitud confirmation
+// Hara Match — Post-solicitud confirmation
 // Shown after successful intake form submission
 
 import { PageBackground } from '@/app/components/ui/PageBackground'
@@ -17,7 +17,7 @@ export default function GraciasPage() {
 
         <p className="text-muted leading-relaxed mb-8 text-center max-w-sm mx-auto">
           Vamos a buscar profesionales que se ajusten a lo que nos contaste.
-          Te contactamos por WhatsApp con tus 3 recomendaciones.
+          Te escribimos cuando tengamos tus 3 opciones.
         </p>
 
         <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 w-full max-w-md overflow-hidden p-8">
@@ -51,7 +51,7 @@ export default function GraciasPage() {
                 <div className="w-2.5 h-2.5 rounded-full bg-white" />
                 <div className="w-px h-8 bg-white" />
               </div>
-              <p className="text-sm text-muted -mt-0.5">Te enviamos un link por WhatsApp con tus opciones</p>
+              <p className="text-sm text-muted -mt-0.5">Te escribimos con tus 3 opciones</p>
             </div>
 
             {/* Step 4 */}

@@ -1,11 +1,11 @@
-// Hará Match — Email utility
+// Hara Match — Email utility
 // Uses Resend for transactional emails
 // Fails gracefully — email failures never block the main operation
 
 import { Resend } from 'resend'
 
 const ADMIN_EMAIL = 'centrovitalhara@gmail.com'
-const FROM_EMAIL = 'Hará Match <hola@haravital.app>'
+const FROM_EMAIL = 'Hara Match <hola@haravital.app>'
 const REPLY_TO   = 'centrovitalhara@gmail.com'
 
 let resend: Resend | null = null
@@ -70,7 +70,7 @@ export async function notifyNewLead(lead: {
     subject: `${urgencyLabel} Nueva solicitud — ${intentText}`,
     html: `
       <div style="font-family: system-ui, sans-serif; max-width: 500px; margin: 0 auto;">
-        <h2 style="color: #1F1A24;">Nueva solicitud en Hará</h2>
+        <h2 style="color: #1F1A24;">Nueva solicitud en Hara</h2>
         <table style="width: 100%; border-collapse: collapse;">
           <tr>
             <td style="padding: 8px 0; color: #6B6374; font-size: 14px;">Busca ayuda con</td>
@@ -121,7 +121,7 @@ export async function notifyNewProfessional(professional: {
     subject: `Nuevo profesional registrado — ${professional.full_name}`,
     html: `
       <div style="font-family: system-ui, sans-serif; max-width: 500px; margin: 0 auto;">
-        <h2 style="color: #1F1A24;">Nuevo profesional en Hará</h2>
+        <h2 style="color: #1F1A24;">Nuevo profesional en Hara</h2>
         <table style="width: 100%; border-collapse: collapse;">
           <tr>
             <td style="padding: 8px 0; color: #6B6374; font-size: 14px;">Nombre</td>
@@ -177,7 +177,7 @@ export async function notifyReviewRequest({
           ¿Cómo te fue con ${professionalName}?
         </h2>
         <p style="font-size: 15px; color: #6B6374; margin-bottom: 24px; line-height: 1.6;">
-          Hace una semana contactaste a ${professionalName} a través de Hará Match.
+          Hace una semana contactaste a ${professionalName} a través de Hara Match.
           Si tuviste una sesión, nos ayudaría mucho conocer tu experiencia.
         </p>
         <a href="${link}"

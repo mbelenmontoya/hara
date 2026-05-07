@@ -1,4 +1,4 @@
-# Claude Code — Hará Match Tooling Reference
+# Claude Code — Hara Match Tooling Reference
 
 Everything Claude Code has available in this project. If something is missing here, it doesn't exist.
 

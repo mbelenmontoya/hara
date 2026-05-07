@@ -1,4 +1,4 @@
--- Hará Match — Reviews Collection System
+-- Hara Match — Reviews Collection System
 -- Purpose: reviews + review_requests tables, aggregate trigger that chains into
 --          recompute_ranking(), submit_review() atomic RPC, and a helper
 --          function for the daily cron.

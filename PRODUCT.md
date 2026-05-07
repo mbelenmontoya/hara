@@ -1,10 +1,10 @@
-# Hará Match — Product
+# Hara Match — Product
 
 > The canonical answer to "what is this product?" — read this before the code, the plan, or the PRDs. Update when the product evolves, not when features ship.
 
 ## What it is
 
-Hará Match is a curated marketplace for **terapias alternativas y bienestar holístico** in Spanish-speaking markets — reiki, masajes terapéuticos, constelaciones familiares, diseño humano, registros akáshicos, terapia floral, terapia energética, meditación, y otras prácticas afines. It's a **trust layer** between people atravesando algo concreto (ansiedad, insomnio, duelo, estrés, búsqueda de claridad) and the holistic practitioners who can accompany them — verified practitioners, reputation built from real interactions, and a human-curated concierge layer for users who want a recommendation chosen for them.
+Hara Match is a curated marketplace for **terapias alternativas y bienestar holístico** in Spanish-speaking markets — reiki, masajes terapéuticos, constelaciones familiares, diseño humano, registros akáshicos, terapia floral, terapia energética, meditación, y otras prácticas afines. It's a **trust layer** between people atravesando algo concreto (ansiedad, insomnio, duelo, estrés, búsqueda de claridad) and the holistic practitioners who can accompany them — verified practitioners, reputation built from real interactions, and a human-curated concierge layer for users who want a recommendation chosen for them.
 
 The match is **"lo que estás atravesando → quién puede acompañarte desde otro lugar"** — anchored in what the user is *feeling*, open about the modality. A user with insomnia might be paired with masaje, constelaciones, or reiki — whatever resonates. The platform's job is to make that pairing trustworthy.
 
@@ -38,7 +38,7 @@ Both paths end the same way: a WhatsApp conversation between user and profession
 
 ## Where
 
-The vision is **the Spanish-speaking wellness trust layer across every Spanish-speaking market**. Wherever someone speaks Spanish and struggles to find a trustworthy wellness professional, Hará should be the answer.
+The vision is **the Spanish-speaking wellness trust layer across every Spanish-speaking market**. Wherever someone speaks Spanish and struggles to find a trustworthy wellness professional, Hara should be the answer.
 
 - **Home / proving ground:** Argentina. All copy today is Argentine informal Spanish (*vos, querés, escribís*), pricing is in ARS, AFIP invoicing automation is on the roadmap. We start here because this is where we are and where we can iterate fastest.
 - **Same-language reach:** Spain, Mexico, Chile, Uruguay, Colombia, and the rest of the Spanish-speaking world. Same product, same trust problem, shared language across all markets. The order we expand in is an open product question.

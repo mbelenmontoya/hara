@@ -108,7 +108,7 @@ Type: Feature
   - **`STYLE_MAP` had legacy keys** (`cbt`, `psychodynamic`, `integrative`) the registration form never offered (drift). After migration these stop appearing; no fallback rendering needed because the migration clears all `style[]` data via the rename + `'{}'` reset.
   - **Existing E2E tests submit a `style` field** in the registration form. They will break after Task 4 (registro refactor) until Task 12 (E2E test update). Run them last in the chain or run only after the full chain is in place.
   - **Admin review page is `'use client'`** — fetches via `useEffect` + `fetch('/api/admin/professionals/[id]')`. The PRD's "server-component fetch" framing is wrong for this page; we extend the existing GET response instead.
-- **Domain context:** Hará's pivot (Apr 2026) shifted positioning from psychotherapy to holistic-wellness. The codebase still encodes the pre-pivot taxonomy in three places. This PRD eliminates that drift and sets up a forward-compatible catalog for the deferred submission/review workflow (where pros can suggest new practices and admin merges/rejects them).
+- **Domain context:** Hara's pivot (Apr 2026) shifted positioning from psychotherapy to holistic-wellness. The codebase still encodes the pre-pivot taxonomy in three places. This PRD eliminates that drift and sets up a forward-compatible catalog for the deferred submission/review workflow (where pros can suggest new practices and admin merges/rejects them).
 
 ## Runtime Environment
 

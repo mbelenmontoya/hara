@@ -1,4 +1,4 @@
-// Hará Match - Admin Match Creation API (Production-Grade Atomic)
+// Hara Match - Admin Match Creation API (Production-Grade Atomic)
 // Purpose: Create match with 3 distinct professionals + signed attribution tokens
 // Security: Admin-only, fully atomic via PostgreSQL RPC
 // Atomicity: Pre-generates match_id + tokens, RPC inserts all in single transaction

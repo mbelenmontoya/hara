@@ -1,4 +1,4 @@
-// Hará Match — Ranking formula helper
+// Hara Match — Ranking formula helper
 // Mirrors the SQL recompute_ranking() trigger function.
 // These constants and formulas must stay in sync with migrations/004_ranking_foundation.sql
 // (originally) and migrations/005_destacado_tier_mvp.sql (expiry-aware update).

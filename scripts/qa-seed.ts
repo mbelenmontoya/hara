@@ -1,4 +1,4 @@
-// Hará Match - QA Seed Script
+// Hara Match - QA Seed Script
 // Purpose: Generate test data with 3 DISTINCT professionals + valid attribution tokens
 // Usage: npx tsx scripts/qa-seed.ts > qa.env && source qa.env
 

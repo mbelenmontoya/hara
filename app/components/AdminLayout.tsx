@@ -1,4 +1,4 @@
-// Hará — Admin Layout
+// Hara — Admin Layout
 // Shell for all admin pages: illustration background, glass nav, content area
 
 'use client'

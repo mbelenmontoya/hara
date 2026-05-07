@@ -1,4 +1,4 @@
-// Hará UI v2 - Public Layout
+// Hara UI v2 - Public Layout
 // Warm, calm frame for public pages
 
 import { ReactNode } from 'react'
@@ -15,7 +15,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
       <header className="bg-surface border-b border-outline">
         <div className="container-public py-5">
           <Link href="/" className="text-xl font-semibold text-foreground hover:text-brand transition-colors duration-150">
-            Hará
+            Hara
           </Link>
         </div>
       </header>
@@ -29,7 +29,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
       <footer className="bg-surface border-t border-outline mt-auto">
         <div className="container-public py-8 text-center">
           <p className="text-sm text-muted">
-            © 2026 Hará Match · Conectamos con bienestar
+            © 2026 Hara Match · Conectamos con bienestar
           </p>
         </div>
       </footer>

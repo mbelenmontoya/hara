@@ -1,4 +1,4 @@
-// Hará Match — DB-backed parity test for the ranking formula
+// Hara Match — DB-backed parity test for the ranking formula
 //
 // PURPOSE: Assert that computeRankingScore() in lib/ranking.ts produces the same value
 // as the SQL recompute_ranking() trigger for every fixture shape.

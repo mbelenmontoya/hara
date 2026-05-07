@@ -1,4 +1,4 @@
-// Hará UI v2 - Narrative Kitchen Sink
+// Hara UI v2 - Narrative Kitchen Sink
 // Design system showcase with consistent spacing rhythm
 
 'use client'
@@ -20,7 +20,7 @@ export default function UIPage() {
       {/* Header */}
       <div className="bg-surface border-b border-outline sticky top-0 z-10">
         <div className="container-public py-4">
-          <h1 className="text-2xl font-semibold text-foreground">Hará UI v2</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Hara UI v2</h1>
           <p className="text-sm text-muted mt-1">Sistema de diseño · Foundations</p>
         </div>
       </div>
@@ -207,7 +207,7 @@ export default function UIPage() {
         {/* Footer */}
         <div className="pt-12 text-center border-t border-outline">
           <p className="text-sm text-muted">
-            Hará UI v2 · Diseño mobile-first
+            Hara UI v2 · Diseño mobile-first
           </p>
         </div>
       </div>

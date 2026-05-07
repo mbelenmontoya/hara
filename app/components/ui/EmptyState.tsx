@@ -1,4 +1,4 @@
-// Hará UI - Empty State Component
+// Hara UI - Empty State Component
 // Purpose: Friendly message when lists are empty
 
 import { ReactNode } from 'react'

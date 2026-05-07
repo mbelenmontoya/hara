@@ -1,4 +1,4 @@
--- Hará Match — Ranking Foundation
+-- Hara Match — Ranking Foundation
 -- Purpose: Add ranking columns to professionals, trigger-driven scoring function,
 --          and directory query index. Mirrors lib/profile-score.ts exactly.
 --

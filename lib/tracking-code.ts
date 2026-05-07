@@ -1,4 +1,4 @@
-// Hará Match - Tracking Code Generator
+// Hara Match - Tracking Code Generator
 // Format: M-<13-digit-timestamp>-<6-uppercase-alphanumeric>
 // Alphabet: A-Z0-9 (36 symbols)
 // Collision resistance: 36^6 = 2,176,782,336 combinations

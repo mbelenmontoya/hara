@@ -1,4 +1,4 @@
-// Hará UI v2 - Badge Component
+// Hara UI v2 - Badge Component
 // Purpose: Status indicators with cohesive palette
 
 import { ReactNode } from 'react'

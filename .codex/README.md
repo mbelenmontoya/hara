@@ -1,4 +1,4 @@
-# Codex Tooling — Hará Match
+# Codex Tooling — Hara Match
 
 This directory mirrors the existing `.claude/` tooling so Codex sessions have the same commands, skills, agents, rules, and hooks without touching the Claude setup. Nothing here replaces `.claude/`; both folders should evolve together.
 

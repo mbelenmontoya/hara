@@ -1,4 +1,4 @@
-// Hará Match - Vitest Global Setup
+// Hara Match - Vitest Global Setup
 // Purpose: Start Next.js dev server for integration tests
 // Only runs once before all tests
 

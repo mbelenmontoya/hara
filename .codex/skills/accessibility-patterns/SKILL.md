@@ -1,9 +1,9 @@
 ---
 name: accessibility-patterns
-description: Build accessible React components with WCAG 2.1 Level AA compliance for Hará Match. Use when creating interactive elements, forms, modals, bottom sheets, or any user-facing components. Triggers on "accessibility", "a11y", "ARIA", "keyboard", "focus", "screen reader", "WCAG".
+description: Build accessible React components with WCAG 2.1 Level AA compliance for Hara Match. Use when creating interactive elements, forms, modals, bottom sheets, or any user-facing components. Triggers on "accessibility", "a11y", "ARIA", "keyboard", "focus", "screen reader", "WCAG".
 ---
 
-# Accessibility Patterns for Hará Match
+# Accessibility Patterns for Hara Match
 
 Build WCAG 2.1 Level AA compliant React components with Tailwind CSS.
 

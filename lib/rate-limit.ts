@@ -1,4 +1,4 @@
-// Hará Match - Rate Limiting
+// Hara Match - Rate Limiting
 // Purpose: Anti-spam on public endpoints via Upstash Redis (sliding window per IP).
 // Behavior: FAIL OPEN — when Redis is unavailable or misconfigured, requests are
 // allowed through and the failure is logged. Rationale: pre-launch the cost of a

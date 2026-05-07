@@ -1,4 +1,4 @@
-// Hará Match — Pre-launch preview of the post-launch home page.
+// Hara Match — Pre-launch preview of the post-launch home page.
 // Lives at /preview while public /  shows "Próximamente".
 // Restore as /  after launch by moving this file back.
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Hará Match — pre-push hook
+# Hara Match — pre-push hook
 # Runs unit tests before every push. Blocks push if any test fails.
 # Bypass with: git push --no-verify
 

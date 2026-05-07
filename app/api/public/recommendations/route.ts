@@ -1,4 +1,4 @@
-// Hará Match - Public Recommendations Endpoint
+// Hara Match - Public Recommendations Endpoint
 // Purpose: Controlled public read of match recommendations (no direct anon RLS)
 // Security: Uses service role, only returns whitelisted fields, validates tracking_code format, rate limited
 

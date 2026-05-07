@@ -1,4 +1,4 @@
-// Hará UI - Modal Component
+// Hara UI - Modal Component
 // Purpose: Dialog overlay for admin actions
 // Accessibility: focus trap, ESC to close, click outside to close, role=dialog + aria-modal
 

@@ -1,14 +1,14 @@
 ---
 name: code-reviewer
-description: "Reviews code for Hará rule violations with confidence-scored findings. Checks TypeScript strictness, Tailwind token usage, Spanish copy, console.log usage, file size, and locked file protection. Reports only high-confidence issues (>=80%).\n\n<example>\nuser: \"Review my changes before I push\"\nassistant: \"I'll launch the code-reviewer agent to check your changes against Hará's rules.\"\n</example>\n\n<example>\nuser: \"Can you check if my code follows the project standards?\"\nassistant: \"Let me run the code-reviewer agent to scan for rule violations.\"\n</example>"
+description: "Reviews code for Hara rule violations with confidence-scored findings. Checks TypeScript strictness, Tailwind token usage, Spanish copy, console.log usage, file size, and locked file protection. Reports only high-confidence issues (>=80%).\n\n<example>\nuser: \"Review my changes before I push\"\nassistant: \"I'll launch the code-reviewer agent to check your changes against Hara's rules.\"\n</example>\n\n<example>\nuser: \"Can you check if my code follows the project standards?\"\nassistant: \"Let me run the code-reviewer agent to scan for rule violations.\"\n</example>"
 tools: Read, Grep, Glob, Bash
 model: sonnet
 color: green
 ---
 
-# Code Reviewer for Hará Match
+# Code Reviewer for Hara Match
 
-Mechanical rule compliance reviewer for Hará's coding standards. Scans changed files for violations, scores confidence, and reports only issues at >=80% confidence.
+Mechanical rule compliance reviewer for Hara's coding standards. Scans changed files for violations, scores confidence, and reports only issues at >=80% confidence.
 
 ## Workflow
 
@@ -105,7 +105,7 @@ Search for hardcoded numeric values in logic (not in named constants):
 ## Output Format
 
 ```markdown
-# Code Review: Hará Rule Compliance
+# Code Review: Hara Rule Compliance
 
 **Files reviewed**: {count}
 **Findings**: {blocking} blocking, {warnings} warnings

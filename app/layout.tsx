@@ -14,23 +14,23 @@ const manrope = Manrope({
 })
 
 export const metadata = {
-  title: 'Hará Match | Conectá con tu terapeuta ideal',
+  title: 'Hara Match | Conectá con tu terapeuta ideal',
   description: 'Plataforma que conecta personas con profesionales de bienestar. Encuentra tu terapeuta ideal: recomendaciones personalizadas, profesionales verificados, primero contacto libre.',
   keywords: 'terapia online, psicólogo argentina, terapeuta online, salud mental, bienestar emocional',
-  authors: [{ name: 'Hará Match' }],
-  creator: 'Hará Match',
-  publisher: 'Hará Match',
+  authors: [{ name: 'Hara Match' }],
+  creator: 'Hara Match',
+  publisher: 'Hara Match',
   openGraph: {
-    title: 'Hará Match | Tu terapeuta ideal',
+    title: 'Hara Match | Tu terapeuta ideal',
     description: 'Conectamos personas con profesionales de bienestar verificados',
     url: 'https://hara.com',
-    siteName: 'Hará Match',
+    siteName: 'Hara Match',
     locale: 'es_AR',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Hará Match',
+    title: 'Hara Match',
     description: 'Conectá con tu terapeuta ideal',
   },
   robots: {

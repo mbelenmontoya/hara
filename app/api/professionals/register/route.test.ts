@@ -6,18 +6,27 @@ import { NextRequest } from 'next/server'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
-const mockSingle = vi.fn()
-const mockSelect = vi.fn()
 const mockInsert = vi.fn()
 const mockLike = vi.fn()
-const mockSlugSelect = vi.fn()
+
+// Cooldown query chain: .select(...).eq('email', ...).eq('status', 'rejected')
+//                                   .order(created_at).order(id).limit(1).maybeSingle()
+const mockCooldownMaybeSingle = vi.fn()
+const mockCooldownLimit = vi.fn().mockReturnValue({ maybeSingle: mockCooldownMaybeSingle })
+const mockCooldownOrder2 = vi.fn().mockReturnValue({ limit: mockCooldownLimit })
+const mockCooldownOrder1 = vi.fn().mockReturnValue({ order: mockCooldownOrder2 })
+const mockCooldownEq2 = vi.fn().mockReturnValue({ order: mockCooldownOrder1 })
+const mockCooldownEq1 = vi.fn().mockReturnValue({ eq: mockCooldownEq2 })
 
 vi.mock('@/lib/supabase-admin', () => ({
   supabaseAdmin: {
     from: vi.fn((table: string) => {
       if (table === 'professionals') {
         return {
-          select: vi.fn().mockReturnValue({ like: mockLike }),
+          select: vi.fn().mockReturnValue({
+            like: mockLike,         // slug-uniqueness path
+            eq: mockCooldownEq1,    // cooldown-lookup path
+          }),
           insert: mockInsert,
         }
       }
@@ -32,6 +41,7 @@ vi.mock('@/lib/practices', () => ({
 
 vi.mock('@/lib/email', () => ({
   notifyNewProfessional: vi.fn().mockResolvedValue(undefined),
+  notifyRegistrationReceived: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('@/lib/storage', () => ({
@@ -67,6 +77,10 @@ function setupSlugMock() {
   mockLike.mockResolvedValue({ data: [], error: null })
 }
 
+function setupCooldownNoMatch() {
+  mockCooldownMaybeSingle.mockResolvedValue({ data: null, error: null })
+}
+
 function setupInsertMock(id = 'uuid-1234') {
   const selectMock = vi.fn().mockResolvedValue({
     data: { id, slug: 'maria-garcia', ...VALID_FIELDS },
@@ -85,6 +99,7 @@ describe('POST /api/professionals/register — practices field', () => {
   it('(a) valid practices → 201, row inserted with practices column', async () => {
     const { validatePracticeKeys } = await import('@/lib/practices')
     vi.mocked(validatePracticeKeys).mockResolvedValue({ ok: true })
+    setupCooldownNoMatch()
     setupSlugMock()
     setupInsertMock()
 
@@ -111,6 +126,7 @@ describe('POST /api/professionals/register — practices field', () => {
     const { validatePracticeKeys } = await import('@/lib/practices')
     // validatePracticeKeys short-circuits for empty array without even being called
     vi.mocked(validatePracticeKeys).mockResolvedValue({ ok: true })
+    setupCooldownNoMatch()
     setupSlugMock()
     setupInsertMock()
 
@@ -123,6 +139,7 @@ describe('POST /api/professionals/register — practices field', () => {
   it('(d) legacy style field in body is not inserted into practices column', async () => {
     const { validatePracticeKeys } = await import('@/lib/practices')
     vi.mocked(validatePracticeKeys).mockResolvedValue({ ok: true })
+    setupCooldownNoMatch()
     setupSlugMock()
     setupInsertMock()
 

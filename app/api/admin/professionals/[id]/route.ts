@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { logError } from '@/lib/monitoring'
 import { getActivePractices, validatePracticeKeys } from '@/lib/practices'
+import { notifyProfessionalApproved, notifyProfessionalRejected } from '@/lib/email'
 
 export const runtime = 'nodejs'
 
@@ -153,7 +154,7 @@ export async function PATCH(
 
   const { data: existing, error: fetchError } = await supabaseAdmin
     .from('professionals')
-    .select('id, status')
+    .select('id, status, email, full_name, slug')
     .eq('id', id)
     .single()
 
@@ -176,11 +177,18 @@ export async function PATCH(
       )
     }
 
+    const trimmedReason = rejection_reason.trim()
+    // 60-day cooldown — pro can re-apply after this date. Enforced by the
+    // registration handler's pre-insert lookup. See plan Risks table for the
+    // race-condition note (partial UNIQUE keeps it safe).
+    const resubmitAfter = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
+
     const { error: updateError } = await supabaseAdmin
       .from('professionals')
       .update({
         status: 'rejected',
-        rejection_reason: rejection_reason.trim(),
+        rejection_reason: trimmedReason,
+        resubmit_after: resubmitAfter,
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
@@ -188,6 +196,14 @@ export async function PATCH(
     if (updateError) {
       return NextResponse.json({ error: 'Error al rechazar el perfil' }, { status: 500 })
     }
+
+    // Fire-and-forget — email failure must not block the status update.
+    notifyProfessionalRejected({
+      to: existing.email,
+      full_name: existing.full_name,
+      rejection_reason: trimmedReason,
+      resubmit_after: resubmitAfter,
+    }).catch(() => {})
 
     return NextResponse.json({ success: true, status: 'rejected' })
   }
@@ -210,6 +226,13 @@ export async function PATCH(
   if (updateError) {
     return NextResponse.json({ error: 'Error al aprobar el perfil' }, { status: 500 })
   }
+
+  // Fire-and-forget — email failure must not block the status update.
+  notifyProfessionalApproved({
+    to: existing.email,
+    full_name: existing.full_name,
+    slug: existing.slug,
+  }).catch(() => {})
 
   return NextResponse.json({ success: true, status: 'active' })
 }

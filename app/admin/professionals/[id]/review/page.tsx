@@ -417,8 +417,8 @@ export default function ProfessionalReviewPage() {
         >
           <div className="space-y-4">
             <p className="text-sm text-foreground">
-              Escribí el motivo por el cual se rechaza este perfil. El profesional podrá verlo si le
-              comunicamos la decisión.
+              <span className="font-semibold">Razón de rechazo</span>{' '}
+              (este texto se le enviará al profesional con tus palabras exactas).
             </p>
             <textarea
               value={rejectionReason}
@@ -427,6 +427,10 @@ export default function ProfessionalReviewPage() {
               rows={4}
               className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all text-sm resize-none"
             />
+            <p className="text-xs text-muted">
+              El profesional recibirá esto en un email automático junto con la fecha en la que puede volver
+              a aplicar (60 días).
+            </p>
             {score && score.total < 50 && (
               <p className="text-xs text-muted">
                 El puntaje del perfil es {score.total}/100. Podés usar el desglose de arriba como referencia

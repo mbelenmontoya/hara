@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { notifyNewProfessional } from '@/lib/email'
+import { notifyNewProfessional, notifyRegistrationReceived } from '@/lib/email'
 import { uploadProfileImage } from '@/lib/storage'
 import { validatePracticeKeys } from '@/lib/practices'
 
@@ -137,6 +137,42 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Cooldown check — block re-applications from rejected pros within their
+    // 60-day cooldown window. Looks up the most recent rejected row for this
+    // email and short-circuits with a 403 if `resubmit_after > NOW()`.
+    // Race note: parallel re-applications at expiry can both pass this SELECT;
+    // the partial UNIQUE on (email) WHERE status != 'rejected' (migration 011)
+    // catches the second INSERT with 23505 — the existing dup-email guard at
+    // the bottom of this handler returns the appropriate error.
+    const { data: priorRejected } = await supabaseAdmin
+      .from('professionals')
+      .select('id, created_at, resubmit_after')
+      .eq('email', email)
+      .eq('status', 'rejected')
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (priorRejected?.resubmit_after && new Date(priorRejected.resubmit_after) > new Date()) {
+      // TODO(bel): `previous_application_at` is the original submission date,
+      // not the rejection date. PRD copy "Ya aplicaste el [fecha]" maps to
+      // created_at literally. If we'd rather show the rejection date, surface
+      // updated_at or add a rejected_at column. See plan Open Questions.
+      const fmt = (d: string) =>
+        new Date(d).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })
+      const previousAppliedAt = fmt(priorRejected.created_at)
+      const resubmitAfterFmt = fmt(priorRejected.resubmit_after)
+      return NextResponse.json(
+        {
+          error: `Ya aplicaste a Hara el ${previousAppliedAt}. Podés volver a aplicar a partir del ${resubmitAfterFmt}. Si tenés preguntas, escribinos a centrovitalhara@gmail.com.`,
+          resubmit_after: priorRejected.resubmit_after,
+          previous_application_at: priorRejected.created_at,
+        },
+        { status: 403 }
+      )
+    }
+
     // Generate unique slug
     let slug = generateSlug(full_name)
 
@@ -214,6 +250,13 @@ export async function POST(request: NextRequest) {
       whatsapp,
       country,
       specialties,
+    }).catch(() => {})
+
+    // Confirmation to the pro — fire and forget. Closes the silence between
+    // submit and admin decision. Email failure must not block the response.
+    notifyRegistrationReceived({
+      to: email,
+      full_name,
     }).catch(() => {})
 
     return NextResponse.json({

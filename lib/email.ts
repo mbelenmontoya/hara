@@ -22,6 +22,29 @@ function getResend(): Resend | null {
   return resend
 }
 
+// Resolves the base URL for links in transactional emails. Replaces the
+// previous inline pattern which had an operator-precedence bug
+// (`A || B ? X : Y` parses as `(A || B) ? X : Y`, so NEXT_PUBLIC_SITE_URL
+// was read but never used).
+function emailBaseUrl(): string {
+  return (
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+  )
+}
+
+// Minimal HTML-escape for dynamic strings rendered into email bodies.
+// Defense-in-depth: admin-typed text (rejection_reason, full_name) crosses
+// a trust boundary into the pro's email client.
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 interface EmailOptions {
   to: string
   subject: string
@@ -110,9 +133,7 @@ export async function notifyNewProfessional(professional: {
   country: string
   specialties: string[]
 }): Promise<boolean> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'http://localhost:3000'
+  const baseUrl = emailBaseUrl()
   const reviewPath = `/admin/professionals/${professional.id}/review`
   const reviewUrl = `${baseUrl}/admin/login?redirect=${encodeURIComponent(reviewPath)}`
 
@@ -189,6 +210,160 @@ export async function notifyReviewRequest({
           Solo lleva un minuto. Si no tuviste una sesión, ignorá este mensaje.
           <br />
           O copiá el enlace: ${link}
+        </p>
+      </div>
+    `,
+  })
+}
+
+// ─── Pro-facing: registration received ────────────────────────────────────────
+
+export async function notifyRegistrationReceived({
+  to,
+  full_name,
+}: {
+  to: string
+  full_name: string
+}): Promise<boolean> {
+  const safeName = escapeHtml(full_name)
+  return sendEmail({
+    to,
+    subject: 'Recibimos tu solicitud en Hara',
+    html: `
+      <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 16px; color: #1F1A24;">
+        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;">
+          Hola ${safeName},
+        </h2>
+        <p style="font-size: 15px; color: #1F1A24; line-height: 1.6; margin-bottom: 16px;">
+          Recibimos tu solicitud para sumarte como profesional a Hara. Vamos a revisar tu perfil con calma — esto suele tomar unos pocos días.
+        </p>
+        <p style="font-size: 15px; color: #1F1A24; line-height: 1.6; margin-bottom: 16px;">
+          Te escribimos en cuanto tengamos una respuesta. Si necesitás cambiar algo en tu solicitud mientras tanto, escribinos a ${ADMIN_EMAIL}.
+        </p>
+        <p style="font-size: 15px; color: #6B6374; line-height: 1.6; margin-top: 24px;">
+          Gracias por confiar en Hara.
+        </p>
+      </div>
+    `,
+  })
+}
+
+// ─── Pro-facing: profile approved ─────────────────────────────────────────────
+
+export async function notifyProfessionalApproved({
+  to,
+  full_name,
+  slug,
+}: {
+  to: string
+  full_name: string
+  slug: string
+}): Promise<boolean> {
+  const safeName = escapeHtml(full_name)
+  // slug is URL-safe by construction (app/api/professionals/register/route.ts:22-30
+  // produces [a-z0-9-] only). No encoding needed.
+  const profileUrl = `${emailBaseUrl()}/p/${slug}`
+  return sendEmail({
+    to,
+    subject: '¡Tu perfil en Hara está activo!',
+    html: `
+      <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 16px; color: #1F1A24;">
+        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;">
+          Hola ${safeName},
+        </h2>
+        <p style="font-size: 15px; color: #1F1A24; line-height: 1.6; margin-bottom: 24px;">
+          Tu perfil ya está activo en Hara. Las personas que entren al directorio o reciban tus recomendaciones a través de nuestro sistema concierge pueden ver tu información y contactarte.
+        </p>
+        <div style="margin: 24px 0;">
+          <a href="${profileUrl}" target="_blank" rel="noopener"
+             style="display: inline-block; padding: 14px 28px; background-color: #4B2BBF; color: #ffffff;
+                    text-decoration: none; border-radius: 9999px; font-size: 15px; font-weight: 600;">
+            Ver mi perfil
+          </a>
+        </div>
+        <p style="margin-top: 12px; font-size: 13px; color: #6B6374;">
+          O copiá el enlace: ${profileUrl}
+        </p>
+
+        <h3 style="font-size: 16px; font-weight: 600; margin-top: 32px; margin-bottom: 8px; color: #1F1A24;">
+          ¿Cómo te encuentran?
+        </h3>
+        <p style="font-size: 14px; color: #1F1A24; line-height: 1.6; margin-bottom: 16px;">
+          Tu perfil aparece en <strong>/profesionales</strong>. También podemos recomendarte cuando alguien que busca ayuda holística llene el formulario de solicitud y vos seas un buen match.
+        </p>
+
+        <h3 style="font-size: 16px; font-weight: 600; margin-top: 24px; margin-bottom: 8px; color: #1F1A24;">
+          ¿Cómo te contactan?
+        </h3>
+        <p style="font-size: 14px; color: #1F1A24; line-height: 1.6; margin-bottom: 16px;">
+          Cuando alguien hace click en el botón de contacto de tu perfil, se abre un chat de WhatsApp directo a tu número. No filtramos ni intermediamos — la conversación es entre vos y el cliente.
+        </p>
+
+        <h3 style="font-size: 16px; font-weight: 600; margin-top: 24px; margin-bottom: 8px; color: #1F1A24;">
+          ¿Querés actualizar algo?
+        </h3>
+        <p style="font-size: 14px; color: #1F1A24; line-height: 1.6; margin-bottom: 24px;">
+          Por ahora, escribinos a ${ADMIN_EMAIL} y te lo cambiamos. Pronto vas a poder editarlo vos directamente.
+        </p>
+
+        <p style="font-size: 15px; color: #6B6374; line-height: 1.6; margin-top: 24px;">
+          Te damos la bienvenida a Hara.
+        </p>
+      </div>
+    `,
+  })
+}
+
+// ─── Pro-facing: profile rejected ─────────────────────────────────────────────
+
+export async function notifyProfessionalRejected({
+  to,
+  full_name,
+  rejection_reason,
+  resubmit_after,
+}: {
+  to: string
+  full_name: string
+  rejection_reason: string
+  resubmit_after: string | Date
+}): Promise<boolean> {
+  const safeName = escapeHtml(full_name)
+  // Trim before escape so the verbatim block doesn't carry leading/trailing
+  // whitespace into the pro's inbox. Newlines INSIDE the text are preserved
+  // because the wrapping <blockquote> uses `white-space: pre-line`.
+  const safeReason = escapeHtml(rejection_reason.trim())
+  const resubmitDate = new Date(resubmit_after).toLocaleDateString('es-AR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+
+  return sendEmail({
+    to,
+    subject: 'Sobre tu solicitud en Hara',
+    html: `
+      <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 16px; color: #1F1A24;">
+        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;">
+          Hola ${safeName},
+        </h2>
+        <p style="font-size: 15px; color: #1F1A24; line-height: 1.6; margin-bottom: 16px;">
+          Gracias por aplicar a Hara. Después de revisar tu perfil, decidimos no avanzar con tu solicitud por ahora.
+        </p>
+
+        <p style="font-size: 14px; color: #6B6374; margin-top: 24px; margin-bottom: 8px;">
+          <strong style="color: #1F1A24;">Razón:</strong>
+        </p>
+        <blockquote style="margin: 0 0 24px 0; padding: 12px 16px; border-left: 3px solid #4B2BBF; background-color: #F6F0E8; font-style: italic; color: #1F1A24; white-space: pre-line; font-size: 15px; line-height: 1.6;">${safeReason}</blockquote>
+
+        <p style="font-size: 15px; color: #1F1A24; line-height: 1.6; margin-bottom: 16px;">
+          Si querés volver a aplicar después de ajustar lo anterior, podés hacerlo a partir del <strong>${resubmitDate}</strong>.
+        </p>
+        <p style="font-size: 15px; color: #1F1A24; line-height: 1.6; margin-bottom: 16px;">
+          Si tenés preguntas, escribinos a ${ADMIN_EMAIL}.
+        </p>
+
+        <p style="font-size: 15px; color: #6B6374; line-height: 1.6; margin-top: 24px;">
+          Gracias de nuevo por tu interés.
         </p>
       </div>
     `,

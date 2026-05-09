@@ -81,7 +81,7 @@ The product ships in 4 phase gates. Each phase has a clear definition of done. *
 
 1. ~~**Holistic modality catalog**~~ ✅ **Built 2026-05-05, migrations 009 + 010 applied 2026-05-07.** 184/184 unit tests + 23/23 practices integration tests + public-side registration E2E all green. Final naming is `practices` / "Práctica" (NOT `modalities` — collision with existing `professionals.modality` field for online/presencial format). DB-driven catalog of 15 holistic practices, shared `<PracticePicker>` component, server-side validation, admin re-classification banner for the 45 existing pros. **Only remaining gate before VERIFIED:** admin-side eyeball of the re-classification banner at `/admin/professionals/50434fcc-1c5b-4e14-ba42-f33ba0de6cf6/review` (Bel's manual check).
 2. **Concierge link delivery — `/gracias` copy alignment** *(reframed 2026-05-07)* — Manual admin delivery (WhatsApp link or Instagram DM reply) is the intended flow, not a bug. The real gap was `/gracias` over-promising the channel. ✅ **Done 2026-05-07:** `/gracias` copy is now channel-agnostic ("Te escribimos cuando tengamos tus 3 opciones"). **Folded sub-items, deferred (await explicit go):** (a) user confirmation email after `/solicitar` submission, (b) `additional_context` dead-field cleanup in `app/actions/create-lead.ts:23`. **Out of scope:** auto-delivery automation, Instagram DM auto-reply (parked as a future n8n workflow, outside the codebase).
-3. **Professional approval/rejection emails** — When admin approves or rejects a registration, send the practitioner a Resend email. Approval: *"¡Tu perfil está activo!"* + link to `/p/{slug}`. Rejection: warm explanation + the `rejection_reason` + *"Podés volver a aplicar a partir del [fecha + 60 días]"* (per item 5 decision, 2026-05-07). Two new templates in `lib/email.ts`, two callsites in `/api/admin/professionals/[id]` PATCH branches, **migration 011** adding `resubmit_after TIMESTAMPTZ` to `professionals` (set on rejection), and registration handler updated to enforce the cooldown when an existing email reapplies.
+3. ~~**Professional approval/rejection emails**~~ ✅ **Built + VERIFIED 2026-05-08.** PRD `docs/prd/2026-05-07-pro-approval-rejection-emails.md` → plan `docs/plans/2026-05-08-pro-approval-rejection-emails.md` → 6 tasks all done. Three new pro-facing email functions in `lib/email.ts` (submission confirmation, approval, rejection-with-verbatim-reason), `emailBaseUrl()` + `escapeHtml()` helpers, registration cooldown check with server-composed Spanish error, admin PATCH email firing + `resubmit_after` write, Reject modal Flow-6 copy. Migration 011 applied (idempotent: schema-syncs `rejected` status + `rejection_reason` that lived only in `scripts/migrate-review-flow.mjs`, plus `resubmit_after TIMESTAMPTZ`, partial UNIQUE on email excluding rejected, regular email index). 251/251 unit tests, 3/3 integration tests, partial-UNIQUE smoke test green. Bonus fix: corrected operator-precedence bug at the previous `lib/email.ts:113-115` baseUrl pattern.
 4. **Public home flip** — Decide what `/` should be once we're "open": dual-CTA home (current `/preview`) or directory-first home. Today `/` is the waitlist *Próximamente* page; `/preview` holds the post-launch home but its hero copy *"Te conectamos con tu terapeuta ideal"* is pre-pivot wording. This item is the moment we actually open the doors. Touches `app/page.tsx`, `app/preview/page.tsx` (probably becomes the new `/`).
 5. **Rejected-profile policy decision** — ✅ **Decided 2026-05-07: Soft no with 60-day cooldown.** Rejected pros can reapply after 60 days. Implementation: `resubmit_after TIMESTAMPTZ` on `professionals` (set on rejection to `NOW() + INTERVAL '60 days'`), registration handler blocks re-registration with the same email until `resubmit_after` passes. Rejection email (item 3) says: warm explanation + `rejection_reason` + *"Podés volver a aplicar a partir del [fecha]"*. **Now unblocks Item 3.**
 6. **Desktop UI polish pass** — Mobile-first design works on phones; desktop "looks fine but that's it." Sweep every public + admin route at desktop widths (>= 1024px), catalog visual breaks, and tighten spacing/alignment/proportions for the 960px container. Bel runs Phase 0 mobile QA in parallel; this item is its desktop counterpart.
@@ -194,6 +194,48 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 2. **Admin detail pages** that depend on the portal: `/admin/professionals/[id]` (reviews, rating, tier history), `/admin/analytics` (funnel + MRR + active Destacado).
 
 ## Session Log
+
+### Session — 2026-05-08 (Soft Launch Push Item 3: Pro approval/rejection emails — VERIFIED)
+
+**Completed — /spec end-to-end on Item 3:**
+- Plan: `docs/plans/2026-05-08-pro-approval-rejection-emails.md`. PRD was already final; planning skipped batch 1, went straight to exploration → batch 2 with one substantive design question (re-application schema). Bel chose partial UNIQUE index (`WHERE status != 'rejected'`) over (a) drop UNIQUE, (b) update-in-place — preserves "old row stays in DB" history while keeping live-row uniqueness intact.
+- Planning reviewer (general-purpose substituting for `pilot:spec-review` which isn't installed): 3 must_fix + 9 should_fix + 5 suggestions. **All addressed before code:** operator-precedence bug at `lib/email.ts:113-115` (NEXT_PUBLIC_SITE_URL was being read but never used in the URL output) → fix via new `emailBaseUrl()` helper; XSS gap on admin-typed `rejection_reason` → fix via new `escapeHtml()` helper; `RegistroForm` scope leak → fix via server-composed Spanish error message (no client changes); schema drift surfaced (`rejection_reason` column + `'rejected'` status value lived only in `scripts/migrate-review-flow.mjs`, never landed in numbered migrations) → fix by absorbing into mig 011 idempotently.
+- Implementation: 6 tasks in dependency order. Migration 011 → email helpers + 3 functions + 13 unit tests → registration handler cooldown + confirmation email → admin PATCH approve/reject email firing + `resubmit_after` write + 4 new PATCH unit tests → Reject modal copy (Flow 6) → cooldown integration test (3 scenarios). 251/251 unit tests green at every step.
+- Implementation reviewer: 0 must_fix + 5 should_fix + 5 suggestions. **All 5 should_fix + 4 of 5 suggestions applied:** orphan mock vars, brittle `mockImplementationOnce` ordering → replaced with shared `builders.lastUpdatePayload` capture, PRD copy alignment on Reject modal (parenthetical form), gendered "Bienvenida" → gender-neutral "Te damos la bienvenida" (PRD draft was feminine but directory is mixed-gender), cooldown query secondary `.order('id', desc)` tiebreaker, rollback-comment caveat, `TODO(bel)` for `previous_application_at` semantics, `target/rel` on approval-email link, integration-test mock-invocation assertion. Skipped: `it.each` refactor (cosmetic only).
+- Feature-dev:code-reviewer second-opinion (Bel-requested): 0 issues at ≥80% confidence. Confirmed all 5 should_fix and 4/5 suggestions correctly applied across all 9 changed files.
+- Codex adversarial review (Bel-requested): hung at startup, no output beyond `Turn started` after ~2.5h. Killed cleanly. Likely auth/rate issue, unrelated to the code.
+- Bel applied migration 011 via Supabase SQL Editor. Integration test went 3/3 green. Partial-UNIQUE smoke test (`rejected` + `submitted` coexist for same email; second non-rejected blocked with `23505`) confirmed schema invariant. **All 8 Goal Verification truths met.** Plan flipped to VERIFIED.
+
+**Items 4/6/7 (Soft Launch Push remainder) discussion:**
+- Bel's comment: "we have a task to rewrite the entire app so I would not concern myself with that just yet." Items 4 (public home flip), 6 (desktop UI polish), and 7 (final wording pass) are potentially throwaway under a planned rewrite. Item 3 is durable (emails + migration carry over). Plan focused on Item 3 only this session.
+- Item 4 sub-decisions captured during discussion (in case the current app ships before the rewrite): browse-first home (matches PRODUCT.md "primary path"), flip after Item 3 ships (now done), waitlist form repurposed as newsletter footer.
+- Plan-vs-mental-model discrepancy noted: Bel originally only had Item 7 in mind. The 7-item Soft Launch Push list grew during the 2026-05-05 audit. Surfaced and acknowledged; proceeded with Item 3 as the next logical step regardless.
+
+**Modified:**
+- `migrations/011_pro_resubmit_cooldown.sql` (new) — schema sync (Section A, idempotent) + resubmit_after + partial UNIQUE + email index (Section B).
+- `lib/email.ts` — `emailBaseUrl()` + `escapeHtml()` helpers, three new exported pro-facing functions, `notifyNewProfessional` updated to use `emailBaseUrl()` (replaces lines 113-115's broken pattern).
+- `lib/email.test.ts` (new) — 13 unit tests including escape regression on `<script>`/`<img onerror>`, multi-line preservation, graceful fail.
+- `app/api/professionals/register/route.ts` — cooldown check after input validation, server-composed 403 with both formatted dates, fire-and-forget `notifyRegistrationReceived`, secondary order by id for deterministic tiebreaker.
+- `app/api/professionals/register/route.test.ts` — cooldown mock chain (`eq.eq.order.order.limit.maybeSingle`), `setupCooldownNoMatch()` helper, orphan mocks removed.
+- `app/api/admin/professionals/[id]/route.ts` — extended `existing` select to `id, status, email, full_name, slug`, reject branch writes `resubmit_after = NOW + 60 days`, both branches fire emails fire-and-forget.
+- `app/api/admin/professionals/[id]/route.test.ts` — 4 new PATCH tests (approve/reject × success/email-rejects), shared mock capturing `lastUpdatePayload`.
+- `app/admin/professionals/[id]/review/page.tsx` — Reject modal copy aligned with PRD Flow 6 parenthetical form, hint about 60-day cooldown below textarea.
+- `__tests__/integration/cooldown-enforcement.test.ts` (new) — TS-002 (within window blocks), TS-003 (after window allows, 2 rows preserved), no-prior-rejection passes through. Cleanup-by-email handles the multi-row case.
+
+**Deviations:**
+- `pilot:spec-review` and `pilot:changes-review` agents not installed in this environment — substituted with `general-purpose` for both, same brief.
+- Codex review wedged silently. Killed after no output for 2.5h. Did not retry — feature-dev second-opinion already provided independent coverage.
+- Did NOT use git-write commands. All 10 changed files (6 modified + 4 new) remain uncommitted at session close, ready for a clean separable commit.
+
+**Blockers:** None remaining. Migration 011 applied + verified end-to-end.
+
+**Tests:** 251/251 unit pass · 3/3 integration pass · partial-UNIQUE smoke pass · tsc clean · build clean.
+
+**Resume here:**
+1. Commit Item 3 as a clean separable PR ("feat: pro approval/rejection emails (Soft Launch Push Item 3)"). 10 files: 6 modified + 4 new (migration, 2 test files, plan).
+2. Bel's call: proceed with Items 4/6/7 on the current app, OR pause the Soft Launch Push and shape the rewrite. If proceeding: Item 4 sub-decisions are already captured (browse-first, waitlist→newsletter); next step is `/spec` on Item 4.
+
+---
 
 ### Session — 2026-05-07 (Soft Launch Push Item 1: Migration apply + verify)
 
@@ -374,63 +416,9 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 4. Run Flow A smoke test (`/profesionales` → profile → contact → cron curl → email → review submit).
 5. Then Flow B (Concierge) + Flow C (Onboarding), then Tasks 4-6.
 
-### Session — 2026-05-01 → 2026-05-03 (Phase 0 push: domain, homepage, cleanup)
-
-**Completed:**
-- Fixed prod 500 — Vercel was missing `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Code now reads the new Supabase publishable-key naming (`f654181`).
-- Resend domain verified (`haravital.app`) and `lib/email.ts` updated: `FROM_EMAIL = 'Hara Match <hola@haravital.app>'`, `ADMIN_EMAIL = 'centrovitalhara@gmail.com'`, `replyTo` header on every send (`226774f`).
-- Pre-launch homepage shipped (`6c548ef`): `/` → "Próximamente" with email capture; existing directory home moved to `/preview`. Migration 007 created `waitlist` table with RLS deny-all + idempotent insert.
-- Test data cleanup: deleted 23 orphan test professionals + 59 pqls via service role. 45 real submitted professionals remain.
-- Admin delete-professional flow (`2ec2e5f`): `DELETE /api/admin/professionals/[id]` handles cascade ordering (pqls → professional with FK cascade). Trash icon + confirmation modal added to `/admin/professionals` rows. Replaces manual SQL flow.
-- Rate limiter changed to fail-open in production (`987b40e`). Removed legacy fail-closed branch from `lib/rate-limit.ts`. Means Upstash flakes log loudly but don't break public endpoints. Documented in Notes → Infrastructure decisions.
-- Upstash free-tier DB was deleted by inactivity, restore stuck "pending" 2+ days. Decided to defer — fail-open keeps the site working. Documented as deferred with reactivation note.
-- Documented infrastructure decisions in Notes (rate limiter rationale, Upstash deletion incident, Resend sender + replyTo pattern) and added "n8n heartbeat workflow" + "reactivate Upstash before launch" to Misc deferred items (`5e1ea13`).
-
-**Deviations:**
-- Misread user intent twice early in this stretch: assumed Vercel had `_PUBLISHABLE_KEY` (didn't — it had no `NEXT_PUBLIC_*` Supabase vars at all), and proposed renaming `SUPABASE_URL` → `NEXT_PUBLIC_SUPABASE_URL` in `supabase-admin.ts` (would break the intentional server-only/client-safe split). Both flagged by user, both fixed.
-- Codex review surfaced 4 bugs in migrations 005/006 before they were applied: missing RLS on 3 tables (subscription_payments, reviews, review_requests), off-by-one in `upgrade_destacado_tier()` extension branch, OLD/NEW professional_id stale-aggregate bug in reviews trigger. All fixed in-place (`448ab3c`) before applying.
-
-**Blockers / open follow-ups:**
-- Upstash reactivation before public launch (deferred; tracked in Misc).
-- Infrastructure heartbeat workflow in n8n (deferred; tracked in Misc).
-- Phase 0 Tasks 3 + 4 + 5 + 6 still pending (smoke tests, visual QA, image upload e2e, rejected profile flow).
-
-**Tests:** 147/147 unit pass · pre-push hook ran on every push · prod verified live (haravital.app/, /preview, /api/waitlist all return success).
-
-**Resume here:** Phase 0 Tasks 0/1/2 complete. Remaining: smoke test the 3 flows, visual QA pass, image upload e2e, decide rejected profile flow. Each is independent.
-
-### Session — 2026-05-01 (Doc alignment + Cron PRD + Migrations 004/005 applied)
-
-**Completed:**
-- Created `PRODUCT.md` at repo root (`a670736`) — canonical product context, vision = "Spanish-speaking wellness trust layer" (Argentina home, expand pan-Spanish). CLAUDE.md "What Is This" rewritten + pointer to PRODUCT.md.
-- Aligned all top-level docs (`eb16d0f`) with post-pivot product: README.md (Browse + Concierge data flows, Supabase Auth instead of Clerk, push-to-main workflow), FINAL_SPEC.md (scoped to DB+API spec), DEVELOPMENT_HISTORY.md + PRODUCTION_READINESS.md (marked as pre-pivot historical snapshots), main.md (PRODUCT.md pointer + Spanish-speaking framing).
-- Wrote `docs/prd/2026-05-01-cron-infrastructure-n8n.md` (`9caae6d`) — six-task PRD routing scheduled jobs through user's self-hosted n8n at `https://n8n.greenbit.info` (Hetzner + Coolify) instead of Vercel crons. Decision matrix vs Pro Vercel/Pro Supabase/DB migration. Existing `expire-destacado` cron's `UPDATE professionals` query doubles as keep-alive heartbeat.
-- **Discovered** the existing crons in `vercel.json` (`expire-destacado`, `send-review-requests`, both committed 2026-04-27) **never fired in prod**. Three failures stacked: Vercel Hobby doesn't fire `vercel.json` crons (route comments warn this), Supabase free-tier paused, migrations 005/006 not applied so the RPCs the crons call don't exist.
-- Migration 004 applied via Supabase SQL Editor (you), verified via apply script (`✓ Migration already applied`) and live REST query: ranking_score values match `0.7 * profile_completeness_score` for all 5 rows.
-- Codex review of migrations 005/006 surfaced 4 issues I missed/flagged. Fixed in-place (`448ab3c`) since migrations not yet deployed:
-  - 005: RLS + `Deny all` on `subscription_payments` (was missing — anon could read/write payment records)
-  - 005: off-by-one in `upgrade_destacado_tier()` extension branch (extension lost 1 day vs cold renewal because it computed `period_end - period_start` exclusive while cold renewal treats `period_end` as inclusive end-of-day). Fix: `+ 1` for inclusive math, with matching update to DestacadoPaymentModal preset arithmetic and parity test fixture 11.
-  - 006: RLS + `Deny all` on `reviews` and `review_requests` (review_requests holds plaintext one-time tokens + reviewer emails — without RLS anon could scrape and consume).
-  - 006: `trigger_recompute_review_aggregates()` now recomputes both OLD and NEW `professional_id` on UPDATE (previously only NEW — admin reassignment would leave old professional with stale aggregates).
-- Migration 005 applied (you), verified end-to-end: `subscription_payments` table empty, `tier_expires_at` column populated NULL across all 5 rows, anon SELECT returns `[]` (RLS active), `upgrade_destacado_tier()` RPC raises P0001 on invalid period as designed.
-- Migration 006 applied (you), verified end-to-end: `reviews` + `review_requests` tables empty, anon SELECT returns `[]` on both (RLS active — no token leak surface), `submit_review()` RPC raises P0001 `invalid_token` on bogus token, `select_pending_review_events()` returns `[]` (no events from 7 days ago — correct).
-- **All three migrations now applied and verified.**
-
-**Deviations:**
-- Sandbox network changed since prior sessions — `*.supabase.co` resolves and is reachable now. The apply scripts can verify migrations via column-existence checks but still cannot push DDL (Supabase doesn't enable the `exec_sql` RPC by default). SQL Editor remains the right tool for applying migrations.
-- Misread one of the user's messages early in the session — assumed Vercel env had `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` based on what they pasted, when they were actually showing me what Supabase calls the var in their dashboard. User flagged the assumption + scope creep in my proposed code rename (was about to rename `SUPABASE_URL` → `NEXT_PUBLIC_SUPABASE_URL` in `lib/supabase-admin.ts` — that's an intentional server-only/client-safe split, not a bug).
-
-**Blockers / open follow-ups:**
-- **Prod still 500ing** with `MIDDLEWARE_INVOCATION_FAILED` on every route. Suspected root cause (unverified — needs user to check Vercel dashboard): code reads `NEXT_PUBLIC_SUPABASE_ANON_KEY`; if Vercel env has `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (new Supabase naming) instead, middleware crashes. Fix path TBD pending verification of actual Vercel env var names. Migrations now applied so the only remaining cause for prod 500 is auth/env wiring.
-- Cron PRD remaining tasks: Task 3 set `CRON_SECRET` in Vercel, Task 4 build 2 n8n workflows at `https://n8n.greenbit.info`, Task 5 remove dead `crons` block from `vercel.json`, Task 6 update plan + Phase 0 PRD pointer.
-- Resend domain verification still pending (Phase 0 Task 2 in the activation PRD).
-- Smoke tests, visual QA, image upload e2e, rejected profile flow decision (Phase 0 Tasks 3-6) still pending.
-
-**Tests:** 135/135 unit pass · pre-push hook ran on every push.
-
-**Resume here:** all three migrations applied + verified. Next priorities (your call): (a) fix prod 500 by verifying/updating env var names, (b) continue cron PRD Task 3 (CRON_SECRET in Vercel + n8n workflows), or (c) Resend domain verification. Each is independent.
-
 ### Archived Sessions
+- **2026-05-01 → 2026-05-03**: Phase 0 push (domain, homepage, cleanup) — Fixed prod 500 (Vercel env var alignment, `f654181`). Resend domain `haravital.app` verified + `lib/email.ts` updated. Pre-launch `/` shipped as Próximamente + waitlist (mig 007, `6c548ef`); post-launch home moved to `/preview`. Test-data cleanup (deleted 23 orphan pros + 59 pqls). Admin delete-professional flow (`2ec2e5f`). Rate limiter fail-open in prod (`987b40e`). Upstash deferred — free-tier DB deleted, restore stuck. Codex review of migs 005/006 caught 4 bugs (missing RLS on 3 tables, off-by-one in upgrade_destacado_tier extension, OLD/NEW professional_id stale-aggregate). 147/147 unit pass.
+- **2026-05-01**: Doc alignment + Cron PRD + Migrations 004/005/006 applied — Created PRODUCT.md (`a670736`), aligned top-level docs (`eb16d0f`), wrote cron infra PRD (`9caae6d`) routing scheduled jobs through self-hosted n8n at https://n8n.greenbit.info. Discovered existing `vercel.json` crons never fired in prod (Vercel Hobby + Supabase paused + migs not applied). Migrations 004/005/006 applied via Supabase SQL Editor + verified end-to-end (RLS active, RPCs functional, triggers correct). 135/135 unit pass.
 - **2026-04-27**: Plan Restructure + Phase 0 PRD — Committed/pushed Reviews Collection System (`cf2fc6d`, 23 files). Rewrote `main.md` Roadmap (`48715d2`): 4 phase gates (Phase 0–3) with definition-of-done, moved polish/perf/a11y/infra items to `Deferred` section with rationale (−173/+91). Wrote `docs/prd/2026-04-27-phase-0-activation.md` (`61b5798`) covering 7 tasks. Mid-session discovered prod 500ing — initial framing of Vercel env-var audit corrected to actual cause (Supabase free-tier auto-pause, one-click resume; `2631b8f`). Saved memory `feedback_simplest_explanation_first.md` anchoring "boring cause first" debugging discipline. 135/135 unit pass.
 - **2026-04-27**: Reviews Collection System (`/spec`, plan `docs/plans/2026-04-27-reviews-collection-system.md`, PRD `docs/prd/2026-04-27-reviews-collection-system.md`) — `migrations/006_reviews_collection.sql` (`reviews` + `review_requests` tables, `recompute_review_aggregates()`, `submit_review()` atomic RPC with `FOR UPDATE`, `select_pending_review_events()` cron helper, trigger using `CASE TG_OP`), `app/api/events/route.ts` direct-contact branch (synthetic `direct-{slug}-{nanoid(10)}` tracking code), `ContactButton` event-firing fix + `ReviewerEmailCapture`, `app/api/contact-email/route.ts`, daily 07:00 UTC review-request cron with Bearer auth + Resend `notifyReviewRequest` template, `app/api/reviews/submit/route.ts` (P0001 → Spanish error map, 5/hr rate limit), `app/r/review/[token]/page.tsx` 3-state form (valid/consumed/expired), `/p/[slug]` rating fields + reviews card, `/admin/reviews` moderation with `is_hidden` toggle, `__tests__/integration/reviews-flow.test.ts` + `__tests__/e2e/reviews.spec.ts` (TS-001 + TS-004 cron auth). Migration 006 written but not applied this session. 134/134 unit pass. Resend domain still pending at session end.
 - **2026-04-27**: Destacado Tier — Admin-Gated MVP (`/spec`, plan `docs/plans/2026-04-24-destacado-tier-mvp.md`, PRD `docs/prd/2026-04-24-destacado-tier-mvp.md`) — `migrations/005_destacado_tier_mvp.sql` (`tier_expires_at` column + `subscription_payments` table + partial index + expiry-aware `recompute_ranking()` trigger + atomic `upgrade_destacado_tier()` RPC with `SELECT ... FOR UPDATE` row lock), `lib/ranking.ts` extended with `isEffectivelyDestacado()` + 11 new unit tests (29 total), `__tests__/integration/ranking-parity.test.ts` +3 fixtures (future/past expiry + retroactive RPC arithmetic), `app/api/admin/subscriptions/route.ts` (POST + GET history) + 15 unit tests, `app/admin/professionals/page.tsx` inline status chip + expand history + DestacadoPaymentModal (7 unit tests), Destacado chip on `/profesionales` + `/p/[slug]`, `app/api/cron/expire-destacado/route.ts` daily cron + 6 unit tests, `app/components/ui/Alert.tsx` `role="alert"`, `__tests__/e2e/destacado.spec.ts` (TS-001..005, cron auth verified green, DB-dependent tests skip until migration applied). Migration 005 written but not applied this session. 92/92 unit pass.
@@ -447,9 +435,11 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 ## Open Questions
 
-- [ ] What happens when a profile is rejected? Keep data? Allow resubmission? Notify the professional?
+- [x] What happens when a profile is rejected? Keep data? Allow resubmission? Notify the professional? → **Resolved 2026-05-07/08:** soft no with 60-day cooldown; verbatim rejection_reason emailed to the pro; row preserved (partial UNIQUE excludes rejected from the live-row uniqueness invariant). See Item 3 above.
 - [x] What data should each card in the admin professionals list show? → Name, up to 3 specialty chips (colored), location, status badge (implemented in specialty color system)
 - [ ] Should existing 45 professionals get placeholder images, or leave as initial-letter avatars until they re-register?
+- [ ] **Rewrite scope, timeline, and trigger.** Bel mentioned 2026-05-08 that an app rewrite is on the table. Item 3 carries over (durable: emails + DB column + partial UNIQUE). Items 4 (public home flip), 6 (desktop UI polish), 7 (final wording pass) are potentially throwaway under a rewrite. Decision needed: continue Soft Launch Push on the current app, OR pause it and shape the rewrite. If the rewrite ships first, what's the migration path for existing pros + waitlist + reviews + tracking codes? This is a Phase-0-class strategic call.
+- [ ] **Item 4 detail decisions captured 2026-05-08 (held in case Soft Launch Push continues):** browse-first home (matches PRODUCT.md "primary path"), flip after Item 3 ships (now done — gate cleared), waitlist form repurposed as newsletter footer with a one-time "Hara abrió sus puertas" email to existing signups. Hero copy still TBD by Bel; *"Te conectamos con tu terapeuta ideal"* on `/preview` is pre-pivot wording and must change.
 
 ## Notes
 

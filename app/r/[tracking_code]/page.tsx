@@ -5,6 +5,7 @@
 
 import { useState } from 'react'
 import { useParams } from 'next/navigation'
+import Link from 'next/link'
 import Image from 'next/image'
 import { ContactButton } from '@/app/components/ContactButton'
 import { Chip } from '@/app/components/ui/Chip'
@@ -66,7 +67,21 @@ export default function RecommendationsPage() {
             {error === 'expired' ? 'Este link venció' : 'No pudimos cargar'}
           </h2>
           <p className="text-muted leading-relaxed mb-6">
-            {error === 'expired' ? 'Pedí uno nuevo por email.' : 'Probá de nuevo.'}
+            {error === 'expired' ? (
+              <>
+                ¿Perdiste tu link?{' '}
+                <Link href="/ayuda" className="text-brand hover:underline">
+                  Visitá /ayuda
+                </Link>
+              </>
+            ) : (
+              <>
+                Probá de nuevo.{' '}
+                <Link href="/ayuda" className="text-brand hover:underline">
+                  ¿Necesitás ayuda?
+                </Link>
+              </>
+            )}
           </p>
           <button
             onClick={() => window.location.reload()}

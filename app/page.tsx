@@ -2,6 +2,7 @@
 // Replaces the post-launch home (which now lives at /preview) until the
 // directory and concierge flows are open to the public.
 
+import Link from 'next/link'
 import { PageBackground } from './components/ui/PageBackground'
 import { WaitlistForm }   from './components/WaitlistForm'
 
@@ -34,9 +35,14 @@ export default function HomePage() {
           <WaitlistForm />
         </div>
 
-        <p className="text-xs text-muted text-center mt-auto pt-6">
-          Tu privacidad primero: nadie recibe tus datos hasta que vos escribas.
-        </p>
+        <div className="mt-auto pt-6 text-center space-y-2">
+          <p className="text-xs text-muted">
+            Tu privacidad primero: nadie recibe tus datos hasta que vos escribas.
+          </p>
+          <Link href="/ayuda" className="text-xs text-muted hover:text-foreground transition-colors">
+            ¿Necesitás ayuda?
+          </Link>
+        </div>
 
       </div>
     </div>

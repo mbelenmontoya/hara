@@ -1,27 +1,9 @@
-// Root-level Error Boundary
-// Catches unhandled errors in the entire application
+// Global 404 page — shown when no route matches.
+// Mirrors app/error.tsx shell exactly; no reset button (nothing to retry on 404).
 
-'use client'
-
-import { useEffect } from 'react'
 import Link from 'next/link'
-import { logError } from '@/lib/monitoring'
 
-export default function Error({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string }
-  reset: () => void
-}) {
-  useEffect(() => {
-    // Log error to monitoring service
-    logError(error, {
-      location: 'root-error-boundary',
-      digest: error.digest,
-    })
-  }, [error])
-
+export default function NotFound() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="bg-surface backdrop-blur-xl rounded-3xl shadow-elevated p-8 max-w-md w-full text-center">
@@ -42,32 +24,19 @@ export default function Error({
         </div>
 
         <h2 className="text-2xl font-semibold text-foreground mb-3">
-          Algo salió mal
+          Página no encontrada
         </h2>
 
         <p className="text-muted leading-relaxed mb-6">
-          {error.message || 'Ocurrió un error inesperado. Por favor, intentá de nuevo.'}
+          No encontramos esta página. Puede que el link esté roto o que la dirección haya cambiado.
         </p>
 
-        {error.digest && (
-          <p className="text-xs text-muted/60 mb-6 font-mono">
-            Error ID: {error.digest}
-          </p>
-        )}
-
-        <button
-          onClick={() => reset()}
-          className="w-full bg-brand text-white px-6 py-4 rounded-full shadow-elevated hover:shadow-strong active:scale-[0.98] transition-all font-semibold mb-3"
-        >
-          Intentar de nuevo
-        </button>
-
-        <button
-          onClick={() => (window.location.href = '/')}
-          className="w-full text-muted hover:text-foreground transition-colors text-sm py-2"
+        <Link
+          href="/"
+          className="block w-full bg-brand text-white px-6 py-4 rounded-full shadow-elevated hover:shadow-strong active:scale-[0.98] transition-all font-semibold mb-3"
         >
           Volver al inicio
-        </button>
+        </Link>
         <Link href="/ayuda" className="block text-muted hover:text-foreground transition-colors text-sm py-2">
           ¿Necesitás ayuda?
         </Link>

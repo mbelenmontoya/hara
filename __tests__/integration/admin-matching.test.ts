@@ -6,7 +6,7 @@
 // 3. tracking_code present in all responses
 // 4. pql_adjustments append-only (no pqls mutations)
 
-import { describe, it, expect, beforeAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 import { eventually } from '../helpers/eventually'
 import { TRACKING_CODE_REGEX } from '@/lib/tracking-code'
@@ -57,6 +57,35 @@ describe('Admin Matching & Billing (Week 3)', () => {
     }).select().single()
 
     testLeadId = lead!.id
+  })
+
+  afterAll(async () => {
+    const proIds = [testPro1Id, testPro2Id, testPro3Id].filter(Boolean)
+    if (proIds.length === 0) return
+
+    // Cascade: events → pqls → match_recommendations → matches → reviews → professionals
+    const { data: recs } = await supabaseAdmin
+      .from('match_recommendations')
+      .select('match_id')
+      .in('professional_id', proIds)
+    const matchIds = [...new Set((recs || []).map(r => r.match_id))]
+
+    if (matchIds.length > 0) {
+      await supabaseAdmin.from('events').delete().in('match_id', matchIds)
+      await supabaseAdmin.from('pqls').delete().in('match_id', matchIds)
+      await supabaseAdmin.from('match_recommendations').delete().in('match_id', matchIds)
+      await supabaseAdmin.from('matches').delete().in('id', matchIds)
+    }
+
+    if (testLeadId) {
+      await supabaseAdmin.from('leads').delete().eq('id', testLeadId)
+    }
+
+    await supabaseAdmin.from('reviews').delete().in('professional_id', proIds)
+    await supabaseAdmin.from('pqls').delete().in('professional_id', proIds)
+    await supabaseAdmin.from('events').delete().in('professional_id', proIds)
+    await supabaseAdmin.from('match_recommendations').delete().in('professional_id', proIds)
+    await supabaseAdmin.from('professionals').delete().in('id', proIds)
   })
 
   // QA Requirement 1: Match with 3 distinct professionals (constraints enforced)

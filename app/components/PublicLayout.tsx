@@ -31,6 +31,9 @@ export function PublicLayout({ children }: PublicLayoutProps) {
           <p className="text-sm text-muted">
             © 2026 Hara Vital · Conectamos con bienestar
           </p>
+          <Link href="/ayuda" className="text-sm text-muted hover:text-foreground transition-colors mt-2 inline-block">
+            Ayuda
+          </Link>
         </div>
       </footer>
     </div>

@@ -2,7 +2,7 @@
 // Purpose: Verify billing-critical event ingestion works correctly
 // Requirements: Seed data from qa.env (run: npm run qa:week1 first)
 
-import { describe, it, expect, beforeAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 import { createAttributionToken } from '@/lib/attribution-tokens'
 import { eventually } from '../helpers/eventually'
@@ -59,6 +59,25 @@ describe('/api/events Integration Tests', () => {
       tracking_code: testTrackingCode,
       rank: 1,
     })
+  })
+
+  afterAll(async () => {
+    if (testMatchId) {
+      await supabaseAdmin.from('events').delete().eq('match_id', testMatchId)
+      await supabaseAdmin.from('pqls').delete().eq('match_id', testMatchId)
+      await supabaseAdmin.from('match_recommendations').delete().eq('match_id', testMatchId)
+      await supabaseAdmin.from('matches').delete().eq('id', testMatchId)
+    }
+    if (testLeadId) {
+      await supabaseAdmin.from('leads').delete().eq('id', testLeadId)
+    }
+    if (testProId) {
+      await supabaseAdmin.from('reviews').delete().eq('professional_id', testProId)
+      await supabaseAdmin.from('pqls').delete().eq('professional_id', testProId)
+      await supabaseAdmin.from('events').delete().eq('professional_id', testProId)
+      await supabaseAdmin.from('match_recommendations').delete().eq('professional_id', testProId)
+      await supabaseAdmin.from('professionals').delete().eq('id', testProId)
+    }
   })
 
   // Helper: Generate unique fingerprint to avoid rate limiting

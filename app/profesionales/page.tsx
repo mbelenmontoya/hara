@@ -104,6 +104,13 @@ export default async function DirectoryPage() {
           </div>
         )}
 
+        {/* Footer */}
+        <footer className="text-center pt-4">
+          <Link href="/ayuda" className="text-sm text-muted hover:text-foreground transition-colors">
+            ¿Necesitás ayuda?
+          </Link>
+        </footer>
+
       </div>
     </div>
   )

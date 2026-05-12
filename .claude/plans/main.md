@@ -77,15 +77,27 @@ The product ships in 4 phase gates. Each phase has a clear definition of done. *
 
 **Definition of done:** All three workflows complete end-to-end without manual admin glue, in language that matches the holistic-wellness positioning, with a desktop UI that doesn't look like an afterthought.
 
-#### The 7 items — to PRD and ship one at a time
+#### The items — to PRD and ship one at a time
 
 1. ~~**Holistic modality catalog**~~ ✅ **Built 2026-05-05, migrations 009 + 010 applied 2026-05-07.** 184/184 unit tests + 23/23 practices integration tests + public-side registration E2E all green. Final naming is `practices` / "Práctica" (NOT `modalities` — collision with existing `professionals.modality` field for online/presencial format). DB-driven catalog of 15 holistic practices, shared `<PracticePicker>` component, server-side validation, admin re-classification banner for the 45 existing pros. **Only remaining gate before VERIFIED:** admin-side eyeball of the re-classification banner at `/admin/professionals/50434fcc-1c5b-4e14-ba42-f33ba0de6cf6/review` (Bel's manual check).
 2. **Concierge link delivery — `/gracias` copy alignment** *(reframed 2026-05-07)* — Manual admin delivery (WhatsApp link or Instagram DM reply) is the intended flow, not a bug. The real gap was `/gracias` over-promising the channel. ✅ **Done 2026-05-07:** `/gracias` copy is now channel-agnostic ("Te escribimos cuando tengamos tus 3 opciones"). **Folded sub-items, deferred (await explicit go):** (a) user confirmation email after `/solicitar` submission, (b) `additional_context` dead-field cleanup in `app/actions/create-lead.ts:23`. **Out of scope:** auto-delivery automation, Instagram DM auto-reply (parked as a future n8n workflow, outside the codebase).
 3. ~~**Professional approval/rejection emails**~~ ✅ **Built + VERIFIED 2026-05-08.** PRD `docs/prd/2026-05-07-pro-approval-rejection-emails.md` → plan `docs/plans/2026-05-08-pro-approval-rejection-emails.md` → 6 tasks all done. Three new pro-facing email functions in `lib/email.ts` (submission confirmation, approval, rejection-with-verbatim-reason), `emailBaseUrl()` + `escapeHtml()` helpers, registration cooldown check with server-composed Spanish error, admin PATCH email firing + `resubmit_after` write, Reject modal Flow-6 copy. Migration 011 applied (idempotent: schema-syncs `rejected` status + `rejection_reason` that lived only in `scripts/migrate-review-flow.mjs`, plus `resubmit_after TIMESTAMPTZ`, partial UNIQUE on email excluding rejected, regular email index). 251/251 unit tests, 3/3 integration tests, partial-UNIQUE smoke test green. Bonus fix: corrected operator-precedence bug at the previous `lib/email.ts:113-115` baseUrl pattern.
-4. **Public home flip** — Decide what `/` should be once we're "open": dual-CTA home (current `/preview`) or directory-first home. Today `/` is the waitlist *Próximamente* page; `/preview` holds the post-launch home but its hero copy *"Te conectamos con tu terapeuta ideal"* is pre-pivot wording. This item is the moment we actually open the doors. Touches `app/page.tsx`, `app/preview/page.tsx` (probably becomes the new `/`).
+4. ~~**Public home flip**~~ — **Moved 2026-05-12 to the *Final Go-Live Gate* at the end of this plan.** The app is not ready to open yet; the home flip is the actual go-live moment, not a launch-readiness item. Item number kept (do not renumber) so session-log references to "Item 4" stay valid.
 5. **Rejected-profile policy decision** — ✅ **Decided 2026-05-07: Soft no with 60-day cooldown.** Rejected pros can reapply after 60 days. Implementation: `resubmit_after TIMESTAMPTZ` on `professionals` (set on rejection to `NOW() + INTERVAL '60 days'`), registration handler blocks re-registration with the same email until `resubmit_after` passes. Rejection email (item 3) says: warm explanation + `rejection_reason` + *"Podés volver a aplicar a partir del [fecha]"*. **Now unblocks Item 3.**
 6. **Desktop UI polish pass** — Mobile-first design works on phones; desktop "looks fine but that's it." Sweep every public + admin route at desktop widths (>= 1024px), catalog visual breaks, and tighten spacing/alignment/proportions for the 960px container. Bel runs Phase 0 mobile QA in parallel; this item is its desktop counterpart.
 7. **Final wording pass** — Single consolidated copy review across every user-facing surface (homepage, `/profesionales`, `/solicitar`, `/gracias`, `/p/[slug]`, `/profesionales/registro`, all admin emails, all confirmation pages, error states). Done at the end so we audit against final structure, not chase moving copy. The *"¿Querés saber cuando abramos?"* on the current `/` is one example of the kind of line this pass exists to fix.
+8. **`/ayuda` — Public support page** *(added 2026-05-12 from route-inventory audit)* — Lead-facing route for link recovery ("perdí mi link de recomendaciones"), common errors, and basic support contact. Lightweight static page or simple form. Launch-relevant: a user who loses their `/r/[tracking_code]` link today has no recovery path. Surface: new `app/ayuda/page.tsx`, link from footer + error states.
+
+#### Operational admin routes (added 2026-05-12 from route-inventory audit)
+
+Admin tooling gaps surfaced from the requested route list. Not blocking soft launch on day one, but each shortens admin friction once real concierge volume starts:
+
+- `/admin/matches` *(listing)* — Today, matches are only navigable from `/admin/leads/[id]`. A flat list of all matches/tokens with state filters helps admin track in-flight concierge deliveries at a glance. **Priority:** Phase 1 (real usage will reveal whether the lead-by-lead nav is enough).
+- `/admin/matches/[id]` *(detail)* — Match timeline view: tracking link, current state, expiration, "message sent" status, event history (contact_click, etc.). **Priority:** Phase 1, pair with `/admin/matches` listing.
+- `/admin/events` *(raw audit)* — Read-only audit log of `events` table rows (contact_click, etc.) with filters. Operational/forensic value, not user-facing. **Priority:** Phase 1 nice-to-have; defer if Sentry + DB queries suffice.
+- `/admin/settings` *(operational config)* — Admin-editable settings: official IG handle, default expiration windows, WhatsApp/email message templates. Today these live in code constants. **Priority:** Phase 1 only if real usage shows admin editing constants weekly; otherwise defer.
+
+**Already roadmapped (no new entry):** `/admin/professionals/[id]` detail + `/admin/analytics` + `/pro/*` portal — all explicitly Phase 3 in this plan.
 
 #### Workflow gap analysis (audit, 2026-05-05)
 
@@ -193,6 +205,32 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 1. **`/pro/*` portal** — auth-bind `professionals.user_id` to Supabase Auth, build `/pro` home, `/pro/leads`, `/pro/profile` edit, tier visibility. (PRD: `docs/prd/` — to be written.)
 2. **Admin detail pages** that depend on the portal: `/admin/professionals/[id]` (reviews, rating, tier history), `/admin/analytics` (funnel + MRR + active Destacado).
 
+### Final Go-Live Gate — Public home flip *(end of plan; do not start until earlier work is done)*
+
+**Status:** Deferred to end of plan as of 2026-05-12. The app is not ready to open. This gate exists so the home-flip decisions captured during Soft Launch Push discussions don't get lost — but the flip itself happens *after* everything above is done.
+
+**Was Soft Launch Push Item 4.** Moved here because flipping `/` from *Próximamente* to the open-doors home is the actual go-live moment, not launch-readiness work. Item 4's number is preserved earlier in this plan (struck through with a redirect) so session-log references stay valid.
+
+**Definition of done:** `/` serves the open-doors home; `/preview` is either decommissioned or kept as staging mirror; waitlist users are notified or transitioned cleanly to a newsletter list.
+
+**What this gate involves:**
+- Decide what `/` becomes: dual-CTA home (current `/preview` layout) **or** directory-first home (matches PRODUCT.md "Browse is the primary path").
+- Swap `app/page.tsx` (currently *Próximamente* + `WaitlistForm`) with the chosen layout. `/preview` likely becomes the new `/` (or is deleted).
+- Pre-pivot copy in `/preview` hero (*"Te conectamos con tu terapeuta ideal"*) must be fixed before flip — Item 7 (final wording pass) is a prerequisite, not parallel.
+- Decide fate of existing `waitlist` table rows: auto-send "we're open" email, or quiet handover to a newsletter list. (`WaitlistForm` may be repurposed as newsletter footer per sub-decisions captured in the 2026-05-08 session log.)
+
+**Prerequisite checklist before opening this gate:**
+- [ ] Soft Launch Push items 1, 2, 3, 5, 6, 7, 8 all complete
+- [ ] Phase 1 success criteria met (10 pros onboarded, 5 concierge requests handled end-to-end, basic monitoring catches errors before users report them)
+- [ ] Item 7 (final wording pass) completed — `/preview` hero copy fixed before flip
+- [ ] Bel decides browse-first vs. dual-CTA (sub-decisions captured 2026-05-08, revisit before flip)
+- [ ] Waitlist email handover plan agreed (auto-announcement vs. quiet drop-in)
+
+**Sub-decisions captured during 2026-05-08 discussion** *(reference only; revisit when the gate actually opens):*
+- Browse-first home (matches PRODUCT.md "primary path")
+- Waitlist form repurposed as newsletter footer
+- Flip happens after Item 3 ships *(no longer the trigger — full prerequisite checklist above supersedes)*
+
 ## Session Log
 
 ### Session — 2026-05-08 (Soft Launch Push Item 3: Pro approval/rejection emails — VERIFIED)
@@ -207,7 +245,8 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 - Bel applied migration 011 via Supabase SQL Editor. Integration test went 3/3 green. Partial-UNIQUE smoke test (`rejected` + `submitted` coexist for same email; second non-rejected blocked with `23505`) confirmed schema invariant. **All 8 Goal Verification truths met.** Plan flipped to VERIFIED.
 
 **Items 4/6/7 (Soft Launch Push remainder) discussion:**
-- Bel's comment: "we have a task to rewrite the entire app so I would not concern myself with that just yet." Items 4 (public home flip), 6 (desktop UI polish), and 7 (final wording pass) are potentially throwaway under a planned rewrite. Item 3 is durable (emails + migration carry over). Plan focused on Item 3 only this session.
+- Bel's comment: "we have a task to rewrite the entire app" — **clarified 2026-05-12 as a content rewrite (which is Item 7 itself), NOT an app rewrite.**
+- **Further clarified 2026-05-12: Item 4 (public home flip) moved out of Soft Launch Push to the *Final Go-Live Gate* at the end of this plan** — the app is not ready to open. Items 6 (desktop UI polish) and 7 (final wording pass) remain in the Soft Launch Push as launch-readiness work. Item 3 is durable (emails + migration carry over). Plan focused on Item 3 only this session.
 - Item 4 sub-decisions captured during discussion (in case the current app ships before the rewrite): browse-first home (matches PRODUCT.md "primary path"), flip after Item 3 ships (now done), waitlist form repurposed as newsletter footer.
 - Plan-vs-mental-model discrepancy noted: Bel originally only had Item 7 in mind. The 7-item Soft Launch Push list grew during the 2026-05-05 audit. Surfaced and acknowledged; proceeded with Item 3 as the next logical step regardless.
 

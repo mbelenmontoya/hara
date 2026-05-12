@@ -1,6 +1,6 @@
 'use server'
 
-// Hara Match - Lead Creation Server Action
+// Hara Vital - Lead Creation Server Action
 // Purpose: Create lead using service role (RLS-safe)
 // Note: leads table RLS denies public INSERT, must use service role
 

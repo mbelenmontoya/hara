@@ -1,4 +1,4 @@
--- Hara Match - Production Hardening (Week 3 Final)
+-- Hara Vital - Production Hardening (Week 3 Final)
 -- Purpose: Make match creation fully atomic, add constraints, enforce NOT NULL
 
 -- Add UNIQUE constraint on (match_id, rank)

@@ -49,7 +49,7 @@ async function tryExecSql(query) {
 }
 
 async function run() {
-  console.log('Hara Match — Applying migration 006_reviews_collection.sql')
+  console.log('Hara Vital — Applying migration 006_reviews_collection.sql')
   console.log()
 
   if (await verifyTables()) {

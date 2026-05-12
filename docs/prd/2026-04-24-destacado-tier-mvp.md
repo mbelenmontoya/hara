@@ -8,7 +8,7 @@ Research: Standard
 
 ## Problem Statement
 
-Hara Match's 2026-04-01 pivot made subscription tiers the core monetization story. The Directory + Ranking Foundation PRD (shipped 2026-04-24) added the `subscription_tier` column to `professionals` (`'basico'` | `'destacado'`) and wired a +10 ranking boost for paid tier into `recompute_ranking()`. Today nothing writes to that column. No professional is `'destacado'`. The paid tier has no data, no visible signal to users, and no path to revenue.
+Hara Vital's 2026-04-01 pivot made subscription tiers the core monetization story. The Directory + Ranking Foundation PRD (shipped 2026-04-24) added the `subscription_tier` column to `professionals` (`'basico'` | `'destacado'`) and wired a +10 ranking boost for paid tier into `recompute_ranking()`. Today nothing writes to that column. No professional is `'destacado'`. The paid tier has no data, no visible signal to users, and no path to revenue.
 
 Full payment-provider integration (MercadoPago subscriptions + webhooks + dunning + self-serve checkout) is the right long-term answer, but it's a multi-week investment for a solo dev building a product that hasn't yet proven professionals will pay. The highest-leverage move is to ship an **admin-gated MVP**: admin records a payment + extends a time-boxed Destacado boost via the existing admin UI. Payment itself happens out-of-band (MP link, transfer, WhatsApp handshake) and the admin enters the AFIP invoice number after issuing it via AFIP's portal. This starts generating revenue in days, validates demand, and builds the data model self-serve will later plug into without schema changes.
 

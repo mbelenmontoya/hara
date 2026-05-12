@@ -1,4 +1,4 @@
-// Hara Match - Validation Utilities
+// Hara Vital - Validation Utilities
 // Purpose: Validate client inputs for billing-critical events
 // Security: Never trust client data, validate all formats
 

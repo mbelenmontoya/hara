@@ -1,4 +1,4 @@
-// Spanish translations for Hara Match
+// Spanish translations for Hara Vital
 // Central source of truth for all UI strings
 
 export const ES_TRANSLATIONS = {

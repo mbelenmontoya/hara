@@ -1,4 +1,4 @@
--- Hara Match - Atomic Match Creation Function
+-- Hara Vital - Atomic Match Creation Function
 -- Purpose: Create match + 3 recommendations in single transaction
 -- Security: SECURITY DEFINER with safe search_path, service_role only
 

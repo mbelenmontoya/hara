@@ -8,7 +8,7 @@ Research: None (auto mode — defaults baked from prior gap analysis)
 
 ## Problem Statement
 
-Hara Match's ranking formula already reserves 20% weight for `rating_average` (combined with `rating_count`) — but no code path writes to those columns. Every professional sits at `rating_count = 0` forever, which means the directory's effective ranking is **only** profile completeness + paid Destacado tier. That defeats the trust story the brand is built on ("reputation comes from real interactions, not anonymous reviews") and makes the directory feel static — strong professionals can't differentiate themselves once their profile is complete.
+Hara Vital's ranking formula already reserves 20% weight for `rating_average` (combined with `rating_count`) — but no code path writes to those columns. Every professional sits at `rating_count = 0` forever, which means the directory's effective ranking is **only** profile completeness + paid Destacado tier. That defeats the trust story the brand is built on ("reputation comes from real interactions, not anonymous reviews") and makes the directory feel static — strong professionals can't differentiate themselves once their profile is complete.
 
 This PRD ships the missing trust loop: after a real user contacts a professional via WhatsApp, the system sends a single-use review link. The user submits a star rating + optional text. A DB trigger updates `professionals.rating_average` and `rating_count`, which (via the existing `recompute_ranking()` chain) updates `ranking_score`. Recent reviews appear on the public profile.
 

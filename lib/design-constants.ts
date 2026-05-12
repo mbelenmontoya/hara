@@ -1,4 +1,4 @@
-// Hara Match — Shared Design Constants
+// Hara Vital — Shared Design Constants
 // Animation timing, easing curves, card layout, and shared data maps
 // Used by: recommendations page, BottomSheet, and future components
 

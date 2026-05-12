@@ -1,6 +1,6 @@
 ---
 name: tooling-registry
-description: Map Hara Match's Codex commands, including start-session/end-session, audits, bug hunts, feature starts, PR prep, and test scaffolding, so they trigger automatically from chat requests.
+description: Map Hara Vital's Codex commands, including start-session/end-session, audits, bug hunts, feature starts, PR prep, and test scaffolding, so they trigger automatically from chat requests.
 ---
 
 # Hara Codex Tooling Registry

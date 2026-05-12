@@ -1,4 +1,4 @@
-// Hara Match — Profile Score Calculator
+// Hara Vital — Profile Score Calculator
 // Scores a professional profile based on submission completeness.
 // Pure function — no DB dependency, no side effects.
 //

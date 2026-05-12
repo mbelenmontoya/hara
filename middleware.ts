@@ -1,4 +1,4 @@
-// Hara Match - Route Protection Middleware
+// Hara Vital - Route Protection Middleware
 // Purpose: Gate /admin/* routes with Supabase Auth
 // Public routes (/r/, /p/, /solicitar, etc.) are not affected
 

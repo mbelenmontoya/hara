@@ -106,7 +106,7 @@ function LoginForm() {
           </GlassCard>
 
           <p className="text-xs text-muted text-center mt-6">
-            Hara Match · Panel de administración
+            Hara Vital · Panel de administración
           </p>
 
         </div>

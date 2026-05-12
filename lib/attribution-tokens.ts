@@ -1,4 +1,4 @@
-// Hara Match - Attribution Token Library
+// Hara Vital - Attribution Token Library
 // Purpose: Create and verify signed JWT tokens for PQL attribution
 // Security: HS256 signature with 30-day expiration
 

@@ -81,7 +81,7 @@ Type: Feature
   - **Google Places in E2E:** Registration form Step 0 requires location from PlacesAutocomplete (depends on Google Maps API). Strategy: fill city field directly via `page.fill()` and set country via `page.evaluate()` to bypass autocomplete. If that doesn't trigger the form's state update, test will verify only up to the location field and document the limitation.
   - **`npm test` script:** After workspace migration, bare `npm test` runs both projects (starts dev server for integration). Update to `vitest run --project unit` for fast default, or document the behavior.
 
-- **Domain context:** Hara Match is a wellness professional marketplace. The registration form at `/profesionales/registro` is a 4-step form. The specialty system has 12 curated specialties with dedicated colors and support for custom specialties. Admin pages are behind Supabase Auth.
+- **Domain context:** Hara Vital is a wellness professional marketplace. The registration form at `/profesionales/registro` is a 4-step form. The specialty system has 12 curated specialties with dedicated colors and support for custom specialties. Admin pages are behind Supabase Auth.
 
 ## Runtime Environment
 

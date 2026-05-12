@@ -1,4 +1,4 @@
--- Hara Match - Initial Schema Migration
+-- Hara Vital - Initial Schema Migration
 -- Generated from: FINAL_SPEC.md
 -- Purpose: Create all tables, indexes, RLS policies, triggers, and operational functions
 

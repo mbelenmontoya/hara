@@ -1,4 +1,4 @@
-// Hara Match - Admin Authentication Guard
+// Hara Vital - Admin Authentication Guard
 // Purpose: Shared auth check for all /api/admin/* routes
 // Production: Fail-closed (503) until Clerk configured
 // Development: Placeholder UUID allowed

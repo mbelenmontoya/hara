@@ -1,4 +1,4 @@
--- Hara Match — Destacado Tier MVP
+-- Hara Vital — Destacado Tier MVP
 -- Purpose: Add tier_expires_at column, subscription_payments table, and update
 --          recompute_ranking() trigger to respect tier expiry.
 --          Adds upgrade_destacado_tier() RPC for atomic payment recording + tier update.

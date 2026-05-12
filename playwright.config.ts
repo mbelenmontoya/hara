@@ -1,4 +1,4 @@
-// Hara Match - Playwright E2E Configuration
+// Hara Vital - Playwright E2E Configuration
 // Projects: auth-setup, public, admin, visual
 //
 // Scripts:

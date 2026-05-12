@@ -1,4 +1,4 @@
-// Hara Match — Admin Match Creation
+// Hara Vital — Admin Match Creation
 // Purpose: Select 3 professionals and create a match with ranks + reasons
 // Security: Admin-only via middleware
 

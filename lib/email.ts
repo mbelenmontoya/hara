@@ -1,11 +1,11 @@
-// Hara Match — Email utility
+// Hara Vital — Email utility
 // Uses Resend for transactional emails
 // Fails gracefully — email failures never block the main operation
 
 import { Resend } from 'resend'
 
 const ADMIN_EMAIL = 'centrovitalhara@gmail.com'
-const FROM_EMAIL = 'Hara Match <hola@haravital.app>'
+const FROM_EMAIL = 'Hara Vital <hola@haravital.app>'
 const REPLY_TO   = 'centrovitalhara@gmail.com'
 
 let resend: Resend | null = null
@@ -198,7 +198,7 @@ export async function notifyReviewRequest({
           ¿Cómo te fue con ${professionalName}?
         </h2>
         <p style="font-size: 15px; color: #6B6374; margin-bottom: 24px; line-height: 1.6;">
-          Hace una semana contactaste a ${professionalName} a través de Hara Match.
+          Hace una semana contactaste a ${professionalName} a través de Hara Vital.
           Si tuviste una sesión, nos ayudaría mucho conocer tu experiencia.
         </p>
         <a href="${link}"

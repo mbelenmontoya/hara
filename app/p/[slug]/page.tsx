@@ -1,4 +1,4 @@
-// Hara Match - Professional Profile Page
+// Hara Vital - Professional Profile Page
 // Purpose: Public profile view for professionals
 // Design: 5 glass cards grouping info by user questions
 // force-dynamic: calls getAllPractices() at render time; must not be statically prerendered.

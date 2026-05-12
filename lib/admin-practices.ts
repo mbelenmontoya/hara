@@ -1,4 +1,4 @@
-// Hara Match — Admin Practices Catalog View
+// Hara Vital — Admin Practices Catalog View
 // Server-only helper that joins the `practices` lookup with usage counts
 // from `professionals.practices[]`. Used by the /admin/practices list page
 // and GET /api/admin/practices.

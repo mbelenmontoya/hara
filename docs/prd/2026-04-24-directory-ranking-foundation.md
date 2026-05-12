@@ -8,7 +8,7 @@ Research: Quick
 
 ## Problem Statement
 
-Hara Match pivoted its business model on 2026-04-01 from "PQL/concierge only" to "Directory + Concierge with subscription tiers and review-based ranking." The concierge infrastructure (tracking codes, attribution tokens, matches, events, PQLs) is complete. The directory side of the new model is not built: there is no `/profesionales` page, no ranking logic, and no `subscription_tier` / `rating_average` / `ranking_score` data anywhere in the schema.
+Hara Vital pivoted its business model on 2026-04-01 from "PQL/concierge only" to "Directory + Concierge with subscription tiers and review-based ranking." The concierge infrastructure (tracking codes, attribution tokens, matches, events, PQLs) is complete. The directory side of the new model is not built: there is no `/profesionales` page, no ranking logic, and no `subscription_tier` / `rating_average` / `ranking_score` data anywhere in the schema.
 
 Without a directory, the app has no organic discovery path. Users can only reach professionals via admin-sent concierge links, which means no self-serve acquisition, no subscription revenue story, and no surface for the future review system to live on. The plan's recent work has polished the concierge-era infrastructure (home dual CTA, specialty colors, admin list improvements, legal page) while the load-bearing directory + ranking + reviews + payments system remains unbuilt.
 

@@ -1,4 +1,4 @@
-// Hara Match — Supabase Storage helper
+// Hara Vital — Supabase Storage helper
 // Handles profile image uploads to the 'profile-images' bucket.
 // Uses the service role client so uploads work server-side.
 

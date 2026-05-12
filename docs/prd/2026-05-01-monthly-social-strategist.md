@@ -8,7 +8,7 @@ Research: Standard
 
 ## Problem Statement
 
-Hara Match is a pre-launch wellness marketplace for Spanish-speaking markets, building credibility and curiosity on Instagram before launch. Manual content planning isn't sustainable — but bad strategy upstream poisons every downstream workflow (caption generation, image generation, publishing). The strategist agent must be solid, voice-consistent, and narratively coherent before any content production can be automated.
+Hara Vital is a pre-launch wellness marketplace for Spanish-speaking markets, building credibility and curiosity on Instagram before launch. Manual content planning isn't sustainable — but bad strategy upstream poisons every downstream workflow (caption generation, image generation, publishing). The strategist agent must be solid, voice-consistent, and narratively coherent before any content production can be automated.
 
 This workflow generates the strategy layer only: a monthly content plan with ~20 post slots, each carrying enough strategic context for a downstream constructor workflow to execute. It does not write captions, generate media, or publish — those are separate workflows that consume this one's output.
 

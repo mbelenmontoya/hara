@@ -1,4 +1,4 @@
-# Hara Match — Completed Work
+# Hara Vital — Completed Work
 
 **Last Updated:** 2026-03-11
 

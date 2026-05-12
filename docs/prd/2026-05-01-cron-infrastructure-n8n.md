@@ -7,7 +7,7 @@ Status: In Progress
 
 ## Problem Statement
 
-Hara Match has two scheduled jobs committed to the codebase that have **never run in production**:
+Hara Vital has two scheduled jobs committed to the codebase that have **never run in production**:
 
 - `app/api/cron/expire-destacado/route.ts` — daily 06:00 UTC, expires lapsed Destacado tier subscriptions
 - `app/api/cron/send-review-requests/route.ts` — daily 07:00 UTC, sends review-request emails for contacts from 7 days ago
@@ -56,7 +56,7 @@ The DB-migration option is not the right answer for this problem. Hara uses Supa
 **Why:** Every subsequent task depends on the DB being reachable. Migrations cannot be applied to a paused project; the cron endpoints will 500 against a paused DB; n8n cannot validate its workflows without a working DB.
 
 **How:**
-1. Open Supabase dashboard → select the Hara Match project
+1. Open Supabase dashboard → select the Hara Vital project
 2. Click **Resume** (free-tier projects auto-pause; this is a single-click recovery)
 3. Wait ~30–60 seconds for the project status to flip to `Active`
 4. Confirm `curl -I https://hara-weld.vercel.app` returns `200` (middleware no longer crashes)
@@ -100,7 +100,7 @@ The apply scripts at `scripts/apply-*-migration.mjs` will fall back to printing 
    ```
    node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
    ```
-2. Vercel dashboard → Hara Match project → Settings → Environment Variables
+2. Vercel dashboard → Hara Vital project → Settings → Environment Variables
 3. Add `CRON_SECRET` = `<generated value>` with scope **Production** (and optionally Preview)
 4. Trigger a redeploy so the env var is picked up: push a trivial commit, or use the Vercel UI's "Redeploy" button on the latest production deployment
 5. Save the value in 1Password as `Hara — CRON_SECRET` (n8n needs it in Task 4)

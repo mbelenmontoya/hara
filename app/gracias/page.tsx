@@ -1,4 +1,4 @@
-// Hara Match — Post-solicitud confirmation
+// Hara Vital — Post-solicitud confirmation
 // Shown after successful intake form submission
 
 import { PageBackground } from '@/app/components/ui/PageBackground'

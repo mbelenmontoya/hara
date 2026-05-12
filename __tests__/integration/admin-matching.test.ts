@@ -1,4 +1,4 @@
-// Hara Match - Week 3 Integration Tests
+// Hara Vital - Week 3 Integration Tests
 // Purpose: Verify admin matching + billing workflows
 // QA Requirements:
 // 1. Match creation with 3 distinct professionals (constraints enforced)

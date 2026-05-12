@@ -1,4 +1,4 @@
-// Hara Match — Admin PQL Ledger
+// Hara Vital — Admin PQL Ledger
 // Purpose: View PQL ledger entries with search, month filter, and adjustment modal
 // Security: Admin-only via middleware
 

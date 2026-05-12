@@ -7,7 +7,7 @@ Status: In Progress
 
 ## Problem Statement
 
-The Hara Match codebase contains a complete MVP: a directory ranked by reputation, a concierge intake flow with admin matching, professional registration with admin approval, a reviews collection loop, and an admin-gated Destacado tier. **None of it actually works in production yet.**
+The Hara Vital codebase contains a complete MVP: a directory ranked by reputation, a concierge intake flow with admin matching, professional registration with admin approval, a reviews collection loop, and an admin-gated Destacado tier. **None of it actually works in production yet.**
 
 Three migrations (`004_ranking_foundation`, `005_destacado_tier_mvp`, `006_reviews_collection`) are committed in the repository but not applied to the live Supabase database. The Resend email sender is still on the unverified `onboarding@resend.dev` domain, which only delivers to the account owner. Several flows (image upload, the rejected-profile path) have been coded but never tested end-to-end against a real user.
 
@@ -84,7 +84,7 @@ The reviews loop is structurally broken until this is fixed.
 **How:**
 
 1. In Resend dashboard, add the production sending domain (e.g., `mail.hara.app` or whatever the registered domain is). Add the DNS records (DKIM, SPF, MX) to the domain registrar. Wait for verification.
-2. Update `lib/email.ts`: change `FROM_EMAIL` from `onboarding@resend.dev` to a verified address (e.g., `Hara Match <hola@mail.hara.app>`).
+2. Update `lib/email.ts`: change `FROM_EMAIL` from `onboarding@resend.dev` to a verified address (e.g., `Hara Vital <hola@mail.hara.app>`).
 3. Add a Vercel env var if needed (`RESEND_FROM_EMAIL`) so the address can change without a deploy.
 4. Test by triggering a real `notifyNewLead`, `notifyNewProfessional`, and `notifyReviewRequest` to a non-owner email address and confirming arrival.
 

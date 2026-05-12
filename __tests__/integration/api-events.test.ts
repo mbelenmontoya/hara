@@ -1,4 +1,4 @@
-// Hara Match - Integration Tests for /api/events
+// Hara Vital - Integration Tests for /api/events
 // Purpose: Verify billing-critical event ingestion works correctly
 // Requirements: Seed data from qa.env (run: npm run qa:week1 first)
 

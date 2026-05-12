@@ -6,7 +6,7 @@ model: sonnet
 color: green
 ---
 
-# Code Reviewer for Hara Match
+# Code Reviewer for Hara Vital
 
 Mechanical rule compliance reviewer for Hara's coding standards. Scans changed files for violations, scores confidence, and reports only issues at >=80% confidence.
 

@@ -4,7 +4,7 @@
 
 ## Overview
 
-Hara Match is **the Spanish-speaking holistic-wellness trust layer** — a curated marketplace for **terapias alternativas y bienestar holístico** (reiki, masajes, constelaciones familiares, diseño humano, registros akáshicos, terapia floral/energética, meditación, etc.) in Spanish-speaking markets (LATAM + Spain), with Argentina as the home/proving ground. It combines two modes:
+Hara Vital is **the Spanish-speaking holistic-wellness trust layer** — a curated marketplace for **terapias alternativas y bienestar holístico** (reiki, masajes, constelaciones familiares, diseño humano, registros akáshicos, terapia floral/energética, meditación, etc.) in Spanish-speaking markets (LATAM + Spain), with Argentina as the home/proving ground. It combines two modes:
 
 1. **Browse mode (Directory):** Users browse professionals ranked by reputation (stars, profile completeness). Professionals can pay for visibility (subscription tiers, boosts). This is the primary discovery path.
 2. **Concierge mode (Solicitar):** Users describe what they need → admin reviews → sends personalized recommendations via tracking link. This is the high-trust differentiator — "we pick for you."
@@ -48,6 +48,7 @@ Deployed at: https://hara-weld.vercel.app
 - All user-facing copy in Spanish (Argentine informal: vos, querés, escribís)
 - No broad DB schema changes — targeted additions only
 - Rejected profile handling is pinned for a future conversation (keep data? allow resubmit?)
+- **Concierge under-promoted until billing model lands** *(added 2026-05-12)* — concierge flow is alive end-to-end (`/solicitar` → admin curate → `/r/[tracking_code]`), but the Apr-1 PQL pivot left attribution unsolved. Until a new billing model is figured out, do **not lead with concierge** on the home, in PRDs, in `/ayuda` copy, or in marketing surfaces. Marketplace + concierge are co-equal in long-term product shape; this is a temporary visibility constraint, not a positioning change. See PRODUCT.md "How we make money" §2 for the canonical version.
 
 ## Roadmap
 
@@ -63,7 +64,7 @@ The product ships in 4 phase gates. Each phase has a clear definition of done. *
 
 0. ~~**Resume the Supabase database.**~~ ✅ Done 2026-05-01.
 1. ~~**Apply migrations 004 + 005 + 006 to Supabase.**~~ ✅ Done 2026-05-01 via SQL Editor. All three verified end-to-end (RLS active, RPCs functional, triggers chaining correctly).
-2. ~~**Verify Resend domain + swap `FROM_EMAIL`.**~~ ✅ Done 2026-05-01. `haravital.app` verified, `lib/email.ts` updated to `Hara Match <hola@haravital.app>` with `replyTo: centrovitalhara@gmail.com`.
+2. ~~**Verify Resend domain + swap `FROM_EMAIL`.**~~ ✅ Done 2026-05-01. `haravital.app` verified, `lib/email.ts` updated to `Hara Vital <hola@haravital.app>` with `replyTo: centrovitalhara@gmail.com`.
 3. **Smoke test 3 flows on prod** — *Bel-tested in parallel.* Browse / Concierge / Onboarding flows. Bel runs on real device, surfaces specific bugs as they appear.
 4. **Visual QA pass** — *Bel-tested in parallel.* Mobile viewport sweep across all routes.
 5. **Image upload end-to-end verification** — *Bel-tested in parallel.*
@@ -661,7 +662,7 @@ The product is not yet live. The items below are speculative polish, pre-mature 
 
 ### Email decisions
 - Resend chosen for simplicity (one API call, good Next.js integration, free tier 3,000/month)
-- Production sender = `Hara Match <hola@haravital.app>` with `replyTo: centrovitalhara@gmail.com` (verified 2026-05-01). No mailbox needed at haravital.app — replies route via gmail. Cloudflare email forwarding considered and skipped (rare for users to compose fresh emails to a domain address; reply path covers ~all cases).
+- Production sender = `Hara Vital <hola@haravital.app>` with `replyTo: centrovitalhara@gmail.com` (verified 2026-05-01). No mailbox needed at haravital.app — replies route via gmail. Cloudflare email forwarding considered and skipped (rare for users to compose fresh emails to a domain address; reply path covers ~all cases).
 - Admin notifications (`notifyNewLead`, `notifyNewProfessional`) go to `centrovitalhara@gmail.com` (was `mariabmontoya@gmail.com` while domain was unverified).
 - `lib/email.ts` has both `notifyNewLead()` and `notifyNewProfessional()` ready
 - `create-lead.ts` server action has `additional_context` field but it doesn't exist in DB schema — skipped for now

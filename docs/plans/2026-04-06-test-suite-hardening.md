@@ -151,7 +151,7 @@ Type: Feature
 **Key Decisions / Notes:**
 
 - **admin-auth-gating.spec.ts line 25:** `expect(text).toContain('Clerk')` — Clerk was removed. The middleware now redirects to `/admin/login` (Supabase Auth). Update the assertion to match current behavior: when `REQUIRE_ADMIN_AUTH=true`, admin routes should redirect to login or return 503. Read the actual middleware to verify current behavior before changing.
-- **ui-smoke.spec.ts:** Currently asserts `h1` text is "Hara Match" and looks for `a[href="/admin/leads"]`. These break on any home page redesign. Replace with resilient assertions: page loads (status 200), has visible heading (any text), Tailwind CSS is applied (computed style check is fine to keep — it tests infrastructure, not content).
+- **ui-smoke.spec.ts:** Currently asserts `h1` text is "Hara Vital" and looks for `a[href="/admin/leads"]`. These break on any home page redesign. Replace with resilient assertions: page loads (status 200), has visible heading (any text), Tailwind CSS is applied (computed style check is fine to keep — it tests infrastructure, not content).
 - Both files are gated by env vars (`REQUIRE_ADMIN_AUTH`, seed data) — the tests themselves are fine, just the assertions are stale.
 
 **Definition of Done:**
@@ -239,7 +239,7 @@ Type: Feature
 - **`scripts/setup-hooks.sh`:**
   ```bash
   #!/bin/sh
-  # Install git hooks for Hara Match
+  # Install git hooks for Hara Vital
   cp scripts/hooks/pre-push .git/hooks/pre-push
   chmod +x .git/hooks/pre-push
   echo "✅ Git hooks installed."

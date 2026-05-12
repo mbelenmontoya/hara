@@ -1,4 +1,4 @@
-// Hara Match - E2E Test: Admin Auth Gating
+// Hara Vital - E2E Test: Admin Auth Gating
 // Purpose: Verify that unauthenticated requests to admin routes are redirected to login
 // Current auth: Supabase Auth (middleware.ts redirects to /admin/login)
 

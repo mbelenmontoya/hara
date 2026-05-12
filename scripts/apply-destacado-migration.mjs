@@ -64,7 +64,7 @@ async function tryExecSql(query) {
 }
 
 async function run() {
-  console.log('Hara Match — Applying migration 005_destacado_tier_mvp.sql')
+  console.log('Hara Vital — Applying migration 005_destacado_tier_mvp.sql')
   console.log()
 
   const columnsExist = await verifyColumns()

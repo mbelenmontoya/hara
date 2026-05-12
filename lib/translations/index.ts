@@ -1,4 +1,4 @@
-// Translation system for Hara Match
+// Translation system for Hara Vital
 // Currently Spanish-only, designed for easy multi-language expansion
 
 import { ES_TRANSLATIONS, type Translations } from './es'

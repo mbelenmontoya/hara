@@ -1,4 +1,4 @@
-// Hara Match - E2E Test: Admin Match Creation Flow
+// Hara Vital - E2E Test: Admin Match Creation Flow
 // Purpose: Test complete match creation workflow
 // Validates: UI, API, DB state, tracking code format
 // Requires: npm run qa:seed-e2e (creates .e2e-test-data.json)

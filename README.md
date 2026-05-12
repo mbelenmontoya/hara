@@ -1,4 +1,4 @@
-# Hara Match
+# Hara Vital
 
 > The Spanish-speaking wellness trust layer — verified professionals, real-interaction reputation, human-curated concierge fallback.
 
@@ -8,7 +8,7 @@
 
 ## Overview
 
-Hara Match is a curated marketplace for **terapias alternativas y bienestar holístico** in Spanish-speaking markets (LATAM + Spain, Argentina home) — reiki, masajes terapéuticos, constelaciones familiares, diseño humano, registros akáshicos, terapia floral, terapia energética, meditación, and related holistic practices. It's a trust layer between people navigating something specific (ansiedad, insomnio, duelo, estrés, búsqueda de claridad) and the holistic practitioners who can accompany them.
+Hara Vital is a curated marketplace for **terapias alternativas y bienestar holístico** in Spanish-speaking markets (LATAM + Spain, Argentina home) — reiki, masajes terapéuticos, constelaciones familiares, diseño humano, registros akáshicos, terapia floral, terapia energética, meditación, and related holistic practices. It's a trust layer between people navigating something specific (ansiedad, insomnio, duelo, estrés, búsqueda de claridad) and the holistic practitioners who can accompany them.
 
 **📖 For the full product context — what we're building, who it's for, where, why, and how we measure success — read [`PRODUCT.md`](./PRODUCT.md).**
 

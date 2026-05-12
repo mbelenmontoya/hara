@@ -1,7 +1,7 @@
 {
   "name": "hara",
   "version": "1.0.0",
-  "description": "Hara Match - Performance-based lead marketplace for wellness professionals",
+  "description": "Hara Vital - Performance-based lead marketplace for wellness professionals",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

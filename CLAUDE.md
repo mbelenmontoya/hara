@@ -1,4 +1,4 @@
-# Hara Match — Claude Code Guide
+# Hara Vital — Claude Code Guide
 
 ## What Is This
 

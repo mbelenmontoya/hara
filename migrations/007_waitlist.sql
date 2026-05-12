@@ -1,4 +1,4 @@
--- Hara Match — Pre-launch waitlist
+-- Hara Vital — Pre-launch waitlist
 -- Used by the homepage "Próximamente" form so visitors (mostly professionals
 -- interested in joining) can leave their email before the directory opens.
 --

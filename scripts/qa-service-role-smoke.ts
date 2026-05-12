@@ -1,4 +1,4 @@
-// Hara Match - QA Service Role Smoke Test
+// Hara Vital - QA Service Role Smoke Test
 // Purpose: Verify service role can bypass RLS and write to protected tables
 // Usage: npx tsx scripts/qa-service-role-smoke.ts
 // Exit: 0 if service role works, 1 if blocked

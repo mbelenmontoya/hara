@@ -53,7 +53,7 @@ async function verifyColumns() {
 }
 
 async function run() {
-  console.log('Hara Match — Applying migration 004_ranking_foundation.sql')
+  console.log('Hara Vital — Applying migration 004_ranking_foundation.sql')
   console.log()
 
   // Quick check: already applied?

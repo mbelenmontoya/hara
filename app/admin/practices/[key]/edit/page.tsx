@@ -1,4 +1,4 @@
-// Hara Match — Admin Practices: Edit
+// Hara Vital — Admin Practices: Edit
 // Server shell. Fetches the practice by key and renders <PracticeForm>
 // in edit mode with prefilled values. notFound() if the key doesn't exist.
 

@@ -1,4 +1,4 @@
-// Hara Match - Contact Button Component
+// Hara Vital - Contact Button Component
 // Purpose: Track contact events via sendBeacon + navigate to WhatsApp
 // Security: NEVER blocks navigation, uses real WhatsApp number format
 //

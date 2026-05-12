@@ -1,10 +1,10 @@
-# Hara Match — Product
+# Hara Vital — Product
 
 > The canonical answer to "what is this product?" — read this before the code, the plan, or the PRDs. Update when the product evolves, not when features ship.
 
 ## What it is
 
-Hara Match is a curated marketplace for **terapias alternativas y bienestar holístico** in Spanish-speaking markets — reiki, masajes terapéuticos, constelaciones familiares, diseño humano, registros akáshicos, terapia floral, terapia energética, meditación, y otras prácticas afines. It's a **trust layer** between people atravesando algo concreto (ansiedad, insomnio, duelo, estrés, búsqueda de claridad) and the holistic practitioners who can accompany them — verified practitioners, reputation built from real interactions, and a human-curated concierge layer for users who want a recommendation chosen for them.
+Hara Vital is a curated marketplace for **terapias alternativas y bienestar holístico** in Spanish-speaking markets — reiki, masajes terapéuticos, constelaciones familiares, diseño humano, registros akáshicos, terapia floral, terapia energética, meditación, y otras prácticas afines. It's a **trust layer** between people atravesando algo concreto (ansiedad, insomnio, duelo, estrés, búsqueda de claridad) and the holistic practitioners who can accompany them — verified practitioners, reputation built from real interactions, and a human-curated concierge layer for users who want a recommendation chosen for them.
 
 The match is **"lo que estás atravesando → quién puede acompañarte desde otro lugar"** — anchored in what the user is *feeling*, open about the modality. A user with insomnia might be paired with masaje, constelaciones, or reiki — whatever resonates. The platform's job is to make that pairing trustworthy.
 
@@ -74,9 +74,10 @@ Supply-funded. Users pay nothing.
    - **Destacado (paid):** higher ranking, visual badge, featured placement
    - More tiers can be added over time as we learn what professionals will pay for
 
-2. **Concierge leads** *(future, optional)*
+2. **Concierge leads** *(future, optional — billing unsolved)*
    - The existing PQL/attribution infrastructure can be repurposed to charge professionals per curated lead delivered through `/solicitar` → `/r/[code]`
    - We pivoted *away* from PQL-only billing on **Apr 1, 2026** because attribution disputes were unsustainable as the primary revenue model. But the infra is preserved as an optional premium layer for the concierge flow.
+   - **Visibility constraint (added 2026-05-12):** Until a new concierge billing model lands, concierge stays operationally alive (the flow runs end-to-end) but is **not actively promoted** in product surfaces — home, hero copy, and support pages lead with marketplace. Marketplace and concierge remain co-equal in the long-term product shape; this is a temporary visibility decision tied to monetization, not a positioning change.
 
 ## How we know we're winning
 

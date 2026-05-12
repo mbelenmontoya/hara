@@ -10,7 +10,7 @@ Type: Feature
 
 ## Summary
 
-**Goal:** Build an n8n-hosted strategist agent that generates a monthly Instagram content strategy (theme, narrative arc, ~20 post slots with full briefs) for Hara Match using Claude Sonnet 4.6, persists to a new multi-tenant Supabase project (`automations`), notifies via email, and supports rejection-driven regeneration.
+**Goal:** Build an n8n-hosted strategist agent that generates a monthly Instagram content strategy (theme, narrative arc, ~20 post slots with full briefs) for Hara Vital using Claude Sonnet 4.6, persists to a new multi-tenant Supabase project (`automations`), notifies via email, and supports rejection-driven regeneration.
 
 **Architecture:** Two n8n workflows on the existing Hetzner Coolify server: (1) **Generation** — webhook-triggered, reads context from `automations` Supabase project, calls Sonnet 4.6 with web search, validates JSON output, writes `monthly_strategies` + `post_slots`, logs to `agent_runs`, sends email; handles fresh generation and regeneration via conditional branching driven by `rejection_reason` presence. (2) **Heartbeat** — cron every 3 days, writes a row to keep the free-tier Supabase project warm.
 
@@ -433,7 +433,7 @@ On webhook hit:
 
 **Key Decisions / Notes:**
 - Industry-standard 4-section structure: **Persona** → **Context** → **Rules** → **Knowledge** (per research findings; references included in PRD)
-- **Persona:** "You are an Argentine community manager for Hara Match, a curated wellness professional marketplace. Your tone is calm, warm, premium..."
+- **Persona:** "You are an Argentine community manager for Hara Vital, a curated wellness professional marketplace. Your tone is calm, warm, premium..."
 - **Context:** placeholders for `{brand_context}`, `{content_pillars}`, `{recent_post_slots}` (last 4 weeks for anti-repetition), `{posting_benchmarks}`, `{prior_rejected_strategies}` (last 3 with rejection_reason), `{target_month}`, `{is_regeneration}`, `{rejection_reason}` (only if regen). The n8n Code node fills these from DB queries.
 - **Rules** (load-bearing, MUST appear verbatim in the prompt):
   - Use Argentine informal Spanish (vos/querés/escribís); never tú; never usted

@@ -1,4 +1,4 @@
-// Hara Match — Holistic Practices Catalog
+// Hara Vital — Holistic Practices Catalog
 // Server-only helpers for the `practices` lookup table.
 // Do NOT import from client components — use the Practice type only,
 // and receive practices as a prop from the server-component parent.

@@ -1,6 +1,6 @@
 ---
 name: commit-message-helper
-description: Helps write conventional commit messages following Hara Match standards. Triggers on "commit", "ready to commit", "push".
+description: Helps write conventional commit messages following Hara Vital standards. Triggers on "commit", "ready to commit", "push".
 ---
 
 # Commit Message Helper

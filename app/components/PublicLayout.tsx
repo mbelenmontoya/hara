@@ -29,7 +29,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
       <footer className="bg-surface border-t border-outline mt-auto">
         <div className="container-public py-8 text-center">
           <p className="text-sm text-muted">
-            © 2026 Hara Match · Conectamos con bienestar
+            © 2026 Hara Vital · Conectamos con bienestar
           </p>
         </div>
       </footer>

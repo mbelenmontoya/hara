@@ -1,4 +1,4 @@
-// Hara Match - Admin Leads Page
+// Hara Vital - Admin Leads Page
 // Client component — fetches leads with match context, supports search + status filtering
 
 'use client'

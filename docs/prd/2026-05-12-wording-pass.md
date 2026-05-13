@@ -126,7 +126,7 @@ Component-level user-facing strings:
 
 > **Format:** "Before" = current copy on the page. "Problem" = what's wrong (which principle fails, what category of bad writing). "Direction" = the shape of the rewrite — kept brief on purpose.
 >
-> **⛔ Final Spanish copy is written by Bel, anchored on the Voice section above.** The "Direction" column describes the kind of rewrite needed (the structural fix — e.g., "rhetorical question → invitation"). Claude does NOT propose finished Spanish strings; that's where the translated-from-English failure mode lives. Bel applies the Hara voice to each line during /spec. Where structural examples appear in this PRD, they are illustrative of the *shape* of the fix, never the chosen wording.
+> **Claude writes all final Spanish copy**, anchored on the Voice section above. The "Direction" column describes the structural fix; Claude produces the finished string during /spec, tested against the 6 voice checks (§ "Cómo aplicar esto a una rewrite"). Bel reviews the result at the Code Review Gate.
 >
 > **Note:** This table captures the *highest-impact* lines identified during the PRD audit. /spec implementation may surface additional small fixes (typos, missing privacy lines, gender phrasing) as Bel reads each file in full. Those count as in-scope additions.
 
@@ -317,8 +317,8 @@ Component-level user-facing strings:
 
 ## Open Questions for /spec
 
-- **Final hero copy for `/preview`.** The PRD proposes `Encontrá tu próximo acompañamiento` as 1.1. /spec gives the implementer 1-2 alternatives to choose from inline with Bel ("Encontrá tu acompañante en bienestar" / "Tu próximo paso en bienestar"). Iterate during implementation.
-- **WaitlistForm exact button label.** PRD says "Avisame cuando abran" or similar — /spec confirms with Bel based on what currently lives in the file.
-- **`/r/review/[token]` review-prompt phrasing.** Without reading the file in full at PRD time, the exact change is deferred to /spec. The voice principles apply.
+- **Final hero copy for `/preview`.** Read the file, derive the string from the voice contract (holistic framing, no filler, no concierge-led). Claude writes it; no consultation needed.
+- **WaitlistForm exact button label.** Read the file in /spec to see what's there; rewrite from voice principles directly.
+- **`/r/review/[token]` review-prompt phrasing.** Read the file in /spec; apply voice principles directly.
 - **E2E test string assertions.** /spec greps `__tests__/e2e/*.spec.ts` for hardcoded Spanish strings being changed and updates assertions in lockstep with copy changes. If any test asserts a string this PRD doesn't change, it stays as-is.
-- **WhatsApp CTA copy on `ContactButton`.** PRD assumes "Escribir por WhatsApp" is the current label; /spec verifies and adjusts the privacy-note placement if needed.
+- **WhatsApp CTA copy on `ContactButton`.** Read the file in /spec; confirm label + ensure privacy note is inline.

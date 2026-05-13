@@ -46,7 +46,7 @@ export default function Error({
         </h2>
 
         <p className="text-muted leading-relaxed mb-6">
-          {error.message || 'Algo no funcionó como esperábamos. Intentá de nuevo en un momento.'}
+          {error.message || 'Ocurrió un error inesperado. Por favor, intentá de nuevo.'}
         </p>
 
         {error.digest && (

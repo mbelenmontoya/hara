@@ -222,7 +222,7 @@ export default async function ProfessionalProfilePage({
           {/* Accepting clients */}
           {professional.accepting_new_clients && (
             <div className="flex justify-center">
-              <Chip label="Disponible para nuevas consultas" variant="success" />
+              <Chip label="Aceptando nuevos pacientes" variant="success" />
             </div>
           )}
         </div>

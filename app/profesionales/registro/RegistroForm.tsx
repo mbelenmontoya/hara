@@ -497,7 +497,7 @@ export function RegistroForm({ practices }: Props) {
                       }`}
                     />
                   </button>
-                  <span className="text-sm text-foreground">Recibo consultas nuevas</span>
+                  <span className="text-sm text-foreground">Estoy aceptando nuevos pacientes</span>
                 </div>
               </>
             )}
@@ -555,7 +555,7 @@ export function RegistroForm({ practices }: Props) {
                     type="text"
                     value={formData.short_description}
                     onChange={(e) => updateField('short_description', e.target.value)}
-                    placeholder="Ej: Reikista especializada en equilibrio energético y bienestar"
+                    placeholder="Ej: Psicóloga especializada en ansiedad y estrés laboral"
                     className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all"
                   />
                   <p className="text-xs text-muted mt-1.5">Una línea que aparece debajo de tu nombre en el perfil</p>
@@ -568,7 +568,7 @@ export function RegistroForm({ practices }: Props) {
                   <textarea
                     value={formData.bio}
                     onChange={(e) => updateField('bio', e.target.value)}
-                    placeholder="Contá un poco sobre tu enfoque, cómo trabajás y qué pueden esperar las personas que te eligen..."
+                    placeholder="Contá un poco sobre tu enfoque, cómo trabajás y qué pueden esperar tus pacientes..."
                     rows={5}
                     className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all resize-none"
                   />
@@ -593,7 +593,8 @@ export function RegistroForm({ practices }: Props) {
 
                 <div className="bg-info-weak border border-info/20 rounded-xl p-4">
                   <p className="text-sm text-info">
-                    Revisamos tu perfil antes de publicarlo. Te avisamos por email lo antes que podamos.
+                    Tu perfil será revisado por nuestro equipo antes de ser publicado.
+                    Te contactaremos por email cuando esté activo.
                   </p>
                 </div>
               </>

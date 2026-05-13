@@ -60,7 +60,7 @@ export function ReviewSubmitForm({ token, professionalName }: ReviewSubmitFormPr
       <div className="text-center py-8" role="status">
         <p className="text-2xl mb-2">🌟</p>
         <h2 className="text-xl font-bold text-foreground mb-2">¡Gracias por tu reseña!</h2>
-        <p className="text-sm text-muted">Tu experiencia ayuda a que otros encuentren su acompañante en bienestar.</p>
+        <p className="text-sm text-muted">Tu opinión ayuda a otros usuarios a encontrar el profesional ideal.</p>
       </div>
     )
   }
@@ -71,7 +71,7 @@ export function ReviewSubmitForm({ token, professionalName }: ReviewSubmitFormPr
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
         <p className="text-sm font-medium text-foreground mb-3 text-center">
-          ¿Cómo fue tu encuentro con {professionalName}?
+          Calificá tu experiencia con {professionalName}
         </p>
 
         {/* Star picker */}

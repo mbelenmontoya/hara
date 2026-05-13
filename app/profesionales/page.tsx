@@ -84,15 +84,15 @@ export default async function DirectoryPage() {
 
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Profesionales verificados</h1>
-          <p className="text-sm text-muted mt-1">Elegí con quién querés conectar. Tu info se comparte recién cuando vos escribís.</p>
+          <h1 className="text-2xl font-bold text-foreground">Profesionales</h1>
+          <p className="text-sm text-muted mt-1">Elegí a quien querés contactar.</p>
         </div>
 
         {/* List */}
         {professionals.length === 0 ? (
           <GlassCard>
             <EmptyState
-              title="Estamos sumando profesionales."
+              title="Todavía no hay profesionales disponibles."
               description="Volvé pronto."
             />
           </GlassCard>

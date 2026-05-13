@@ -204,10 +204,10 @@ export async function notifyReviewRequest({
         <a href="${link}"
            style="display: inline-block; padding: 14px 28px; background-color: #4B2BBF; color: #ffffff;
                   text-decoration: none; border-radius: 9999px; font-size: 15px; font-weight: 600;">
-          Dejar mi reseña
+          Calificar mi experiencia
         </a>
         <p style="margin-top: 20px; font-size: 12px; color: #6B6374;">
-          Si no llegaste a tener una sesión, ignorá este mensaje.
+          Solo lleva un minuto. Si no tuviste una sesión, ignorá este mensaje.
           <br />
           O copiá el enlace: ${link}
         </p>
@@ -272,7 +272,7 @@ export async function notifyProfessionalApproved({
           Hola ${safeName},
         </h2>
         <p style="font-size: 15px; color: #1F1A24; line-height: 1.6; margin-bottom: 24px;">
-          Tu perfil ya está activo en Hara. Las personas que naveguen el directorio, o que reciban tus recomendaciones a través de Hara, pueden ver tu información y contactarte.
+          Tu perfil ya está activo en Hara. Las personas que entren al directorio o reciban tus recomendaciones a través de nuestro sistema concierge pueden ver tu información y contactarte.
         </p>
         <div style="margin: 24px 0;">
           <a href="${profileUrl}" target="_blank" rel="noopener"
@@ -296,7 +296,7 @@ export async function notifyProfessionalApproved({
           ¿Cómo te contactan?
         </h3>
         <p style="font-size: 14px; color: #1F1A24; line-height: 1.6; margin-bottom: 16px;">
-          Cuando alguien hace click en el botón de contacto de tu perfil, se abre un chat de WhatsApp directo a tu número. No filtramos ni intermediamos — la conversación es directamente entre vos y la persona.
+          Cuando alguien hace click en el botón de contacto de tu perfil, se abre un chat de WhatsApp directo a tu número. No filtramos ni intermediamos — la conversación es entre vos y el cliente.
         </p>
 
         <h3 style="font-size: 16px; font-weight: 600; margin-top: 24px; margin-bottom: 8px; color: #1F1A24;">
@@ -347,7 +347,7 @@ export async function notifyProfessionalRejected({
           Hola ${safeName},
         </h2>
         <p style="font-size: 15px; color: #1F1A24; line-height: 1.6; margin-bottom: 16px;">
-          Gracias por aplicar a Hara. Revisamos tu perfil con atención y, en esta ocasión, no podemos incorporarte al directorio todavía.
+          Gracias por aplicar a Hara. Después de revisar tu perfil, decidimos no avanzar con tu solicitud por ahora.
         </p>
 
         <p style="font-size: 14px; color: #6B6374; margin-top: 24px; margin-bottom: 8px;">
@@ -356,14 +356,14 @@ export async function notifyProfessionalRejected({
         <blockquote style="margin: 0 0 24px 0; padding: 12px 16px; border-left: 3px solid #4B2BBF; background-color: #F6F0E8; font-style: italic; color: #1F1A24; white-space: pre-line; font-size: 15px; line-height: 1.6;">${safeReason}</blockquote>
 
         <p style="font-size: 15px; color: #1F1A24; line-height: 1.6; margin-bottom: 16px;">
-          Si querés volver a aplicar una vez que hayas revisado lo que mencionamos, podés hacerlo a partir del <strong>${resubmitDate}</strong>.
+          Si querés volver a aplicar después de ajustar lo anterior, podés hacerlo a partir del <strong>${resubmitDate}</strong>.
         </p>
         <p style="font-size: 15px; color: #1F1A24; line-height: 1.6; margin-bottom: 16px;">
           Si tenés preguntas, escribinos a ${ADMIN_EMAIL}.
         </p>
 
         <p style="font-size: 15px; color: #6B6374; line-height: 1.6; margin-top: 24px;">
-          Gracias por confiar en Hara.
+          Gracias de nuevo por tu interés.
         </p>
       </div>
     `,

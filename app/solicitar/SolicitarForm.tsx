@@ -21,8 +21,8 @@ const INTENT_OPTIONS = [
   { value: 'grief', label: 'Duelo' },
   { value: 'addiction', label: 'Adicciones' },
   { value: 'eating-disorders', label: 'Trastornos alimentarios' },
-  { value: 'couples', label: 'Pareja' },
-  { value: 'family', label: 'Familia' },
+  { value: 'couples', label: 'Terapia de pareja' },
+  { value: 'family', label: 'Terapia familiar' },
   { value: 'children', label: 'Niños y adolescentes' },
 ]
 
@@ -146,7 +146,7 @@ export function SolicitarForm({ practices }: Props) {
       })
       router.push('/gracias')
     } catch {
-      setSubmitError('Algo no funcionó. Intentá de nuevo.')
+      setSubmitError('Hubo un error. Intentá de nuevo.')
       setSubmitting(false)
     }
   }
@@ -157,10 +157,10 @@ export function SolicitarForm({ practices }: Props) {
 
       <div className="relative z-10 max-w-md md:max-w-[960px] mx-auto px-4 pt-8 pb-12">
         <h1 className="text-2xl font-semibold text-foreground mb-2 text-center">
-          Contanos qué estás buscando
+          Encontrá tu profesional ideal
         </h1>
         <p className="text-sm text-muted text-center mb-8">
-          Te acercamos opciones en bienestar holístico, elegidas a mano según lo que buscás.
+          Contanos qué buscás y te conectamos con 3 profesionales que se ajustan a vos.
         </p>
 
         <form onSubmit={handleSubmit}>
@@ -168,7 +168,7 @@ export function SolicitarForm({ practices }: Props) {
           {/* Card: What are you looking for */}
           <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6 mb-4">
             <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">
-              ¿Qué te trae a Hara? *
+              ¿En qué necesitás ayuda? *
             </h2>
             <div className="flex flex-wrap gap-2">
               {INTENT_OPTIONS.map(opt => (
@@ -252,7 +252,7 @@ export function SolicitarForm({ practices }: Props) {
           {/* Card: WhatsApp */}
           <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6 mb-4">
             <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">
-              ¿A dónde te enviamos tus opciones? *
+              ¿Cómo te contactamos? *
             </h2>
             <div>
               <label className={LABEL_CLASS}>WhatsApp</label>
@@ -265,7 +265,7 @@ export function SolicitarForm({ practices }: Props) {
               />
               {phoneError
                 ? <p className={ERROR_CLASS}>{phoneError}</p>
-                : <p className={HELPER_CLASS}>Solo usamos tu número para enviarte las 3 opciones.</p>
+                : <p className={HELPER_CLASS}>Solo te escribimos para enviarte las recomendaciones.</p>
               }
             </div>
           </div>

@@ -14,31 +14,31 @@ export default function HomePreviewPage() {
 
         {/* Hero */}
         <h1 className="text-3xl font-semibold text-foreground mb-3 text-center leading-tight">
-          Te conectamos con tu terapeuta ideal
+          Encontrá tu acompañante en bienestar holístico
         </h1>
         <p className="text-base text-muted mb-8 leading-relaxed text-center">
-          Recibí 3 recomendaciones personalizadas de profesionales verificados
+          Reiki, masajes, constelaciones familiares, diseño humano y más — elegidos a mano para vos.
         </p>
 
         {/* CTAs */}
         <div className="space-y-3 mb-10">
           <Link
-            href="/solicitar"
+            href="/profesionales"
             className="block w-full px-6 py-4 bg-brand text-white font-semibold rounded-full shadow-elevated hover:shadow-strong btn-press-glow transition-all text-center"
           >
-            Solicitar recomendaciones
+            Ver profesionales
           </Link>
           <Link
-            href="/profesionales"
+            href="/solicitar"
             className="block w-full px-6 py-3.5 bg-surface border border-outline text-foreground font-semibold rounded-full shadow-soft hover:shadow-elevated hover:border-muted transition-all text-center"
           >
-            Ver profesionales
+            Pedir recomendaciones
           </Link>
           <Link
             href="/profesionales/registro"
             className="block w-full px-6 py-3.5 bg-surface border border-outline text-foreground font-semibold rounded-full shadow-soft hover:shadow-elevated hover:border-muted transition-all text-center"
           >
-            Únete como profesional
+            Sumate como profesional
           </Link>
         </div>
 
@@ -54,8 +54,8 @@ export default function HomePreviewPage() {
                 1
               </div>
               <div>
-                <p className="font-semibold text-foreground mb-1">Cuéntanos qué necesitás</p>
-                <p className="text-sm text-muted leading-relaxed">Completá un breve formulario sobre tus preferencias</p>
+                <p className="font-semibold text-foreground mb-1">Contanos qué estás buscando</p>
+                <p className="text-sm text-muted leading-relaxed">Completá un formulario breve — sin presión, a tu ritmo</p>
               </div>
             </div>
 
@@ -64,8 +64,8 @@ export default function HomePreviewPage() {
                 2
               </div>
               <div>
-                <p className="font-semibold text-foreground mb-1">Recibí 3 recomendaciones</p>
-                <p className="text-sm text-muted leading-relaxed">Te enviamos perfiles de profesionales que se ajustan a vos</p>
+                <p className="font-semibold text-foreground mb-1">Recibís 3 opciones elegidas a mano</p>
+                <p className="text-sm text-muted leading-relaxed">Revisamos el directorio y te acercamos los perfiles que más resuenan con lo que buscás</p>
               </div>
             </div>
 
@@ -74,8 +74,8 @@ export default function HomePreviewPage() {
                 3
               </div>
               <div>
-                <p className="font-semibold text-foreground mb-1">Contactá directamente</p>
-                <p className="text-sm text-muted leading-relaxed">Iniciá la conversación por WhatsApp sin intermediarios</p>
+                <p className="font-semibold text-foreground mb-1">Escribís cuando estés lista</p>
+                <p className="text-sm text-muted leading-relaxed">Tu info se comparte recién cuando vos escribís — directo, sin intermediarios</p>
               </div>
             </div>
           </div>

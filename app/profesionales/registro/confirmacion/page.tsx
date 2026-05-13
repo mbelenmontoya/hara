@@ -16,8 +16,7 @@ export default function ConfirmationPage() {
         </h1>
         
         <p className="text-muted leading-relaxed mb-8 text-center max-w-sm mx-auto">
-          Recibimos tu información. Nuestro equipo revisará tu perfil y te contactaremos 
-          por email en las próximas 24-48 horas.
+          Recibimos tu información. Revisamos tu perfil y te avisamos por email lo antes que podamos.
         </p>
 
         {/* Card with timeline and button */}
@@ -51,7 +50,7 @@ export default function ConfirmationPage() {
                 <div className="flex flex-col items-center">
                   <div className="w-2.5 h-2.5 rounded-full bg-white" />
                 </div>
-                <p className="text-sm text-muted -mt-0.5">Tu perfil se activa y empezás a recibir leads</p>
+                <p className="text-sm text-muted -mt-0.5">Tu perfil se activa y aparecés en el directorio</p>
               </div>
             </div>
           </div>

@@ -49,16 +49,16 @@ function getTokenState(request: ReviewRequest | null): TokenState {
 
 const STATE_MESSAGES: Record<Exclude<TokenState, 'valid'>, { title: string; body: string }> = {
   consumed: {
-    title: 'Esta reseña ya fue enviada.',
-    body: 'Ya enviaste tu reseña. Gracias por tu tiempo.',
+    title: 'Ya compartiste tu reseña.',
+    body: 'Gracias por tomarte el tiempo. Tu opinión ayuda a que otros encuentren al profesional indicado.',
   },
   expired: {
-    title: 'El enlace de reseña venció.',
-    body: 'Este enlace de reseña ya no es válido. Si querés dejar tu opinión, contactanos.',
+    title: 'Este enlace ya no está activo.',
+    body: 'El tiempo para dejar tu reseña venció. Si querés compartir tu experiencia, escribinos a centrovitalhara@gmail.com.',
   },
   invalid: {
-    title: 'Enlace inválido.',
-    body: 'Este enlace de reseña no existe o es incorrecto.',
+    title: 'No encontramos este enlace.',
+    body: 'Puede que el link esté incompleto o haya cambiado. Si necesitás ayuda, escribinos a centrovitalhara@gmail.com.',
   },
 }
 
@@ -96,7 +96,7 @@ export default async function ReviewPage({ params }: { params: { token: string }
         </GlassCard>
 
         <p className="text-xs text-muted text-center mt-6">
-          Hara Vital — plataforma de profesionales de bienestar verificados.
+          Hara Vital — bienestar holístico con profesionales verificados.
         </p>
       </div>
     </div>

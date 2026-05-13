@@ -21,16 +21,16 @@ export default function HomePage() {
             Próximamente
           </h1>
           <p className="text-base text-muted leading-relaxed">
-            Estamos creando un espacio donde encontrar profesionales del bienestar sea simple, humano y confiable.
+            Un espacio para encontrar tu acompañante en bienestar holístico — reiki, masajes, constelaciones familiares, y más.
           </p>
         </div>
 
         <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6 mb-6">
           <p className="text-sm text-foreground font-semibold mb-1">
-            ¿Querés saber cuando abramos?
+            Dejanos tu email y te avisamos cuando abramos.
           </p>
           <p className="text-sm text-muted leading-relaxed mb-5">
-            Dejanos tu email. Si sos profesional y querés sumarte, también es por acá.
+            Si sos profesional y querés sumarte, también es por acá.
           </p>
           <WaitlistForm />
         </div>

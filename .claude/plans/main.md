@@ -234,6 +234,77 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 ## Session Log
 
+### Session — 2026-05-12 (Plan corrections + brand rename + Item 8 /ayuda VERIFIED + DB cleanup + Item 7 PRD)
+
+**Completed — Plan corrections + commits:**
+- Fixed 2026-05-08 session-log misquote: "rewrite the entire app" → clarified as **content rewrite (Item 7), not app rewrite**. Items 6 + 7 remain in scope; Item 4 (Public home flip) moved out of Soft Launch Push to a new **Final Go-Live Gate** section at the end of the plan (the app is not ready to open). Item 4 number kept in original location, struck through with redirect.
+- Added Item 8 (`/ayuda` public support page) to Soft Launch Push from route-inventory audit.
+- Added "Operational admin routes" sub-section under Soft Launch Push: `/admin/matches`, `/admin/matches/[id]`, `/admin/events`, `/admin/settings` — Phase 1 candidates.
+- Committed as `fb6776d`.
+
+**Completed — Brand name sweep (Hara Match → Hara Vital):**
+- Discovered during /prd /ayuda that the canonical product name is **Hara Vital**, not "Hara Match" — the docs had been wrong all along (matches domain `haravital.app`). Bel clarified: there was no rebrand, the docs were just wrong.
+- Bulk `sed` replacement across 105 files: PRODUCT.md, CLAUDE.md, plan, FINAL_SPEC.md, READMEs, source files (`app/layout.tsx` metadata, `app/page.tsx` homepage hero, `lib/email.ts` From line and email bodies, `app/components/PublicLayout.tsx` footer, `package.json` description, every header comment), all 144 occurrences. No test assertions touched.
+- Added **concierge visibility constraint** to PRODUCT.md "How we make money" §2 + plan Constraints section: concierge flow stays operationally alive but is **not actively promoted** in product surfaces until a new billing model lands (the Apr-1 PQL pivot left attribution unsolved). Marketplace + concierge remain co-equal long-term — this is a temporary visibility decision tied to monetization, not a positioning change.
+- Committed as `8544bde`.
+
+**Completed — Soft Launch Push Item 8: `/ayuda` (VERIFIED end-to-end via /spec):**
+- PRD `docs/prd/2026-05-12-ayuda-public-support-page.md` (Status: Final). Standard research tier — surveyed FAQ/help-center UX patterns + LATAM marketplace `/ayuda` benchmarks (Mercado Libre, SaaS help pages). Per-PRD-question pattern: 7 questions before /spec, all answered.
+- Plan `docs/plans/2026-05-12-ayuda-public-support-page.md` (Status: VERIFIED). spec-plan reviewer surfaced 7 findings (2 must_fix on error.tsx button structure + `/r/[tracking_code]` expired/transient conditional preservation, 3 should_fix, 2 suggestions); all addressed inline before implementation.
+- 4 implementation tasks, all green:
+  - Task 1: Extracted `DisclosureItem` + `Chevron` from `app/components/TermsAndPrivacyPage.tsx` into shared `app/components/ui/Disclosure.tsx`. Renamed types `LegalDisclosure`/`LegalGroup` → `DisclosureEntry`/`DisclosureGroup`. `TermsAndPrivacyPage` now imports from the new module; no inline duplicates remain.
+  - Task 2: New `app/ayuda/page.tsx` (server component, 183 lines) — exact `TermsAndPrivacyPage` shell (PageBackground + container + back link + eyebrow + H1 + intro + anchor pill nav + GlassCard sections with `DisclosureItem` accordion). Two sections: Para usuarios (6 FAQs) + Para profesionales (6 FAQs). Contact GlassCard at bottom with `mailto:centrovitalhara@gmail.com` + `https://instagram.com/haravital` (NOT WhatsApp — that's user↔practitioner only).
+  - Task 3: Added `/ayuda` links to 4 entry points — `PublicLayout` footer, `app/error.tsx` (as 3rd element below "Intentar de nuevo" + "Volver al inicio"), `app/r/[tracking_code]/page.tsx` error state (preserving expired-vs-transient conditional: expired → "¿Perdiste tu link? Visitá /ayuda", transient → "Probá de nuevo. ¿Necesitás ayuda?"), `app/page.tsx` Próximamente home (wrapped in `mt-auto pt-6 text-center space-y-2` flex div).
+  - Task 4: New `app/not-found.tsx` (46 lines) — mirrors `error.tsx` shell exactly (same `bg-danger-weak` circle + warning SVG icon, no new icon library), "Página no encontrada" + "Volver al inicio" + "¿Necesitás ayuda?" link.
+- spec-verify changes-review: alignment_score high, quality_score high, goal_score achieved, 7/8 truths verified statically (TS-001..004 verified live), 1 suggestion (Chevron not exported — YAGNI, no consumer needs it, left as-is per reviewer recommendation).
+- **Phase B finding (fixed inline):** `PublicLayout` has **zero consumers** — every public page builds its own shell, so the footer Ayuda link in `PublicLayout.tsx` was dead code. Fix: added `<footer>` with /ayuda link directly to `app/profesionales/page.tsx`. `PublicLayout` adoption is a future cleanup item.
+- E2E (Chrome DevTools MCP) — all 4 scenarios PASS: TS-001 (`/terminosyprivacidad` no regression after Disclosure extraction), TS-002 (`/ayuda` full render + accordion expand + email/IG link hrefs), TS-003 (lost-link recovery flow through `/r/INVALID123` error state → /ayuda), TS-004 (footer + 404 + Próximamente entry points).
+- Tests: 251/251 unit · tsc clean · lint clean · build clean.
+- Committed as `894e4c3`.
+
+**Completed — DB cleanup + integration test leak fix:**
+- Bel flagged during /ayuda E2E that `/profesionales` showed cards even though no professionals had been approved.
+- Surveyed `professionals` table: 65 total → 20 leaked test rows (`admin-test-pro-*` and `test-pro-*` slug patterns, all `status='active'`) + 45 real `submitted` rows. The test rows were why the directory wasn't empty.
+- Found leak source: `__tests__/integration/admin-matching.test.ts` and `__tests__/integration/api-events.test.ts` had `beforeAll` inserts with **zero cleanup logic** (no `afterAll`, no `delete`). Every test run permanently added rows.
+- Wrote `scripts/survey-test-data.ts` (read-only diagnostic, categorizes test vs real rows by slug/email/name patterns) + `scripts/cleanup-test-data.ts` (one-shot deletion with full FK cascade: events → pqls direct + via match → match_recommendations direct + via match → matches → reviews → professionals).
+- Initial cleanup hit FK constraint — `pqls` references `professional_id` directly, not just via `match_id`. Updated script to cover all direct-FK paths; second run succeeded. DB: 65 → 45.
+- Added `afterAll` cleanup to both leaking integration test files so this stops recurring.
+- All bundled with `/ayuda` commit `894e4c3`.
+
+**Completed — Soft Launch Push Item 7 PRD (wording pass, ready for /spec tomorrow):**
+- Wrote `docs/prd/2026-05-12-wording-pass.md` (Status: Final). Standard research tier — surveyed Spanish UX copywriting principles, LATAM holistic-wellness platform voice (minomada.app, sientelavibra.org, others), Argentine voseo conventions in UX.
+- **Multiple voice iterations.** Initial PRD draft anchored on neutral "wellness app voice" and proposed Spanish copy that read translated-from-English (e.g., "Dejanos tu email y te avisamos cuando abramos" — still banner-speak, not native Argentine). Bel called this out three times before the pivot landed: the failure mode wasn't framing drift, it was *that Claude shouldn't propose finished Spanish at all*.
+- **Final structure:** Voice section anchored **verbatim on Bel's brand voice doc** ("Cálido, claro, nunca clínico", "Acompañamiento, no tratamiento", "Hara hace silencio donde otros gritan", "Hara invita y respeta el timing del usuario", "Tu info se comparte recién cuando vos escribís", the *Hara = centro energético* framing, etc.). Per-surface audit table has **Before / Problem / Direction** columns — no proposed Spanish copy. Bel writes finals during /spec, anchored on the voice section.
+- 17 surfaces in scope: 13 user-facing pages (home, /preview, /profesionales, /p/[slug], /profesionales/registro, /confirmacion, /solicitar, /gracias, /ayuda, /r/[tracking_code], /r/review/[token], /terminosyprivacidad, error.tsx, not-found.tsx) + 2 components (WaitlistForm, ContactButton) + email templates in `lib/email.ts`. Admin pages out of scope.
+- Highest-priority surfaces (most concentrated bad-writing): `/preview` (pre-pivot hero "Te conectamos con tu terapeuta ideal"), Próximamente (rhetorical "¿Querés saber cuando abramos?"), `/profesionales` (flat directory header missing privacy line), `/solicitar` form, `error.tsx` (clinical formal tone).
+- **Uncommitted** at session close — handoff to /spec tomorrow.
+
+**Modified from original plan:**
+- Item 4 (Public home flip) reclassified from Soft Launch Push Item to **Final Go-Live Gate** (post-Phase-3 trigger). The flip is the actual go-live moment, not launch-readiness. Number preserved at the original location with strikethrough + redirect note.
+- Item 8 (`/ayuda`) added to Soft Launch Push — wasn't in the original 7-item list, surfaced from route-inventory audit.
+- Operational admin routes (`/admin/matches` + `[id]`, `/admin/events`, `/admin/settings`) added as Phase 1 candidates — also from route-inventory audit, not in original plan.
+
+**Deviations:**
+- The brand-name correction (Hara Match → Hara Vital) was unplanned — discovered mid-/prd when Bel called out the wrong name appearing throughout docs and copy.
+- The DB cleanup wasn't on today's agenda — discovered during /spec-verify Phase B of /ayuda when Bel asked why `/profesionales` showed cards she hadn't approved. Fixed inline + leak source closed.
+- The Item 7 PRD took 4+ iterations because of voice fidelity issues. Should have asked Bel for her voice doc earlier instead of trying to derive voice from research. Documented in this entry as a lesson; future copy work should anchor on the brand voice doc from turn one.
+- `PublicLayout` has zero consumers — found during /ayuda E2E. Documented in plan + footer added directly to `/profesionales/page.tsx` as a Phase B fix. `PublicLayout` adoption across public pages is a separate future cleanup.
+
+**Blockers / open follow-ups:**
+- None — all today's tracks completed cleanly.
+- Item 7 PRD finalized but uncommitted at session close; handoff to /spec tomorrow.
+- Item 6 (Desktop UI polish), Operational admin routes still open in Soft Launch Push.
+
+**Tests:** 251/251 unit · tsc clean · lint clean · build clean · 4/4 E2E scenarios PASS for Item 8.
+
+**Resume here (next session):**
+1. Commit + push `docs/prd/2026-05-12-wording-pass.md` (Item 7 PRD, currently uncommitted).
+2. `/spec docs/prd/2026-05-12-wording-pass.md` to start wording implementation. Bel writes final Spanish copy anchored on the PRD's Voice section; Claude applies file by file.
+3. After Item 7: Item 6 (Desktop UI polish) → operational admin routes (`/admin/matches` + `[id]`) → remaining admin routes.
+4. Final Go-Live Gate (Item 4 home flip) is deferred until Soft Launch Push + Phase 1 are done.
+
+---
+
 ### Session — 2026-05-08 (Soft Launch Push Item 3: Pro approval/rejection emails — VERIFIED)
 
 **Completed — /spec end-to-end on Item 3:**
@@ -403,60 +474,8 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 **Resume here:** Bel reviews the **Soft Launch Push** section and confirms / edits the proposed modality catalog list (canonical entries + answers to the open product questions), then we start implementing item 1 one-by-one.
 
-### Session — 2026-05-03 (Heartbeat extension + review-delay refactor + UI 960px pass)
-
-**Completed — Heartbeat to Hara main DB:**
-- Migration 008 (`migrations/008_heartbeat.sql`) added `heartbeat` table to Hara main DB. Mirrors `automation/migrations/001_initial_schema.sql` §9 exactly — single-row inserts, no RLS (service-role-only writes from n8n). Applied via SQL Editor + verified.
-- Extended n8n workflow `Hara — Heartbeat` (https://n8n.greenbit.info) with a parallel Postgres node fed by the same Cron trigger. New credential `hara-supabase (pooler)` (Supabase Transaction-mode pooler, port 6543, IPv4 — direct endpoint is IPv6-only and Coolify n8n can't reach it; `Ignore SSL Issues` on per pooler trust-chain quirk). Both Postgres Error outputs route to the existing Resend notification, so either DB failing pages an email.
-- Manual Execute Workflow verified — fresh `pinged_at` row in `heartbeat` on both Hara and automations DBs within seconds. Workflow published in n8n's new versioning model (Active toggle is gone), next auto-fire 2026-05-06 13:00 UTC.
-- Doc filed at `automation/docs/heartbeat.md` covering topology, credentials, verification queries, and that n8n is source of truth (not the stale `heartbeat.json`). Memory `project_heartbeat_extend_to_hara_db.md` removed (TODO done).
-
-**Completed — Upstash decision:**
-- Deferred indefinitely with explicit revisit triggers (existing free-tier DB stuck in "pending restore", free tier only allows 1 DB so can't create a new one until the stuck one clears, fail-open in prod means the site works without it). Plan note rewritten to demote from "before public launch" to "when restore completes / abuse signal appears / ready to switch providers". Future Upstash heartbeat is a 3rd parallel branch on the same n8n workflow when reactivation happens.
-
-**Completed — Review-email delay parameterization (migration 009):**
-- Bel called out a real red flag I'd missed: 7-day delay was hardcoded in the SQL function `select_pending_review_events()` as `BETWEEN NOW() - INTERVAL '7 days' AND NOW() - INTERVAL '6 days'`. Two issues: magic number can't be tuned without a migration, AND the 24-hour BETWEEN window is a ticking bug — if the cron misses a single day (Vercel Hobby didn't run the cron until recently), events on day 7 fall to day 8 and exit the window forever, never triggering a review email.
-- Migration 009 (`migrations/009_review_delay_param.sql`) — RPC now takes `delay_days INT DEFAULT 7`, switched `BETWEEN` to `<` (the LEFT JOIN on `review_requests` was always what prevented duplicates, not the window). Old 0-arg signature dropped to avoid PostgREST overload ambiguity.
-- Route `app/api/cron/send-review-requests/route.ts` reads `REVIEW_DELAY_DAYS` env var (default 7), passes to RPC. Backwards-compatible: unset in prod = identical behavior. `.env.example` documents the new var. **Migration 009 NOT yet applied to Hara Supabase** — required before review-flow smoke test with `REVIEW_DELAY_DAYS=0` works.
-
-**Completed — Local env-var rename fix:**
-- `.env.local` was still using legacy `SUPABASE_ANON_KEY` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` names while the source code reads `*_PUBLISHABLE_KEY` (renamed in `f654181` during May 1-3 session — prod was fixed via Vercel update, local was missed). Bel hit "Your project's URL and Key are required" error when starting `npm run dev`. Renamed both lines in `.env.local` to match (values were already in the new `sb_publishable_*` format).
-- Saved memory `feedback_test_local_after_env_changes.md` to anchor future sessions: prod-fixed-local-broken is a recurring blind spot when env vars get renamed.
-
-**Completed — UI: 960px container expansion:**
-- Outer container max-width changed from `max-w-md` (448px) to `max-w-md md:max-w-[960px]` on 12 files: 10 public pages (`/`, `/profesionales`, `/profesionales/registro`, `/profesionales/registro/confirmacion`, `/gracias`, `/solicitar`, `/p/[slug]`, `/r/review/[token]`, `/preview`, `TermsAndPrivacyPage`) + AdminLayout's two containers (header + main content) which expanded `max-w-3xl` → `max-w-[960px]` for all admin pages.
-- Mobile unchanged — 448px container stays. 960px kicks in at viewport ≥ 768px.
-- Skipped intentionally: `/r/[tracking_code]` (card deck design), error screens, `/admin/login` (login should stay narrow).
-
-**Completed — UI: 3-column card grids:**
-- Converted 5 card lists from vertical stack (`space-y-3`) to responsive grid (`grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4`): `/profesionales` directory, `/admin/professionals` (Pendientes + Revisados sections), `/admin/leads`, `/admin/reviews`. `/admin/pqls` skipped — it's a `<table>`, not a card grid.
-
-**Completed — UI: richer directory cards:**
-- Rewrote `/profesionales` ProfessionalCard. Added 9 fields to the SELECT (`short_description`, `modality`, `price_range_min/max`, `currency`, `rating_average`, `rating_count`, plus the existing ones). Card now shows: avatar + name + Destacado chip + rating ("4.8 ★ · 12 reseñas") + 3-line clamped tagline + specialty chips + bottom meta block (📍 location, 💻 modality, 💰 price range). `mt-auto` + `flex flex-col` + `h-full` keeps cards equal-height across the grid even when content varies.
-- Added `export const dynamic = 'force-dynamic'` to the directory page — was likely statically prerendered (which would explain Bel's "old data" symptom). Also handles future Destacado expiry / ranking changes appearing fresh without manual revalidation.
-
-**Deviations:**
-- Got pulled into the review-delay refactor mid-smoke-test. Was supposed to be a quick "make 7 days into 0 days for testing" — turned into a real bug fix when the BETWEEN window came up. Worth it: the dropped-events bug was real, just hadn't bitten yet because the cron never fired in prod.
-- Considered `postgres_fdw` for cross-DB shared heartbeat table. Rejected: more setup, security cross-contamination (storing automations creds inside Hara's DB), and unverified Supabase auto-pause activity semantics. Two independent tables stayed simpler.
-- UI work happened in parallel with Bel running the smoke test — except she got blocked by stale Next.js dev cache + in-memory env vars from before the `.env.local` rename, before any actual smoke testing started. Fix: `rm -rf .next; npm run dev`.
-
-**Blockers / open follow-ups:**
-- Migration 009 needs to be applied to Hara Supabase via SQL Editor before the review-flow smoke test works locally (with `REVIEW_DELAY_DAYS=0`).
-- Bel's dev server needs a clean restart to clear stale bundle that still references the old env-var names.
-- Phase 0 Task 3 smoke test was scoped but not started — Browse / Concierge / Onboarding flows all still pending.
-- Phase 0 Tasks 4 (visual QA — including how the 3-col grid + 960px container actually look on real desktop), 5 (image upload e2e), 6 (rejected profile flow) all still open.
-- 17 modified files + 5 untracked files uncommitted. Includes migration 008 (applied), migration 009 (NOT applied), all UI changes, env rename, plan update.
-
-**Tests:** Manual heartbeat n8n Execute Workflow verified end-to-end (rows in both DBs). No automated tests run this session. Smoke test of review flow not yet executed.
-
-**Resume here:**
-1. `rm -rf .next; npm run dev` to clear stale dev bundle.
-2. Verify `/profesionales` renders the new richer cards with real DB data.
-3. Apply migration 009 in Hara Supabase SQL Editor.
-4. Run Flow A smoke test (`/profesionales` → profile → contact → cron curl → email → review submit).
-5. Then Flow B (Concierge) + Flow C (Onboarding), then Tasks 4-6.
-
 ### Archived Sessions
+- **2026-05-03**: Heartbeat + review-delay refactor + UI 960px pass — Migration 008 (heartbeat table) applied + n8n workflow extended with Postgres node + Resend error notification + `automation/docs/heartbeat.md`. Upstash deferred indefinitely (free-tier DB stuck pending-restore, fail-open in prod). Migration 009 (review-delay parameterization) — RPC `select_pending_review_events(delay_days INT DEFAULT 7)`, fixed dropped-events bug from hardcoded `BETWEEN NOW() - 7d AND NOW() - 6d` 24h window. `app/api/cron/send-review-requests/route.ts` reads `REVIEW_DELAY_DAYS` env var. `.env.local` `*_ANON_KEY` → `*_PUBLISHABLE_KEY` rename. UI: 960px container expansion across 10 public pages + AdminLayout; 5 card lists → 3-col responsive grid; `/profesionales` richer directory cards with 9 added fields + `force-dynamic`. 17 modified + 5 untracked uncommitted. Migration 009 not yet applied to Supabase.
 - **2026-05-01 → 2026-05-03**: Phase 0 push (domain, homepage, cleanup) — Fixed prod 500 (Vercel env var alignment, `f654181`). Resend domain `haravital.app` verified + `lib/email.ts` updated. Pre-launch `/` shipped as Próximamente + waitlist (mig 007, `6c548ef`); post-launch home moved to `/preview`. Test-data cleanup (deleted 23 orphan pros + 59 pqls). Admin delete-professional flow (`2ec2e5f`). Rate limiter fail-open in prod (`987b40e`). Upstash deferred — free-tier DB deleted, restore stuck. Codex review of migs 005/006 caught 4 bugs (missing RLS on 3 tables, off-by-one in upgrade_destacado_tier extension, OLD/NEW professional_id stale-aggregate). 147/147 unit pass.
 - **2026-05-01**: Doc alignment + Cron PRD + Migrations 004/005/006 applied — Created PRODUCT.md (`a670736`), aligned top-level docs (`eb16d0f`), wrote cron infra PRD (`9caae6d`) routing scheduled jobs through self-hosted n8n at https://n8n.greenbit.info. Discovered existing `vercel.json` crons never fired in prod (Vercel Hobby + Supabase paused + migs not applied). Migrations 004/005/006 applied via Supabase SQL Editor + verified end-to-end (RLS active, RPCs functional, triggers correct). 135/135 unit pass.
 - **2026-04-27**: Plan Restructure + Phase 0 PRD — Committed/pushed Reviews Collection System (`cf2fc6d`, 23 files). Rewrote `main.md` Roadmap (`48715d2`): 4 phase gates (Phase 0–3) with definition-of-done, moved polish/perf/a11y/infra items to `Deferred` section with rationale (−173/+91). Wrote `docs/prd/2026-04-27-phase-0-activation.md` (`61b5798`) covering 7 tasks. Mid-session discovered prod 500ing — initial framing of Vercel env-var audit corrected to actual cause (Supabase free-tier auto-pause, one-click resume; `2631b8f`). Saved memory `feedback_simplest_explanation_first.md` anchoring "boring cause first" debugging discipline. 135/135 unit pass.
@@ -478,8 +497,8 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 - [x] What happens when a profile is rejected? Keep data? Allow resubmission? Notify the professional? → **Resolved 2026-05-07/08:** soft no with 60-day cooldown; verbatim rejection_reason emailed to the pro; row preserved (partial UNIQUE excludes rejected from the live-row uniqueness invariant). See Item 3 above.
 - [x] What data should each card in the admin professionals list show? → Name, up to 3 specialty chips (colored), location, status badge (implemented in specialty color system)
 - [ ] Should existing 45 professionals get placeholder images, or leave as initial-letter avatars until they re-register?
-- [ ] **Rewrite scope, timeline, and trigger.** Bel mentioned 2026-05-08 that an app rewrite is on the table. Item 3 carries over (durable: emails + DB column + partial UNIQUE). Items 4 (public home flip), 6 (desktop UI polish), 7 (final wording pass) are potentially throwaway under a rewrite. Decision needed: continue Soft Launch Push on the current app, OR pause it and shape the rewrite. If the rewrite ships first, what's the migration path for existing pros + waitlist + reviews + tracking codes? This is a Phase-0-class strategic call.
-- [ ] **Item 4 detail decisions captured 2026-05-08 (held in case Soft Launch Push continues):** browse-first home (matches PRODUCT.md "primary path"), flip after Item 3 ships (now done — gate cleared), waitlist form repurposed as newsletter footer with a one-time "Hara abrió sus puertas" email to existing signups. Hero copy still TBD by Bel; *"Te conectamos con tu terapeuta ideal"* on `/preview` is pre-pivot wording and must change.
+- [x] **Rewrite scope, timeline, and trigger.** → **Resolved 2026-05-12:** Bel clarified the "rewrite" she'd referenced is a **content rewrite (= Item 7, final wording pass), NOT an app rewrite**. Soft Launch Push continues on the current app. Items 6 + 7 remain in scope; Item 4 moved to **Final Go-Live Gate** (post-Phase-3 trigger) since the app is not ready to open.
+- [x] **Item 4 detail decisions.** → **Resolved 2026-05-12:** Sub-decisions (browse-first home, waitlist → newsletter, post-Item-3 timing) preserved inside the new **Final Go-Live Gate** section at the end of the Roadmap. Hero copy ("Te conectamos con tu terapeuta ideal") is part of Item 7's wording-pass scope, not deferred to the gate itself.
 
 ## Notes
 

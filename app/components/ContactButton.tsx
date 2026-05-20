@@ -61,8 +61,8 @@ export function ContactButton({
           timestamp:         new Date().toISOString(),
           // Read optional reviewer email from localStorage (set by ReviewerEmailCapture)
           reviewer_email:
-            typeof window !== 'undefined'
-              ? (localStorage.getItem(`reviewer-email:${professionalSlug}`) ?? undefined)
+            typeof window !== 'undefined' && window.localStorage
+              ? (window.localStorage.getItem(`reviewer-email:${professionalSlug}`) ?? undefined)
               : undefined,
         }
 

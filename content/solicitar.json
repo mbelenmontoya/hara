@@ -24,7 +24,7 @@
     "location_label": "Ubicación",
     "location_placeholder": "Empezá a escribir tu ciudad...",
     "location_helper": "Seleccioná tu ciudad de la lista. Esto también detecta tu país.",
-    "modality_label": "¿Cómo preferís las sesiones?",
+    "modality_label": "¿Cómo preferís que sea?",
     "modality_options": {
       "online": "Online",
       "presencial": "Presencial",
@@ -44,11 +44,11 @@
     "advanced_toggle_show": "Más opciones",
     "advanced_toggle_hide": "Ocultar opciones adicionales",
     "advanced_section_title": "Opciones adicionales",
-    "practice_label": "Práctica preferida",
+    "practice_label": "Tipo de práctica que preferís",
     "practice_helper": "Si no sabés, no te preocupes — nosotros lo consideramos.",
     "budget_label": "Presupuesto por sesión",
     "email_label": "Email",
-    "email_helper": "Opcional. Para enviarte las recomendaciones también por email.",
+    "email_helper": "Opcional. Te lo enviamos también por email.",
     "submit_button": "Encontrar mis 3 opciones",
     "submit_loading": "Enviando...",
     "privacy_note": "Tu privacidad primero: nadie recibe tus datos hasta que vos escribas.",
@@ -57,7 +57,7 @@
     "error_no_intent": "Seleccioná al menos un tema",
     "error_no_location": "Buscá y seleccioná tu ubicación",
     "error_no_whatsapp": "Ingresá tu WhatsApp",
-    "error_fix_whatsapp": "Corregí el número de WhatsApp antes de enviar",
+    "error_fix_whatsapp": "Corregí el número de WhatsApp",
     "error_generic": "Hubo un error. Intentá de nuevo."
   }
 }

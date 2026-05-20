@@ -126,7 +126,7 @@ export function SolicitarForm({ practices }: Props) {
     if (intentTags.length === 0) { setSubmitError('Seleccioná al menos un tema'); return }
     if (!countryCode && !country) { setSubmitError('Buscá y seleccioná tu ubicación'); return }
     if (!whatsapp) { setSubmitError('Ingresá tu WhatsApp'); return }
-    if (phoneError) { setSubmitError('Corregí el número de WhatsApp antes de enviar'); return }
+    if (phoneError) { setSubmitError('Corregí el número de WhatsApp'); return }
 
     setSubmitting(true)
     try {
@@ -205,7 +205,7 @@ export function SolicitarForm({ practices }: Props) {
                 <p className={HELPER_CLASS}>Seleccioná tu ciudad de la lista. Esto también detecta tu país.</p>
               </div>
               <div>
-                <label className={LABEL_CLASS}>¿Cómo preferís las sesiones?</label>
+                <label className={LABEL_CLASS}>¿Cómo preferís que sea?</label>
                 <div className="flex gap-2">
                   {MODALITY_OPTIONS.map(opt => (
                     <button
@@ -299,7 +299,7 @@ export function SolicitarForm({ practices }: Props) {
                   practices={practices}
                   selected={practicePreference}
                   onChange={setPracticePreference}
-                  label="Práctica preferida"
+                  label="Tipo de práctica que preferís"
                   helperText="Si no sabés, no te preocupes — nosotros lo consideramos."
                   includeNoPreference
                 />
@@ -343,7 +343,7 @@ export function SolicitarForm({ practices }: Props) {
                     placeholder="tu@email.com"
                     className={INPUT_CLASS}
                   />
-                  <p className={HELPER_CLASS}>Opcional. Para enviarte las recomendaciones también por email.</p>
+                  <p className={HELPER_CLASS}>Opcional. Te lo enviamos también por email.</p>
                 </div>
               </div>
             </div>

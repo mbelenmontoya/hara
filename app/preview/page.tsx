@@ -17,7 +17,7 @@ export default function HomePreviewPage() {
           Te conectamos con tu terapeuta ideal
         </h1>
         <p className="text-base text-muted mb-8 leading-relaxed text-center">
-          Recibí 3 recomendaciones personalizadas de profesionales verificados
+          Recibí 3 recomendaciones de profesionales que se ajustan a vos
         </p>
 
         {/* CTAs */}
@@ -38,7 +38,7 @@ export default function HomePreviewPage() {
             href="/profesionales/registro"
             className="block w-full px-6 py-3.5 bg-surface border border-outline text-foreground font-semibold rounded-full shadow-soft hover:shadow-elevated hover:border-muted transition-all text-center"
           >
-            Únete como profesional
+            Sumarte como profesional
           </Link>
         </div>
 
@@ -55,7 +55,7 @@ export default function HomePreviewPage() {
               </div>
               <div>
                 <p className="font-semibold text-foreground mb-1">Cuéntanos qué necesitás</p>
-                <p className="text-sm text-muted leading-relaxed">Completá un breve formulario sobre tus preferencias</p>
+                <p className="text-sm text-muted leading-relaxed">Completá un breve formulario sobre lo que estás buscando</p>
               </div>
             </div>
 
@@ -64,8 +64,8 @@ export default function HomePreviewPage() {
                 2
               </div>
               <div>
-                <p className="font-semibold text-foreground mb-1">Recibí 3 recomendaciones</p>
-                <p className="text-sm text-muted leading-relaxed">Te enviamos perfiles de profesionales que se ajustan a vos</p>
+                <p className="font-semibold text-foreground mb-1">Recibí 3 opciones</p>
+                <p className="text-sm text-muted leading-relaxed">Te enviamos profesionales que se ajustan a lo que dijiste</p>
               </div>
             </div>
 
@@ -74,8 +74,8 @@ export default function HomePreviewPage() {
                 3
               </div>
               <div>
-                <p className="font-semibold text-foreground mb-1">Contactá directamente</p>
-                <p className="text-sm text-muted leading-relaxed">Iniciá la conversación por WhatsApp sin intermediarios</p>
+                <p className="font-semibold text-foreground mb-1">Conectá directamente</p>
+                <p className="text-sm text-muted leading-relaxed">Hablás por WhatsApp, sin intermediarios, cuando quieras</p>
               </div>
             </div>
           </div>

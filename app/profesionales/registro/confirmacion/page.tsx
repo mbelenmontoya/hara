@@ -51,7 +51,7 @@ export default function ConfirmationPage() {
                 <div className="flex flex-col items-center">
                   <div className="w-2.5 h-2.5 rounded-full bg-white" />
                 </div>
-                <p className="text-sm text-muted -mt-0.5">Tu perfil se activa y empezás a recibir leads</p>
+                <p className="text-sm text-muted -mt-0.5">Tu perfil se activa y empezás a recibir solicitudes</p>
               </div>
             </div>
           </div>

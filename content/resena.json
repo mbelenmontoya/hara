@@ -24,8 +24,8 @@
     "state_consumed_title": "Esta reseña ya fue enviada.",
     "state_consumed_body": "Ya enviaste tu reseña. Gracias por tu tiempo.",
     "state_expired_title": "El enlace de reseña venció.",
-    "state_expired_body": "Este enlace de reseña ya no es válido. Si querés dejar tu opinión, contactanos.",
+    "state_expired_body": "Este enlace ya no es válido. Si querés dejar tu opinión, contactanos.",
     "state_invalid_title": "Enlace inválido.",
-    "state_invalid_body": "Este enlace de reseña no existe o es incorrecto."
+    "state_invalid_body": "Este enlace no existe o es incorrecto."
   }
 }

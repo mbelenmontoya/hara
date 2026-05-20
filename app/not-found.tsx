@@ -28,7 +28,7 @@ export default function NotFound() {
         </h2>
 
         <p className="text-muted leading-relaxed mb-6">
-          No encontramos esta página. Puede que el link esté roto o que la dirección haya cambiado.
+          No encontramos esta página. Puede que el link esté roto o que haya cambiado.
         </p>
 
         <Link

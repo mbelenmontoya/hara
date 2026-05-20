@@ -289,21 +289,21 @@ export async function notifyProfessionalApproved({
           ¿Cómo te encuentran?
         </h3>
         <p style="font-size: 14px; color: #1F1A24; line-height: 1.6; margin-bottom: 16px;">
-          Tu perfil aparece en <strong>/profesionales</strong>. También podemos recomendarte cuando alguien que busca ayuda holística llene el formulario de solicitud y vos seas un buen match.
+          Tu perfil aparece en <strong>/profesionales</strong>. También podemos recomendarte cuando alguien que busca ayuda holística complete el formulario de solicitud y vos seas un buen match.
         </p>
 
         <h3 style="font-size: 16px; font-weight: 600; margin-top: 24px; margin-bottom: 8px; color: #1F1A24;">
           ¿Cómo te contactan?
         </h3>
         <p style="font-size: 14px; color: #1F1A24; line-height: 1.6; margin-bottom: 16px;">
-          Cuando alguien hace click en el botón de contacto de tu perfil, se abre un chat de WhatsApp directo a tu número. No filtramos ni intermediamos — la conversación es entre vos y el cliente.
+          Cuando alguien hace click en tu perfil, se abre un chat de WhatsApp directo a tu número. No filtramos ni intermediamos — la conversación es entre vos y el cliente.
         </p>
 
         <h3 style="font-size: 16px; font-weight: 600; margin-top: 24px; margin-bottom: 8px; color: #1F1A24;">
           ¿Querés actualizar algo?
         </h3>
         <p style="font-size: 14px; color: #1F1A24; line-height: 1.6; margin-bottom: 24px;">
-          Por ahora, escribinos a ${ADMIN_EMAIL} y te lo cambiamos. Pronto vas a poder editarlo vos directamente.
+          Por ahora, escribinos a ${ADMIN_EMAIL}. Pronto vas a poder editarlo vos directamente.
         </p>
 
         <p style="font-size: 15px; color: #6B6374; line-height: 1.6; margin-top: 24px;">

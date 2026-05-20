@@ -558,7 +558,7 @@ export function RegistroForm({ practices }: Props) {
                     placeholder="Ej: Psicóloga especializada en ansiedad y estrés laboral"
                     className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all"
                   />
-                  <p className="text-xs text-muted mt-1.5">Una línea que aparece debajo de tu nombre en el perfil</p>
+                  <p className="text-xs text-muted mt-1.5">Una línea que aparece debajo de tu nombre</p>
                 </div>
 
                 <div>
@@ -568,7 +568,7 @@ export function RegistroForm({ practices }: Props) {
                   <textarea
                     value={formData.bio}
                     onChange={(e) => updateField('bio', e.target.value)}
-                    placeholder="Contá un poco sobre tu enfoque, cómo trabajás y qué pueden esperar tus pacientes..."
+                    placeholder="Contá tu enfoque, cómo trabajás y qué pueden esperar tus pacientes..."
                     rows={5}
                     className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all resize-none"
                   />
@@ -584,7 +584,7 @@ export function RegistroForm({ practices }: Props) {
                   <textarea
                     value={formData.experience_description}
                     onChange={(e) => updateField('experience_description', e.target.value)}
-                    placeholder="Formación, años de experiencia, instituciones donde trabajaste, certificaciones..."
+                    placeholder="Formación, años de experiencia, instituciones, certificaciones..."
                     rows={4}
                     className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all resize-none"
                   />

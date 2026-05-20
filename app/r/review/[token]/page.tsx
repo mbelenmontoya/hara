@@ -54,11 +54,11 @@ const STATE_MESSAGES: Record<Exclude<TokenState, 'valid'>, { title: string; body
   },
   expired: {
     title: 'El enlace de reseña venció.',
-    body: 'Este enlace de reseña ya no es válido. Si querés dejar tu opinión, contactanos.',
+    body: 'Este enlace ya no es válido. Si querés dejar tu opinión, contactanos.',
   },
   invalid: {
     title: 'Enlace inválido.',
-    body: 'Este enlace de reseña no existe o es incorrecto.',
+    body: 'Este enlace no existe o es incorrecto.',
   },
 }
 

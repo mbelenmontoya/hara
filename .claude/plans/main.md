@@ -33,7 +33,7 @@ Deployed at: https://hara-weld.vercel.app
 - [x] DB supports `rejected` status and `rejection_reason`
 - [x] Specialty color system — 12 curated colors, custom specialty support, admin mapping
 - [x] 3-level testing infrastructure — 26 component tests + E2E + visual regression
-- [ ] All pages visually match the design system (liquid-glass, tokens, pill buttons, identical page shells) — desktop responsive pass complete (Item 6, awaiting Bel approval); full visual testing still needed
+- [ ] All pages visually match the design system (liquid-glass, tokens, pill buttons, identical page shells) — desktop responsive pass (Item 6) + JSON-driven wording pass (Item 7) committed 2026-05-20, awaiting Bel manual browser verification to flip to VERIFIED
 - [x] Public directory page (`/profesionales`) with reputation-based ranking — shipped 2026-04-24 (migration 004: ranking columns + trigger; /profesionales server component; home page 3rd CTA)
 - [x] Home page redesign with dual CTA (concierge + directory) — "Ver profesionales" CTA added 2026-04-24
 - [x] Destacado tier MVP — admin-gated payment recording, expiry-aware ranking, public Destacado chip, daily cron cleanup (shipped 2026-04-27, migration 005)
@@ -85,8 +85,8 @@ The product ships in 4 phase gates. Each phase has a clear definition of done. *
 3. ~~**Professional approval/rejection emails**~~ ✅ **Built + VERIFIED 2026-05-08.** PRD `docs/prd/2026-05-07-pro-approval-rejection-emails.md` → plan `docs/plans/2026-05-08-pro-approval-rejection-emails.md` → 6 tasks all done. Three new pro-facing email functions in `lib/email.ts` (submission confirmation, approval, rejection-with-verbatim-reason), `emailBaseUrl()` + `escapeHtml()` helpers, registration cooldown check with server-composed Spanish error, admin PATCH email firing + `resubmit_after` write, Reject modal Flow-6 copy. Migration 011 applied (idempotent: schema-syncs `rejected` status + `rejection_reason` that lived only in `scripts/migrate-review-flow.mjs`, plus `resubmit_after TIMESTAMPTZ`, partial UNIQUE on email excluding rejected, regular email index). 251/251 unit tests, 3/3 integration tests, partial-UNIQUE smoke test green. Bonus fix: corrected operator-precedence bug at the previous `lib/email.ts:113-115` baseUrl pattern.
 4. ~~**Public home flip**~~ — **Moved 2026-05-12 to the *Final Go-Live Gate* at the end of this plan.** The app is not ready to open yet; the home flip is the actual go-live moment, not a launch-readiness item. Item number kept (do not renumber) so session-log references to "Item 4" stay valid.
 5. **Rejected-profile policy decision** — ✅ **Decided 2026-05-07: Soft no with 60-day cooldown.** Rejected pros can reapply after 60 days. Implementation: `resubmit_after TIMESTAMPTZ` on `professionals` (set on rejection to `NOW() + INTERVAL '60 days'`), registration handler blocks re-registration with the same email until `resubmit_after` passes. Rejection email (item 3) says: warm explanation + `rejection_reason` + *"Podés volver a aplicar a partir del [fecha]"*. **Now unblocks Item 3.**
-6. **Desktop UI polish pass** — Mobile-first design works on phones; desktop "looks fine but that's it." Sweep every public + admin route at desktop widths (>= 1024px), catalog visual breaks, and tighten spacing/alignment/proportions for the 960px container. Bel runs Phase 0 mobile QA in parallel; this item is its desktop counterpart.
-7. **Final wording pass** — Single consolidated copy review across every user-facing surface (homepage, `/profesionales`, `/solicitar`, `/gracias`, `/p/[slug]`, `/profesionales/registro`, all admin emails, all confirmation pages, error states). Done at the end so we audit against final structure, not chase moving copy. The *"¿Querés saber cuando abramos?"* on the current `/` is one example of the kind of line this pass exists to fix.
+6. ~~**Desktop UI polish pass**~~ ✅ **Built 2026-05-14, committed/pushed 2026-05-20 (`4dd2ad0`). Awaiting Bel manual browser verification to flip to VERIFIED.** PRD `docs/prd/2026-05-14-desktop-responsive-ui-pass.md`, plan `docs/plans/2026-05-14-desktop-responsive-ui-pass.md`. 11 tasks: `.container-public` extended to 1024px at `lg:`, `SiteHeader` with desktop nav (3 links + active state) wired to root layout, `/p/[slug]` decomposed into 6 sub-components + sticky contact sidebar, `/r/[tracking_code]` extracted into `DeckView`/`GridView`/`RecommendationCard`, `RevealOnScroll` with `prefers-reduced-motion`, `/profesionales` 2-col grid at `lg:`, BottomSheet modal-on-desktop.
+7. ~~**Final wording pass**~~ ✅ **Applied 2026-05-20 (`f8f2471`). Awaiting Bel manual browser verification to flip to VERIFIED.** JSON-driven approach (different from the 2026-05-13 reverted attempt): Bel writes finalized Spanish copy in `content/*.json` (13 files), Claude mechanically applies to app files. 21 string changes across 7 files (preview, solicitar, r/review, registro, registro/confirmacion, lib/email, not-found); 7 files already matched JSON. 6 categories of gap-strings documented in 2026-05-20 session log for follow-up.
 8. **`/ayuda` — Public support page** *(added 2026-05-12 from route-inventory audit)* — Lead-facing route for link recovery ("perdí mi link de recomendaciones"), common errors, and basic support contact. Lightweight static page or simple form. Launch-relevant: a user who loses their `/r/[tracking_code]` link today has no recovery path. Surface: new `app/ayuda/page.tsx`, link from footer + error states.
 
 #### Operational admin routes (added 2026-05-12 from route-inventory audit)
@@ -234,24 +234,74 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 ## Next Steps
 
-1. **Approve Item 6 spec after manual browser test**
-   - What: Open `http://localhost:3000` and verify — nav links at 1280px, 2-column directory at 1280px, container 640px on mobile, scroll reveals on home page, no regressions. Then approve spec-verify gate.
-   - Why: Plan status is COMPLETE; one manual approval step remains before VERIFIED.
+1. **Bel manual browser test of Items 6 + 7**
+   - What: Open `http://localhost:3000` and verify both passes — desktop nav links at 1280px, 2-column directory, scroll reveals on home + profile, sticky contact sidebar at `/p/[slug]`, container 640px on mobile, 1024px on desktop. Spot-check applied copy on `/preview`, `/solicitar`, `/r/review/[token]`, `/profesionales/registro`, `/profesionales/registro/confirmacion`, `/not-found`, and pro approval email (if you can trigger one).
+   - Why: Both items are committed + pushed. Manual verification flips them to VERIFIED in the plan.
 
-2. **Commit Item 6 as a clean PR**
-   - What: `git add` all modified/new files + commit with message `feat(ui): desktop responsive UI pass (Soft Launch Push Item 6)`. Push and open PR.
-   - Considerations: ~25 files changed (16 modified + 9 new components/types). Plan file + PRD are untracked — include them.
+2. **Decide on Item 7 gap strings**
+   - What: 6 categories of app strings are NOT in `content/*.json` (left unchanged today). Either add them to JSON (then re-apply), accept as-is, or update them using `voice.json` rules.
+   - Considerations: `'Enviando…'` (WaitlistForm), directory chip dynamic labels ("Online"/"Presencial", "desde/hasta"), profile review fallbacks ("Anónimo"), Solicitar currency labels + "Mín/Máx", Registro currency descriptions + "Vista previa", admin emails (out of scope per `emails.json`).
 
-3. **Item 7 — Final wording pass (next /spec)**
-   - What: `docs/prd/2026-05-12-wording-pass.md` is Final (was written 2026-05-12 but uncommitted). Commit the PRD, then `/spec docs/prd/2026-05-12-wording-pass.md`. Bel writes final Spanish copy anchored on the PRD's Voice section; Claude applies file by file across 17 surfaces.
-   - Why: Last Soft Launch Push item before the Final Go-Live Gate.
+3. **Item 4 (Public home flip) — deferred until Phase 1 done**
+   - What: Public home flip (`/` from Próximamente to open-doors home). See Final Go-Live Gate section for prerequisite checklist.
 
-4. **Final Go-Live Gate (Item 4) — deferred until items above + Phase 1 done**
-   - What: Public home flip (`/` from Próximamente to open-doors home). See Roadmap section for full prerequisite checklist.
+4. **Phase 1 — first 10 pros, 5 concierge requests, Sentry + Vercel Analytics**
+   - What: Soft Launch Push items are done. Phase 1 work can begin: wire Sentry + Vercel Analytics, schedule recurring crons on Vercel, onboard 10 real pros, handle 5 real concierge requests.
 
 ---
 
 ## Session Log
+
+### Session — 2026-05-20 (Soft Launch Push Items 6 + 7 committed/applied + Node 26 test compat fix)
+
+**Completed — Cleared committed-state debt from 2026-05-13/14:**
+- `/start-session` discovery surfaced 2026-05-13 gap not in the plan: Item 7 wording pass had been committed (`e7e7c20`) and reverted same day (`fc575a5`) by Bel. Item 6 was still uncommitted from the 2026-05-14 session. Between sessions Bel created `content/` directory with 13 JSON files (per-page copy + `voice.json`) as the new source-of-truth for copy.
+- Bel asked to commit + push everything. Single-commit choice. Added `.playwright-cli/` and `.claude/test-analyses/` to `.gitignore` (tooling output, local only). Created commit `4dd2ad0` `feat(ui): desktop responsive UI pass + content files (Soft Launch Push Item 6)` — 46 files (Item 6 UI changes + 6 new profile sub-components + `SiteHeader`, `RevealOnScroll`, `GridView`/`DeckView`/`RecommendationCard` + `content/*.json` + plan/PRD docs).
+
+**Completed — Pre-existing test failure investigation + fix:**
+- Push blocked by pre-push hook — 6 test failures in `ContactButton.test.tsx` + `ReviewerEmailCapture.test.tsx`. Not introduced by Item 6 (those files weren't touched in the commit). Root cause: Node 26.0.0 defines `localStorage` as experimental global (returns `undefined` without `--localstorage-file`); shadows jsdom 29.0.1's `window.localStorage`. Direct-contact path in `ContactButton` threw on `localStorage.getItem(...)` before `sendBeacon` fired.
+- Three-part fix: (1) `vitest.workspace.ts` — added `environmentOptions.jsdom.url = 'http://localhost'` (jsdom needs a URL origin for storage APIs); (2) `__tests__/setup/component-setup.ts` — added `vi.stubGlobal('localStorage', …)` shim with stateful Map-backed implementation; (3) `app/components/ContactButton.tsx` — guarded the access via `typeof window !== 'undefined' && window.localStorage` so production code is defensive too.
+- 251/251 unit tests passing after fix. Commit `98f79be` `fix(tests): localStorage shim for Node 26 + jsdom URL for sendBeacon`. Pushed cleanly.
+
+**Completed — Item 7 (Wording pass) applied via JSON-driven approach:**
+- Bel: *"i did correct them but i feel not all the text in the app are in the json file. can you update all the text based on the new changes?"*. New approach (different from the 2026-05-13 reverted attempt): Bel writes the finalized copy in `content/*.json`, Claude does the mechanical apply to app files. No Claude-written copy decisions — addresses why the 2026-05-13 attempt was reverted.
+- Quick-mode file-by-file plus a "flag and ask for gaps" choice via `AskUserQuestion`. TaskList with 13 tasks.
+- **21 string changes across 7 files; 7 files already matched JSON:**
+  - `app/preview/page.tsx` (7): hero subtitle drops "personalizadas/verificados" filler, "Únete" → "Sumarte", 3 step pairs reworded ("Recibí 3 opciones", "Conectá directamente", "Hablás por WhatsApp, sin intermediarios, cuando quieras").
+  - `app/solicitar/SolicitarForm.tsx` (4): modality label "¿Cómo preferís las sesiones?" → "¿Cómo preferís que sea?", practice picker label, email helper, phone error.
+  - `app/r/review/[token]/page.tsx` (2): expired + invalid bodies drop "de reseña" filler.
+  - `app/profesionales/registro/RegistroForm.tsx` (3): description helper, bio placeholder, experience placeholder — all shortened.
+  - `app/profesionales/registro/confirmacion/page.tsx` (1): step3 "leads" → "solicitudes".
+  - `lib/email.ts` (3): `notifyProfessionalApproved` — "llene" → "complete", "click en el botón de contacto de tu perfil" → "click en tu perfil", "escribinos a … y te lo cambiamos" → "escribinos a …".
+  - `app/not-found.tsx` (1): body drops "la dirección".
+  - **Matched without changes:** `app/page.tsx` + `WaitlistForm`, `app/profesionales/page.tsx`, `app/gracias/page.tsx`, `app/p/[slug]/page.tsx` + 6 sub-components, `app/r/[tracking_code]/page.tsx`, `ReviewSubmitForm.tsx`, `app/error.tsx`.
+- Bel also corrected `content/*.json` source-of-truth files during the session (7 JSONs touched).
+- 251/251 unit tests · tsc clean. No test assertions on changed strings (grep verified). Commit `f8f2471` `feat(copy): apply wording pass from content/*.json (Soft Launch Push Item 7)`. Pushed cleanly.
+
+**Gaps surfaced (app strings NOT in `content/*.json`, left unchanged per Bel's "flag and ask" choice):**
+- `WaitlistForm`: `'Enviando…'` (submit loading state).
+- Directory cards (`/profesionales`): dynamic modality labels (`'Online'`/`'Presencial'`), location format separator, `'desde'`/`'hasta'` price prefixes.
+- `ProfileReviews`: `'Anónimo'` fallback for null `reviewer_name`, star glyphs, `'es-AR'` date format.
+- `SolicitarForm`: currency labels (`'ARS'`, `'USD'`, `'EUR'`, `'MXN'`), `'Mín'`/`'Máx'` budget placeholders, `'Ej: +5491123456789'` phone fallback, ` para ${country}` phone error suffix.
+- `RegistroForm`: currency labels with descriptions (`'ARS (Peso argentino)'`, etc.), `'Ej: 50'`/`'Ej: 100'` price placeholders, `'Vista previa'` image alt, dev-only bg-picker strings.
+- `lib/email.ts`: `notifyNewLead` + `notifyNewProfessional` (admin emails — explicitly out of scope per `emails.json` description).
+
+**Modified from plan:**
+- Item 7 plan said "/spec docs/prd/2026-05-12-wording-pass.md, Bel writes Spanish copy" — this session executed it as quick-mode apply from `content/*.json` instead (Bel had already written copy in JSON files between sessions). Outcome is the same; ceremony was lighter because the copy authorship question was already settled in her favor.
+- Item 6 carries from "uncommitted COMPLETE" (2026-05-14) → "committed, awaiting Bel's manual browser test for VERIFIED stamp".
+
+**Deviations:**
+- Pre-push hook test failure that blocked Item 6 commit was not previously known. Surfaced because Node 26 changed `localStorage` semantics between the 2026-05-14 session and today. Fixed inline before push.
+- A git stash conflict cropped up mid-investigation (stash pop tried to restore a file deleted by upstream `fc575a5` revert). Resolved with `git rm` + `stash drop` — no work lost.
+
+**Blockers:**
+- None resolved. **Open:** Bel's manual browser test of Items 6 + 7 (visual sanity check) to flip them to VERIFIED. Decision needed on the 6 gap-string categories (add to JSON, accept, or update with voice rules).
+
+**Tests:** 251/251 unit pass · tsc clean · pre-push hook green on both pushes.
+
+**Commits this session:** `4dd2ad0` (Item 6), `98f79be` (Node 26 test fix), `f8f2471` (Item 7).
+
+---
 
 ### Session — 2026-05-14 (Soft Launch Push Item 6: Desktop responsive UI pass — plan COMPLETE, awaiting manual approval)
 
@@ -450,61 +500,8 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 ---
 
-### Session — 2026-05-05 (Soft Launch Push Item 1: Holistic practice catalog implementation)
-
-**Completed — PRD + plan via /prd → /spec workflow:**
-- Wrote `docs/prd/2026-05-05-holistic-modality-catalog.md` (Status: Final). Standard-tier research surfaced Nomada (closest competitor in AR) listing 20 categories; we landed on 15 canonical practices: reiki, constelaciones-familiares, registros-akashicos, diseno-humano, terapia-floral, masaje-terapeutico, meditacion-mindfulness, biodecodificacion, sonoterapia, tarot-terapeutico, astrologia, coaching-ontologico, aromaterapia, yoga-terapeutico, terapia-energetica.
-- **PRD-amendment found during /spec-plan exploration:** PRD originally proposed renaming `style[]` → `modalities[]`, but the existing schema already has `professionals.modality TEXT[]` (online/presencial format) and `leads.modality_preference TEXT[]`. Singular-vs-plural collision plus literal SQL collision on `leads.modality_preference`. Bel chose `practices` / "Práctica" — PRD amended with full substitution table (key/label/component/file/UI label).
-- Wrote `docs/plans/2026-05-05-holistic-modality-catalog.md` (12 tasks, Status: COMPLETE, Approved: Yes). Spec-review caught 4 issues during planning, all fixed before implementation: migration step ordering hardened (UPDATE WHERE NULL before SET NOT NULL), Tasks 4–7 reordered to pair form refactors with their write-path updates so the data flow never breaks mid-chain, PracticeReclassificationBanner extracted as its own component for proper test coverage, validatePracticeKeys cache TTL spelled out.
-- Edited global rule `~/.claude/rules/task-and-workflow.md` line 7: Bel never authored the "NEVER auto-invoke /spec" rule. Replaced with the correct pattern (ask for approval, then invoke). Memory `feedback_spec_invocation_allowed.md` already captured this from a prior session.
-
-**Completed — Implementation (12 tasks, all green):**
-- `migrations/010_holistic_practices_catalog.sql` — atomic transaction. CREATE TABLE practices, INSERT 15 seeds, RENAME `professionals.style` → `practices`, RENAME `leads.style_preference` → `practice_preference`, UPDATE all professionals to `practices = '{}'`, SET NOT NULL DEFAULT '{}', ADD `needs_practice_review` boolean, mark all 45 pros for re-classification.
-- `lib/practices.ts` — `Practice` type, `getActivePractices()`, `validatePracticeKeys()`. Module-level singleton cache with 60s TTL shared between both helpers, so registration / createLead / admin PATCH paths don't issue per-write Supabase round-trips.
-- `app/components/PracticePicker.tsx` — shared `'use client'` chip multi-select used by registro form, solicitar form, and the admin re-classification banner. Optional `includeNoPreference` prop renders a "No tengo preferencia" pill with mutual-exclusion semantics (clicking it clears the array; clicking any chip while it's active starts a fresh selection).
-- Refactored `app/profesionales/registro/page.tsx` and `app/solicitar/page.tsx` into server-component shells + `RegistroForm.tsx` / `SolicitarForm.tsx` client form children. Both pages get `export const dynamic = 'force-dynamic'`. Form bodies moved verbatim except `style[]` → `practices[]` field name and the inline `STYLES.map(...)` / `STYLE_OPTIONS.map(...)` blocks replaced with `<PracticePicker>`.
-- `app/api/professionals/register/route.ts` — reads `practices` from FormData, calls `validatePracticeKeys()` (returns 400 with offending key on mismatch), inserts into `practices` column.
-- `app/actions/create-lead.ts` — input renamed `style_preference` → `practice_preference`, validates keys, inserts into renamed column.
-- `app/api/admin/professionals/[id]/route.ts` — GET response now `{ professional, practices }`. PATCH gained a practices-only path parallel to the specialty-only path, with empty-array enforcement (server-side defends against direct curl calls), type narrowing on array elements, and a single-query update (`update().eq().select().single()`) eliminating the TOCTOU window the changes-reviewer flagged.
-- `app/admin/professionals/[id]/review/components/PracticeReclassificationBanner.tsx` — `'use client'` extracted component. Renders only when `needs_practice_review = true`, uses `<PracticePicker>`, save button disabled when nothing selected, calls extended PATCH, refetches on success, stays mounted with error message on failure. Now also accepts `initialSelected` prop and the review page passes `professional.practices` so re-runs pre-fill correctly (changes-reviewer fix #6).
-- Wired the banner into `app/admin/professionals/[id]/review/page.tsx`, dropped `STYLE_MAP` import, built `practiceLabelMap` from the fetched catalog, renamed "Enfoque terapéutico" → "Prácticas".
-- Updated `app/p/[slug]/page.tsx` — selects `practices` from DB, builds catalog map, renders practice labels with `practiceLabelMap[k] ?? k` fallback for unknown keys, dropped `STYLE_MAP` import. Added `export const dynamic = 'force-dynamic'` (changes-reviewer fix #2 — defensive even though the parameterized [slug] route was already rendering dynamic without it).
-- Removed `STYLE_MAP` from `lib/design-constants.ts` (final cleanup, Task 11). `grep -r STYLE_MAP app lib` returns no matches.
-- Updated `__tests__/e2e/registration-full-flow.spec.ts` — selects two practice chips (Reiki + Meditación y mindfulness) at step 1, asserts `aria-pressed='true'` after click, post-submit fetches the row from Supabase and asserts `practices` array contains both keys (changes-reviewer fix #1: replaced `if (practicesRow)` silent skip with `expect(practicesRow).not.toBeNull()` followed by unconditional assertion).
-
-**Completed — Test coverage:**
-- 37 new tests across 8 new test files: `lib/practices.test.ts` (8 — cache behavior + TTL with mocked Date), `__tests__/integration/practices-helpers.test.ts` (5), `__tests__/integration/practices-migration.test.ts` (10 — needs migration applied to go green), `__tests__/integration/create-lead.test.ts` (3), `app/components/PracticePicker.test.tsx` (13 — chip rendering, selection, no-preference mutual exclusion), `app/api/professionals/register/route.test.ts` (4), `app/api/admin/professionals/[id]/route-practices.test.ts` (6 — GET extended response + practices-only PATCH with all 4 validation paths + existing approve/reject untouched), `app/admin/professionals/[id]/review/components/PracticeReclassificationBanner.test.tsx` (6 — render conditions, save button disable, success unmount, failure mounted-with-error).
-- **184/184 unit tests passing** (was 147 before this session — 37 added). Build clean. Full lint pass. Integration tests for practices-migration + practices-helpers will go RED until migration 010 is applied to Supabase test DB.
-
-**Completed — Two reviewer cycles, all findings addressed:**
-- spec-review (planning phase) — 4 issues, all fixed in plan before implementation started: migration ordering, task chain ordering (4→5→6→7 pairing), banner UI test gap, validation cache.
-- changes-review (verify phase) — 4 issues found post-implementation, all fixed: TS-001 silent assertion → unconditional check; `/p/[slug]` got `force-dynamic`; TOCTOU eliminated via single-query update with `.select().single()`; type narrowing for `practices` array elements; banner gets `initialSelected` prop wired from `professional.practices`. The migration NOT NULL constraint test exists at `practices-migration.test.ts:110` (the changes-reviewer flagged it as possibly missing because they couldn't see it in the diff context — confirmed present, no fix needed).
-
-**Modified:**
-- PRD's `modalities` naming → `practices` mid-flight (post-amendment) for column-name disambiguation. The 15 seed values themselves (keys + Spanish labels) are unchanged from the PRD's research-driven canonical list.
-- Test approach for the two `'use client'` form refactors (RegistroForm, SolicitarForm) and the two server shells: deliberately did not write per-page Vitest tests despite TDD-reminder hooks firing repeatedly. Reasoning: the form bodies are existing code moved verbatim with surgical changes (field rename, picker swap), and the meaningful behavior is covered at the right layers — `<PracticePicker>` has its own 13-test suite, the API write paths have their own 4 + 3 + 6 test suites, and the E2E covers the full registration flow. Mock-everything-then-assert-composition tests would test the framework, not our logic.
-
-**Deviations:**
-- Spent extra cycles on TDD-hook noise during the form refactors. Hook fires on every `Write`/`Edit` to a non-test file regardless of whether tests exist at meaningful layers. Continued the work, documented the reasoning above.
-- The user attempted `/end-session` (Step 18 Code Review Gate currently held open with "Manual — I'll test and report back" — verification is not yet VERIFIED, will be completed when user confirms after testing).
-
-**Blockers / open follow-ups:**
-- **Bel must apply `migrations/010_holistic_practices_catalog.sql`** to Supabase before integration tests turn green and the running app works end-to-end. Migration 009 (carry-over from 2026-05-03) also still pending. Both via SQL Editor.
-- spec-verify Step 18 gate held open — user chose "Manual — I'll test and report back". Plan status is `COMPLETE` (not yet `VERIFIED`). When Bel approves after live testing, mark VERIFIED.
-- 30+ files modified/uncommitted. This change is a clean separable commit (Soft Launch Push Item 1: holistic practice catalog).
-- Phase 0 Tasks 3–6 still on Bel's parallel track.
-
-**Tests:** 184/184 unit pass · build clean · lint clean · integration tests RED until migration 010 applied · E2E ready for live test DB.
-
-**Resume here:**
-1. Bel applies migration 010 to Supabase (and 009 if not done).
-2. Run `npm run test:integration` — practices-migration + practices-helpers go green.
-3. Smoke test: `/profesionales/registro` step 2 shows the new "Práctica" picker; `/admin/professionals/[id]/review` shows re-classification banner for every existing pro; pick practices + save → banner disappears + Prácticas section populates.
-4. Bel returns to spec-verify gate, approves → plan flips to VERIFIED.
-5. Then commit (clean separable PR for Soft Launch Push Item 1).
-6. Then move to **Soft Launch Push Item 2: Concierge link delivery** — admin success screen "Send to user" button (WhatsApp link + Resend email) wiring `/r/{tracking_code}` delivery automatically, fulfilling the `/gracias` promise.
-
 ### Archived Sessions
+- **2026-05-05 (later)**: Soft Launch Push Item 1 — Holistic practice catalog (`/prd` → `/spec`, plan `docs/plans/2026-05-05-holistic-modality-catalog.md`, PRD `docs/prd/2026-05-05-holistic-modality-catalog.md`). 15-practice canonical catalog seeded via `migrations/010_holistic_practices_catalog.sql` (created table + renamed `style` → `practices` + `style_preference` → `practice_preference` + `needs_practice_review` flag for the 45 pre-existing pros). `lib/practices.ts` with 60s TTL cache, shared `<PracticePicker>` (registro + solicitar + admin), refactored both forms to server/client split, `app/api/admin/professionals/[id]/route.ts` GET+PATCH practices-only path, `PracticeReclassificationBanner` for the 45 pros. 12 tasks all green. 184/184 unit (37 new). Two reviewer cycles, all findings fixed. Migration 010 + 009 pending Bel's SQL Editor apply at session end. Plan status COMPLETE pending live test + approval.
 - **2026-05-05**: Positioning reframe across all docs + Phase 0 hand-off + workflow audit — Rewrote product framing (terapias alternativas y bienestar holístico) across 9 MD files; stripped negative brand framing per Bel's feedback; Phase 0 handed off to Bel as parallel verification track. Workflow audit surfaced 7 Soft Launch Push items (modality catalog, concierge link delivery, pro emails, home flip, rejected policy, desktop UI, wording pass); full audit captured in this plan.
 - **2026-05-03**: Heartbeat + review-delay refactor + UI 960px pass — Migration 008 (heartbeat table) applied + n8n workflow extended with Postgres node + Resend error notification + `automation/docs/heartbeat.md`. Upstash deferred indefinitely (free-tier DB stuck pending-restore, fail-open in prod). Migration 009 (review-delay parameterization) — RPC `select_pending_review_events(delay_days INT DEFAULT 7)`, fixed dropped-events bug from hardcoded `BETWEEN NOW() - 7d AND NOW() - 6d` 24h window. `app/api/cron/send-review-requests/route.ts` reads `REVIEW_DELAY_DAYS` env var. `.env.local` `*_ANON_KEY` → `*_PUBLISHABLE_KEY` rename. UI: 960px container expansion across 10 public pages + AdminLayout; 5 card lists → 3-col responsive grid; `/profesionales` richer directory cards with 9 added fields + `force-dynamic`. 17 modified + 5 untracked uncommitted. Migration 009 not yet applied to Supabase.
 - **2026-05-01 → 2026-05-03**: Phase 0 push (domain, homepage, cleanup) — Fixed prod 500 (Vercel env var alignment, `f654181`). Resend domain `haravital.app` verified + `lib/email.ts` updated. Pre-launch `/` shipped as Próximamente + waitlist (mig 007, `6c548ef`); post-launch home moved to `/preview`. Test-data cleanup (deleted 23 orphan pros + 59 pqls). Admin delete-professional flow (`2ec2e5f`). Rate limiter fail-open in prod (`987b40e`). Upstash deferred — free-tier DB deleted, restore stuck. Codex review of migs 005/006 caught 4 bugs (missing RLS on 3 tables, off-by-one in upgrade_destacado_tier extension, OLD/NEW professional_id stale-aggregate). 147/147 unit pass.

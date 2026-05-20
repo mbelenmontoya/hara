@@ -43,8 +43,8 @@ export function useMediaQuery(query: string): boolean {
 
 /**
  * Convenience hook for desktop detection
- * Desktop is defined as viewport width >= 768px
+ * Desktop is defined as viewport width >= 1024px (matches .container-public breakpoint)
  */
 export function useIsDesktop(): boolean {
-  return useMediaQuery('(min-width: 768px)')
+  return useMediaQuery('(min-width: 1024px)')
 }

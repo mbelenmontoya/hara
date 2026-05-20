@@ -1,0 +1,33 @@
+{
+  "route": "/p/[slug]",
+  "file": "app/p/[slug]/page.tsx",
+  "description": "Public profile page for a professional. Shows identity, expertise, about, reviews, logistics, contact.",
+  "strings": {
+    "back_to_recommendations": "Volver a recomendaciones",
+    "back_to_home": "Ir al inicio",
+    "accepting_clients_chip": "Aceptando nuevos pacientes",
+    "section_specialties": "Especialidades",
+    "section_practices": "Prácticas",
+    "section_service_type": "Tipo de servicio",
+    "section_about": "Sobre mí",
+    "section_experience": "Sobre la experiencia",
+    "section_reviews": "Reseñas",
+    "review_singular": "reseña",
+    "review_plural": "reseñas",
+    "section_modality": "Modalidad",
+    "section_location": "Ubicación presencial",
+    "section_price": "Rango de precios",
+    "section_courses": "Cursos",
+    "courses_online": "Online",
+    "courses_presencial": "Presenciales — {location}",
+    "section_contact": "Contacto",
+    "contact_whatsapp_label": "WhatsApp",
+    "contact_instagram_label": "Instagram",
+    "contact_button": "Abrir WhatsApp",
+    "contact_button_loading": "Contactando a {name}...",
+    "privacy_note": "Tu privacidad primero: nadie recibe tus datos hasta que vos escribas.",
+    "location_online_only": "Solo online",
+    "price_from": "Desde {currency} {min}",
+    "price_up_to": "Hasta {currency} {max}"
+  }
+}

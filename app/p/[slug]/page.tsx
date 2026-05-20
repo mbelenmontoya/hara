@@ -1,6 +1,4 @@
 // Hara Vital - Professional Profile Page
-// Purpose: Public profile view for professionals
-// Design: 5 glass cards grouping info by user questions
 // force-dynamic: calls getAllPractices() at render time; must not be statically prerendered.
 // Uses getAllPractices (not getActivePractices) so deactivated practices on
 // existing pros still render with their human label, not the raw key.
@@ -9,43 +7,18 @@ export const dynamic = 'force-dynamic'
 
 import { notFound } from 'next/navigation'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { ContactButton } from '@/app/components/ContactButton'
-import { Chip } from '@/app/components/ui/Chip'
 import { MODALITY_MAP, SERVICE_TYPE_MAP } from '@/lib/design-constants'
 import { getAllPractices } from '@/lib/practices'
 import { PageBackground } from '@/app/components/ui/PageBackground'
 import { isEffectivelyDestacado } from '@/lib/ranking'
-import { ReviewerEmailCapture } from '@/app/components/ReviewerEmailCapture'
-
-interface Professional {
-  id: string
-  slug: string
-  name: string
-  specialties: string[]
-  modality: string[]
-  practices: string[]
-  bio: string | null
-  short_description: string | null
-  experience_description: string | null
-  instagram: string | null
-  service_type: string[]
-  offers_courses_online: boolean
-  courses_presencial_location: string | null
-  whatsapp: string
-  country: string
-  city: string | null
-  online_only: boolean
-  price_range_min: number | null
-  price_range_max: number | null
-  currency: string
-  accepting_new_clients: boolean
-  profile_image_url: string | null
-  subscription_tier: string | null
-  tier_expires_at: string | null
-  rating_average: number
-  rating_count: number
-}
-
+import { ProfileHero } from './components/ProfileHero'
+import { ProfileExpertise } from './components/ProfileExpertise'
+import { ProfileAbout } from './components/ProfileAbout'
+import { ProfileReviews } from './components/ProfileReviews'
+import { ProfileLogistics } from './components/ProfileLogistics'
+import { ProfileContact } from './components/ProfileContact'
+import { RevealOnScroll } from '@/app/components/ui/RevealOnScroll'
+import type { Professional, Review } from './types'
 
 async function getProfessional(slug: string): Promise<Professional | null> {
   const { data, error } = await supabaseAdmin
@@ -87,14 +60,6 @@ async function getProfessional(slug: string): Promise<Professional | null> {
   }
 }
 
-interface Review {
-  id: string
-  rating: number
-  text: string | null
-  reviewer_name: string | null
-  submitted_at: string
-}
-
 async function getRecentReviews(professionalId: string): Promise<Review[]> {
   const { data } = await supabaseAdmin
     .from('reviews')
@@ -116,8 +81,7 @@ function formatPrice(min: number | null, max: number | null, currency: string): 
 
 function formatLocation(country: string, city: string | null, onlineOnly: boolean): string {
   if (onlineOnly) return 'Solo online'
-  const parts = [city, country].filter(Boolean)
-  return parts.join(', ')
+  return [city, country].filter(Boolean).join(', ')
 }
 
 export default async function ProfessionalProfilePage({
@@ -128,34 +92,29 @@ export default async function ProfessionalProfilePage({
   searchParams: { from?: string }
 }) {
   const professional = await getProfessional(params.slug)
+  if (!professional) notFound()
 
-  if (!professional) {
-    notFound()
-  }
-
-  // Fetch recent reviews in parallel with nothing else — triggered after professional is confirmed active
   const reviews = await getRecentReviews(professional.id)
+  const catalogPractices = await getAllPractices()
 
-  // Back link: if from recommendations, go back there. Otherwise go home.
+  const practiceLabelMap = Object.fromEntries(catalogPractices.map((p) => [p.key, p.label]))
+  const modalityLabels = professional.modality.map((m) => MODALITY_MAP[m] || m)
+  const practiceLabels = professional.practices.map((k) => practiceLabelMap[k] ?? k)
+  const serviceTypeLabels = professional.service_type.map((s) => SERVICE_TYPE_MAP[s] || s)
+  const location = formatLocation(professional.country, professional.city, professional.online_only)
+  const priceRange = formatPrice(professional.price_range_min, professional.price_range_max, professional.currency)
+  const isDestacado = isEffectivelyDestacado(professional.subscription_tier, professional.tier_expires_at)
+
   const fromPath = searchParams.from
   const backHref = fromPath && fromPath.startsWith('/r/') ? fromPath : '/'
   const backLabel = fromPath && fromPath.startsWith('/r/') ? 'Volver a recomendaciones' : 'Ir al inicio'
-
-
-  const catalogPractices = await getAllPractices()
-  const practiceLabelMap = Object.fromEntries(catalogPractices.map(p => [p.key, p.label]))
-  const modalityLabels = professional.modality.map(m => MODALITY_MAP[m] || m)
-  const practiceLabels = professional.practices.map(k => practiceLabelMap[k] ?? k)
-  const serviceTypeLabels = professional.service_type.map(s => SERVICE_TYPE_MAP[s] || s)
-  const location = formatLocation(professional.country, professional.city, professional.online_only)
-  const priceRange = formatPrice(professional.price_range_min, professional.price_range_max, professional.currency)
+  const showReviewCapture = !fromPath?.startsWith('/r/')
 
   return (
     <div className="min-h-screen bg-background" data-testid="professional-profile">
       <PageBackground />
 
-      {/* Content */}
-      <div className="relative z-10 max-w-md md:max-w-[960px] mx-auto px-4 pt-8 pb-12 space-y-4">
+      <div className="relative z-10 container-public pt-8 pb-12 space-y-4">
 
         {/* Back button */}
         <a
@@ -169,224 +128,72 @@ export default async function ProfessionalProfilePage({
           {backLabel}
         </a>
 
-        {/* Card 1: Identity — "Who is this person?" */}
-        <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6">
+        {/* Two-column on desktop: left = content, right = sticky contact sidebar */}
+        <div className="lg:grid lg:grid-cols-[1fr_360px] lg:gap-8 lg:items-start space-y-4 lg:space-y-0">
 
-          {/* Avatar */}
-          <div className="flex justify-center mb-4">
-            {professional.profile_image_url ? (
-              <img
-                src={professional.profile_image_url}
-                alt={professional.name}
-                className="w-20 h-20 rounded-full object-cover shadow-soft border-2 border-white/60"
+          {/* Left column */}
+          <div className="space-y-4">
+            {/* ProfileHero is above the fold — no reveal */}
+            <ProfileHero
+              name={professional.name}
+              shortDescription={professional.short_description}
+              profileImageUrl={professional.profile_image_url}
+              location={location}
+              acceptingNewClients={professional.accepting_new_clients}
+              isDestacado={isDestacado}
+            />
+
+            <RevealOnScroll delay={0}>
+              <ProfileExpertise
+                specialties={professional.specialties}
+                practiceLabels={practiceLabels}
+                serviceTypeLabels={serviceTypeLabels}
               />
-            ) : (
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-brand-weak to-info-weak flex items-center justify-center shadow-soft border-2 border-white/60">
-                <span className="text-2xl font-semibold text-brand">
-                  {professional.name.charAt(0)}
-                </span>
-              </div>
-            )}
+            </RevealOnScroll>
+
+            <RevealOnScroll delay={100}>
+              <ProfileAbout
+                bio={professional.bio}
+                experienceDescription={professional.experience_description}
+              />
+            </RevealOnScroll>
+
+            <RevealOnScroll delay={200}>
+              <ProfileReviews
+                ratingAverage={professional.rating_average}
+                ratingCount={professional.rating_count}
+                reviews={reviews}
+              />
+            </RevealOnScroll>
+
+            <RevealOnScroll delay={300}>
+              <ProfileLogistics
+                modalityLabels={modalityLabels}
+                location={location}
+                onlineOnly={professional.online_only}
+                city={professional.city}
+                priceRange={priceRange}
+                offersCoursesOnline={professional.offers_courses_online}
+                coursesPresencialLocation={professional.courses_presencial_location}
+              />
+            </RevealOnScroll>
           </div>
 
-          {/* Name */}
-          <h1 className="text-2xl font-bold text-foreground text-center mb-1">
-            {professional.name}
-          </h1>
+          {/* Right column — sticky contact card on desktop, inline on mobile */}
+          <div className="lg:sticky lg:top-8">
+            <RevealOnScroll delay={100}>
+              <ProfileContact
+                slug={professional.slug}
+                name={professional.name}
+                whatsapp={professional.whatsapp}
+                instagram={professional.instagram}
+                showReviewCapture={showReviewCapture}
+              />
+            </RevealOnScroll>
+          </div>
 
-          {/* Destacado badge — visible when tier is active and not expired */}
-          {isEffectivelyDestacado(professional.subscription_tier, professional.tier_expires_at) && (
-            <div className="flex justify-center mb-2">
-              <span data-testid="destacado-chip">
-                <Chip variant="brand" label="Destacado" />
-              </span>
-            </div>
-          )}
-
-          {/* Short description */}
-          {professional.short_description && (
-            <p className="text-sm text-muted text-center italic mb-3">
-              {professional.short_description}
-            </p>
-          )}
-
-          {/* Location */}
-          <p className="text-sm text-muted text-center mb-4">
-            <svg className="inline-block w-3.5 h-3.5 mr-1 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            {location}
-          </p>
-
-          {/* Accepting clients */}
-          {professional.accepting_new_clients && (
-            <div className="flex justify-center">
-              <Chip label="Aceptando nuevos pacientes" variant="success" />
-            </div>
-          )}
         </div>
 
-        {/* Card 2: Expertise — "Can they help me?" */}
-        <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6">
-          <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">Especialidades</h2>
-
-          <div className="flex flex-wrap gap-2 mb-4">
-            {professional.specialties.map(s => (
-              <Chip key={s} specialty={s} />
-            ))}
-          </div>
-
-          {practiceLabels.length > 0 && (
-            <div className="mb-4">
-              <h3 className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Prácticas</h3>
-              <p className="text-sm text-foreground">{practiceLabels.join(', ')}</p>
-            </div>
-          )}
-
-          {serviceTypeLabels.length > 0 && (
-            <div>
-              <h3 className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Tipo de servicio</h3>
-              <p className="text-sm text-foreground">{serviceTypeLabels.join(' & ')}</p>
-            </div>
-          )}
-        </div>
-
-        {/* Card 3: About — "What's their approach?" */}
-        {(professional.bio || professional.experience_description) && (
-          <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6">
-
-            {professional.bio && (
-              <div className={professional.experience_description ? 'mb-6' : ''}>
-                <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Sobre mí</h2>
-                <p className="text-sm text-foreground leading-relaxed">{professional.bio}</p>
-              </div>
-            )}
-
-            {professional.experience_description && (
-              <div>
-                <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Sobre la experiencia</h2>
-                <p className="text-sm text-foreground leading-relaxed">{professional.experience_description}</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Card 3b: Reviews — hidden when no reviews yet */}
-        {professional.rating_count > 0 && (
-          <article
-            data-testid="reviews-card"
-            className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xs font-semibold text-muted uppercase tracking-wide">Reseñas</h2>
-              <span className="text-sm font-semibold text-foreground">
-                {professional.rating_average.toFixed(1)} ★ · {professional.rating_count} {professional.rating_count === 1 ? 'reseña' : 'reseñas'}
-              </span>
-            </div>
-            <div className="space-y-4">
-              {reviews.map((review) => (
-                <div key={review.id} className="border-t border-outline/40 pt-3 first:border-t-0 first:pt-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium text-foreground">
-                      {review.reviewer_name ?? 'Anónimo'}
-                    </span>
-                    <span className="text-xs text-muted">
-                      {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
-                    </span>
-                  </div>
-                  {review.text && (
-                    <p className="text-sm text-muted italic">"{review.text}"</p>
-                  )}
-                  <p className="text-xs text-muted/60 mt-1">
-                    {new Date(review.submitted_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </article>
-        )}
-
-        {/* Card 4: Logistics — "How do I see them?" */}
-        <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6">
-          <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">Modalidad</h2>
-
-          <div className="flex flex-wrap gap-2 mb-4">
-            {modalityLabels.map(label => (
-              <Chip key={label} label={label} variant="neutral" />
-            ))}
-          </div>
-
-          {!professional.online_only && professional.city && (
-            <div className="mb-4">
-              <h3 className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Ubicación presencial</h3>
-              <p className="text-sm text-foreground">{location}</p>
-            </div>
-          )}
-
-          {priceRange && (
-            <div className="mb-4">
-              <h3 className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Rango de precios</h3>
-              <p className="text-sm text-foreground">{priceRange}</p>
-            </div>
-          )}
-
-          {(professional.offers_courses_online || professional.courses_presencial_location) && (
-            <div>
-              <h3 className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Cursos</h3>
-              <div className="space-y-1">
-                {professional.offers_courses_online && (
-                  <p className="text-sm text-foreground">Online</p>
-                )}
-                {professional.courses_presencial_location && (
-                  <p className="text-sm text-foreground">Presenciales — {professional.courses_presencial_location}</p>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Card 5: Contact — "How do I reach them?" */}
-        <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6">
-          <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">Contacto</h2>
-
-          <div className="space-y-3 mb-6">
-            <div>
-              <h3 className="text-xs text-muted mb-1">WhatsApp</h3>
-              <p className="text-sm text-foreground">{professional.whatsapp}</p>
-            </div>
-
-            {professional.instagram && (
-              <div>
-                <h3 className="text-xs text-muted mb-1">Instagram</h3>
-                <a
-                  href={professional.instagram}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-brand hover:underline"
-                >
-                  {professional.instagram.replace('https://www.instagram.com/', '@').replace(/[?/].*$/, '')}
-                </a>
-              </div>
-            )}
-          </div>
-
-          <ContactButton
-            professionalSlug={professional.slug}
-            professionalName={professional.name}
-            whatsappNumber={professional.whatsapp}
-            trackingCode="direct-profile-visit"
-            rank={0}
-            className="w-full"
-          />
-
-          {/* Email-capture for reviews — hidden in concierge flow (visitor has email in lead) */}
-          {!searchParams.from?.startsWith('/r/') && (
-            <ReviewerEmailCapture professionalSlug={professional.slug} />
-          )}
-        </div>
-
-        {/* Privacy */}
         <p className="text-xs text-muted text-center pt-2">
           Tu privacidad primero: nadie recibe tus datos hasta que vos escribas.
         </p>

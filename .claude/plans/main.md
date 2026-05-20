@@ -33,7 +33,7 @@ Deployed at: https://hara-weld.vercel.app
 - [x] DB supports `rejected` status and `rejection_reason`
 - [x] Specialty color system — 12 curated colors, custom specialty support, admin mapping
 - [x] 3-level testing infrastructure — 26 component tests + E2E + visual regression
-- [ ] All pages visually match the design system (liquid-glass, tokens, pill buttons, identical page shells) — first pass done, needs visual testing
+- [ ] All pages visually match the design system (liquid-glass, tokens, pill buttons, identical page shells) — desktop responsive pass complete (Item 6, awaiting Bel approval); full visual testing still needed
 - [x] Public directory page (`/profesionales`) with reputation-based ranking — shipped 2026-04-24 (migration 004: ranking columns + trigger; /profesionales server component; home page 3rd CTA)
 - [x] Home page redesign with dual CTA (concierge + directory) — "Ver profesionales" CTA added 2026-04-24
 - [x] Destacado tier MVP — admin-gated payment recording, expiry-aware ranking, public Destacado chip, daily cron cleanup (shipped 2026-04-27, migration 005)
@@ -232,7 +232,66 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 - Waitlist form repurposed as newsletter footer
 - Flip happens after Item 3 ships *(no longer the trigger — full prerequisite checklist above supersedes)*
 
+## Next Steps
+
+1. **Approve Item 6 spec after manual browser test**
+   - What: Open `http://localhost:3000` and verify — nav links at 1280px, 2-column directory at 1280px, container 640px on mobile, scroll reveals on home page, no regressions. Then approve spec-verify gate.
+   - Why: Plan status is COMPLETE; one manual approval step remains before VERIFIED.
+
+2. **Commit Item 6 as a clean PR**
+   - What: `git add` all modified/new files + commit with message `feat(ui): desktop responsive UI pass (Soft Launch Push Item 6)`. Push and open PR.
+   - Considerations: ~25 files changed (16 modified + 9 new components/types). Plan file + PRD are untracked — include them.
+
+3. **Item 7 — Final wording pass (next /spec)**
+   - What: `docs/prd/2026-05-12-wording-pass.md` is Final (was written 2026-05-12 but uncommitted). Commit the PRD, then `/spec docs/prd/2026-05-12-wording-pass.md`. Bel writes final Spanish copy anchored on the PRD's Voice section; Claude applies file by file across 17 surfaces.
+   - Why: Last Soft Launch Push item before the Final Go-Live Gate.
+
+4. **Final Go-Live Gate (Item 4) — deferred until items above + Phase 1 done**
+   - What: Public home flip (`/` from Próximamente to open-doors home). See Roadmap section for full prerequisite checklist.
+
+---
+
 ## Session Log
+
+### Session — 2026-05-14 (Soft Launch Push Item 6: Desktop responsive UI pass — plan COMPLETE, awaiting manual approval)
+
+**Completed — PRD + spec workflow end-to-end on Item 6:**
+- PRD `docs/prd/2026-05-14-desktop-responsive-ui-pass.md` (Status: Final). Standard research tier — researched responsive patterns, directory/profile/concierge desktop layouts, hover/animation patterns. Key decisions in PRD: two-tier breakpoint only (mobile / lg:1024), extend `.container-public` to 1024px at lg:, directory 2-column grid, profile two-column + sticky contact sidebar, concierge 3-card grid + modal, no card hover (calm aesthetic), scroll reveals on home + profile.
+- Plan `docs/plans/2026-05-14-desktop-responsive-ui-pass.md` (Status: COMPLETE pending Bel manual approval). 11 tasks, all implemented.
+
+**Completed — 11 implementation tasks:**
+- **Task 1 (Foundation):** Extended `.container-public` in `app/globals.css` to scale from 640px → 1024px at `lg:`. Updated `useIsDesktop` threshold from 768px → 1024px in `app/r/[tracking_code]/hooks/useMediaQuery.ts`. Added `@media (hover: hover)` hover refinement to `.btn-press-glow` / `.btn-press-inset`.
+- **Task 2 (Container migration):** Replaced `max-w-md md:max-w-[960px] mx-auto px-4` → `container-public` across 9 pages: `app/page.tsx`, `app/ayuda/page.tsx`, `app/gracias/page.tsx`, `app/preview/page.tsx`, `app/solicitar/SolicitarForm.tsx`, `app/components/TermsAndPrivacyPage.tsx`, `app/profesionales/registro/RegistroForm.tsx`, `app/profesionales/registro/confirmacion/page.tsx`, `app/r/review/[token]/page.tsx`.
+- **Task 3 (Nav — dead code fixed in verify):** Added desktop nav to `app/components/PublicLayout.tsx` — but `PublicLayout` is unused by any page. Fixed during spec-verify: extracted `app/components/SiteHeader.tsx` (logo + `hidden lg:flex` nav with `usePathname` active state), added to `app/layout.tsx` root layout with exclusions for `/admin`, `/r/` routes. 3 nav links: Profesionales, Pedí recomendación, Ayuda.
+- **Task 4 (Profile extraction):** `/p/[slug]/page.tsx` (397 lines → 181 lines) — extracted 6 sub-components: `ProfileHero`, `ProfileExpertise`, `ProfileAbout`, `ProfileReviews`, `ProfileLogistics`, `ProfileContact` (into `app/p/[slug]/components/`). Shared types moved to `app/p/[slug]/types.ts`.
+- **Task 5 (Concierge extraction):** `/r/[tracking_code]/page.tsx` (402 lines → 191 lines) — extracted `RecommendationCard`, `DeckView` into `app/r/[tracking_code]/components/`. Mobile swipe deck behavior preserved.
+- **Task 6 (RevealOnScroll):** Created `app/components/ui/RevealOnScroll.tsx` — `IntersectionObserver` wrapper, fade-up animation (opacity 0 → 1, translateY 16 → 0, 500ms), `prefers-reduced-motion` respected, `delay` prop for stagger, unobserves after first reveal.
+- **Task 7 (Directory layout):** `/profesionales/page.tsx` — `lg:grid-cols-2 lg:gap-5` (was `md:grid-cols-3`).
+- **Task 8 (Profile desktop layout):** `/p/[slug]/page.tsx` — two-column at `lg:` with `grid-cols-[1fr_360px]`; left column has ProfileHero + content; right column has `lg:sticky lg:top-8` ProfileContact as sticky sidebar.
+- **Task 9 (Concierge desktop grid):** Created `app/r/[tracking_code]/components/GridView.tsx` — 3-card grid with `container-public`; `attribution_token` preserved on each card's ContactButton. Wired `isDesktop` switch in page.tsx.
+- **Task 10 (BottomSheet modal):** `app/r/[tracking_code]/components/BottomSheet.tsx` — `lg:items-center lg:justify-center` on backdrop, `lg:rounded-3xl lg:max-w-2xl` on content, scale 0.95 → 1 entry animation on desktop (slide-up on mobile), drag handle `lg:hidden`, Escape-key close.
+- **Task 11 (Scroll reveals):** Applied `<RevealOnScroll>` with stagger to home page (waitlist card + footer) and profile page (all sub-components below ProfileHero).
+
+**Completed — spec-verify Phase A + B:**
+- Build clean, tsc clean, 49/63 integration tests pass (14 pre-existing Supabase connectivity failures — same count confirmed before and after the pass, no regression introduced).
+- E2E (playwright-cli): TS-001 container 1024px desktop / 640px mobile ✓, TS-002 profile sticky sidebar CSS confirmed in build output ✓, TS-003 GridView grid-cols-3 + attribution_token confirmed in source ✓, TS-004 mobile regression check ✓, TS-005 desktop nav 3 links visible at 1280px + active state ✓ (required a verification fix — see Deviations).
+- TS-006 (scroll reveals) not live-verified — RevealOnScroll in source + reduced-motion branch present, but animation requires manual browser test.
+
+**Modified from plan:**
+- `PublicLayout.tsx` consumer gap — the plan specified adding nav to `PublicLayout`, but `PublicLayout` has zero consumers (discovered again, same finding as Item 8 session). Fixed inline during spec-verify by extracting `SiteHeader.tsx` added to `app/layout.tsx`. `SiteHeader` excludes `/admin/*` and `/r/*` routes.
+
+**Deviations:**
+- Item 6 was described in the plan as a "desktop polish pass" — this session promoted it to a full `/spec` workflow with PRD, plan, 11 implementation tasks, and spec-verify. Scope matched the PRD exactly.
+- `PublicLayout` zero-consumer issue re-surfaced for the second time (first noted in Item 8 session). `PublicLayout.tsx` itself was updated (kept as a reference artifact) but the actual nav uses the new `SiteHeader` in the root layout.
+- The dev server during E2E had a stale `.next` cache conflict; required a `rm -rf .next` + restart. Non-blocking.
+
+**Blockers:**
+- Bel's manual approval pending (spec-verify Step 10 gate). Plan status is `COMPLETE` not yet `VERIFIED`. The app is running at `http://localhost:3000` — test Softs, scroll reveals, nav links, container width at 1024px+.
+- All changes uncommitted. This is a clean separable commit: "feat(ui): desktop responsive UI pass (Soft Launch Push Item 6)".
+
+**Tests:** build clean · tsc clean · 49/63 integration pass (14 pre-existing).
+
+---
 
 ### Session — 2026-05-12 (Plan corrections + brand rename + Item 8 /ayuda VERIFIED + DB cleanup + Item 7 PRD)
 
@@ -445,36 +504,8 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 5. Then commit (clean separable PR for Soft Launch Push Item 1).
 6. Then move to **Soft Launch Push Item 2: Concierge link delivery** — admin success screen "Send to user" button (WhatsApp link + Resend email) wiring `/r/{tracking_code}` delivery automatically, fulfilling the `/gracias` promise.
 
-### Session — 2026-05-05 (Positioning reframe across all docs + Phase 0 hand-off)
-
-**Completed — Positioning reframe (terapias alternativas y bienestar holístico):**
-- Bel flagged that PRODUCT.md and downstream docs were anchoring on "therapy / psychologists / coaches / somatic practitioners" framing — actual positioning is **terapias alternativas y bienestar holístico** (reiki, masajes terapéuticos, constelaciones familiares, diseño humano, registros akáshicos, terapia floral/energética, meditación). The match logic is symptom → holistic modality (a user atravesando ansiedad/insomnio/duelo gets paired with whichever holistic practice resonates), so the user-symptom color palette in `app/globals.css:41-64` stays as-is.
-- Reframed 9 MD files: `PRODUCT.md` (most extensive — opening, demand side, supply side, personality), `README.md`, `CLAUDE.md`, `FINAL_SPEC.md` (example payload), `.claude/plans/main.md` (Overview), `.claude/skills/tailwind-design-system/SKILL.md` + `.codex/` mirror, `docs/prd/2026-05-01-monthly-social-strategist.md`, `docs/plans/2026-05-01-monthly-social-strategist.md` (3 spots — strategist tone seed values).
-- Second pass after Bel rebuked the "what is NOT" pattern I'd added: stripped all negative brand-identity framing (`not traditional therapy`, `not a directory of psicólogos clínicos`, `we don't position ourselves alongside therapy`, `out of scope`). Replaced with positive definition by modality list — the practitioner roster + symptom vocabulary now does the disambiguation work positively. Also cleaned pre-existing negations in PRODUCT.md voice section per Bel's universal principle (`never clinical` → `conversational`; `No growth-hacker urgency. No countdown timers, no FOMO mechanics` → `Calm pacing. Copy that respects the user's time and earns attention through clarity`; etc.). `app/globals.css` color-scale comments untouched per Bel's directive.
-- Saved learning: defining a brand by what it isn't is weaker than defining by what it is — if a clarification via negation is needed, the positive isn't specific enough yet. Modality lists do the work clinical disclaimers were trying to do.
-
-**Completed — Phase 0 hand-off:**
-- Phase 0 reframed in this plan as a parallel verification track owned by Bel, not a gate on feature work. Tasks 3–6 (smoke tests, visual QA, image upload e2e, rejected-profile decision) run on Bel's device while Claude builds. Bugs surfaced during her testing become discrete `/fix` or `/spec` tracks.
-
-**Deviations:**
-- Initially added "What it is *not*" sections to PRODUCT.md and "never frame as therapy" guards to the strategist plan — Bel called this out as a tendency to define by negation. Stripped on second pass.
-- Touched some pre-existing negations in PRODUCT.md voice/personas (Bel's original prose) under her authorization to extend the cleanup.
-
-**Blockers / open follow-ups:**
-- None for this session's work. The reframe is doc-only; no code changes, no migrations.
-- Last session's "Resume here" stack (dev cache clear, migration 009 apply, Flow A smoke) now lives on Bel's parallel track per the Phase 0 hand-off above.
-- 23 modified + 6 untracked files uncommitted. Today's MD reframe is a clean separable commit (positioning reframe across docs) if we want to ship it before further work.
-
-**Tests:** No code changes — no test runs needed.
-
-**Completed — Workflow audit + plan reshape (the late part of the session):**
-- Bel asked: *"what is really missing to have these two workflows working and also the admin part where I get the therapist request to be added to Hara and I can approve or not? Leave Destacado for later."* Read the actual code for Browse, Concierge, and Admin Approval flows end-to-end. Surfaced 5 launch-blocking gaps + cross-cutting drift. The single biggest finding: the running app's vocabulary is still 100% traditional psychotherapy (`STYLE_MAP`, both forms), even though the docs are reframed.
-- Captured the full audit in this plan under **Soft Launch Push — Launch-Readiness Items** above. That section now contains: the 7 items (modality catalog, concierge link delivery, pro approval/rejection emails, public home flip, rejected-policy decision, desktop UI polish, final wording pass), the per-workflow gap analysis, and the inline scope for item 1 (holistic modality catalog — including a proposed canonical list and the open product questions Bel needs to answer).
-- Decision: rather than fragment context across new PRD files, the modality catalog scope lives inline in this plan. Other items will be PRD'd inline here too as they come up. *(Bel's directive: "do not do a new file, update an existing file accordingly.")*
-
-**Resume here:** Bel reviews the **Soft Launch Push** section and confirms / edits the proposed modality catalog list (canonical entries + answers to the open product questions), then we start implementing item 1 one-by-one.
-
 ### Archived Sessions
+- **2026-05-05**: Positioning reframe across all docs + Phase 0 hand-off + workflow audit — Rewrote product framing (terapias alternativas y bienestar holístico) across 9 MD files; stripped negative brand framing per Bel's feedback; Phase 0 handed off to Bel as parallel verification track. Workflow audit surfaced 7 Soft Launch Push items (modality catalog, concierge link delivery, pro emails, home flip, rejected policy, desktop UI, wording pass); full audit captured in this plan.
 - **2026-05-03**: Heartbeat + review-delay refactor + UI 960px pass — Migration 008 (heartbeat table) applied + n8n workflow extended with Postgres node + Resend error notification + `automation/docs/heartbeat.md`. Upstash deferred indefinitely (free-tier DB stuck pending-restore, fail-open in prod). Migration 009 (review-delay parameterization) — RPC `select_pending_review_events(delay_days INT DEFAULT 7)`, fixed dropped-events bug from hardcoded `BETWEEN NOW() - 7d AND NOW() - 6d` 24h window. `app/api/cron/send-review-requests/route.ts` reads `REVIEW_DELAY_DAYS` env var. `.env.local` `*_ANON_KEY` → `*_PUBLISHABLE_KEY` rename. UI: 960px container expansion across 10 public pages + AdminLayout; 5 card lists → 3-col responsive grid; `/profesionales` richer directory cards with 9 added fields + `force-dynamic`. 17 modified + 5 untracked uncommitted. Migration 009 not yet applied to Supabase.
 - **2026-05-01 → 2026-05-03**: Phase 0 push (domain, homepage, cleanup) — Fixed prod 500 (Vercel env var alignment, `f654181`). Resend domain `haravital.app` verified + `lib/email.ts` updated. Pre-launch `/` shipped as Próximamente + waitlist (mig 007, `6c548ef`); post-launch home moved to `/preview`. Test-data cleanup (deleted 23 orphan pros + 59 pqls). Admin delete-professional flow (`2ec2e5f`). Rate limiter fail-open in prod (`987b40e`). Upstash deferred — free-tier DB deleted, restore stuck. Codex review of migs 005/006 caught 4 bugs (missing RLS on 3 tables, off-by-one in upgrade_destacado_tier extension, OLD/NEW professional_id stale-aggregate). 147/147 unit pass.
 - **2026-05-01**: Doc alignment + Cron PRD + Migrations 004/005/006 applied — Created PRODUCT.md (`a670736`), aligned top-level docs (`eb16d0f`), wrote cron infra PRD (`9caae6d`) routing scheduled jobs through self-hosted n8n at https://n8n.greenbit.info. Discovered existing `vercel.json` crons never fired in prod (Vercel Hobby + Supabase paused + migs not applied). Migrations 004/005/006 applied via Supabase SQL Editor + verified end-to-end (RLS active, RPCs functional, triggers correct). 135/135 unit pass.

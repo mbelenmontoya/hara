@@ -5,13 +5,14 @@
 import Link from 'next/link'
 import { PageBackground } from './components/ui/PageBackground'
 import { WaitlistForm }   from './components/WaitlistForm'
+import { RevealOnScroll } from './components/ui/RevealOnScroll'
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       <PageBackground />
 
-      <div className="relative z-10 max-w-md md:max-w-[960px] mx-auto px-4 pt-16 pb-12 min-h-screen flex flex-col">
+      <div className="relative z-10 container-public pt-16 pb-12 min-h-screen flex flex-col">
 
         <div className="text-center mb-10">
           <p className="text-xs font-semibold text-brand uppercase tracking-[0.2em] mb-3">
@@ -25,24 +26,28 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6 mb-6">
-          <p className="text-sm text-foreground font-semibold mb-1">
-            ¿Querés saber cuando abramos?
-          </p>
-          <p className="text-sm text-muted leading-relaxed mb-5">
-            Dejanos tu email. Si sos profesional y querés sumarte, también es por acá.
-          </p>
-          <WaitlistForm />
-        </div>
+        <RevealOnScroll delay={100}>
+          <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6 mb-6">
+            <p className="text-sm text-foreground font-semibold mb-1">
+              ¿Querés saber cuando abramos?
+            </p>
+            <p className="text-sm text-muted leading-relaxed mb-5">
+              Dejanos tu email. Si sos profesional y querés sumarte, también es por acá.
+            </p>
+            <WaitlistForm />
+          </div>
+        </RevealOnScroll>
 
-        <div className="mt-auto pt-6 text-center space-y-2">
-          <p className="text-xs text-muted">
-            Tu privacidad primero: nadie recibe tus datos hasta que vos escribas.
-          </p>
-          <Link href="/ayuda" className="text-xs text-muted hover:text-foreground transition-colors">
-            ¿Necesitás ayuda?
-          </Link>
-        </div>
+        <RevealOnScroll delay={200}>
+          <div className="mt-auto pt-6 text-center space-y-2">
+            <p className="text-xs text-muted">
+              Tu privacidad primero: nadie recibe tus datos hasta que vos escribas.
+            </p>
+            <Link href="/ayuda" className="text-xs text-muted hover:text-foreground transition-colors">
+              ¿Necesitás ayuda?
+            </Link>
+          </div>
+        </RevealOnScroll>
 
       </div>
     </div>

@@ -1,0 +1,48 @@
+{
+  "file": "lib/email.ts",
+  "description": "Transactional emails sent to users and professionals. Admin emails are excluded — only user-facing ones.",
+  "admin_email": "centrovitalhara@gmail.com",
+  "strings": {
+    "registration_received": {
+      "to": "professional",
+      "subject": "Recibimos tu solicitud en Hara",
+      "greeting": "Hola {name},",
+      "p1": "Recibimos tu solicitud para sumarte como profesional a Hara. Vamos a revisar tu perfil con calma — esto suele tomar unos pocos días.",
+      "p2": "Te escribimos en cuanto tengamos una respuesta. Si necesitás cambiar algo en tu solicitud mientras tanto, escribinos a centrovitalhara@gmail.com.",
+      "closing": "Gracias por confiar en Hara."
+    },
+    "professional_approved": {
+      "to": "professional",
+      "subject": "¡Tu perfil en Hara está activo!",
+      "greeting": "Hola {name},",
+      "p1": "Tu perfil ya está activo en Hara. Las personas que entren al directorio o reciban tus recomendaciones a través de nuestro sistema concierge pueden ver tu información y contactarte.",
+      "cta_button": "Ver mi perfil",
+      "section_how_found_heading": "¿Cómo te encuentran?",
+      "section_how_found_body": "Tu perfil aparece en /profesionales. También podemos recomendarte cuando alguien que busca ayuda holística llene el formulario de solicitud y vos seas un buen match.",
+      "section_how_contact_heading": "¿Cómo te contactan?",
+      "section_how_contact_body": "Cuando alguien hace click en el botón de contacto de tu perfil, se abre un chat de WhatsApp directo a tu número. No filtramos ni intermediamos — la conversación es entre vos y el cliente.",
+      "section_update_heading": "¿Querés actualizar algo?",
+      "section_update_body": "Por ahora, escribinos a centrovitalhara@gmail.com y te lo cambiamos. Pronto vas a poder editarlo vos directamente.",
+      "closing": "Te damos la bienvenida a Hara."
+    },
+    "professional_rejected": {
+      "to": "professional",
+      "subject": "Sobre tu solicitud en Hara",
+      "greeting": "Hola {name},",
+      "p1": "Gracias por aplicar a Hara. Después de revisar tu perfil, decidimos no avanzar con tu solicitud por ahora.",
+      "reason_label": "Razón:",
+      "reason_value": "{rejection_reason}",
+      "resubmit": "Si querés volver a aplicar después de ajustar lo anterior, podés hacerlo a partir del {resubmit_date}.",
+      "contact": "Si tenés preguntas, escribinos a centrovitalhara@gmail.com.",
+      "closing": "Gracias de nuevo por tu interés."
+    },
+    "review_request": {
+      "to": "user",
+      "subject": "¿Qué tal tu experiencia con {professional_name}?",
+      "h2": "¿Cómo te fue con {professional_name}?",
+      "body": "Hace una semana contactaste a {professional_name} a través de Hara Vital. Si tuviste una sesión, nos ayudaría mucho conocer tu experiencia.",
+      "cta_button": "Calificar mi experiencia",
+      "footer": "Solo lleva un minuto. Si no tuviste una sesión, ignorá este mensaje."
+    }
+  }
+}

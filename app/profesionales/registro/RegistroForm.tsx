@@ -246,7 +246,7 @@ export function RegistroForm({ practices }: Props) {
     <div className="min-h-screen bg-background">
       <PageBackground image={backgroundPath} />
 
-      <div className="relative z-10 max-w-md md:max-w-[960px] mx-auto px-4 pt-8 pb-12">
+      <div className="relative z-10 container-public pt-8 pb-12">
         <div className="flex justify-center gap-2 mb-6">
           {STEPS.map((step, idx) => (
             <div

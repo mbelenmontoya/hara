@@ -1,0 +1,22 @@
+{
+  "route": "/",
+  "file": "app/page.tsx",
+  "description": "Pre-launch homepage. Shown while the app is not yet open to the public.",
+  "strings": {
+    "eyebrow": "Hara Vital",
+    "h1": "Próximamente",
+    "subtitle": "Estamos creando un espacio donde encontrar profesionales del bienestar sea simple, humano y confiable.",
+    "waitlist_card_title": "¿Querés saber cuando abramos?",
+    "waitlist_card_body": "Dejanos tu email. Si sos profesional y querés sumarte, también es por acá.",
+    "waitlist_name_placeholder": "Tu nombre (opcional)",
+    "waitlist_email_placeholder": "Tu email",
+    "waitlist_submit_button": "Avisame cuando abran",
+    "waitlist_success_title": "¡Listo!",
+    "waitlist_success_body": "Te avisamos apenas estemos abiertos.",
+    "waitlist_error_invalid_email": "Ingresá un email válido",
+    "waitlist_error_save_failed": "No pudimos guardar tu email. Intentá de nuevo.",
+    "waitlist_error_connection": "No pudimos conectar. Intentá de nuevo.",
+    "privacy_note": "Tu privacidad primero: nadie recibe tus datos hasta que vos escribas.",
+    "help_link": "¿Necesitás ayuda?"
+  }
+}

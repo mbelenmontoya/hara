@@ -1,0 +1,63 @@
+{
+  "route": "/solicitar",
+  "file": "app/solicitar/SolicitarForm.tsx",
+  "description": "Concierge intake form. User describes what they need, Hara hand-picks 3 professionals.",
+  "strings": {
+    "h1": "Encontrá tu profesional ideal",
+    "subtitle": "Contanos qué buscás y te conectamos con 3 profesionales que se ajustan a vos.",
+    "section_intent": "¿En qué necesitás ayuda? *",
+    "intent_options": {
+      "anxiety": "Ansiedad",
+      "depression": "Depresión",
+      "stress": "Estrés",
+      "trauma": "Trauma",
+      "relationships": "Relaciones",
+      "self_esteem": "Autoestima",
+      "grief": "Duelo",
+      "addiction": "Adicciones",
+      "eating_disorders": "Trastornos alimentarios",
+      "couples": "Terapia de pareja",
+      "family": "Terapia familiar",
+      "children": "Niños y adolescentes"
+    },
+    "section_location": "¿Dónde estás? *",
+    "location_label": "Ubicación",
+    "location_placeholder": "Empezá a escribir tu ciudad...",
+    "location_helper": "Seleccioná tu ciudad de la lista. Esto también detecta tu país.",
+    "modality_label": "¿Cómo preferís las sesiones?",
+    "modality_options": {
+      "online": "Online",
+      "presencial": "Presencial",
+      "ambos": "Ambos"
+    },
+    "section_urgency": "¿Qué tan urgente es?",
+    "urgency_options": {
+      "low": "No es urgente, estoy explorando",
+      "medium": "Me gustaría empezar pronto",
+      "high": "Necesito ayuda lo antes posible"
+    },
+    "section_whatsapp": "¿Cómo te contactamos? *",
+    "whatsapp_label": "WhatsApp",
+    "whatsapp_helper": "Solo te escribimos para enviarte las recomendaciones.",
+    "phone_error_format": "Debe empezar con + y el código de país",
+    "phone_error_invalid": "El número no parece válido",
+    "advanced_toggle_show": "Más opciones",
+    "advanced_toggle_hide": "Ocultar opciones adicionales",
+    "advanced_section_title": "Opciones adicionales",
+    "practice_label": "Práctica preferida",
+    "practice_helper": "Si no sabés, no te preocupes — nosotros lo consideramos.",
+    "budget_label": "Presupuesto por sesión",
+    "email_label": "Email",
+    "email_helper": "Opcional. Para enviarte las recomendaciones también por email.",
+    "submit_button": "Encontrar mis 3 opciones",
+    "submit_loading": "Enviando...",
+    "privacy_note": "Tu privacidad primero: nadie recibe tus datos hasta que vos escribas.",
+    "terms_link_text": "términos y privacidad",
+    "terms_note": "Al enviarnos tu solicitud, aceptás nuestros",
+    "error_no_intent": "Seleccioná al menos un tema",
+    "error_no_location": "Buscá y seleccioná tu ubicación",
+    "error_no_whatsapp": "Ingresá tu WhatsApp",
+    "error_fix_whatsapp": "Corregí el número de WhatsApp antes de enviar",
+    "error_generic": "Hubo un error. Intentá de nuevo."
+  }
+}

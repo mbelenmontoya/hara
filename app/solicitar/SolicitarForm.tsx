@@ -155,7 +155,7 @@ export function SolicitarForm({ practices }: Props) {
     <div className="min-h-screen bg-background">
       <PageBackground />
 
-      <div className="relative z-10 max-w-md md:max-w-[960px] mx-auto px-4 pt-8 pb-12">
+      <div className="relative z-10 container-public pt-8 pb-12">
         <h1 className="text-2xl font-semibold text-foreground mb-2 text-center">
           Encontrá tu profesional ideal
         </h1>

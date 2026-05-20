@@ -1,0 +1,24 @@
+{
+  "product": "Hara Vital",
+  "market": "Argentina (LATAM + Spain)",
+  "language": "Español rioplatense informal — vos, querés, escribís, podés. Nunca tú, nunca usted.",
+  "tone": "Cálido, claro, nunca clínico. Acompañamiento, no tratamiento. Apoyo, no diagnóstico.",
+  "domain": "Bienestar holístico — reiki, masajes terapéuticos, constelaciones familiares, diseño humano, registros akáshicos, terapia floral, biodecodificación, sonoterapia, tarot terapéutico, astrología, coaching ontológico, aromaterapia, yoga terapéutico, meditación.",
+  "principles": [
+    "Hara invita, nunca empuja. Respeta el timing del usuario.",
+    "Hara hace silencio donde otros gritan — el CTA más fuerte puede ser 'guardalo para después'.",
+    "Privacy-forward: decile al usuario qué NO compartimos antes de que pregunte.",
+    "Cero urgencia growth-hacker — sin countdowns, sin FOMO, sin 'QUEDAN 2'.",
+    "Nunca encuadrar como app de salud mental, psicología clínica o terapia tradicional.",
+    "Género plural-inclusivo donde sea natural. 'Te damos la bienvenida' > 'Bienvenido/a'.",
+    "WhatsApp = usuario ↔ profesional. Email + Instagram = usuario ↔ Hara.",
+    "Marketplace lidera CTAs. Concierge existe pero no encabeza nada.",
+    "Cada palabra tiene que estar porque tiene que estar — cortar filler ('personalizadas', 'verificados', 'profesionales' como adjetivo vacío).",
+    "La frase tiene que sonarle natural a una persona real, no traducida del inglés."
+  ],
+  "canonical_phrases": {
+    "privacy": "Tu info se comparte recién cuando vos escribís.",
+    "welcome": "Te damos la bienvenida",
+    "brand_name": "Hara (腹) — centro energético, sede de la energía vital y el equilibrio"
+  }
+}

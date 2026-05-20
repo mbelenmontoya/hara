@@ -1,0 +1,12 @@
+{
+  "route": "/profesionales",
+  "file": "app/profesionales/page.tsx",
+  "description": "Public directory of active professionals, sorted by ranking score.",
+  "strings": {
+    "h1": "Profesionales",
+    "subtitle": "Elegí a quien querés contactar.",
+    "empty_state_title": "Todavía no hay profesionales disponibles.",
+    "empty_state_body": "Volvé pronto.",
+    "help_link": "¿Necesitás ayuda?"
+  }
+}

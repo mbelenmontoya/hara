@@ -1,22 +1,53 @@
+'use client'
+
 // Hara UI v2 - Public Layout
-// Warm, calm frame for public pages
+// Desktop nav links (≥1024px) with active-route highlighting via usePathname
 
 import { ReactNode } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 interface PublicLayoutProps {
   children: ReactNode
 }
 
+const NAV_LINKS = [
+  { href: '/profesionales', label: 'Profesionales' },
+  { href: '/solicitar', label: 'Pedí recomendación' },
+  { href: '/ayuda', label: 'Ayuda' },
+]
+
 export function PublicLayout({ children }: PublicLayoutProps) {
+  const pathname = usePathname()
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <header className="bg-surface border-b border-outline">
-        <div className="container-public py-5">
+        <div className="container-public py-5 flex items-center">
           <Link href="/" className="text-xl font-semibold text-foreground hover:text-brand transition-colors duration-150">
             Hara
           </Link>
+
+          {/* Desktop nav — hidden below 1024px */}
+          <nav className="hidden lg:flex items-center gap-6 ml-auto" aria-label="Navegación principal">
+            {NAV_LINKS.map(({ href, label }) => {
+              const isActive = pathname === href || pathname.startsWith(href + '/')
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`text-sm transition-colors duration-150 ${
+                    isActive
+                      ? 'text-foreground font-medium underline underline-offset-4 decoration-brand/50'
+                      : 'text-muted hover:text-foreground'
+                  }`}
+                >
+                  {label}
+                </Link>
+              )
+            })}
+          </nav>
         </div>
       </header>
 

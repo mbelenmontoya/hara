@@ -1,5 +1,6 @@
 import './globals.css'
 import { Crimson_Pro, Manrope } from 'next/font/google'
+import { SiteHeader } from './components/SiteHeader'
 
 const crimsonPro = Crimson_Pro({
   subsets: ['latin'],
@@ -46,7 +47,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className={`${crimsonPro.variable} ${manrope.variable}`}>
-      <body>{children}</body>
+      <body>
+        <SiteHeader />
+        {children}
+      </body>
     </html>
   )
 }

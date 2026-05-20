@@ -1,0 +1,16 @@
+{
+  "routes": ["error boundary (any route)", "/any-nonexistent-route"],
+  "files": ["app/error.tsx", "app/not-found.tsx"],
+  "description": "Global error boundary and 404 page.",
+  "strings": {
+    "error_h2": "Algo salió mal",
+    "error_body_fallback": "Ocurrió un error inesperado. Por favor, intentá de nuevo.",
+    "error_retry_button": "Intentar de nuevo",
+    "error_back_button": "Volver al inicio",
+    "error_help_link": "¿Necesitás ayuda?",
+    "not_found_h2": "Página no encontrada",
+    "not_found_body": "No encontramos esta página. Puede que el link esté roto o que la dirección haya cambiado.",
+    "not_found_back_button": "Volver al inicio",
+    "not_found_help_link": "¿Necesitás ayuda?"
+  }
+}

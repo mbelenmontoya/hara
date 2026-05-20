@@ -1,0 +1,16 @@
+{
+  "route": "/gracias",
+  "file": "app/gracias/page.tsx",
+  "description": "Confirmation page shown after the user submits the /solicitar intake form.",
+  "strings": {
+    "h1": "¡Recibimos tu solicitud!",
+    "body": "Vamos a buscar profesionales que se ajusten a lo que nos contaste. Te escribimos cuando tengamos tus 3 opciones.",
+    "whats_next_heading": "¿Qué sigue?",
+    "step1": "Analizamos lo que buscás",
+    "step2": "Seleccionamos 3 profesionales para vos",
+    "step3": "Te escribimos con tus 3 opciones",
+    "step4": "Vos elegís con quién conectar, cuando quieras",
+    "back_button": "Volver al inicio",
+    "privacy_note": "Tu privacidad primero: nadie recibe tus datos hasta que vos escribas."
+  }
+}

@@ -63,3 +63,7 @@ Desktop.ini
 .cache/
 .omx/
 .codegraph/
+
+# Tooling output (local only)
+.playwright-cli/
+.claude/test-analyses/

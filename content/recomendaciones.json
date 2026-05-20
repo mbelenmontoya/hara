@@ -1,0 +1,20 @@
+{
+  "route": "/r/[tracking_code]",
+  "file": "app/r/[tracking_code]/page.tsx",
+  "description": "Recommendations card deck. Shown when a user receives their 3 curated professionals. Has a reveal screen (mobile) and card deck.",
+  "strings": {
+    "reveal_h1": "Tus 3 opciones están listas",
+    "reveal_body": "Elegimos profesionales que encajan con lo que nos contaste.",
+    "reveal_button": "Ver mis 3 opciones",
+    "reveal_privacy": "Tu info se comparte recién cuando vos escribís.",
+    "error_expired_h2": "Este link venció",
+    "error_expired_body_link_text": "Visitá /ayuda",
+    "error_expired_body": "¿Perdiste tu link?",
+    "error_load_h2": "No pudimos cargar",
+    "error_load_body_link_text": "¿Necesitás ayuda?",
+    "error_load_body": "Probá de nuevo.",
+    "error_retry_button": "Reintentar",
+    "nav_prev_aria": "Anterior profesional",
+    "nav_next_aria": "Siguiente profesional"
+  }
+}

@@ -80,7 +80,7 @@ export default async function DirectoryPage() {
     <div className="min-h-screen bg-background">
       <PageBackground />
 
-      <div className="relative z-10 max-w-md md:max-w-[960px] mx-auto px-4 pt-8 pb-12 space-y-4">
+      <div className="relative z-10 container-public pt-8 pb-12 space-y-4">
 
         {/* Header */}
         <div>
@@ -97,7 +97,7 @@ export default async function DirectoryPage() {
             />
           </GlassCard>
         ) : (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-5">
             {professionals.map((pro) => (
               <ProfessionalCard key={pro.slug} professional={pro} />
             ))}

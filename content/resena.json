@@ -1,0 +1,31 @@
+{
+  "route": "/r/review/[token]",
+  "files": ["app/r/review/[token]/page.tsx", "app/r/review/[token]/ReviewSubmitForm.tsx"],
+  "description": "Review submission page. Sent to users 7 days after they contact a professional. Single-use token.",
+  "strings": {
+    "page_h1": "Tu reseña",
+    "page_subtitle": "sobre {professional_name}",
+    "page_footer": "Hara Vital — plataforma de profesionales de bienestar verificados.",
+    "form_rating_prompt": "Calificá tu experiencia con {professional_name}",
+    "form_text_label": "Comentario",
+    "form_text_optional": "— opcional",
+    "form_text_placeholder": "Contá cómo fue tu experiencia...",
+    "form_name_label": "Tu nombre",
+    "form_name_optional": "— opcional",
+    "form_name_placeholder": "Ej: María P.",
+    "form_name_helper": "Si preferís el anonimato, dejalo en blanco.",
+    "form_submit_button": "Enviar reseña",
+    "form_submit_loading": "Enviando...",
+    "form_error_generic": "No se pudo enviar la reseña. Intentá de nuevo.",
+    "form_error_connection": "No se pudo conectar. Intentá de nuevo.",
+    "success_icon": "🌟",
+    "success_h2": "¡Gracias por tu reseña!",
+    "success_body": "Tu opinión ayuda a otros usuarios a encontrar el profesional ideal.",
+    "state_consumed_title": "Esta reseña ya fue enviada.",
+    "state_consumed_body": "Ya enviaste tu reseña. Gracias por tu tiempo.",
+    "state_expired_title": "El enlace de reseña venció.",
+    "state_expired_body": "Este enlace de reseña ya no es válido. Si querés dejar tu opinión, contactanos.",
+    "state_invalid_title": "Enlace inválido.",
+    "state_invalid_body": "Este enlace de reseña no existe o es incorrecto."
+  }
+}

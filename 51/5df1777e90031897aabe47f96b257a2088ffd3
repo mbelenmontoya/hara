@@ -1,0 +1,187 @@
+app/components/ui/GlassCard.tsx
+  s_b4b50d7cfe891e::t_405243e41e3bc1 9,17
+  s_b4b50d7cfe891e::t_c63e19ef63a7f7 10-11,14,16
+.claude/plans/main.md
+  s_b4b50d7cfe891e::t_cf8709feab70aa 268-323
+  s_b4b50d7cfe891e::t_9a26da5a951786 596
+  s_b4b50d7cfe891e::t_46279b9ae1110e 237-239,241-244,246-248,250-262
+app/p/[slug]/components/ProfileHero.tsx
+  s_b4b50d7cfe891e::t_30293b2a23634f 25
+scripts/survey-leads.mjs
+  s_b4b50d7cfe891e::t_5f8fbfa37f2153 19
+  s_b4b50d7cfe891e::t_8c43f970c4d63e 1-18,20-41,43-44
+  s_b4b50d7cfe891e::t_75516671fddbf0 42
+global.d.ts
+  s_b4b50d7cfe891e::t_a4c9116392f842 3-4
+  s_b4b50d7cfe891e::t_d1e4f0d63ad339 1-2
+migrations/013_score_overrides.sql
+  s_b4b50d7cfe891e::t_4fcfb33477e3d0 7-9
+  s_b4b50d7cfe891e::t_fdf40f6bb83d4f 1-6,10-12
+lib/profile-score.test.ts
+  s_b4b50d7cfe891e::t_3f222ecb959ebb 17
+  s_b4b50d7cfe891e::t_993ac4dea7f6ab 69,73,79-82,84-107,111-113,117-123
+  s_b4b50d7cfe891e::t_1a7ec186e4191e 108-110,114-116
+  s_b4b50d7cfe891e::t_eff7d6fdda824b 127-129,134-135,140-143
+  s_b4b50d7cfe891e::t_c264264661ac12 1-4,6-7,12-16,18-24,26-50,56-58,61-63,66-68,74-75,83,124-126,155-156,158,162-163,168-169,183-184,187-189,191-192,194-195
+  s_b4b50d7cfe891e::t_d679826a2dd16f 152-153,164,170,175-177,181-182,185,190
+  s_b4b50d7cfe891e::t_306e6697ea35f3 25
+  s_b4b50d7cfe891e::t_42887bf064aa23 130-133,136-139,144-151
+  s_b4b50d7cfe891e::t_6b9b7b7e70b770 11
+  s_b4b50d7cfe891e::t_98cf4b98ce6ebe 5,8-10
+  s_b4b50d7cfe891e::t_08208b8849361e 51-55,59-60,64-65
+  s_b4b50d7cfe891e::t_320fbeb6caaf4b 154,157,159-161,165-167,171-174,178-180,186,193
+  s_b4b50d7cfe891e::t_9878182b62fa23 70-72,76-78
+app/admin/practices/[key]/edit/page.tsx
+  s_b4b50d7cfe891e::t_0969b70e5863b9 18
+app/admin/professionals/[id]/review/components/PracticeMapper.tsx
+  s_b4b50d7cfe891e::t_5598b5990e109b 1-114
+migrations/012_practices_specialty_mapping.sql
+  s_b4b50d7cfe891e::t_a32022b38e6802 1-53
+app/admin/practices/page.tsx
+  s_b4b50d7cfe891e::t_adf2fadc7eae9f 32
+  s_b4b50d7cfe891e::t_419a73abeefbcb 8,10,15-18
+app/admin/page.tsx
+  s_b4b50d7cfe891e::t_e993c571766c23 1-5
+app/admin/practices/SuggestedPractices.tsx
+  s_b4b50d7cfe891e::t_80589022dbf238 87
+  s_b4b50d7cfe891e::t_452c0fa8c327ae 5
+  s_b4b50d7cfe891e::t_84e4e3c5976d32 14
+  s_b4b50d7cfe891e::t_b34cafafcb6e40 16,22,25-32,35,47,50,57-58,86,115,123-131,141,148-150,164
+  s_b4b50d7cfe891e::t_3cd79dc8f9d210 6,10,13,17-20,24,33-34,36-41,43-44,48-49,52-56,59,72,89-92,94-102,114,116-117,119-122,132,134,136-137,139-140,142-147,151-163,165
+  s_b4b50d7cfe891e::t_71b7b56cdefb6d 1-4,7-9,11-12,15,21,23,60-71,73-85,88,93,138,166-173
+  s_b4b50d7cfe891e::t_e716ea13b40f16 103-113,118,133,135
+  s_b4b50d7cfe891e::t_11534f05105cb8 42,45-46,51
+app/api/admin/practices/[key]/route.ts
+  s_b4b50d7cfe891e::t_bc72fdceb2f4c3 127-168
+  s_b4b50d7cfe891e::t_a4ac514e3cfab7 17-22,28
+  s_b4b50d7cfe891e::t_e56989a539f854 88-99
+  s_b4b50d7cfe891e::t_7ceda734c30ef8 7
+  s_b4b50d7cfe891e::t_b35f9be8bd820a 253
+  s_b4b50d7cfe891e::t_4fc5a10c9984f4 29
+  s_b4b50d7cfe891e::t_0bdf587ea17b13 76-87
+app/admin/professionals/[id]/review/page.tsx
+  s_b4b50d7cfe891e::t_0093814c01d08b 182
+  s_b4b50d7cfe891e::t_c996b87a5ee4a1 462-466
+  s_b4b50d7cfe891e::t_e30c79d70361e4 245-246
+  s_b4b50d7cfe891e::t_ac283781d820e6 409-418
+  s_b4b50d7cfe891e::t_33b25cf5a716e4 137-139
+  s_b4b50d7cfe891e::t_332292688ac4dd 275,277
+  s_b4b50d7cfe891e::t_0ea67e8c79d725 87
+  s_b4b50d7cfe891e::t_7363752731bcfe 24
+  s_b4b50d7cfe891e::t_febd552428dc07 262-273,276
+  s_b4b50d7cfe891e::t_1625ed7a5ce9de 278-324
+  s_b4b50d7cfe891e::t_b4091b8d0dd5cb 340,343-348
+  s_b4b50d7cfe891e::t_3a9561478d68ae 376
+  s_b4b50d7cfe891e::t_4aa1583d12302c 152-154
+  s_b4b50d7cfe891e::t_feb9d11e910ea8 477-492
+  s_b4b50d7cfe891e::t_958c25fdd915fa 509-516
+  s_b4b50d7cfe891e::t_a535633310d584 155-160,162-171
+  s_b4b50d7cfe891e::t_c8028ab3ac7deb 355
+  s_b4b50d7cfe891e::t_89fd2a5af74b3d 386,388-408,420,431,435-443
+  s_b4b50d7cfe891e::t_f45e5a00e4b5d6 64
+  s_b4b50d7cfe891e::t_1655377a27f480 21
+  s_b4b50d7cfe891e::t_ded77927810ec0 260,359,371-375,377,379-385,387,422-430,432-434,444-454,456,461,472,520,522-523,525-527,529,531,534-535,537,539,542,545
+  s_b4b50d7cfe891e::t_74c87a5d8fa5cc 54-55,57-61
+  s_b4b50d7cfe891e::t_96cd153c579cba 88
+  s_b4b50d7cfe891e::t_7832183fd1e26f 89-111
+  s_b4b50d7cfe891e::t_45ef525edda706 161
+  s_b4b50d7cfe891e::t_866cf40b1ab51f 327-339,353
+  s_b4b50d7cfe891e::t_d94cd5d05f20de 378
+  s_b4b50d7cfe891e::t_5b8019b2116a84 129
+  s_b4b50d7cfe891e::t_7768a47ba5a119 352,354
+  s_b4b50d7cfe891e::t_0b03f67f4e1411 7
+app/admin/professionals/[id]/review/components/PracticeMapper.test.tsx
+  s_b4b50d7cfe891e::t_443cefae321ebc 1-106
+package.json
+  s_b4b50d7cfe891e::t_dc5940c5cd8e57 53
+lib/profile-score.ts
+  s_b4b50d7cfe891e::t_56c993756acfe0 83-84,86
+  s_b4b50d7cfe891e::t_1af8b66abcbeee 69,71-74,77-79,81-82,85,91-93,95-96,113,115,120,126,132
+  s_b4b50d7cfe891e::t_2ee8d404425ab0 107
+  s_b4b50d7cfe891e::t_ea2168bd1aa5b1 17
+  s_b4b50d7cfe891e::t_d4b33bae214495 143-144,148,152-153,155,160
+  s_b4b50d7cfe891e::t_5eca071c1c2a50 141-142,145-147,149
+  s_b4b50d7cfe891e::t_5ef9a7cd0a24fb 151,154
+  s_b4b50d7cfe891e::t_7e254edbdc5406 101,104-106,108,121,127,133
+  s_b4b50d7cfe891e::t_7b6b0abad3c897 80
+app/admin/practices/new/page.tsx
+  s_b4b50d7cfe891e::t_e159f705d6dcdb 4
+  s_b4b50d7cfe891e::t_14e56905bb4658 24-26
+app/api/admin/professionals/[id]/image/route.ts
+  s_b4b50d7cfe891e::t_e1a1cc99c58603 1-59
+app/admin/practices/components/PracticeForm.test.tsx
+  s_b4b50d7cfe891e::t_8ba2d5efbfe83a 119
+  s_b4b50d7cfe891e::t_acc1fcbdf42ec0 12
+app/admin/professionals/page.tsx
+  s_b4b50d7cfe891e::t_f1fad5afb79cd7 309-310,315-318,328-332,334-335,337-340,344-349,352-353,355,357-358,363-365,367,369-375,381,389,401,431
+  s_b4b50d7cfe891e::t_6bb5ebd3cc23b3 350-351,354,356,359
+  s_b4b50d7cfe891e::t_4df0c2a9719b92 320-325,333,336,341,360-362,366,368
+scripts/cleanup-test-leads.mjs
+  s_b4b50d7cfe891e::t_dbf81df39d09d6 1-67
+app/admin/professionals/[id]/review/components/ScoreDisplay.test.tsx
+  s_b4b50d7cfe891e::t_12d82cb969030c 24,26-27,30-33,36-50
+  s_b4b50d7cfe891e::t_4447cf1ab6a8c6 1-23,25,28-29,34-35,51-52
+app/api/admin/practices/[key]/route.test.ts
+  s_33d4ca6287cdae::t_eb4ee9383e3735 31
+app/api/admin/professionals/route-image.test.ts
+  s_b4b50d7cfe891e::t_910b24f4bd3bd2 19
+  s_b4b50d7cfe891e::t_c8f80ca64db21d 22-29
+  s_b4b50d7cfe891e::t_674b5938c45566 5,7-15,36-37,48
+  s_b4b50d7cfe891e::t_c47971d39a98fe 35,38-41
+  s_b4b50d7cfe891e::t_aa6466a15f7a25 4,6
+app/admin/professionals/[id]/review/components/ScoreDisplay.tsx
+  s_b4b50d7cfe891e::t_bcf5db35541415 58
+  s_b4b50d7cfe891e::t_527c02ce5026d5 98
+  s_b4b50d7cfe891e::t_55c4318cca771c 53,55-57,59-63,95-96,121,126,129,131,134-135,176-180
+  s_b4b50d7cfe891e::t_bcef023d1d2c5f 3,5-7,54,64-94,97,99-117,122-124,128,140-141,143-175,182
+  s_b4b50d7cfe891e::t_e3e8cb869a6421 132-133,136-139
+app/api/admin/professionals/[id]/route.ts
+  s_b4b50d7cfe891e::t_b28227c9494a64 221-224
+  s_b4b50d7cfe891e::t_a0baf4b84b7236 225-227
+  s_b4b50d7cfe891e::t_33e3a671fa346e 68,73
+app/admin/practices/components/PracticeForm.tsx
+  s_b4b50d7cfe891e::t_9be5e77570d40b 222-229,232-233,235-236,238-241,243-247
+  s_b4b50d7cfe891e::t_491e5b55bd8841 230-231,234,237,242
+  s_b4b50d7cfe891e::t_7996181781c2d6 8
+  s_b4b50d7cfe891e::t_222217db9d5e58 31-32
+  s_b4b50d7cfe891e::t_d8cea1fc0f9961 203-221
+  s_b4b50d7cfe891e::t_31d4d258e08f79 66
+  s_b4b50d7cfe891e::t_e05261ba7a6ca4 55-63
+  s_b4b50d7cfe891e::t_c83064848256a2 11
+  s_b4b50d7cfe891e::t_d986ad7fbfbc9c 97
+app/profesionales/page.tsx
+  s_b4b50d7cfe891e::t_02681260cd9de7 139
+lib/admin-practices.ts
+  s_b4b50d7cfe891e::t_2580e686c7fe32 54,61
+  s_b4b50d7cfe891e::t_683901cbf09f77 25-42,44-48,55-56,62-67,69-83
+  s_b4b50d7cfe891e::t_e113ef313b816b 68
+  s_b4b50d7cfe891e::t_42381b96eea6dd 43
+  s_b4b50d7cfe891e::t_1e20e60d474d00 59
+  s_b4b50d7cfe891e::t_0b4c4131944874 49-53,57-58,60
+lib/practices.ts
+  s_b4b50d7cfe891e::t_24d6a60e64b152 15-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "515df1777e90031897aabe47f96b257a2088ffd3",
+  "prompts": {},
+  "sessions": {
+    "s_33d4ca6287cdae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3ee52c5a-c994-4aab-a7ca-ef0dbaf99742",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": null
+    },
+    "s_b4b50d7cfe891e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f9678b03-316a-4b9e-8d5a-e6d1daad5a55",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "mbelenmontoya <mariabmontoya@gmail.com>"
+    }
+  }
+}

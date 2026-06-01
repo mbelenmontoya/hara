@@ -65,7 +65,7 @@ export function ProfileHero({
 
       {acceptingNewClients && (
         <div className="flex justify-center">
-          <Chip label="Aceptando nuevos pacientes" variant="success" />
+          <Chip label="Aceptando nuevas consultas" variant="success" />
         </div>
       )}
     </div>

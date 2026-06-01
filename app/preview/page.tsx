@@ -14,7 +14,7 @@ export default function HomePreviewPage() {
 
         {/* Hero */}
         <h1 className="text-3xl font-semibold text-foreground mb-3 text-center leading-tight">
-          Te conectamos con tu terapeuta ideal
+          Encontrá tu profesional de bienestar
         </h1>
         <p className="text-base text-muted mb-8 leading-relaxed text-center">
           Recibí 3 recomendaciones de profesionales que se ajustan a vos
@@ -54,7 +54,7 @@ export default function HomePreviewPage() {
                 1
               </div>
               <div>
-                <p className="font-semibold text-foreground mb-1">Cuéntanos qué necesitás</p>
+                <p className="font-semibold text-foreground mb-1">Contanos qué necesitás</p>
                 <p className="text-sm text-muted leading-relaxed">Completá un breve formulario sobre lo que estás buscando</p>
               </div>
             </div>

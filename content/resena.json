@@ -5,7 +5,7 @@
   "strings": {
     "page_h1": "Tu reseña",
     "page_subtitle": "sobre {professional_name}",
-    "page_footer": "Hara Vital — plataforma de profesionales de bienestar verificados.",
+    "page_footer": "Hara Vital — profesionales de bienestar.",
     "form_rating_prompt": "Calificá tu experiencia con {professional_name}",
     "form_text_label": "Comentario",
     "form_text_optional": "— opcional",

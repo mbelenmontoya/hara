@@ -497,7 +497,7 @@ export function RegistroForm({ practices }: Props) {
                       }`}
                     />
                   </button>
-                  <span className="text-sm text-foreground">Estoy aceptando nuevos pacientes</span>
+                  <span className="text-sm text-foreground">Estoy aceptando nuevas consultas</span>
                 </div>
               </>
             )}
@@ -555,7 +555,7 @@ export function RegistroForm({ practices }: Props) {
                     type="text"
                     value={formData.short_description}
                     onChange={(e) => updateField('short_description', e.target.value)}
-                    placeholder="Ej: Psicóloga especializada en ansiedad y estrés laboral"
+                    placeholder="Ej: Facilitadora de constelaciones familiares y diseño humano"
                     className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all"
                   />
                   <p className="text-xs text-muted mt-1.5">Una línea que aparece debajo de tu nombre</p>
@@ -568,7 +568,7 @@ export function RegistroForm({ practices }: Props) {
                   <textarea
                     value={formData.bio}
                     onChange={(e) => updateField('bio', e.target.value)}
-                    placeholder="Contá tu enfoque, cómo trabajás y qué pueden esperar tus pacientes..."
+                    placeholder="Contá tu enfoque, cómo trabajás y qué pueden esperar quienes te consulten..."
                     rows={5}
                     className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all resize-none"
                   />

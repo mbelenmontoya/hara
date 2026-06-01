@@ -13,10 +13,12 @@ const NAV_LINKS = [
 ]
 
 const EXCLUDED_PREFIXES = ['/admin', '/r/', '/r/review']
+const EXCLUDED_EXACT = ['/']
 
 export function SiteHeader() {
   const pathname = usePathname()
 
+  if (EXCLUDED_EXACT.includes(pathname)) return null
   if (EXCLUDED_PREFIXES.some((prefix) => pathname.startsWith(prefix))) return null
 
   return (

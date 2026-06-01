@@ -14,7 +14,7 @@ export default function HomePage() {
 
       <div className="relative z-10 container-public pt-8 pb-8 flex flex-col justify-center min-h-screen">
 
-        <div className="text-center mb-10">
+        <div className="text-center mb-6">
           <p className="text-xs font-semibold text-brand uppercase tracking-[0.2em] mb-3">
             Hara Vital
           </p>

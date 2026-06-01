@@ -1,0 +1,23 @@
+app/page.tsx
+  s_33d4ca6287cdae::t_3d38ca994896a3 35
+content/home-proximamente.json
+  s_33d4ca6287cdae::t_20b403cc9fd2ea 10,13
+app/components/WaitlistForm.tsx
+  s_33d4ca6287cdae::t_ef56bf5614a8eb 83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "aff347ae961ac7efb4d6a8ed3cc5cffe04d60a8a",
+  "prompts": {},
+  "sessions": {
+    "s_33d4ca6287cdae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3ee52c5a-c994-4aab-a7ca-ef0dbaf99742",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "mbelenmontoya <mariabmontoya@gmail.com>"
+    }
+  }
+}

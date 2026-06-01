@@ -29,7 +29,7 @@ export default function HomePage() {
         <RevealOnScroll delay={100}>
           <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6 mb-6">
             <p className="text-sm text-foreground font-semibold mb-1">
-              ¿Querés saber cuando abramos?
+              ¿Te querés enterar primera?
             </p>
             <p className="text-sm text-muted leading-relaxed mb-5">
               Dejanos tu email. Si sos profesional y querés sumarte, también es por acá.

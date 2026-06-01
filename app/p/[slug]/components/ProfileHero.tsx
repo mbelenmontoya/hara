@@ -22,7 +22,7 @@ export function ProfileHero({
   return (
     <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6">
       <div className="flex justify-center mb-4">
-        {profileImageUrl ? (
+        {profileImageUrl?.startsWith('http') ? (
           <img
             src={profileImageUrl}
             alt={name}

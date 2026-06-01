@@ -22,6 +22,65 @@ export interface PracticeWithCount extends Practice {
   usage_count: number
 }
 
+export interface PracticeSuggestion {
+  entry: string   // original free-text value as written by the professional
+  count: number   // how many active/submitted professionals wrote this
+}
+
+/**
+ * Returns free-text entries from professionals.specialties that don't already
+ * exist in the practices catalog, sorted by frequency descending.
+ */
+export async function loadPracticeSuggestions(): Promise<PracticeSuggestion[]> {
+  const [{ data: pros, error: prosError }, { data: existingPractices, error: practicesError }] =
+    await Promise.all([
+      supabaseAdmin
+        .from('professionals')
+        .select('specialties')
+        .in('status', ['active', 'submitted']),
+      supabaseAdmin
+        .from('practices')
+        .select('key, label, aliases'),
+    ])
+
+  if (prosError) throw new Error(`Suggestions: failed to load professionals: ${prosError.message}`)
+  if (practicesError) throw new Error(`Suggestions: failed to load practices: ${practicesError.message}`)
+
+  // Normalize: lowercase + strip accents so "yoga terapeutico" matches "yoga terapéutico"
+  function normalize(s: string): string {
+    return s.toLowerCase().trim().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  }
+
+  // Build exclusion set from existing practice keys, labels, and aliases
+  const excluded = new Set<string>()
+  for (const p of existingPractices ?? []) {
+    excluded.add(normalize(p.key))
+    excluded.add(normalize(p.label))
+    for (const alias of p.aliases ?? []) {
+      excluded.add(normalize(alias))
+    }
+  }
+
+  // Count occurrences of each free-text entry
+  const counts = new Map<string, { display: string; count: number }>()
+  for (const row of (pros ?? []) as Array<{ specialties: string[] | null }>) {
+    for (const raw of row.specialties ?? []) {
+      const normalized = normalize(raw)
+      if (!normalized || excluded.has(normalized)) continue
+      const existing = counts.get(normalized)
+      if (existing) {
+        existing.count++
+      } else {
+        counts.set(normalized, { display: raw.trim(), count: 1 })
+      }
+    }
+  }
+
+  return Array.from(counts.values())
+    .map(({ display, count }) => ({ entry: display, count }))
+    .sort((a, b) => b.count - a.count || a.entry.localeCompare(b.entry))
+}
+
 /** Returns all practices (active + inactive) with per-practice usage counts. */
 export async function loadAdminPracticesView(): Promise<PracticeWithCount[]> {
   const all = await getAllPractices()

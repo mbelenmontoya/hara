@@ -8,7 +8,6 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { AdminLayout } from '@/app/components/AdminLayout'
 import { GlassCard } from '@/app/components/ui/GlassCard'
-import { Badge } from '@/app/components/ui/Badge'
 import { Chip } from '@/app/components/ui/Chip'
 import { Button } from '@/app/components/ui/Button'
 import { Modal } from '@/app/components/ui/Modal'
@@ -307,65 +306,87 @@ interface ProfessionalRowProps {
 }
 
 function ProfessionalRow({ professional: pro, expanded, payments, onToggleExpand, onUpgrade, onDelete }: ProfessionalRowProps) {
-  const badge = STATUS_CONFIG[pro.status] || STATUS_CONFIG.draft
+  const [showAllChips, setShowAllChips] = useState(false)
+
   const location = [pro.city, pro.country].filter(Boolean).join(', ')
-  const visibleSpecialties = (pro.specialties ?? []).slice(0, 3)
-  const overflow = (pro.specialties?.length ?? 0) - visibleSpecialties.length
   const registeredDate = new Date(pro.created_at).toLocaleDateString('es-AR', {
     day: 'numeric', month: 'short', year: 'numeric',
   })
-  const effective = isEffectivelyDestacado(pro.subscription_tier, pro.tier_expires_at)
-  // Legacy destacado rows (null expiry) are still effective per backward-compat —
-  // show "Destacado" without a date. New rows always have an expiry, so we show it.
-  const tierLabel = effective
-    ? pro.tier_expires_at
-      ? `Destacado hasta ${new Date(pro.tier_expires_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}`
-      : 'Destacado'
-    : 'Básico'
+  const effective      = isEffectivelyDestacado(pro.subscription_tier, pro.tier_expires_at)
+  const allSpecialties = pro.specialties ?? []
+  const visibleChips   = showAllChips ? allSpecialties : allSpecialties.slice(0, 2)
+  const overflow       = allSpecialties.length - 2
+
+  const statusDot: Record<string, string> = {
+    active:    'bg-success',
+    submitted: 'bg-warning',
+    rejected:  'bg-danger',
+  }
+  const dotColor = statusDot[pro.status] ?? 'bg-muted/40'
 
   return (
-    <GlassCard>
-      {/* Main row */}
-      <div className="flex items-center gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2 mb-1">
-            <p className="text-sm font-medium text-foreground truncate">{pro.name}</p>
-            {/* Tier status chip */}
-            <Chip
-              variant={effective ? 'brand' : 'neutral'}
-              label={tierLabel}
-              className="text-[10px] px-2 py-0.5"
-            />
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5 mb-1">
-            {visibleSpecialties.map((s) => (
-              <Chip key={s} specialty={s} className="text-[11px] px-2 py-1" />
-            ))}
-            {overflow > 0 && <span className="text-xs text-muted">+{overflow}</span>}
-          </div>
-          <p className="text-xs text-muted">
-            {location}{location && ' · '}Registrado {registeredDate}
-          </p>
+    <GlassCard className="h-full" contentClassName="flex flex-col h-full">
+
+      {/* Content — grows to fill, pushes actions to bottom */}
+      <div className="flex-1 space-y-2 mb-4">
+
+        {/* Row: Name + star (if Destacado) + status dot right */}
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-semibold text-foreground">{pro.name}</p>
+          {effective && (
+            <svg className="w-3.5 h-3.5 text-brand flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-label="Destacado">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+          )}
+          <span className={`ml-auto w-2.5 h-2.5 rounded-full flex-shrink-0 ${dotColor}`} title={pro.status} />
         </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <Badge variant={badge.variant}>{badge.label}</Badge>
+        {/* Row: 2 chips + expandable +N link */}
+        <div className="flex flex-wrap gap-1.5 items-center">
+          {visibleChips.map((s) => (
+            <Chip key={s} specialty={s} className="text-[11px] px-2 py-1" />
+          ))}
+          {!showAllChips && overflow > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowAllChips(true)}
+              className="text-xs text-brand hover:underline"
+            >
+              +{overflow}
+            </button>
+          )}
+        </div>
 
-          {/* Upgrade button */}
+        {/* 2 rows: location then date */}
+        {location && <p className="text-xs text-muted">{location}</p>}
+        <p className="text-xs text-muted">Registrado {registeredDate}</p>
+      </div>
+
+      {/* Bottom — always at bottom */}
+      <div className="border-t border-outline/30 pt-2">
+
+        {/* Actions right-aligned — Revisar | Destacar | 🗑️ | ↓ */}
+        <div className="flex justify-end items-center gap-2">
+          <Link
+            href={`/admin/professionals/${pro.id}/review`}
+            className="text-xs text-brand font-medium hover:underline"
+          >
+            Revisar
+          </Link>
+
           <Button
             variant="ghost"
             size="sm"
             onClick={() => onUpgrade(pro)}
-            className="text-xs text-brand hover:bg-brand-weak"
+            className="text-xs text-muted hover:bg-surface-2 px-2 py-1"
           >
             {effective ? 'Extender' : 'Destacar'}
           </Button>
 
-          {/* Delete button — destructive, requires confirmation */}
           <button
             type="button"
             onClick={() => onDelete(pro)}
-            className="text-muted hover:text-danger transition-colors p-1"
+            className="text-muted hover:text-danger transition-colors p-1 rounded-lg hover:bg-danger/10"
             aria-label={`Eliminar a ${pro.name}`}
             title="Eliminar profesional"
           >
@@ -374,22 +395,10 @@ function ProfessionalRow({ professional: pro, expanded, payments, onToggleExpand
             </svg>
           </button>
 
-          {/* Link to review page */}
-          <Link
-            href={`/admin/professionals/${pro.id}/review`}
-            className="text-muted hover:text-foreground transition-colors p-1"
-            aria-label={`Ver perfil de ${pro.name}`}
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
-
-          {/* Expand chevron for payment history */}
           <button
             type="button"
             onClick={() => onToggleExpand(pro.id)}
-            className="text-muted hover:text-foreground transition-colors p-1"
+            className="text-muted hover:text-foreground transition-colors p-1 rounded-lg hover:bg-surface-2"
             aria-label={expanded ? 'Colapsar historial' : 'Ver historial de pagos'}
           >
             <svg
@@ -419,9 +428,7 @@ function ProfessionalRow({ professional: pro, expanded, payments, onToggleExpand
                     {new Date(payment.paid_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </span>
                   <span className="text-muted">{METHOD_LABEL[payment.payment_method] ?? payment.payment_method}</span>
-                  <span className="text-muted">
-                    {payment.period_start} → {payment.period_end}
-                  </span>
+                  <span className="text-muted">{payment.period_start} → {payment.period_end}</span>
                   {payment.invoice_number && (
                     <span className="text-muted">Factura {payment.invoice_number}</span>
                   )}

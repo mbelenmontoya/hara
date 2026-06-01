@@ -136,7 +136,7 @@ function ProfessionalCard({ professional: pro }: { professional: DirectoryProfes
 
             {/* Avatar */}
             <div className="flex-shrink-0">
-              {pro.profile_image_url ? (
+              {pro.profile_image_url?.startsWith('http') ? (
                 <img
                   src={pro.profile_image_url}
                   alt={pro.full_name}

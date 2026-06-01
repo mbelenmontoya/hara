@@ -9,6 +9,7 @@ const mockPush = vi.fn()
 const mockRefresh = vi.fn()
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, refresh: mockRefresh }),
+  useSearchParams: () => ({ get: () => null }),
 }))
 
 // Mock global fetch
@@ -115,6 +116,7 @@ describe('PracticeForm — edit mode', () => {
     slug: 'reiki-original',
     sort_order: 10,
     active: true,
+    specialties: [] as string[],
   }
 
   it('renders prefilled fields with key disabled', () => {

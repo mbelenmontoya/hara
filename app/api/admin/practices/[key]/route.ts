@@ -4,6 +4,7 @@
 // Security: Admin-only via getAdminUserId().
 
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getAdminUserId } from '@/lib/admin-auth'
 import { bustPracticesCache } from '@/lib/practices'
@@ -13,11 +14,19 @@ export const runtime = 'nodejs'
 
 const KEBAB_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/
 
+const VALID_SPECIALTY_KEYS = new Set([
+  'anxiety', 'depression', 'stress', 'trauma', 'relationships',
+  'self-esteem', 'grief', 'addiction', 'eating-disorders', 'couples',
+  'family', 'children',
+])
+
 interface UpdateInput {
   label?: string
   slug?: string
   sort_order?: number
   active?: boolean
+  specialties?: string[]
+  aliases?: string[]
 }
 
 function validateUpdate(
@@ -64,6 +73,30 @@ function validateUpdate(
     out.active = r.active
   }
 
+  if (r.specialties !== undefined) {
+    if (!Array.isArray(r.specialties)) {
+      return { ok: false, error: '`specialties` debe ser un array' }
+    }
+    for (const s of r.specialties) {
+      if (typeof s !== 'string' || !VALID_SPECIALTY_KEYS.has(s)) {
+        return { ok: false, error: `Especialidad inválida: '${String(s)}'` }
+      }
+    }
+    out.specialties = r.specialties as string[]
+  }
+
+  if (r.aliases !== undefined) {
+    if (!Array.isArray(r.aliases)) {
+      return { ok: false, error: '`aliases` debe ser un array' }
+    }
+    for (const a of r.aliases) {
+      if (typeof a !== 'string' || a.trim().length === 0) {
+        return { ok: false, error: 'Cada alias debe ser un string no vacío' }
+      }
+    }
+    out.aliases = (r.aliases as string[]).map(a => a.trim().toLowerCase())
+  }
+
   // Coerce empty/whitespace body.key to undefined; the immutability check
   // only matters when the client actively tried to change it.
   const bodyKey = typeof r.key === 'string' && r.key.trim().length > 0 ? r.key.trim() : undefined
@@ -89,6 +122,48 @@ export async function PATCH(
     body = await req.json()
   } catch {
     return NextResponse.json({ error: 'Body inválido (JSON)' }, { status: 400 })
+  }
+
+  // Atomic alias append — fetches current aliases from DB and appends.
+  // Never overwrites existing aliases with stale client-side state.
+  if (typeof body === 'object' && body !== null && 'append_alias' in body) {
+    const raw = (body as Record<string, unknown>).append_alias
+    if (typeof raw !== 'string' || !raw.trim()) {
+      return NextResponse.json({ error: 'append_alias debe ser un string no vacío' }, { status: 400 })
+    }
+    const newAlias = raw.trim().toLowerCase()
+
+    const { data: current, error: fetchErr } = await supabaseAdmin
+      .from('practices')
+      .select('aliases')
+      .eq('key', urlKey)
+      .single()
+
+    if (fetchErr || !current) {
+      return NextResponse.json({ error: 'Práctica no encontrada' }, { status: 404 })
+    }
+
+    const existing: string[] = current.aliases ?? []
+    if (existing.includes(newAlias)) {
+      // Already present — idempotent success
+      bustPracticesCache()
+      revalidatePath('/admin/practices')
+      return NextResponse.json({ success: true })
+    }
+
+    const { error: updateErr } = await supabaseAdmin
+      .from('practices')
+      .update({ aliases: [...existing, newAlias] })
+      .eq('key', urlKey)
+
+    if (updateErr) {
+      logError(new Error(updateErr.message), { source: 'PATCH /api/admin/practices/[key] append_alias', urlKey })
+      return NextResponse.json({ error: 'Error al guardar el alias' }, { status: 500 })
+    }
+
+    bustPracticesCache()
+    revalidatePath('/admin/practices')
+    return NextResponse.json({ success: true })
   }
 
   const validation = validateUpdate(body)
@@ -175,5 +250,6 @@ export async function PATCH(
   }
 
   bustPracticesCache()
+  revalidatePath('/admin/practices')
   return NextResponse.json({ success: true })
 }

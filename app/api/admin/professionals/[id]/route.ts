@@ -65,11 +65,12 @@ export async function PATCH(
   }
 
   const body = await request.json()
-  const { action, rejection_reason, specialties, practices } = body as {
+  const { action, rejection_reason, specialties, practices, score_overrides } = body as {
     action?: string
     rejection_reason?: string
     specialties?: unknown
     practices?: unknown
+    score_overrides?: unknown
   }
 
   // Validate specialties if provided
@@ -216,6 +217,13 @@ export async function PATCH(
   }
   if (specialties !== undefined) {
     updatePayload.specialties = (specialties as string[]).map(s => s.trim())
+  }
+  if (practices !== undefined && Array.isArray(practices) && practices.length > 0) {
+    updatePayload.practices = practices
+    updatePayload.needs_practice_review = false
+  }
+  if (score_overrides !== null && typeof score_overrides === 'object' && !Array.isArray(score_overrides)) {
+    updatePayload.score_overrides = score_overrides
   }
 
   const { error: updateError } = await supabaseAdmin

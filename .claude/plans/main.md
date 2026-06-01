@@ -234,23 +234,92 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 ## Next Steps
 
-1. **Bel manual browser test of Items 6 + 7**
-   - What: Open `http://localhost:3000` and verify both passes — desktop nav links at 1280px, 2-column directory, scroll reveals on home + profile, sticky contact sidebar at `/p/[slug]`, container 640px on mobile, 1024px on desktop. Spot-check applied copy on `/preview`, `/solicitar`, `/r/review/[token]`, `/profesionales/registro`, `/profesionales/registro/confirmacion`, `/not-found`, and pro approval email (if you can trigger one).
-   - Why: Both items are committed + pushed. Manual verification flips them to VERIFIED in the plan.
+1. **Apply migration 013** (`migrations/013_score_overrides_and_aliases.sql`)
+   - What: Run in Supabase SQL Editor. Adds `score_overrides jsonb` on professionals and `aliases text[]` on practices. Both idempotent.
+   - Why: Required for score override editing on review page and alias mapping to work.
 
-2. **Decide on Item 7 gap strings**
-   - What: 6 categories of app strings are NOT in `content/*.json` (left unchanged today). Either add them to JSON (then re-apply), accept as-is, or update them using `voice.json` rules.
-   - Considerations: `'Enviando…'` (WaitlistForm), directory chip dynamic labels ("Online"/"Presencial", "desde/hasta"), profile review fallbacks ("Anónimo"), Solicitar currency labels + "Mín/Máx", Registro currency descriptions + "Vista previa", admin emails (out of scope per `emails.json`).
+2. **Debug and fix `SuggestedPractices` mapping feature** — BROKEN, handed to another AI
+   - What: The `append_alias` API endpoint is correct and saves to DB. The list exclusion logic is correct (verified via Node.js simulation). But entries reappear in the suggestions list on navigation. Suspected cause: Next.js router cache or `revalidatePath` not working as expected. `router.refresh()` is called client-side after each mapping.
+   - Files: `app/admin/practices/SuggestedPractices.tsx`, `app/api/admin/practices/[key]/route.ts`, `lib/admin-practices.ts`
+   - Known: `append_alias` atomic server-side append is correct. `loadPracticeSuggestions` correctly excludes aliases (including accent-normalized). `revalidatePath('/admin/practices')` called on PATCH success.
 
-3. **Item 4 (Public home flip) — deferred until Phase 1 done**
-   - What: Public home flip (`/` from Próximamente to open-doors home). See Final Go-Live Gate section for prerequisite checklist.
+3. **Apply migration 012** (`migrations/012_practices_specialty_mapping.sql`)
+   - What: Adds `specialties text[]` to `practices` table with seeded research-based specialty mappings for all 15 practices.
+   - Why: Required for the practice ↔ specialty mapping on the practices edit page.
 
-4. **Phase 1 — first 10 pros, 5 concierge requests, Sentry + Vercel Analytics**
-   - What: Soft Launch Push items are done. Phase 1 work can begin: wire Sentry + Vercel Analytics, schedule recurring crons on Vercel, onboard 10 real pros, handle 5 real concierge requests.
+4. **Complete profile image scoring discussion** — next session
+   - What: `profileImage` criterion (10pts) is now binary (has http URL or not). Admin can override via score editor. No AI image analysis implemented — left to admin judgment.
+
+5. **Bel manual browser test of Items 6 + 7** (carried over from 2026-05-20)
+   - What: Verify desktop nav, 2-col directory, scroll reveals, sticky sidebar, container widths, spot-check applied copy.
+
+6. **Decide on Item 7 gap strings** (carried over)
+   - Considerations: `'Enviando…'` (WaitlistForm), directory chip labels, profile review fallbacks, Solicitar currency labels, Registro currency descriptions, admin emails (out of scope).
+
+7. **Item 4 (Public home flip)** — deferred until Phase 1 done
+   - What: See Final Go-Live Gate section for prerequisite checklist.
+
+8. **Phase 1 — first 10 pros, 5 concierge requests, Sentry + Vercel Analytics**
 
 ---
 
 ## Session Log
+
+### Session — 2026-05-30/31 (Admin UI overhaul + score system + practices mapping — partial, BROKEN)
+
+**Completed — Admin bugs fixed:**
+- `app/admin/page.tsx` — added redirect to `/admin/leads` (navigating to `/admin` was showing 404 custom page instead of dashboard)
+- `@types/google.maps` installed + `global.d.ts` created — fixed 3 pre-existing TypeScript errors (PlacesAutocomplete google namespace, CSS import)
+- Admin professionals card (`app/admin/professionals/page.tsx`) — full redesign: vertical layout, colored status dot (green/yellow/red), star for Destacado, 2 chips + `+N` expandable, location/date on separate rows, actions row (Revisar | Destacar | 🗑️ | ↓)
+- `GlassCard` — added `contentClassName` and `overflowHidden` props
+- Admin professionals list: equal-height cards via `h-full flex flex-col`
+
+**Completed — DB cleanup:**
+- 274 test leads deleted from DB (had raw filenames as `profile_image_url`, no whatsapp/email). 2 real leads preserved.
+- Profile images: all 45 professionals had raw browser filenames (e.g. `PicsArt_05.jpg`) stored in `profile_image_url` instead of Supabase Storage URLs. Nulled all 45 rows. Orphan storage file deleted.
+- Image display guard: all 3 surfaces (`/profesionales`, `/p/[slug]`, admin review) now check `startsWith('http')` before rendering `<img>`.
+
+**Completed — Professional review page redesign:**
+- Layout: full-width header + back button outside card + ScoreRing in header top-right + 2-col (Score | Bio+Contact) + full-width Perfil profesional + bare right-aligned action buttons
+- Header: status dot next to name, tier/ranking/ratings line, clickable avatar with camera overlay → uploads to Supabase Storage via `POST /api/admin/professionals/[id]/image`
+- All fields now shown: `short_description`, `experience_description`, `service_type`, `accepting_new_clients`, `offers_courses_online`, `courses_presencial_location`, `subscription_tier`, `ranking_score`, `rating_average`
+- `PracticeMapper` component replaces `SpecialtyMapper` + `PracticeReclassificationBanner`: maps free-text `professionals.specialties` entries to canonical practice keys, saves to `professionals.practices`
+- `ScoreBreakdown`: inline editable score (click number → input, 0–max), ℹ️ tooltip per criterion, dot reflects 0/partial/full, override saved to DB on approve
+
+**Completed — Score system overhaul (`lib/profile-score.ts`):**
+- `evaluate` function changed from `boolean` to `number` (0–1 fraction) enabling partial scoring
+- `textTier(text, minChars, fullChars)` helper for 3-tier text scoring
+- New weights — mandatory (5pts each): whatsapp, modality, specialties→practices, bio. Optional (10–15pts each): profileImage, shortDescription, experienceDescription, serviceType, locationClarity, instagram. Total = 100.
+- `shortDescription` (15pts): 0–24→0, 25–49→7, 50+→15
+- `bio` (5pts): 0–99→0, 100–249→2, 250+→5
+- `experienceDescription` (15pts): 0–49→0, 50–149→7, 150+→15
+- `modality` (5pts): binary (any modality = 5pts — not partial, can't penalize for business model)
+- `practices` (5pts): binary (≥1 practice = 5pts)
+- `calculateProfileScore(profile, overrides: Record<string, number>)` — admin overrides per criterion stored as numbers in `professionals.score_overrides`
+- Criterion key renamed `specialties` → `practices` throughout (score, type, hint, review page)
+- Profile image criterion: uses `startsWith('http')` guard (no raw filenames count)
+- `lib/profile-score.test.ts` — 26 tests covering all criteria, 3-tier thresholds, overrides, edge cases
+- `ScoreDisplay.test.tsx` — 5 tests for editable breakdown behavior
+
+**Completed — Practices catalog enhancements:**
+- `migrations/012_practices_specialty_mapping.sql` — adds `specialties text[]` to `practices` table with seeded research-based mappings for all 15 practices
+- `migrations/013_score_overrides_and_aliases.sql` — adds `score_overrides jsonb` to professionals, `aliases text[]` to practices
+- `PracticeForm` — added `Especialidades que cubre` section (12 checkboxes from SPECIALTY_MAP), `Aliases mapeados` read-only display, `?label=` URL param pre-fill in create mode
+- `lib/admin-practices.ts` — `loadPracticeSuggestions()` aggregates free-text entries from `professionals.specialties` not in catalog, sorted by frequency, accent-normalized exclusion
+- `SuggestedPractices.tsx` — collapsible section at top of practices page: 3 actions per entry: Descartar (local dismiss), Nueva práctica (link to `/admin/practices/new?label=...`), Agregar a práctica (maps as alias via `append_alias`)
+- `append_alias` API path in `PATCH /api/admin/practices/[key]` — atomic: fetches current aliases from DB, appends new one, saves. Never overwrites.
+- `revalidatePath('/admin/practices')` + `router.refresh()` added to invalidate Next.js router cache after mapping.
+- 294 → 293 unit tests (net change due to modality binary revert removing 1 test)
+
+**Deviations:**
+- Score system redesign was unplanned — emerged from Bel's review of professionals during approval workflow. Became a deep refactor of scoring weights, partial scoring, and override system.
+- `SuggestedPractices` mapping feature was partially unplanned — emerged from Bel noticing free-text practice names not matching catalog.
+
+**Blockers — OPEN:**
+- `SuggestedPractices` alias mapping is BROKEN. Entries reappear in the list after mapping despite aliases being correctly saved in DB and exclusion logic being verified as correct via Node.js simulation. Root cause not fully identified. Hypotheses: Next.js router cache, `revalidatePath` not behaving as expected, or subtle component state issue. Handed to another AI for fresh diagnosis.
+- Migrations 012 and 013 NOT applied to Supabase yet. Both must be applied before score overrides, alias mapping, or practices specialty mapping work in production.
+
+**Tests:** 293/293 unit pass · tsc clean (0 errors)
 
 ### Session — 2026-05-20 (Soft Launch Push Items 6 + 7 committed/applied + Node 26 test compat fix)
 
@@ -524,7 +593,7 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 - [x] What happens when a profile is rejected? Keep data? Allow resubmission? Notify the professional? → **Resolved 2026-05-07/08:** soft no with 60-day cooldown; verbatim rejection_reason emailed to the pro; row preserved (partial UNIQUE excludes rejected from the live-row uniqueness invariant). See Item 3 above.
 - [x] What data should each card in the admin professionals list show? → Name, up to 3 specialty chips (colored), location, status badge (implemented in specialty color system)
-- [ ] Should existing 45 professionals get placeholder images, or leave as initial-letter avatars until they re-register?
+- [x] Should existing 45 professionals get placeholder images, or leave as initial-letter avatars until they re-register? → **Resolved 2026-05-30:** show initial-letter avatars as visual placeholder; the profile-score "has image" criterion stays unmet until they upload a real photo (intentional — placeholder lowers their ranking vs pros with real images).
 - [x] **Rewrite scope, timeline, and trigger.** → **Resolved 2026-05-12:** Bel clarified the "rewrite" she'd referenced is a **content rewrite (= Item 7, final wording pass), NOT an app rewrite**. Soft Launch Push continues on the current app. Items 6 + 7 remain in scope; Item 4 moved to **Final Go-Live Gate** (post-Phase-3 trigger) since the app is not ready to open.
 - [x] **Item 4 detail decisions.** → **Resolved 2026-05-12:** Sub-decisions (browse-first home, waitlist → newsletter, post-Item-3 timing) preserved inside the new **Final Go-Live Gate** section at the end of the Roadmap. Hero copy ("Te conectamos con tu terapeuta ideal") is part of Item 7's wording-pass scope, not deferred to the gate itself.
 

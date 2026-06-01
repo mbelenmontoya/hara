@@ -1,6 +1,7 @@
 // Hara Vital — Admin Practices: Create
 // Server shell. Renders the shared <PracticeForm> in create mode.
 
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { AdminLayout } from '@/app/components/AdminLayout'
 import { GlassCard } from '@/app/components/ui/GlassCard'
@@ -20,7 +21,9 @@ export default function NewPracticePage() {
         </div>
         <GlassCard>
           <div className="p-6">
-            <PracticeForm mode="create" />
+            <Suspense fallback={<div className="text-sm text-muted">Cargando...</div>}>
+              <PracticeForm mode="create" />
+            </Suspense>
           </div>
         </GlassCard>
       </div>

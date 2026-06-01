@@ -5,13 +5,17 @@
 import Link from 'next/link'
 import { AdminLayout } from '@/app/components/AdminLayout'
 import { Button } from '@/app/components/ui/Button'
-import { loadAdminPracticesView } from '@/lib/admin-practices'
+import { loadAdminPracticesView, loadPracticeSuggestions } from '@/lib/admin-practices'
 import { PracticesList } from './PracticesList'
+import { SuggestedPractices } from './SuggestedPractices'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminPracticesPage() {
-  const practices = await loadAdminPracticesView()
+  const [practices, suggestions] = await Promise.all([
+    loadAdminPracticesView(),
+    loadPracticeSuggestions(),
+  ])
 
   return (
     <AdminLayout>
@@ -25,6 +29,7 @@ export default async function AdminPracticesPage() {
             <Button>Nueva práctica</Button>
           </Link>
         </div>
+        <SuggestedPractices suggestions={suggestions} practices={practices} />
         <PracticesList practices={practices} />
       </div>
     </AdminLayout>

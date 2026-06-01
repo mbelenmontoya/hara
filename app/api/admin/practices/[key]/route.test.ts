@@ -28,6 +28,7 @@ vi.mock('@/lib/supabase-admin', () => ({
 vi.mock('@/lib/admin-auth', () => ({ getAdminUserId: vi.fn() }))
 vi.mock('@/lib/practices', () => ({ bustPracticesCache: vi.fn() }))
 vi.mock('@/lib/monitoring', () => ({ logError: vi.fn() }))
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 
 function makeReq(body?: unknown): NextRequest {
   return new NextRequest('http://localhost/api/admin/practices/reiki', {

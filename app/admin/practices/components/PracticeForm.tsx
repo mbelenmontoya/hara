@@ -5,9 +5,10 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Alert } from '@/app/components/ui/Alert'
 import { Button } from '@/app/components/ui/Button'
+import { SPECIALTY_MAP } from '@/lib/design-constants'
 
 const KEBAB_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/
 
@@ -27,6 +28,8 @@ interface InitialPractice {
   slug: string
   sort_order: number
   active: boolean
+  specialties?: string[]
+  aliases?: string[]
 }
 
 interface PracticeFormProps {
@@ -49,11 +52,18 @@ function isValid(values: {
 
 export function PracticeForm({ mode, initial }: PracticeFormProps) {
   const router = useRouter()
-  const [key, setKey] = useState(initial?.key ?? '')
-  const [label, setLabel] = useState(initial?.label ?? '')
-  const [slug, setSlug] = useState(initial?.slug ?? '')
+  const searchParams = useSearchParams()
+
+  // In create mode, pre-fill label (and auto-derive key/slug) from ?label= param
+  const suggestedLabel = mode === 'create' ? (searchParams.get('label') ?? '') : ''
+  const suggestedKey   = mode === 'create' ? normalizeSlug(suggestedLabel) : ''
+
+  const [key, setKey] = useState(initial?.key ?? suggestedKey)
+  const [label, setLabel] = useState(initial?.label ?? suggestedLabel)
+  const [slug, setSlug] = useState(initial?.slug ?? suggestedKey)
   const [sortOrder, setSortOrder] = useState<number>(initial?.sort_order ?? 0)
   const [active, setActive] = useState(initial?.active ?? true)
+  const [specialties, setSpecialties] = useState<string[]>(initial?.specialties ?? [])
   // In edit mode, slug is locked from auto-derive (treat as if user touched it).
   const [slugTouched, setSlugTouched] = useState(mode === 'edit')
   const [submitting, setSubmitting] = useState(false)
@@ -84,6 +94,7 @@ export function PracticeForm({ mode, initial }: PracticeFormProps) {
       slug,
       sort_order: sortOrder,
       active,
+      specialties,
       ...(mode === 'create' ? { key } : {}),
     }
 
@@ -188,6 +199,51 @@ export function PracticeForm({ mode, initial }: PracticeFormProps) {
         />
         <span className="text-sm text-foreground">Activa (visible en el picker público)</span>
       </label>
+
+      {mode === 'edit' && initial?.aliases && initial.aliases.length > 0 && (
+        <div className="flex flex-col gap-1">
+          <p className="text-sm font-medium text-foreground">Aliases mapeados</p>
+          <p className="text-xs text-muted mb-1">
+            Términos alternativos que los profesionales usaron para esta práctica.
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {initial.aliases.map(alias => (
+              <span
+                key={alias}
+                className="text-xs bg-surface-2 border border-outline rounded-full px-2.5 py-1 text-foreground"
+              >
+                {alias}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <fieldset className="flex flex-col gap-2">
+        <legend className="text-sm font-medium text-foreground mb-1">
+          Especialidades que cubre
+        </legend>
+        <p className="text-xs text-muted -mt-1 mb-1">
+          Síntomas o situaciones que esta práctica aborda. Se usa internamente para el matching.
+        </p>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+          {Object.entries(SPECIALTY_MAP).map(([sKey, sLabel]) => (
+            <label key={sKey} className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={specialties.includes(sKey)}
+                onChange={(e) => {
+                  setSpecialties(prev =>
+                    e.target.checked ? [...prev, sKey] : prev.filter(s => s !== sKey)
+                  )
+                }}
+                className="accent-brand"
+              />
+              <span className="text-sm text-foreground">{sLabel}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       <div className="flex gap-2 pt-2">
         <Button type="submit" disabled={!valid || submitting}>

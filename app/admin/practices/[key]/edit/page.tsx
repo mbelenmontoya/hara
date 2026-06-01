@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic'
 export default async function EditPracticePage({ params }: { params: { key: string } }) {
   const { data, error } = await supabaseAdmin
     .from('practices')
-    .select('key, label, slug, sort_order, active')
+    .select('key, label, slug, sort_order, active, specialties, aliases')
     .eq('key', params.key)
     .single()
 

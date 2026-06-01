@@ -12,6 +12,8 @@ export interface Practice {
   slug: string
   sort_order: number
   active: boolean
+  specialties?: string[]
+  aliases?: string[]
 }
 
 // Module-level caches shared by getActivePractices, validatePracticeKeys,

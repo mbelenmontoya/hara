@@ -80,7 +80,7 @@ export function WaitlistForm() {
         disabled={status === 'loading'}
         className="w-full px-6 py-3.5 bg-brand text-white font-semibold rounded-full shadow-elevated hover:shadow-strong btn-press-glow transition-all disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        {status === 'loading' ? 'Enviando…' : 'Avisame cuando abran'}
+        {status === 'loading' ? 'Enviando…' : 'Anotame'}
       </button>
     </form>
   )

@@ -32,7 +32,7 @@ export default function HomePage() {
               ¿Te querés enterar primera?
             </p>
             <p className="text-sm text-muted leading-relaxed mb-5">
-              Dejanos tu email. Si sos profesional y querés sumarte, también es por acá.
+              Dejanos tu email y te avisamos cuando estemos listos. ¿Sos profesional y querés sumarte? También es por acá.
             </p>
             <WaitlistForm />
           </div>

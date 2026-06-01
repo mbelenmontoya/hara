@@ -238,7 +238,7 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
    - What: Run in Supabase SQL Editor. Adds `score_overrides jsonb` on professionals and `aliases text[]` on practices. Both idempotent.
    - Why: Required for score override editing on review page and alias mapping to work.
 
-2. **Debug and fix `SuggestedPractices` mapping feature** — BROKEN, handed to another AI
+2. **Debug and fix `SuggestedPractices` mapping feature** — BROKEN
    - What: The `append_alias` API endpoint is correct and saves to DB. The list exclusion logic is correct (verified via Node.js simulation). But entries reappear in the suggestions list on navigation. Suspected cause: Next.js router cache or `revalidatePath` not working as expected. `router.refresh()` is called client-side after each mapping.
    - Files: `app/admin/practices/SuggestedPractices.tsx`, `app/api/admin/practices/[key]/route.ts`, `lib/admin-practices.ts`
    - Known: `append_alias` atomic server-side append is correct. `loadPracticeSuggestions` correctly excludes aliases (including accent-normalized). `revalidatePath('/admin/practices')` called on PATCH success.
@@ -247,23 +247,53 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
    - What: Adds `specialties text[]` to `practices` table with seeded research-based specialty mappings for all 15 practices.
    - Why: Required for the practice ↔ specialty mapping on the practices edit page.
 
-4. **Complete profile image scoring discussion** — next session
+4. **Fix metadata in `app/layout.tsx`** — old copy still present
+   - What: `title`, `description`, `openGraph`, and `twitter` fields still reference "terapeuta ideal", "verificados", "psicólogo argentina" — language that conflicts with the holistic-wellness positioning and the copy fixes applied this session.
+
+5. **Complete profile image scoring discussion** — next session
    - What: `profileImage` criterion (10pts) is now binary (has http URL or not). Admin can override via score editor. No AI image analysis implemented — left to admin judgment.
 
-5. **Bel manual browser test of Items 6 + 7** (carried over from 2026-05-20)
-   - What: Verify desktop nav, 2-col directory, scroll reveals, sticky sidebar, container widths, spot-check applied copy.
+6. **Bel manual browser test of remaining pages** (carried over from 2026-05-20)
+   - What: Homepage layout + copy verified this session. Remaining: desktop nav, 2-col directory, scroll reveals, sticky sidebar on /p/[slug], container widths.
 
-6. **Decide on Item 7 gap strings** (carried over)
+7. **Decide on Item 7 gap strings** (carried over)
    - Considerations: `'Enviando…'` (WaitlistForm), directory chip labels, profile review fallbacks, Solicitar currency labels, Registro currency descriptions, admin emails (out of scope).
 
-7. **Item 4 (Public home flip)** — deferred until Phase 1 done
+8. **Item 4 (Public home flip)** — deferred until Phase 1 done
    - What: See Final Go-Live Gate section for prerequisite checklist.
 
-8. **Phase 1 — first 10 pros, 5 concierge requests, Sentry + Vercel Analytics**
+9. **Phase 1 — first 10 pros, 5 concierge requests, Sentry + Vercel Analytics**
 
 ---
 
 ## Session Log
+
+### Session — 2026-06-01 (Copy audit + homepage layout fixes)
+
+**Completed:**
+- Pushed backlog from 2026-05-30/31 session (32 files, `515df17`) — pre-push hook was blocked by missing `vi.mock('next/cache', ...)` in `app/api/admin/practices/[key]/route.test.ts`; added mock, 293/293 tests pass
+- Homepage copy pass triggered by Bel's review of live site:
+  - `waitlist_card_title`: "¿Querés saber cuando abramos?" → "¿Te querés enterar primera?"
+  - `waitlist_card_body` and `WaitlistForm` button: "Avisame cuando abran" → "Anotame", body rewritten
+  - Full audit of all 13 content JSON files + source files — removed clinical language across all pages:
+    - "pacientes" (3×) → "consultas" / "quienes te consulten" (ProfileHero, RegistroForm)
+    - `/preview` h1: "Te conectamos con tu terapeuta ideal" → "Encontrá tu profesional de bienestar"
+    - "Cuéntanos" → "Contanos" (voseo fix on /preview)
+    - `step3_short_description_placeholder`: "Psicóloga especializada en ansiedad y estrés laboral" → "Facilitadora de constelaciones familiares y diseño humano"
+    - Review page footer: "verificados" removed
+  - 8 source files + 4 content JSON files updated
+- Homepage layout fixes after Bel reported mobile scroll:
+  - `SiteHeader` excluded from `/` (was adding ~56px logo bar on mobile)
+  - `pt-16` → `pt-8`, added `justify-center`, hero `mb-10` → `mb-6`
+  - Bel confirmed scroll resolved on mobile
+
+**Deviations:**
+- Copy audit and layout fixes were unplanned — surfaced from Bel's live testing session
+
+**Blockers (carried over):**
+- Migrations 012 + 013 not yet applied to Supabase
+- `SuggestedPractices` alias mapping still broken (entries reappear on navigation)
+- `app/layout.tsx` metadata still has old copy ("terapeuta ideal", "verificados") — added as Next Step 4
 
 ### Session — 2026-05-30/31 (Admin UI overhaul + score system + practices mapping — partial, BROKEN)
 
@@ -483,93 +513,10 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 ---
 
-### Session — 2026-05-08 (Soft Launch Push Item 3: Pro approval/rejection emails — VERIFIED)
-
-**Completed — /spec end-to-end on Item 3:**
-- Plan: `docs/plans/2026-05-08-pro-approval-rejection-emails.md`. PRD was already final; planning skipped batch 1, went straight to exploration → batch 2 with one substantive design question (re-application schema). Bel chose partial UNIQUE index (`WHERE status != 'rejected'`) over (a) drop UNIQUE, (b) update-in-place — preserves "old row stays in DB" history while keeping live-row uniqueness intact.
-- Planning reviewer (general-purpose substituting for `pilot:spec-review` which isn't installed): 3 must_fix + 9 should_fix + 5 suggestions. **All addressed before code:** operator-precedence bug at `lib/email.ts:113-115` (NEXT_PUBLIC_SITE_URL was being read but never used in the URL output) → fix via new `emailBaseUrl()` helper; XSS gap on admin-typed `rejection_reason` → fix via new `escapeHtml()` helper; `RegistroForm` scope leak → fix via server-composed Spanish error message (no client changes); schema drift surfaced (`rejection_reason` column + `'rejected'` status value lived only in `scripts/migrate-review-flow.mjs`, never landed in numbered migrations) → fix by absorbing into mig 011 idempotently.
-- Implementation: 6 tasks in dependency order. Migration 011 → email helpers + 3 functions + 13 unit tests → registration handler cooldown + confirmation email → admin PATCH approve/reject email firing + `resubmit_after` write + 4 new PATCH unit tests → Reject modal copy (Flow 6) → cooldown integration test (3 scenarios). 251/251 unit tests green at every step.
-- Implementation reviewer: 0 must_fix + 5 should_fix + 5 suggestions. **All 5 should_fix + 4 of 5 suggestions applied:** orphan mock vars, brittle `mockImplementationOnce` ordering → replaced with shared `builders.lastUpdatePayload` capture, PRD copy alignment on Reject modal (parenthetical form), gendered "Bienvenida" → gender-neutral "Te damos la bienvenida" (PRD draft was feminine but directory is mixed-gender), cooldown query secondary `.order('id', desc)` tiebreaker, rollback-comment caveat, `TODO(bel)` for `previous_application_at` semantics, `target/rel` on approval-email link, integration-test mock-invocation assertion. Skipped: `it.each` refactor (cosmetic only).
-- Feature-dev:code-reviewer second-opinion (Bel-requested): 0 issues at ≥80% confidence. Confirmed all 5 should_fix and 4/5 suggestions correctly applied across all 9 changed files.
-- Codex adversarial review (Bel-requested): hung at startup, no output beyond `Turn started` after ~2.5h. Killed cleanly. Likely auth/rate issue, unrelated to the code.
-- Bel applied migration 011 via Supabase SQL Editor. Integration test went 3/3 green. Partial-UNIQUE smoke test (`rejected` + `submitted` coexist for same email; second non-rejected blocked with `23505`) confirmed schema invariant. **All 8 Goal Verification truths met.** Plan flipped to VERIFIED.
-
-**Items 4/6/7 (Soft Launch Push remainder) discussion:**
-- Bel's comment: "we have a task to rewrite the entire app" — **clarified 2026-05-12 as a content rewrite (which is Item 7 itself), NOT an app rewrite.**
-- **Further clarified 2026-05-12: Item 4 (public home flip) moved out of Soft Launch Push to the *Final Go-Live Gate* at the end of this plan** — the app is not ready to open. Items 6 (desktop UI polish) and 7 (final wording pass) remain in the Soft Launch Push as launch-readiness work. Item 3 is durable (emails + migration carry over). Plan focused on Item 3 only this session.
-- Item 4 sub-decisions captured during discussion (in case the current app ships before the rewrite): browse-first home (matches PRODUCT.md "primary path"), flip after Item 3 ships (now done), waitlist form repurposed as newsletter footer.
-- Plan-vs-mental-model discrepancy noted: Bel originally only had Item 7 in mind. The 7-item Soft Launch Push list grew during the 2026-05-05 audit. Surfaced and acknowledged; proceeded with Item 3 as the next logical step regardless.
-
-**Modified:**
-- `migrations/011_pro_resubmit_cooldown.sql` (new) — schema sync (Section A, idempotent) + resubmit_after + partial UNIQUE + email index (Section B).
-- `lib/email.ts` — `emailBaseUrl()` + `escapeHtml()` helpers, three new exported pro-facing functions, `notifyNewProfessional` updated to use `emailBaseUrl()` (replaces lines 113-115's broken pattern).
-- `lib/email.test.ts` (new) — 13 unit tests including escape regression on `<script>`/`<img onerror>`, multi-line preservation, graceful fail.
-- `app/api/professionals/register/route.ts` — cooldown check after input validation, server-composed 403 with both formatted dates, fire-and-forget `notifyRegistrationReceived`, secondary order by id for deterministic tiebreaker.
-- `app/api/professionals/register/route.test.ts` — cooldown mock chain (`eq.eq.order.order.limit.maybeSingle`), `setupCooldownNoMatch()` helper, orphan mocks removed.
-- `app/api/admin/professionals/[id]/route.ts` — extended `existing` select to `id, status, email, full_name, slug`, reject branch writes `resubmit_after = NOW + 60 days`, both branches fire emails fire-and-forget.
-- `app/api/admin/professionals/[id]/route.test.ts` — 4 new PATCH tests (approve/reject × success/email-rejects), shared mock capturing `lastUpdatePayload`.
-- `app/admin/professionals/[id]/review/page.tsx` — Reject modal copy aligned with PRD Flow 6 parenthetical form, hint about 60-day cooldown below textarea.
-- `__tests__/integration/cooldown-enforcement.test.ts` (new) — TS-002 (within window blocks), TS-003 (after window allows, 2 rows preserved), no-prior-rejection passes through. Cleanup-by-email handles the multi-row case.
-
-**Deviations:**
-- `pilot:spec-review` and `pilot:changes-review` agents not installed in this environment — substituted with `general-purpose` for both, same brief.
-- Codex review wedged silently. Killed after no output for 2.5h. Did not retry — feature-dev second-opinion already provided independent coverage.
-- Did NOT use git-write commands. All 10 changed files (6 modified + 4 new) remain uncommitted at session close, ready for a clean separable commit.
-
-**Blockers:** None remaining. Migration 011 applied + verified end-to-end.
-
-**Tests:** 251/251 unit pass · 3/3 integration pass · partial-UNIQUE smoke pass · tsc clean · build clean.
-
-**Resume here:**
-1. Commit Item 3 as a clean separable PR ("feat: pro approval/rejection emails (Soft Launch Push Item 3)"). 10 files: 6 modified + 4 new (migration, 2 test files, plan).
-2. Bel's call: proceed with Items 4/6/7 on the current app, OR pause the Soft Launch Push and shape the rewrite. If proceeding: Item 4 sub-decisions are already captured (browse-first, waitlist→newsletter); next step is `/spec` on Item 4.
-
----
-
-### Session — 2026-05-07 (Soft Launch Push Item 1: Migration apply + verify)
-
-**Completed — Migration apply + verify:**
-- Bel applied `migrations/010_holistic_practices_catalog.sql` via Supabase SQL Editor. All 15 seed practices loaded. Renames (`professionals.style → practices`, `leads.style_preference → practice_preference`) and the new `professionals.needs_practice_review` column verified — 57 of 65 existing pros correctly flagged for re-classification.
-- Migration 009 (review-delay parameterization) was already applied — plan was stale. Confirmed by calling `select_pending_review_events(delay_days := 7)` successfully.
-- Added `scripts/verify-migrations-009-010.mjs` — same shape as the existing `apply-*.mjs` scripts. Uses Supabase as the truth oracle (queries the new objects with the service-role client). Reusable for future migration cycles.
-
-**Completed — Test fixture fix + assertion tightening:**
-- The integration suite surfaced a real assertion-correctness bug, not a migration bug. The "should reject NULL practices on insert" test (`practices-migration.test.ts:110`) was a **false positive** — the fixture omitted `status` (NOT NULL with no default per `001_schema.sql:12`), so the row failed on `status NOT NULL` instead of the `practices NOT NULL` constraint the test names. The sibling test "should default practices to empty array for new inserts" failed loudly for the same fixture gap. Both fixtures got `status: 'submitted'` added, and the NULL-practices test now also asserts `error.message + error.details` mentions "practices" — proving the right constraint fires. Without this, we had no actual evidence the migration's NOT NULL on practices worked.
-- 23/23 practices integration tests green (`create-lead` 3/3, `practices-helpers` 8/8, `practices-migration` 12/12).
-
-**Completed — Smoke test (public side):**
-- `__tests__/e2e/registration-full-flow.spec.ts` passed in 3.8s. Drives the full 4-step form, clicks Reiki + Meditación y mindfulness chips on step 3 (asserts `aria-pressed='true'`), submits, then queries Supabase to assert `practices = ['reiki', 'meditacion-mindfulness']` on the inserted row. Cleanup deletes the test pro.
-- Public registration page snapshotted clean — no SSR errors, only two pre-existing Google Maps deprecation warnings.
-
-**Pending — Smoke test (admin side):**
-- Re-classification banner needs Bel's manual eyeball. Suggested target: `/admin/professionals/50434fcc-1c5b-4e14-ba42-f33ba0de6cf6/review` (Laura Giraudo, submitted, `practices=[]`, `needs_practice_review=true`). Expected: banner with `<PracticePicker>` (15 chips), save disabled until selection, save → banner unmounts + "Prácticas" section populates. Component has 6/6 unit tests already.
-
-**Other integration suites — pre-existing failures, NOT today's work:**
-- `admin-matching` 0/7 — 5 of 7 fail with `<!DOCTYPE` (HTML response on JSON parse, dev-server / auth-wrapper symptom), 1 billing_month validator regression, 1 normalize. Predates 2026-05-05.
-- `api-events` 4/5 — 1 fail: rate-limit test timeout (matches the "Upstash deferred / fail-open" decision; the test exercises the disabled path).
-- `reviews-flow` 0/2 — RPC error semantics drifted (`invalid_token` returned where test expects `token_consumed`).
-- These deserve a separate triage session. Not blocking Item 1.
-
-**Modified:**
-- `__tests__/integration/practices-migration.test.ts` — fixture fix on two tests + tightened error-message assertion on the NULL-practices test.
-- `scripts/verify-migrations-009-010.mjs` — new (reusable verify pattern).
-
-**Blockers / open follow-ups:**
-- Admin banner visual confirmation (Bel) — blocks spec-verify gate flip to VERIFIED.
-- Test-data debris: 20 extra professional rows accumulated from unclean test runs (65 total vs 45 baseline). Cleanup pass deferred.
-- 10 pre-existing integration failures across 3 unrelated suites — separate triage.
-
-**Tests:** 184/184 unit pass · practices integration 23/23 pass · registration E2E pass.
-
-**Resume here:**
-1. Bel eyeballs `/admin/professionals/50434fcc-1c5b-4e14-ba42-f33ba0de6cf6/review` — banner renders, picker works, save flow updates DB and unmounts banner.
-2. Bel approves spec-verify gate → plan flips to VERIFIED.
-3. Commit Soft Launch Push Item 1 as a clean separable commit.
-4. Then move to **Item 2: Concierge link delivery** — admin success-screen "Send to user" button (WhatsApp link + Resend email) auto-delivering `/r/{tracking_code}`, fulfilling the `/gracias` promise.
-
----
-
 ### Archived Sessions
+
+- **2026-05-08**: Soft Launch Push Item 3: Pro approval/rejection emails — VERIFIED via /spec. Migration 011 (resubmit cooldown + partial UNIQUE + email index), `emailBaseUrl()` + `escapeHtml()` helpers, 3 pro-facing email functions, registration cooldown, admin PATCH email firing, Reject modal copy. 251/251 unit, 3/3 integration, partial-UNIQUE smoke. Migration 011 applied by Bel.
+- **2026-05-07**: Soft Launch Push Item 1: Migration 010 applied by Bel (15 practices seeded, style→practices rename verified). Test fixture false-positive fixed in practices-migration.test.ts. Registration E2E passed. Admin re-classification banner pending Bel's manual eyeball.
 - **2026-05-05 (later)**: Soft Launch Push Item 1 — Holistic practice catalog (`/prd` → `/spec`, plan `docs/plans/2026-05-05-holistic-modality-catalog.md`, PRD `docs/prd/2026-05-05-holistic-modality-catalog.md`). 15-practice canonical catalog seeded via `migrations/010_holistic_practices_catalog.sql` (created table + renamed `style` → `practices` + `style_preference` → `practice_preference` + `needs_practice_review` flag for the 45 pre-existing pros). `lib/practices.ts` with 60s TTL cache, shared `<PracticePicker>` (registro + solicitar + admin), refactored both forms to server/client split, `app/api/admin/professionals/[id]/route.ts` GET+PATCH practices-only path, `PracticeReclassificationBanner` for the 45 pros. 12 tasks all green. 184/184 unit (37 new). Two reviewer cycles, all findings fixed. Migration 010 + 009 pending Bel's SQL Editor apply at session end. Plan status COMPLETE pending live test + approval.
 - **2026-05-05**: Positioning reframe across all docs + Phase 0 hand-off + workflow audit — Rewrote product framing (terapias alternativas y bienestar holístico) across 9 MD files; stripped negative brand framing per Bel's feedback; Phase 0 handed off to Bel as parallel verification track. Workflow audit surfaced 7 Soft Launch Push items (modality catalog, concierge link delivery, pro emails, home flip, rejected policy, desktop UI, wording pass); full audit captured in this plan.
 - **2026-05-03**: Heartbeat + review-delay refactor + UI 960px pass — Migration 008 (heartbeat table) applied + n8n workflow extended with Postgres node + Resend error notification + `automation/docs/heartbeat.md`. Upstash deferred indefinitely (free-tier DB stuck pending-restore, fail-open in prod). Migration 009 (review-delay parameterization) — RPC `select_pending_review_events(delay_days INT DEFAULT 7)`, fixed dropped-events bug from hardcoded `BETWEEN NOW() - 7d AND NOW() - 6d` 24h window. `app/api/cron/send-review-requests/route.ts` reads `REVIEW_DELAY_DAYS` env var. `.env.local` `*_ANON_KEY` → `*_PUBLISHABLE_KEY` rename. UI: 960px container expansion across 10 public pages + AdminLayout; 5 card lists → 3-col responsive grid; `/profesionales` richer directory cards with 9 added fields + `force-dynamic`. 17 modified + 5 untracked uncommitted. Migration 009 not yet applied to Supabase.

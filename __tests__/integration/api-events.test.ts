@@ -1,6 +1,10 @@
 // Hara Vital - Integration Tests for /api/events
-// Purpose: Verify billing-critical event ingestion works correctly
-// Requirements: Seed data from qa.env (run: npm run qa:week1 first)
+// Purpose: Verify billing-critical event ingestion works correctly.
+// Requires: at least 1 active professional and 1 lead already in the DB.
+// If that data is not there yet, the tests fail with a clear message.
+//
+// The match created in beforeAll is test infrastructure for the events under test.
+// The professional and lead it references are real pre-existing data — never touched.
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
@@ -25,32 +29,53 @@ describe('/api/events Integration Tests', () => {
   let testCounter = 0
 
   beforeAll(async () => {
-    // Create test data
-    const { data: pro } = await supabaseAdmin.from('professionals').insert({
-      slug: `test-pro-${Date.now()}`,
-      full_name: 'Integration Test Pro',
-      email: `integration-${Date.now()}@test.com`,
-      whatsapp: '+5491112345678',
-      country: 'AR',
-      modality: ['therapy'],
-      specialties: ['anxiety'],
-      status: 'active',
-    }).select().single()
+    // Load real active professional
+    const { data: pro, error: proErr } = await supabaseAdmin
+      .from('professionals')
+      .select('id')
+      .eq('status', 'active')
+      .limit(1)
+      .single()
 
-    const { data: lead } = await supabaseAdmin.from('leads').insert({
-      country: 'AR',
-      intent_tags: ['anxiety'],
-    }).select().single()
+    if (proErr || !pro) {
+      throw new Error(
+        'Need at least 1 active professional in DB. ' +
+        'Approve a professional in /admin/professionals first, then re-run.'
+      )
+    }
 
+    testProId = pro.id
+
+    // Load most recent real lead
+    const { data: lead, error: leadErr } = await supabaseAdmin
+      .from('leads')
+      .select('id')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (leadErr || !lead) {
+      throw new Error(
+        'Need at least 1 lead in DB. Submit a /solicitar request first, then re-run.'
+      )
+    }
+
+    testLeadId = lead.id
+
+    // Create the test match — this is the container the events API operates on.
+    // It references real professional + lead but is itself test-only and cleaned up in afterAll.
     testTrackingCode = `TEST-${Date.now()}`
-    const { data: match } = await supabaseAdmin.from('matches').insert({
-      lead_id: lead!.id,
-      tracking_code: testTrackingCode,
-    }).select().single()
+    const { data: match, error: matchErr } = await supabaseAdmin
+      .from('matches')
+      .insert({ lead_id: testLeadId, tracking_code: testTrackingCode })
+      .select()
+      .single()
 
-    testMatchId = match!.id
-    testProId = pro!.id
-    testLeadId = lead!.id
+    if (matchErr || !match) {
+      throw new Error(`Could not create test match: ${matchErr?.message}`)
+    }
+
+    testMatchId = match.id
 
     validToken = await createAttributionToken({
       match_id: testMatchId,
@@ -62,25 +87,18 @@ describe('/api/events Integration Tests', () => {
   })
 
   afterAll(async () => {
-    if (testMatchId) {
-      await supabaseAdmin.from('events').delete().eq('match_id', testMatchId)
-      await supabaseAdmin.from('pqls').delete().eq('match_id', testMatchId)
-      await supabaseAdmin.from('match_recommendations').delete().eq('match_id', testMatchId)
-      await supabaseAdmin.from('matches').delete().eq('id', testMatchId)
-    }
-    if (testLeadId) {
-      await supabaseAdmin.from('leads').delete().eq('id', testLeadId)
-    }
-    if (testProId) {
-      await supabaseAdmin.from('reviews').delete().eq('professional_id', testProId)
-      await supabaseAdmin.from('pqls').delete().eq('professional_id', testProId)
-      await supabaseAdmin.from('events').delete().eq('professional_id', testProId)
-      await supabaseAdmin.from('match_recommendations').delete().eq('professional_id', testProId)
-      await supabaseAdmin.from('professionals').delete().eq('id', testProId)
-    }
+    if (!testMatchId) return
+
+    await supabaseAdmin.from('pql_adjustments').delete().in(
+      'pql_id',
+      (await supabaseAdmin.from('pqls').select('id').eq('match_id', testMatchId)).data?.map(p => p.id) ?? []
+    )
+    await supabaseAdmin.from('events').delete().eq('match_id', testMatchId)
+    await supabaseAdmin.from('pqls').delete().eq('match_id', testMatchId)
+    await supabaseAdmin.from('match_recommendations').delete().eq('match_id', testMatchId)
+    await supabaseAdmin.from('matches').delete().eq('id', testMatchId)
   })
 
-  // Helper: Generate unique fingerprint to avoid rate limiting
   function getUniqueFingerprint(): string {
     testCounter++
     const base = testCounter.toString(16).padStart(64, 'a')
@@ -109,7 +127,6 @@ describe('/api/events Integration Tests', () => {
     expect(json.success).toBe(true)
     expect(json.event_id).toBeDefined()
 
-    // Verify exactly 1 event
     const { data: events } = await supabaseAdmin
       .from('events')
       .select('*')
@@ -118,38 +135,27 @@ describe('/api/events Integration Tests', () => {
       .eq('event_type', 'contact_click')
 
     expect(events).toHaveLength(1)
-
-    // ✅ Assert tracking_code propagates from token to event
-    expect(events![0].tracking_code).toBe(testTrackingCode)
     expect(events![0].tracking_code).toBe(testTrackingCode)
 
-    // Wait for trigger (poll until PQL exists)
     const pqls = await eventually(async () => {
       const { data } = await supabaseAdmin
         .from('pqls')
         .select('*')
         .eq('match_id', testMatchId)
         .eq('professional_id', testProId)
-
       return data && data.length > 0 ? data : null
     }, { timeout: 3000, errorMessage: 'PQL not created by trigger' })
 
     expect(pqls).toHaveLength(1)
-
-    // ✅ Assert tracking_code propagates from token to PQL
     expect(pqls![0].tracking_code).toBe(testTrackingCode)
-
-    // ✅ Assert PQL links to event (audit integrity)
     expect(pqls![0].event_id).toBe(events![0].id)
     expect(pqls![0].event_created_at).toBe(events![0].created_at)
   })
 
   // Test 2: Idempotency - repeated clicks still 1 PQL
   it('maintains idempotency - 2 clicks create only 1 PQL', async () => {
-    // Wait to avoid IP rate limiting (10/min from localhost)
     await new Promise(resolve => setTimeout(resolve, 1000))
 
-    // Send second contact_click (same match + pro, unique identifiers)
     const response2 = await fetch('http://localhost:3000/api/events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -162,14 +168,12 @@ describe('/api/events Integration Tests', () => {
 
     expect(response2.status).toBe(200)
 
-    // Still exactly 1 PQL (idempotency via UNIQUE constraint)
     const pqls = await eventually(async () => {
       const { data } = await supabaseAdmin
         .from('pqls')
         .select('*')
         .eq('match_id', testMatchId)
         .eq('professional_id', testProId)
-
       return data && data.length > 0 ? data : null
     })
 
@@ -197,10 +201,8 @@ describe('/api/events Integration Tests', () => {
 
   // Test 4: Missing IP/fingerprint → still records, uses fallbacks
   it('records event even with missing IP and fingerprint', async () => {
-    // Wait to avoid IP rate limiting
     await new Promise(resolve => setTimeout(resolve, 1000))
 
-    // Create new token for this test
     const tokenNoMeta = await createAttributionToken({
       match_id: testMatchId,
       professional_id: testProId,
@@ -214,8 +216,8 @@ describe('/api/events Integration Tests', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         attribution_token: tokenNoMeta,
-        fingerprint_hash: 'INVALID-NOT-SHA256',  // Invalid format
-        session_id: getUniqueSession(),  // Unique session
+        fingerprint_hash: 'INVALID-NOT-SHA256',
+        session_id: getUniqueSession(),
       }),
     })
 
@@ -224,7 +226,6 @@ describe('/api/events Integration Tests', () => {
     expect(response.status).toBe(200)
     expect(json.success).toBe(true)
 
-    // Verify event created with null fingerprint, ip_missing logged
     const { data: events } = await supabaseAdmin
       .from('events')
       .select('*')
@@ -239,29 +240,23 @@ describe('/api/events Integration Tests', () => {
   it('enforces rate limiting when configured', async () => {
     const url = process.env.UPSTASH_REDIS_REST_URL
     const requireTests = process.env.REQUIRE_RATE_LIMIT_TESTS === 'true' || process.env.CI === 'true'
-
-    // Check if Upstash is configured
     const isConfigured = url && !url.includes('your-redis') && url.startsWith('https://')
 
     if (!isConfigured) {
       if (requireTests) {
-        // CI/QA: FAIL if not configured
         throw new Error(
           'Rate limiting test REQUIRED but Upstash not configured. ' +
           'Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN in .env.local'
         )
       } else {
-        // Local dev: Skip with warning
-        console.log('⚠️  WARNING: Rate limiting not tested (Upstash not configured)')
-        console.log('   Set REQUIRE_RATE_LIMIT_TESTS=true to enforce this test')
+        console.log('⚠️  Rate limiting not tested (Upstash not configured)')
         return
       }
     }
 
-    // Send 11 requests with same session_id (limit: 5/5min)
     const sessionId = `550e8400-e29b-41d4-a716-${Date.now()}`
-
     let hitLimit = false
+
     for (let i = 0; i < 11; i++) {
       const testToken = await createAttributionToken({
         match_id: testMatchId,
@@ -276,7 +271,7 @@ describe('/api/events Integration Tests', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           attribution_token: testToken,
-          fingerprint_hash: undefined,  // Force session-based limit
+          fingerprint_hash: undefined,
           session_id: sessionId,
         }),
       })
@@ -288,5 +283,5 @@ describe('/api/events Integration Tests', () => {
     }
 
     expect(hitLimit).toBe(true)
-  }, 30000)  // 30s timeout for rate limit test
+  }, 30000)
 })

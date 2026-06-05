@@ -13,22 +13,33 @@ interface Props {
 export function SuggestedPractices({ suggestions, practices }: Props) {
   const router = useRouter()
   const [open, setOpen] = useState(true)
-  const [hidden, setHidden] = useState<string[]>([])
   const [mappingEntry, setMappingEntry] = useState<string | null>(null)
   const [selectedKey, setSelectedKey] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
-  const visible = suggestions.filter(s => !hidden.includes(s.entry))
+  if (suggestions.length === 0) return null
 
-  if (visible.length === 0) return null
-
-  function hide(entry: string) {
-    setHidden(prev => [...prev, entry])
-    setMappingEntry(null)
-    setSelectedKey('')
+  async function handleDismiss(entry: string) {
+    setSaving(true)
     setSaveError(null)
-    setSaving(false)
+    try {
+      const res = await fetch('/api/admin/practices/dismiss', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entry }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({})) as { error?: string }
+        setSaveError(data.error ?? 'Error al descartar')
+        return
+      }
+      router.refresh()
+    } catch {
+      setSaveError('Error de red')
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function handleMap(entry: string) {
@@ -44,13 +55,12 @@ export function SuggestedPractices({ suggestions, practices }: Props) {
       if (!res.ok) {
         const data = await res.json().catch(() => ({})) as { error?: string }
         setSaveError(data.error ?? 'Error al guardar')
-        setSaving(false)
         return
       }
-      hide(entry)
       router.refresh()
     } catch {
       setSaveError('Error de red')
+    } finally {
       setSaving(false)
     }
   }
@@ -69,7 +79,7 @@ export function SuggestedPractices({ suggestions, practices }: Props) {
             Prácticas sugeridas por los profesionales
           </span>
           <span className="text-xs bg-warning/20 text-warning font-medium rounded-full px-2 py-0.5">
-            {visible.length}
+            {suggestions.length}
           </span>
         </div>
         <svg
@@ -84,10 +94,14 @@ export function SuggestedPractices({ suggestions, practices }: Props) {
         <div className="border-t border-warning/20 px-5 py-3 space-y-1">
           <p className="text-xs text-warning/80 mb-3">
             Entradas de los perfiles que no están en el catálogo.
-            <strong> ✕</strong> descarta. <strong> Nueva práctica</strong> la agrega al catálogo. <strong> Agregar a práctica</strong> la guarda como alias de una existente.
+            <strong> ✕</strong> descarta y las elimina de los perfiles. <strong> Nueva práctica</strong> la agrega al catálogo. <strong> Agregar a práctica</strong> la guarda como alias de una existente.
           </p>
 
-          {visible.map(({ entry, count }) => {
+          {saveError && (
+            <p className="text-xs text-danger pb-2">{saveError}</p>
+          )}
+
+          {suggestions.map(({ entry, count }) => {
             const isMapping = mappingEntry === entry
 
             return (
@@ -102,8 +116,9 @@ export function SuggestedPractices({ suggestions, practices }: Props) {
                   <div className="flex items-center gap-3 flex-shrink-0">
                     <button
                       type="button"
-                      onClick={() => hide(entry)}
-                      className="text-xs text-muted/60 hover:text-danger transition-colors"
+                      disabled={saving}
+                      onClick={() => handleDismiss(entry)}
+                      className="text-xs text-muted/60 hover:text-danger transition-colors disabled:opacity-40"
                       title="Descartar"
                       aria-label={`Descartar "${entry}"`}
                     >
@@ -119,6 +134,7 @@ export function SuggestedPractices({ suggestions, practices }: Props) {
                     </Link>
                     <button
                       type="button"
+                      disabled={saving}
                       onClick={() => {
                         if (isMapping) {
                           setMappingEntry(null)
@@ -130,7 +146,7 @@ export function SuggestedPractices({ suggestions, practices }: Props) {
                           setSaveError(null)
                         }
                       }}
-                      className="text-xs text-brand/70 hover:text-brand font-medium"
+                      className="text-xs text-brand/70 hover:text-brand font-medium disabled:opacity-40"
                     >
                       {isMapping ? 'Cancelar' : 'Agregar a práctica →'}
                     </button>
@@ -158,10 +174,6 @@ export function SuggestedPractices({ suggestions, practices }: Props) {
                       {saving ? 'Guardando…' : 'Guardar'}
                     </button>
                   </div>
-                )}
-
-                {isMapping && saveError && (
-                  <p className="text-xs text-danger pb-1">{saveError}</p>
                 )}
               </div>
             )

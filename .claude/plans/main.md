@@ -234,39 +234,59 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 ## Next Steps
 
-1. **Apply migration 013** (`migrations/013_score_overrides_and_aliases.sql`)
-   - What: Run in Supabase SQL Editor. Adds `score_overrides jsonb` on professionals and `aliases text[]` on practices. Both idempotent.
-   - Why: Required for score override editing on review page and alias mapping to work.
+1. ~~**Approve search motor spec**~~ ✅ **VERIFIED 2026-06-03** — Bel manually tested name/practice/accent search and approved. Spec `docs/plans/2026-06-02-search-professionals-directory.md` flipped to VERIFIED.
 
-2. **Debug and fix `SuggestedPractices` mapping feature** — BROKEN
+2. **Apply migration 013** (`migrations/013_score_overrides_and_aliases.sql`)
+   - What: Run in Supabase SQL Editor. Adds `score_overrides jsonb` on professionals and `aliases text[]` on practices. Both idempotent.
+   - Why: Required for score override editing on review page and alias mapping to work. Also required for alias search to work end-to-end (without this, `practices.aliases` is empty in prod → alias search returns 0 results).
+
+3. **Debug and fix `SuggestedPractices` mapping feature** — BROKEN
    - What: The `append_alias` API endpoint is correct and saves to DB. The list exclusion logic is correct (verified via Node.js simulation). But entries reappear in the suggestions list on navigation. Suspected cause: Next.js router cache or `revalidatePath` not working as expected. `router.refresh()` is called client-side after each mapping.
    - Files: `app/admin/practices/SuggestedPractices.tsx`, `app/api/admin/practices/[key]/route.ts`, `lib/admin-practices.ts`
    - Known: `append_alias` atomic server-side append is correct. `loadPracticeSuggestions` correctly excludes aliases (including accent-normalized). `revalidatePath('/admin/practices')` called on PATCH success.
 
-3. **Apply migration 012** (`migrations/012_practices_specialty_mapping.sql`)
+4. **Apply migration 012** (`migrations/012_practices_specialty_mapping.sql`)
    - What: Adds `specialties text[]` to `practices` table with seeded research-based specialty mappings for all 15 practices.
    - Why: Required for the practice ↔ specialty mapping on the practices edit page.
 
-4. **Fix metadata in `app/layout.tsx`** — old copy still present
+5. **Fix metadata in `app/layout.tsx`** — old copy still present
    - What: `title`, `description`, `openGraph`, and `twitter` fields still reference "terapeuta ideal", "verificados", "psicólogo argentina" — language that conflicts with the holistic-wellness positioning and the copy fixes applied this session.
 
-5. **Complete profile image scoring discussion** — next session
+6. **Complete profile image scoring discussion** — next session
    - What: `profileImage` criterion (10pts) is now binary (has http URL or not). Admin can override via score editor. No AI image analysis implemented — left to admin judgment.
 
-6. **Bel manual browser test of remaining pages** (carried over from 2026-05-20)
+7. **Bel manual browser test of remaining pages** (carried over from 2026-05-20)
    - What: Homepage layout + copy verified this session. Remaining: desktop nav, 2-col directory, scroll reveals, sticky sidebar on /p/[slug], container widths.
 
-7. **Decide on Item 7 gap strings** (carried over)
+8. **Decide on Item 7 gap strings** (carried over)
    - Considerations: `'Enviando…'` (WaitlistForm), directory chip labels, profile review fallbacks, Solicitar currency labels, Registro currency descriptions, admin emails (out of scope).
 
-8. **Item 4 (Public home flip)** — deferred until Phase 1 done
+9. **Item 4 (Public home flip)** — deferred until Phase 1 done
    - What: See Final Go-Live Gate section for prerequisite checklist.
 
-9. **Phase 1 — first 10 pros, 5 concierge requests, Sentry + Vercel Analytics**
+10. **Phase 1 — first 10 pros, 5 concierge requests, Sentry + Vercel Analytics**
 
 ---
 
 ## Session Log
+
+### Session — 2026-06-02 (Search motor — `/profesionales` client-side filtering)
+
+**Completed:**
+- PRD `docs/prd/2026-06-02-search-professionals-directory.md` (Status: Final) — search by name, practice (key/label/alias), specialty free-text; client-side filtering; accent normalization; key decisions: single free-text input, useMemo, alias matching critical.
+- Spec plan `docs/plans/2026-06-02-search-professionals-directory.md` (Status: COMPLETE — awaiting Bel's manual approval to flip VERIFIED).
+- Created `app/profesionales/components/ProfessionalsDirectory.tsx` (276 lines, `'use client'`): exports `DirectoryProfessional` interface (adds `practices: string[] | null`), `normalize` (NFD accent strip), `buildPracticeIndex`, `matchesProfessional` (all exported for unit testing); `ProfessionalCard` + format helpers moved here from `page.tsx`; search input with lupa icon + ✕ clear button; result count (only when searching); `aria-live="polite"` on results region for screen readers; `useMemo` for `practiceIndex` (once) and `filtered` (per keystroke).
+- Created `app/profesionales/components/ProfessionalsDirectory.test.tsx` — 12 unit tests covering `normalize`, `buildPracticeIndex`, `matchesProfessional` (name, specialty, practice label, alias, accent-insensitive, empty query, no match).
+- Updated `app/profesionales/page.tsx`: 222 → 67 lines; adds `practices` to SELECT; `Promise.all([getProfessionals(), getActivePractices().catch(...)])` — graceful fallback to `[]` if catalog fails; delegates rendering to `ProfessionalsDirectory`; removed moved code.
+- 306/306 unit tests pass, tsc clean, build clean (`/profesionales` 4.01 kB).
+- Changes-review: compliance=high, quality=high, goal=achieved, 7/7 truths verified. Single suggestion (aria-live) applied inline.
+- E2E: TS-001 name search PASS, TS-002 practice+clear PASS, TS-003 alias NOT_APPLICABLE (no professional has `constelaciones-familiares` mapped in `practices` column yet — requires migration 013 + alias population in DB), TS-004 empty state + accent normalization PASS.
+
+**Blockers:**
+- Alias search end-to-end requires migration 013 applied to Supabase (adds `aliases text[]` to `practices` table) + aliases to be seeded via `migrations/016_new_practices_and_mappings.sql`. Until then, alias matching only works in unit tests.
+- Spec waiting for Bel's manual approval (Step 1 above).
+
+---
 
 ### Session — 2026-06-01 (Copy audit + homepage layout fixes)
 
@@ -442,79 +462,9 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 ---
 
-### Session — 2026-05-12 (Plan corrections + brand rename + Item 8 /ayuda VERIFIED + DB cleanup + Item 7 PRD)
-
-**Completed — Plan corrections + commits:**
-- Fixed 2026-05-08 session-log misquote: "rewrite the entire app" → clarified as **content rewrite (Item 7), not app rewrite**. Items 6 + 7 remain in scope; Item 4 (Public home flip) moved out of Soft Launch Push to a new **Final Go-Live Gate** section at the end of the plan (the app is not ready to open). Item 4 number kept in original location, struck through with redirect.
-- Added Item 8 (`/ayuda` public support page) to Soft Launch Push from route-inventory audit.
-- Added "Operational admin routes" sub-section under Soft Launch Push: `/admin/matches`, `/admin/matches/[id]`, `/admin/events`, `/admin/settings` — Phase 1 candidates.
-- Committed as `fb6776d`.
-
-**Completed — Brand name sweep (Hara Match → Hara Vital):**
-- Discovered during /prd /ayuda that the canonical product name is **Hara Vital**, not "Hara Match" — the docs had been wrong all along (matches domain `haravital.app`). Bel clarified: there was no rebrand, the docs were just wrong.
-- Bulk `sed` replacement across 105 files: PRODUCT.md, CLAUDE.md, plan, FINAL_SPEC.md, READMEs, source files (`app/layout.tsx` metadata, `app/page.tsx` homepage hero, `lib/email.ts` From line and email bodies, `app/components/PublicLayout.tsx` footer, `package.json` description, every header comment), all 144 occurrences. No test assertions touched.
-- Added **concierge visibility constraint** to PRODUCT.md "How we make money" §2 + plan Constraints section: concierge flow stays operationally alive but is **not actively promoted** in product surfaces until a new billing model lands (the Apr-1 PQL pivot left attribution unsolved). Marketplace + concierge remain co-equal long-term — this is a temporary visibility decision tied to monetization, not a positioning change.
-- Committed as `8544bde`.
-
-**Completed — Soft Launch Push Item 8: `/ayuda` (VERIFIED end-to-end via /spec):**
-- PRD `docs/prd/2026-05-12-ayuda-public-support-page.md` (Status: Final). Standard research tier — surveyed FAQ/help-center UX patterns + LATAM marketplace `/ayuda` benchmarks (Mercado Libre, SaaS help pages). Per-PRD-question pattern: 7 questions before /spec, all answered.
-- Plan `docs/plans/2026-05-12-ayuda-public-support-page.md` (Status: VERIFIED). spec-plan reviewer surfaced 7 findings (2 must_fix on error.tsx button structure + `/r/[tracking_code]` expired/transient conditional preservation, 3 should_fix, 2 suggestions); all addressed inline before implementation.
-- 4 implementation tasks, all green:
-  - Task 1: Extracted `DisclosureItem` + `Chevron` from `app/components/TermsAndPrivacyPage.tsx` into shared `app/components/ui/Disclosure.tsx`. Renamed types `LegalDisclosure`/`LegalGroup` → `DisclosureEntry`/`DisclosureGroup`. `TermsAndPrivacyPage` now imports from the new module; no inline duplicates remain.
-  - Task 2: New `app/ayuda/page.tsx` (server component, 183 lines) — exact `TermsAndPrivacyPage` shell (PageBackground + container + back link + eyebrow + H1 + intro + anchor pill nav + GlassCard sections with `DisclosureItem` accordion). Two sections: Para usuarios (6 FAQs) + Para profesionales (6 FAQs). Contact GlassCard at bottom with `mailto:centrovitalhara@gmail.com` + `https://instagram.com/haravital` (NOT WhatsApp — that's user↔practitioner only).
-  - Task 3: Added `/ayuda` links to 4 entry points — `PublicLayout` footer, `app/error.tsx` (as 3rd element below "Intentar de nuevo" + "Volver al inicio"), `app/r/[tracking_code]/page.tsx` error state (preserving expired-vs-transient conditional: expired → "¿Perdiste tu link? Visitá /ayuda", transient → "Probá de nuevo. ¿Necesitás ayuda?"), `app/page.tsx` Próximamente home (wrapped in `mt-auto pt-6 text-center space-y-2` flex div).
-  - Task 4: New `app/not-found.tsx` (46 lines) — mirrors `error.tsx` shell exactly (same `bg-danger-weak` circle + warning SVG icon, no new icon library), "Página no encontrada" + "Volver al inicio" + "¿Necesitás ayuda?" link.
-- spec-verify changes-review: alignment_score high, quality_score high, goal_score achieved, 7/8 truths verified statically (TS-001..004 verified live), 1 suggestion (Chevron not exported — YAGNI, no consumer needs it, left as-is per reviewer recommendation).
-- **Phase B finding (fixed inline):** `PublicLayout` has **zero consumers** — every public page builds its own shell, so the footer Ayuda link in `PublicLayout.tsx` was dead code. Fix: added `<footer>` with /ayuda link directly to `app/profesionales/page.tsx`. `PublicLayout` adoption is a future cleanup item.
-- E2E (Chrome DevTools MCP) — all 4 scenarios PASS: TS-001 (`/terminosyprivacidad` no regression after Disclosure extraction), TS-002 (`/ayuda` full render + accordion expand + email/IG link hrefs), TS-003 (lost-link recovery flow through `/r/INVALID123` error state → /ayuda), TS-004 (footer + 404 + Próximamente entry points).
-- Tests: 251/251 unit · tsc clean · lint clean · build clean.
-- Committed as `894e4c3`.
-
-**Completed — DB cleanup + integration test leak fix:**
-- Bel flagged during /ayuda E2E that `/profesionales` showed cards even though no professionals had been approved.
-- Surveyed `professionals` table: 65 total → 20 leaked test rows (`admin-test-pro-*` and `test-pro-*` slug patterns, all `status='active'`) + 45 real `submitted` rows. The test rows were why the directory wasn't empty.
-- Found leak source: `__tests__/integration/admin-matching.test.ts` and `__tests__/integration/api-events.test.ts` had `beforeAll` inserts with **zero cleanup logic** (no `afterAll`, no `delete`). Every test run permanently added rows.
-- Wrote `scripts/survey-test-data.ts` (read-only diagnostic, categorizes test vs real rows by slug/email/name patterns) + `scripts/cleanup-test-data.ts` (one-shot deletion with full FK cascade: events → pqls direct + via match → match_recommendations direct + via match → matches → reviews → professionals).
-- Initial cleanup hit FK constraint — `pqls` references `professional_id` directly, not just via `match_id`. Updated script to cover all direct-FK paths; second run succeeded. DB: 65 → 45.
-- Added `afterAll` cleanup to both leaking integration test files so this stops recurring.
-- All bundled with `/ayuda` commit `894e4c3`.
-
-**Completed — Soft Launch Push Item 7 PRD (wording pass, ready for /spec tomorrow):**
-- Wrote `docs/prd/2026-05-12-wording-pass.md` (Status: Final). Standard research tier — surveyed Spanish UX copywriting principles, LATAM holistic-wellness platform voice (minomada.app, sientelavibra.org, others), Argentine voseo conventions in UX.
-- **Multiple voice iterations.** Initial PRD draft anchored on neutral "wellness app voice" and proposed Spanish copy that read translated-from-English (e.g., "Dejanos tu email y te avisamos cuando abramos" — still banner-speak, not native Argentine). Bel called this out three times before the pivot landed: the failure mode wasn't framing drift, it was *that Claude shouldn't propose finished Spanish at all*.
-- **Final structure:** Voice section anchored **verbatim on Bel's brand voice doc** ("Cálido, claro, nunca clínico", "Acompañamiento, no tratamiento", "Hara hace silencio donde otros gritan", "Hara invita y respeta el timing del usuario", "Tu info se comparte recién cuando vos escribís", the *Hara = centro energético* framing, etc.). Per-surface audit table has **Before / Problem / Direction** columns — no proposed Spanish copy. Bel writes finals during /spec, anchored on the voice section.
-- 17 surfaces in scope: 13 user-facing pages (home, /preview, /profesionales, /p/[slug], /profesionales/registro, /confirmacion, /solicitar, /gracias, /ayuda, /r/[tracking_code], /r/review/[token], /terminosyprivacidad, error.tsx, not-found.tsx) + 2 components (WaitlistForm, ContactButton) + email templates in `lib/email.ts`. Admin pages out of scope.
-- Highest-priority surfaces (most concentrated bad-writing): `/preview` (pre-pivot hero "Te conectamos con tu terapeuta ideal"), Próximamente (rhetorical "¿Querés saber cuando abramos?"), `/profesionales` (flat directory header missing privacy line), `/solicitar` form, `error.tsx` (clinical formal tone).
-- **Uncommitted** at session close — handoff to /spec tomorrow.
-
-**Modified from original plan:**
-- Item 4 (Public home flip) reclassified from Soft Launch Push Item to **Final Go-Live Gate** (post-Phase-3 trigger). The flip is the actual go-live moment, not launch-readiness. Number preserved at the original location with strikethrough + redirect note.
-- Item 8 (`/ayuda`) added to Soft Launch Push — wasn't in the original 7-item list, surfaced from route-inventory audit.
-- Operational admin routes (`/admin/matches` + `[id]`, `/admin/events`, `/admin/settings`) added as Phase 1 candidates — also from route-inventory audit, not in original plan.
-
-**Deviations:**
-- The brand-name correction (Hara Match → Hara Vital) was unplanned — discovered mid-/prd when Bel called out the wrong name appearing throughout docs and copy.
-- The DB cleanup wasn't on today's agenda — discovered during /spec-verify Phase B of /ayuda when Bel asked why `/profesionales` showed cards she hadn't approved. Fixed inline + leak source closed.
-- The Item 7 PRD took 4+ iterations because of voice fidelity issues. Should have asked Bel for her voice doc earlier instead of trying to derive voice from research. Documented in this entry as a lesson; future copy work should anchor on the brand voice doc from turn one.
-- `PublicLayout` has zero consumers — found during /ayuda E2E. Documented in plan + footer added directly to `/profesionales/page.tsx` as a Phase B fix. `PublicLayout` adoption across public pages is a separate future cleanup.
-
-**Blockers / open follow-ups:**
-- None — all today's tracks completed cleanly.
-- Item 7 PRD finalized but uncommitted at session close; handoff to /spec tomorrow.
-- Item 6 (Desktop UI polish), Operational admin routes still open in Soft Launch Push.
-
-**Tests:** 251/251 unit · tsc clean · lint clean · build clean · 4/4 E2E scenarios PASS for Item 8.
-
-**Resume here (next session):**
-1. Commit + push `docs/prd/2026-05-12-wording-pass.md` (Item 7 PRD, currently uncommitted).
-2. `/spec docs/prd/2026-05-12-wording-pass.md` to start wording implementation. Bel writes final Spanish copy anchored on the PRD's Voice section; Claude applies file by file.
-3. After Item 7: Item 6 (Desktop UI polish) → operational admin routes (`/admin/matches` + `[id]`) → remaining admin routes.
-4. Final Go-Live Gate (Item 4 home flip) is deferred until Soft Launch Push + Phase 1 are done.
-
----
-
 ### Archived Sessions
 
+- **2026-05-12**: Brand rename Hara Match → Hara Vital (105 files), plan corrections (Item 4 → Final Go-Live Gate, Item 8 added), Item 8 `/ayuda` VERIFIED via /spec (4 tasks, /terminosyprivacidad Disclosure extraction, 4 entry points, new not-found.tsx, DB integration test leak fixed with afterAll cleanup), Item 7 PRD finalized (wording pass, voice-doc-anchored, no Claude-proposed copy).
 - **2026-05-08**: Soft Launch Push Item 3: Pro approval/rejection emails — VERIFIED via /spec. Migration 011 (resubmit cooldown + partial UNIQUE + email index), `emailBaseUrl()` + `escapeHtml()` helpers, 3 pro-facing email functions, registration cooldown, admin PATCH email firing, Reject modal copy. 251/251 unit, 3/3 integration, partial-UNIQUE smoke. Migration 011 applied by Bel.
 - **2026-05-07**: Soft Launch Push Item 1: Migration 010 applied by Bel (15 practices seeded, style→practices rename verified). Test fixture false-positive fixed in practices-migration.test.ts. Registration E2E passed. Admin re-classification banner pending Bel's manual eyeball.
 - **2026-05-05 (later)**: Soft Launch Push Item 1 — Holistic practice catalog (`/prd` → `/spec`, plan `docs/plans/2026-05-05-holistic-modality-catalog.md`, PRD `docs/prd/2026-05-05-holistic-modality-catalog.md`). 15-practice canonical catalog seeded via `migrations/010_holistic_practices_catalog.sql` (created table + renamed `style` → `practices` + `style_preference` → `practice_preference` + `needs_practice_review` flag for the 45 pre-existing pros). `lib/practices.ts` with 60s TTL cache, shared `<PracticePicker>` (registro + solicitar + admin), refactored both forms to server/client split, `app/api/admin/professionals/[id]/route.ts` GET+PATCH practices-only path, `PracticeReclassificationBanner` for the 45 pros. 12 tasks all green. 184/184 unit (37 new). Two reviewer cycles, all findings fixed. Migration 010 + 009 pending Bel's SQL Editor apply at session end. Plan status COMPLETE pending live test + approval.
@@ -762,7 +712,8 @@ The product is not yet live. The items below are speculative polish, pre-mature 
 - `lib/ranking.ts` — TS ranking formula helper (`computeRankingScore`, `isEffectivelyDestacado`) — must stay in sync with `migrations/004_ranking_foundation.sql` AND `migrations/005_destacado_tier_mvp.sql`
 - `migrations/004_ranking_foundation.sql` — Ranking columns + `recompute_ranking()` trigger — **apply to Supabase before running integration tests**
 - `migrations/005_destacado_tier_mvp.sql` — `tier_expires_at` column + `subscription_payments` table + expiry-aware trigger + `upgrade_destacado_tier()` RPC — **apply after 004**
-- `app/profesionales/page.tsx` — Public directory page (server component, sorted by `ranking_score DESC`, Destacado chip)
+- `app/profesionales/page.tsx` — Public directory page (server component, 67 lines; fetches professionals + practices catalog in parallel; delegates rendering to `ProfessionalsDirectory`)
+- `app/profesionales/components/ProfessionalsDirectory.tsx` — Client island: search input, `buildPracticeIndex`, `matchesProfessional`, filter logic, `ProfessionalCard` + format helpers; exports `DirectoryProfessional` type
 - `app/p/[slug]/page.tsx` — Public profile page (Destacado chip near name)
 - `app/admin/professionals/page.tsx` + `components/DestacadoPaymentModal.tsx` — Admin tier management UI (modal, row chip, expand history)
 - `app/api/admin/subscriptions/route.ts` — POST upgrade + GET history (admin only via middleware)

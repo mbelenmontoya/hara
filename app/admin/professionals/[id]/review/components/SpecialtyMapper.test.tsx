@@ -5,9 +5,9 @@ import { SpecialtyMapper } from './SpecialtyMapper'
 
 describe('SpecialtyMapper — curated specialties', () => {
   it('renders curated chips without dropdown', () => {
-    render(<SpecialtyMapper specialties={['anxiety', 'depression']} onChange={vi.fn()} />)
-    expect(screen.getByText('Ansiedad')).toBeInTheDocument()
-    expect(screen.getByText('Depresión')).toBeInTheDocument()
+    render(<SpecialtyMapper specialties={['estres-ansiedad', 'bloqueos-emocionales']} onChange={vi.fn()} />)
+    expect(screen.getByText('Estrés y ansiedad')).toBeInTheDocument()
+    expect(screen.getByText('Bloqueos emocionales')).toBeInTheDocument()
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
   })
 })
@@ -17,15 +17,15 @@ describe('SpecialtyMapper — custom specialties', () => {
     render(<SpecialtyMapper specialties={['Mindfulness']} onChange={vi.fn()} />)
     expect(screen.getByText('Mindfulness')).toBeInTheDocument()
     const dropdown = screen.getByRole('combobox')
-    expect(dropdown).toContainElement(screen.getByRole('option', { name: 'Ansiedad' }))
+    expect(dropdown).toContainElement(screen.getByRole('option', { name: 'Estrés y ansiedad' }))
     expect(dropdown).toContainElement(screen.getByRole('option', { name: 'Aprobar como está' }))
   })
 
   it('maps custom to curated key via dropdown', async () => {
     const onChange = vi.fn()
     render(<SpecialtyMapper specialties={['Mindfulness']} onChange={onChange} />)
-    await userEvent.selectOptions(screen.getByRole('combobox'), 'Ansiedad')
-    expect(onChange).toHaveBeenCalledWith(['anxiety'])
+    await userEvent.selectOptions(screen.getByRole('combobox'), 'Estrés y ansiedad')
+    expect(onChange).toHaveBeenCalledWith(['estres-ansiedad'])
   })
 
   it('keeps custom specialty unchanged when "Aprobar como está" is selected', async () => {
@@ -36,8 +36,8 @@ describe('SpecialtyMapper — custom specialties', () => {
   })
 
   it('handles mix of curated and custom with one dropdown', () => {
-    render(<SpecialtyMapper specialties={['anxiety', 'Mindfulness']} onChange={vi.fn()} />)
-    expect(screen.getAllByText('Ansiedad').length).toBeGreaterThanOrEqual(1)
+    render(<SpecialtyMapper specialties={['estres-ansiedad', 'Mindfulness']} onChange={vi.fn()} />)
+    expect(screen.getAllByText('Estrés y ansiedad').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('Mindfulness')).toBeInTheDocument()
     expect(screen.getAllByRole('combobox')).toHaveLength(1)
   })

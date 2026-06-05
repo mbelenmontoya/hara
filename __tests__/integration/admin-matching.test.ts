@@ -1,5 +1,8 @@
-// Hara Vital - Week 3 Integration Tests
-// Purpose: Verify admin matching + billing workflows
+// Hara Vital - Admin Matching & Billing Integration Tests
+// Purpose: Verify admin matching + billing workflows against real DB data.
+// Requires: at least 3 active professionals and 1 lead already in the DB.
+// If that data is not there yet, the tests fail with a clear message.
+//
 // QA Requirements:
 // 1. Match creation with 3 distinct professionals (constraints enforced)
 // 2. Token generation for each recommendation
@@ -26,66 +29,65 @@ describe('Admin Matching & Billing (Week 3)', () => {
   let testPro2Id: string
   let testPro3Id: string
 
+  // Tracks every match this test run creates so afterAll can clean them up.
+  // Professionals and leads are real pre-existing data — never touched.
+  const createdMatchIds: string[] = []
+
   beforeAll(async () => {
-    // Create 3 distinct professionals
-    const timestamp = Date.now()
-    const pros = []
+    // Load real active professionals — need at least 3
+    const { data: pros, error: prosErr } = await supabaseAdmin
+      .from('professionals')
+      .select('id')
+      .eq('status', 'active')
+      .limit(3)
 
-    for (let i = 1; i <= 3; i++) {
-      const { data } = await supabaseAdmin.from('professionals').insert({
-        slug: `admin-test-pro-${timestamp}-${i}`,
-        full_name: `Admin Test Pro ${i}`,
-        email: `admin-test-${timestamp}-${i}@test.com`,
-        whatsapp: `+549111234567${i}`,
-        country: 'AR',
-        modality: ['therapy'],
-        specialties: ['anxiety'],
-        status: 'active',
-      }).select().single()
-
-      pros.push(data)
+    if (prosErr) throw new Error(`Could not load professionals: ${prosErr.message}`)
+    if (!pros || pros.length < 3) {
+      throw new Error(
+        `Need at least 3 active professionals in DB. Found ${pros?.length ?? 0}. ` +
+        `Approve a professional in /admin/professionals first, then re-run.`
+      )
     }
 
-    testPro1Id = pros[0]!.id
-    testPro2Id = pros[1]!.id
-    testPro3Id = pros[2]!.id
+    testPro1Id = pros[0].id
+    testPro2Id = pros[1].id
+    testPro3Id = pros[2].id
 
-    // Create test lead
-    const { data: lead } = await supabaseAdmin.from('leads').insert({
-      country: 'AR',
-      intent_tags: ['anxiety'],
-    }).select().single()
+    // Load most recent real lead
+    const { data: lead, error: leadErr } = await supabaseAdmin
+      .from('leads')
+      .select('id')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
 
-    testLeadId = lead!.id
+    if (leadErr || !lead) {
+      throw new Error(
+        'Need at least 1 lead in DB. Submit a /solicitar request first, then re-run.'
+      )
+    }
+
+    testLeadId = lead.id
   })
 
   afterAll(async () => {
-    const proIds = [testPro1Id, testPro2Id, testPro3Id].filter(Boolean)
-    if (proIds.length === 0) return
+    if (createdMatchIds.length === 0) return
 
-    // Cascade: events → pqls → match_recommendations → matches → reviews → professionals
-    const { data: recs } = await supabaseAdmin
-      .from('match_recommendations')
-      .select('match_id')
-      .in('professional_id', proIds)
-    const matchIds = [...new Set((recs || []).map(r => r.match_id))]
+    // Get pql IDs so we can remove pql_adjustments (FK dependency)
+    const { data: pqls } = await supabaseAdmin
+      .from('pqls')
+      .select('id')
+      .in('match_id', createdMatchIds)
+    const pqlIds = (pqls ?? []).map(p => p.id)
 
-    if (matchIds.length > 0) {
-      await supabaseAdmin.from('events').delete().in('match_id', matchIds)
-      await supabaseAdmin.from('pqls').delete().in('match_id', matchIds)
-      await supabaseAdmin.from('match_recommendations').delete().in('match_id', matchIds)
-      await supabaseAdmin.from('matches').delete().in('id', matchIds)
+    if (pqlIds.length > 0) {
+      await supabaseAdmin.from('pql_adjustments').delete().in('pql_id', pqlIds)
     }
 
-    if (testLeadId) {
-      await supabaseAdmin.from('leads').delete().eq('id', testLeadId)
-    }
-
-    await supabaseAdmin.from('reviews').delete().in('professional_id', proIds)
-    await supabaseAdmin.from('pqls').delete().in('professional_id', proIds)
-    await supabaseAdmin.from('events').delete().in('professional_id', proIds)
-    await supabaseAdmin.from('match_recommendations').delete().in('professional_id', proIds)
-    await supabaseAdmin.from('professionals').delete().in('id', proIds)
+    await supabaseAdmin.from('events').delete().in('match_id', createdMatchIds)
+    await supabaseAdmin.from('pqls').delete().in('match_id', createdMatchIds)
+    await supabaseAdmin.from('match_recommendations').delete().in('match_id', createdMatchIds)
+    await supabaseAdmin.from('matches').delete().in('id', createdMatchIds)
   })
 
   // QA Requirement 1: Match with 3 distinct professionals (constraints enforced)
@@ -110,6 +112,8 @@ describe('Admin Matching & Billing (Week 3)', () => {
     expect(json.match_id).toBeDefined()
     expect(json.tracking_code).toBeDefined()
 
+    createdMatchIds.push(json.match_id)
+
     // Verify 3 recommendations created
     const { data: recs } = await supabaseAdmin
       .from('match_recommendations')
@@ -119,12 +123,8 @@ describe('Admin Matching & Billing (Week 3)', () => {
 
     expect(recs).toHaveLength(3)
 
-    // Verify distinct professionals
     const professionalIds = recs!.map(r => r.professional_id)
-    const uniqueIds = new Set(professionalIds)
-    expect(uniqueIds.size).toBe(3)
-
-    // Verify ranks are 1, 2, 3
+    expect(new Set(professionalIds).size).toBe(3)
     expect(recs![0].rank).toBe(1)
     expect(recs![1].rank).toBe(2)
     expect(recs![2].rank).toBe(3)
@@ -168,20 +168,19 @@ describe('Admin Matching & Billing (Week 3)', () => {
 
     const json = await response.json()
 
+    createdMatchIds.push(json.match_id)
+
     expect(json.recommendations).toHaveLength(3)
 
-    // Verify each has attribution_token
     for (const rec of json.recommendations) {
       expect(rec.attribution_token).toBeDefined()
       expect(typeof rec.attribution_token).toBe('string')
-      expect(rec.attribution_token.length).toBeGreaterThan(100)  // JWT format
-      expect(rec.attribution_token.startsWith('eyJ')).toBe(true)  // JWT starts with eyJ
+      expect(rec.attribution_token.length).toBeGreaterThan(100)
+      expect(rec.attribution_token.startsWith('eyJ')).toBe(true)
     }
 
-    // Verify tokens are different (each has different professional_id)
-    const tokens = json.recommendations.map((r: any) => r.attribution_token)
-    const uniqueTokens = new Set(tokens)
-    expect(uniqueTokens.size).toBe(3)
+    const tokens = json.recommendations.map((r: { attribution_token: string }) => r.attribution_token)
+    expect(new Set(tokens).size).toBe(3)
   })
 
   // QA Requirement 3: tracking_code present in responses
@@ -201,18 +200,17 @@ describe('Admin Matching & Billing (Week 3)', () => {
 
     const json = await response.json()
 
-    // tracking_code in response (exact format: M-<13digits>-<6chars>)
+    createdMatchIds.push(json.match_id)
+
     expect(json.tracking_code).toBeDefined()
     expect(json.tracking_code).toMatch(TRACKING_CODE_REGEX)
 
-    // Verify components
     const parts = json.tracking_code.split('-')
     expect(parts[0]).toBe('M')
-    expect(parts[1]).toHaveLength(13)  // Timestamp
-    expect(parts[2]).toHaveLength(6)   // Nanoid
-    expect(parts[2]).toMatch(/^[A-Z0-9]+$/)  // Uppercase alphanumeric only
+    expect(parts[1]).toHaveLength(13)
+    expect(parts[2]).toHaveLength(6)
+    expect(parts[2]).toMatch(/^[A-Z0-9]+$/)
 
-    // tracking_code in database
     const { data: match } = await supabaseAdmin
       .from('matches')
       .select('tracking_code')
@@ -224,21 +222,21 @@ describe('Admin Matching & Billing (Week 3)', () => {
 
   // QA Requirement 4: pql_adjustments append-only (no UPDATE on pqls)
   it('creates adjustments without mutating pqls table', async () => {
-    // Create match and event first (FK requirements)
     const { data: match } = await supabaseAdmin.from('matches').insert({
       lead_id: testLeadId,
       tracking_code: `ADJ-TEST-${Date.now()}`,
     }).select().single()
 
-    const { data: event } = await supabaseAdmin.from('events').insert({
+    createdMatchIds.push(match!.id)
+
+    await supabaseAdmin.from('events').insert({
       event_type: 'contact_click',
       match_id: match!.id,
       professional_id: testPro1Id,
       lead_id: testLeadId,
       tracking_code: match!.tracking_code,
-    }).select().single()
+    })
 
-    // Wait for trigger to create PQL (poll until exists)
     const pql = await eventually(async () => {
       const { data } = await supabaseAdmin
         .from('pqls')
@@ -246,22 +244,16 @@ describe('Admin Matching & Billing (Week 3)', () => {
         .eq('match_id', match!.id)
         .eq('professional_id', testPro1Id)
         .single()
-
       return data
     }, { timeout: 3000, errorMessage: 'PQL not created by trigger' })
 
     const pqlId = pql.id
 
-    // Verify PQL status before adjustment
     const { data: beforePql } = await supabaseAdmin
-      .from('pqls')
-      .select('status')
-      .eq('id', pqlId)
-      .single()
+      .from('pqls').select('status').eq('id', pqlId).single()
 
     expect(beforePql!.status).toBe('active')
 
-    // Create waive adjustment (created_by extracted from auth, not request)
     const response = await fetch(`http://localhost:3000/api/admin/pqls/${pqlId}/adjust`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -269,40 +261,28 @@ describe('Admin Matching & Billing (Week 3)', () => {
         adjustment_type: 'waive',
         reason: 'Test waive - user never contacted',
         billing_month: '2025-01-01',
-        // created_by NOT sent (server extracts from auth)
       }),
     })
 
     const json = await response.json()
-
-    if (response.status !== 200) {
-      console.error('Adjustment failed:', json)
-    }
+    if (response.status !== 200) console.error('Adjustment failed:', json)
 
     expect(response.status).toBe(200)
     expect(json.success).toBe(true)
     expect(json.adjustment_id).toBeDefined()
 
-    // Verify PQL status UNCHANGED (append-only)
     const { data: afterPql } = await supabaseAdmin
-      .from('pqls')
-      .select('status')
-      .eq('id', pqlId)
-      .single()
+      .from('pqls').select('status').eq('id', pqlId).single()
 
-    expect(afterPql!.status).toBe('active')  // UNCHANGED
+    expect(afterPql!.status).toBe('active')
 
-    // Verify adjustment recorded
     const { data: adjustments } = await supabaseAdmin
-      .from('pql_adjustments')
-      .select('*')
-      .eq('pql_id', pqlId)
+      .from('pql_adjustments').select('*').eq('pql_id', pqlId)
 
     expect(adjustments).toHaveLength(1)
     expect(adjustments![0].adjustment_type).toBe('waive')
     expect(adjustments![0].reason).toBe('Test waive - user never contacted')
 
-    // Create restore adjustment (reverse waive)
     const restoreResponse = await fetch(`http://localhost:3000/api/admin/pqls/${pqlId}/adjust`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -310,40 +290,32 @@ describe('Admin Matching & Billing (Week 3)', () => {
         adjustment_type: 'restore',
         reason: 'Dispute resolved - charge reinstated',
         billing_month: '2025-01-01',
-        // created_by NOT sent (server extracts from auth)
       }),
     })
 
     expect(restoreResponse.status).toBe(200)
 
-    // Verify 2 adjustment rows exist (both preserved)
     const { data: allAdjustments } = await supabaseAdmin
-      .from('pql_adjustments')
-      .select('*')
-      .eq('pql_id', pqlId)
-      .order('created_at')
+      .from('pql_adjustments').select('*').eq('pql_id', pqlId).order('created_at')
 
     expect(allAdjustments).toHaveLength(2)
     expect(allAdjustments![0].adjustment_type).toBe('waive')
     expect(allAdjustments![1].adjustment_type).toBe('restore')
 
-    // Verify PQL table STILL unchanged
     const { data: finalPql } = await supabaseAdmin
-      .from('pqls')
-      .select('status')
-      .eq('id', pqlId)
-      .single()
+      .from('pqls').select('status').eq('id', pqlId).single()
 
-    expect(finalPql!.status).toBe('active')  // Never mutated
+    expect(finalPql!.status).toBe('active')
   })
 
   // Test: billing_month normalization
   it('normalizes billing_month to YYYY-MM-01', async () => {
-    const ts = Date.now()
     const { data: m } = await supabaseAdmin.from('matches').insert({
       lead_id: testLeadId,
-      tracking_code: 'NORM-' + ts,
+      tracking_code: 'NORM-' + Date.now(),
     }).select().single()
+
+    createdMatchIds.push(m!.id)
 
     await supabaseAdmin.from('events').insert({
       event_type: 'contact_click',
@@ -358,15 +330,10 @@ describe('Admin Matching & Billing (Week 3)', () => {
       return data
     })
 
-    // Mid-month → first
     const r1 = await fetch('http://localhost:3000/api/admin/pqls/' + pql.id + '/adjust', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        adjustment_type: 'dispute',
-        reason: 'Test',
-        billing_month: '2025-01-15',
-      }),
+      body: JSON.stringify({ adjustment_type: 'dispute', reason: 'Test', billing_month: '2025-01-15' }),
     })
 
     expect(r1.status).toBe(200)
@@ -376,15 +343,10 @@ describe('Admin Matching & Billing (Week 3)', () => {
 
     expect(a1!.billing_month).toBe('2025-01-01')
 
-    // YYYY-MM → first
     const r2 = await fetch('http://localhost:3000/api/admin/pqls/' + pql.id + '/adjust', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        adjustment_type: 'waive',
-        reason: 'Test',
-        billing_month: '2025-02',
-      }),
+      body: JSON.stringify({ adjustment_type: 'waive', reason: 'Test', billing_month: '2025-02' }),
     })
 
     expect(r2.status).toBe(200)
@@ -402,6 +364,8 @@ describe('Admin Matching & Billing (Week 3)', () => {
       tracking_code: 'INV-' + Date.now(),
     }).select().single()
 
+    createdMatchIds.push(m!.id)
+
     await supabaseAdmin.from('events').insert({
       event_type: 'contact_click',
       match_id: m!.id,
@@ -415,30 +379,20 @@ describe('Admin Matching & Billing (Week 3)', () => {
       return data
     })
 
-    // Invalid format: slash instead of dash
     const r1 = await fetch('http://localhost:3000/api/admin/pqls/' + pql.id + '/adjust', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        adjustment_type: 'waive',
-        reason: 'Test',
-        billing_month: '2025/01',  // Invalid format
-      }),
+      body: JSON.stringify({ adjustment_type: 'waive', reason: 'Test', billing_month: '2025/01' }),
     })
 
     expect(r1.status).toBe(400)
     const json1 = await r1.json()
     expect(json1.error).toContain('Invalid billing_month')
 
-    // Invalid format: text
     const r2 = await fetch('http://localhost:3000/api/admin/pqls/' + pql.id + '/adjust', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        adjustment_type: 'waive',
-        reason: 'Test',
-        billing_month: 'January 2025',
-      }),
+      body: JSON.stringify({ adjustment_type: 'waive', reason: 'Test', billing_month: 'January 2025' }),
     })
 
     expect(r2.status).toBe(400)

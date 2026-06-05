@@ -50,7 +50,7 @@ function GridCard({ recommendation: rec, trackingCode, onOpenDetails }: GridCard
   return (
     <article
       data-testid={`recommendation-${rec.rank}`}
-      className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 overflow-hidden flex flex-col cursor-pointer"
+      className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 overflow-hidden flex flex-col cursor-pointer hover:shadow-strong transition-shadow"
       onClick={onOpenDetails}
     >
       {/* Hero */}

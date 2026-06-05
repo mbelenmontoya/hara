@@ -15,16 +15,16 @@ describe('Chip — variant prop', () => {
 
 describe('Chip — specialty prop', () => {
   it('renders curated specialty with color and Spanish label', () => {
-    const { container } = render(<Chip specialty="anxiety" />)
-    expect(container.firstChild).toHaveTextContent('Ansiedad')
+    const { container } = render(<Chip specialty="estres-ansiedad" />)
+    expect(container.firstChild).toHaveTextContent('Estrés y ansiedad')
     expect(container.firstChild).toHaveClass('bg-sp-teal-weak', 'text-sp-teal')
   })
 
   it('renders all 12 curated specialties with non-neutral styling', () => {
     const curated = [
-      'anxiety', 'depression', 'stress', 'trauma', 'relationships',
-      'self-esteem', 'grief', 'addiction', 'eating-disorders',
-      'couples', 'family', 'children',
+      'estres-ansiedad', 'bloqueos-emocionales', 'autoconocimiento', 'duelo-perdidas',
+      'vinculos-relaciones', 'pareja', 'familia-linaje', 'miedos-creencias',
+      'proposito-vida', 'equilibrio-energetico', 'transiciones-vitales', 'trauma-heridas',
     ]
     curated.forEach(key => {
       const { container } = render(<Chip specialty={key} />)
@@ -39,7 +39,7 @@ describe('Chip — specialty prop', () => {
   })
 
   it('accepts an explicit label override', () => {
-    const { container } = render(<Chip specialty="anxiety" label="Custom" />)
+    const { container } = render(<Chip specialty="estres-ansiedad" label="Custom" />)
     expect(container.firstChild).toHaveTextContent('Custom')
     expect(container.firstChild).toHaveClass('bg-sp-teal-weak')
   })

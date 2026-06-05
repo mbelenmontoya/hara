@@ -5,20 +5,20 @@ import { SpecialtySelector } from './SpecialtySelector'
 
 describe('SpecialtySelector — curated toggles', () => {
   it('renders 12 curated buttons with aria-pressed reflecting selection state', () => {
-    render(<SpecialtySelector selected={['anxiety']} onChange={vi.fn()} />)
-    expect(screen.getByRole('button', { name: 'Ansiedad' })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: 'Depresión' })).toHaveAttribute('aria-pressed', 'false')
-    expect(screen.getByRole('button', { name: 'Niños y adolescentes' })).toBeInTheDocument()
+    render(<SpecialtySelector selected={['estres-ansiedad']} onChange={vi.fn()} />)
+    expect(screen.getByRole('button', { name: 'Estrés y ansiedad' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Bloqueos emocionales' })).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('button', { name: 'Heridas del pasado' })).toBeInTheDocument()
   })
 
   it('toggles curated specialty on click and deselects on re-click', async () => {
     const onChange = vi.fn()
     const { rerender } = render(<SpecialtySelector selected={[]} onChange={onChange} />)
-    await userEvent.click(screen.getByRole('button', { name: 'Ansiedad' }))
-    expect(onChange).toHaveBeenCalledWith(['anxiety'])
+    await userEvent.click(screen.getByRole('button', { name: 'Estrés y ansiedad' }))
+    expect(onChange).toHaveBeenCalledWith(['estres-ansiedad'])
 
-    rerender(<SpecialtySelector selected={['anxiety']} onChange={onChange} />)
-    await userEvent.click(screen.getByRole('button', { name: 'Ansiedad' }))
+    rerender(<SpecialtySelector selected={['estres-ansiedad']} onChange={onChange} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Estrés y ansiedad' }))
     expect(onChange).toHaveBeenLastCalledWith([])
   })
 })
@@ -36,7 +36,7 @@ describe('SpecialtySelector — custom fields', () => {
   it('shows error for duplicate curated label (case-insensitive)', async () => {
     render(<SpecialtySelector selected={[]} onChange={vi.fn()} />)
     await userEvent.click(screen.getByRole('button', { name: /Agregar otra especialidad/i }))
-    await userEvent.type(screen.getByPlaceholderText(/Mindfulness/i), 'ansiedad')
+    await userEvent.type(screen.getByPlaceholderText(/Mindfulness/i), 'autoconocimiento')
     expect(screen.getByText('Esta especialidad ya está en la lista')).toBeInTheDocument()
   })
 

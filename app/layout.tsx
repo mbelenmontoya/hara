@@ -1,6 +1,6 @@
 import './globals.css'
 import { Crimson_Pro, Manrope } from 'next/font/google'
-import { SiteHeader } from './components/SiteHeader'
+import { SiteHeader } from '@/app/components/SiteHeader'
 
 const crimsonPro = Crimson_Pro({
   subsets: ['latin'],

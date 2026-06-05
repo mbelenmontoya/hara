@@ -18,9 +18,21 @@ interface Props {
   onChange: (practiceKeys: string[]) => void
 }
 
+function normalize(s: string): string {
+  return s.toLowerCase().trim().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[\s-]+/g, ' ').trim()
+}
+
 function autoMatch(entry: string, catalog: Practice[]): string {
-  const normalized = entry.toLowerCase().trim()
-  const hit = catalog.find(p => p.key === normalized || p.key.replace(/-/g, '') === normalized.replace(/[\s-]/g, ''))
+  const n = normalize(entry)
+  const stripped = n.replace(/\s/g, '')
+  const hit = catalog.find(p => {
+    // key match (exact or stripped of hyphens/spaces)
+    if (normalize(p.key) === n || p.key.replace(/-/g, '') === stripped) return true
+    // label match
+    if (normalize(p.label) === n) return true
+    // alias match
+    return (p.aliases ?? []).some(a => normalize(a) === n)
+  })
   return hit?.key ?? ''
 }
 

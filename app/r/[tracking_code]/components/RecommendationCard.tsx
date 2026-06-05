@@ -25,7 +25,7 @@ export function RecommendationCard({
 }: RecommendationCardProps) {
   return (
     <div
-      className={`liquid-glass rounded-3xl shadow-elevated border overflow-hidden flex flex-col ${
+      className={`liquid-glass rounded-3xl shadow-elevated border overflow-hidden flex flex-col hover:shadow-strong transition-shadow ${
         isCurrent ? 'border-brand/20' : 'border-outline/30'
       }`}
       onClick={() => {

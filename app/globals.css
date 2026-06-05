@@ -11,12 +11,12 @@
   --color-surface-2: #F6F0E8;       /* Warm tinted surface */
   --color-outline: #E7DDCF;         /* Warm beige border */
   --color-foreground: #1F1A24;      /* Deep warm near-black */
-  --color-muted: #6B6374;           /* Readable muted text */
+  --color-muted: #524B5E;           /* Readable muted text */
 
   /* Brand - refined violet (premium wellness) */
   --color-brand: #4B2BBF;           /* Brand violet */
   --color-brand-weak: #EEE8FF;      /* Light brand tint */
-  --color-brand-hover: #3F24A4;     /* Hover/active state */
+  --color-brand-hover: #5B38CF;     /* Hover/active state — lighter than base for brightness */
 
   /* Primary alias for components */
   --color-primary: #4B2BBF;
@@ -152,9 +152,11 @@ h1, h2, h3, h4, h5, h6 {
   margin-top: var(--spacing-6);
 }
 
-/* Typography spacing */
-h1, h2, h3 {
-  margin-bottom: var(--spacing-4);
+/* Typography spacing — inside @layer base so Tailwind utilities can override */
+@layer base {
+  h1, h2, h3 {
+    margin-bottom: var(--spacing-4);
+  }
 }
 
 p + p {
@@ -171,9 +173,9 @@ p + p {
   position: relative;
   background-color: rgba(255, 255, 255, 0.1);
   border: 1.5px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 25px 45px rgba(75, 43, 191, 0.12);
   overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+  transition: background-color 0.4s cubic-bezier(0.175, 0.885, 0.32, 2.2),
+              border-color 0.4s cubic-bezier(0.175, 0.885, 0.32, 2.2);
 }
 
 .liquid-glass-bg {

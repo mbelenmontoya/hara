@@ -12,11 +12,12 @@ import { getAllPractices } from '@/lib/practices'
 import { PageBackground } from '@/app/components/ui/PageBackground'
 import { isEffectivelyDestacado } from '@/lib/ranking'
 import { ProfileHero } from './components/ProfileHero'
-import { ProfileExpertise } from './components/ProfileExpertise'
 import { ProfileAbout } from './components/ProfileAbout'
-import { ProfileReviews } from './components/ProfileReviews'
-import { ProfileLogistics } from './components/ProfileLogistics'
 import { ProfileContact } from './components/ProfileContact'
+import { ProfileLocation } from './components/ProfileLocation'
+import { ProfileDetails } from './components/ProfileDetails'
+import { ProfileReviews } from './components/ProfileReviews'
+import { ProfileReviewForm } from './components/ProfileReviewForm'
 import { RevealOnScroll } from '@/app/components/ui/RevealOnScroll'
 import type { Professional, Review } from './types'
 
@@ -71,14 +72,6 @@ async function getRecentReviews(professionalId: string): Promise<Review[]> {
   return (data ?? []) as Review[]
 }
 
-function formatPrice(min: number | null, max: number | null, currency: string): string | null {
-  if (!min && !max) return null
-  if (min && max) return `${currency} ${min} – ${max}`
-  if (min) return `Desde ${currency} ${min}`
-  if (max) return `Hasta ${currency} ${max}`
-  return null
-}
-
 function formatLocation(country: string, city: string | null, onlineOnly: boolean): string {
   if (onlineOnly) return 'Solo online'
   return [city, country].filter(Boolean).join(', ')
@@ -102,13 +95,13 @@ export default async function ProfessionalProfilePage({
   const practiceLabels = professional.practices.map((k) => practiceLabelMap[k] ?? k)
   const serviceTypeLabels = professional.service_type.map((s) => SERVICE_TYPE_MAP[s] || s)
   const location = formatLocation(professional.country, professional.city, professional.online_only)
-  const priceRange = formatPrice(professional.price_range_min, professional.price_range_max, professional.currency)
   const isDestacado = isEffectivelyDestacado(professional.subscription_tier, professional.tier_expires_at)
 
   const fromPath = searchParams.from
   const backHref = fromPath && fromPath.startsWith('/r/') ? fromPath : '/'
   const backLabel = fromPath && fromPath.startsWith('/r/') ? 'Volver a recomendaciones' : 'Ir al inicio'
-  const showReviewCapture = !fromPath?.startsWith('/r/')
+
+  const hasPresencialLocation = !professional.online_only && !!professional.city
 
   return (
     <div className="min-h-screen bg-background" data-testid="professional-profile">
@@ -128,71 +121,79 @@ export default async function ProfessionalProfilePage({
           {backLabel}
         </a>
 
-        {/* Two-column on desktop: left = content, right = sticky contact sidebar */}
-        <div className="lg:grid lg:grid-cols-[1fr_360px] lg:gap-8 lg:items-start space-y-4 lg:space-y-0">
+        {/* 1. Full-width hero */}
+        <ProfileHero
+          name={professional.name}
+          shortDescription={professional.short_description}
+          profileImageUrl={professional.profile_image_url}
+          location={location}
+          acceptingNewClients={professional.accepting_new_clients}
+          isDestacado={isDestacado}
+          ratingAverage={professional.rating_average}
+          ratingCount={professional.rating_count}
+        />
 
-          {/* Left column */}
-          <div className="space-y-4">
-            {/* ProfileHero is above the fold — no reveal */}
-            <ProfileHero
-              name={professional.name}
-              shortDescription={professional.short_description}
-              profileImageUrl={professional.profile_image_url}
-              location={location}
-              acceptingNewClients={professional.accepting_new_clients}
-              isDestacado={isDestacado}
+        {/* 2. Two-column: Sobre mí (left) | Contacto sticky (right) */}
+        <div className="lg:grid lg:grid-cols-[1fr_360px] lg:gap-8 space-y-4 lg:space-y-0">
+          <RevealOnScroll delay={0}>
+            <ProfileAbout
+              bio={professional.bio}
+              experienceDescription={professional.experience_description}
             />
-
-            <RevealOnScroll delay={0}>
-              <ProfileExpertise
-                specialties={professional.specialties}
-                practiceLabels={practiceLabels}
-                serviceTypeLabels={serviceTypeLabels}
-              />
-            </RevealOnScroll>
-
-            <RevealOnScroll delay={100}>
-              <ProfileAbout
-                bio={professional.bio}
-                experienceDescription={professional.experience_description}
-              />
-            </RevealOnScroll>
-
-            <RevealOnScroll delay={200}>
-              <ProfileReviews
-                ratingAverage={professional.rating_average}
-                ratingCount={professional.rating_count}
-                reviews={reviews}
-              />
-            </RevealOnScroll>
-
-            <RevealOnScroll delay={300}>
-              <ProfileLogistics
-                modalityLabels={modalityLabels}
-                location={location}
-                onlineOnly={professional.online_only}
-                city={professional.city}
-                priceRange={priceRange}
-                offersCoursesOnline={professional.offers_courses_online}
-                coursesPresencialLocation={professional.courses_presencial_location}
-              />
-            </RevealOnScroll>
-          </div>
-
-          {/* Right column — sticky contact card on desktop, inline on mobile */}
+          </RevealOnScroll>
           <div className="lg:sticky lg:top-8">
-            <RevealOnScroll delay={100}>
+            <RevealOnScroll delay={0}>
               <ProfileContact
                 slug={professional.slug}
                 name={professional.name}
                 whatsapp={professional.whatsapp}
                 instagram={professional.instagram}
-                showReviewCapture={showReviewCapture}
               />
             </RevealOnScroll>
           </div>
-
         </div>
+
+        {/* 3. Ubicación (left) | Detalles (right) — or Detalles full-width when online-only */}
+        {hasPresencialLocation ? (
+          <div className="lg:grid lg:grid-cols-[1fr_360px] lg:gap-8 space-y-4 lg:space-y-0">
+            <RevealOnScroll delay={0}>
+              <ProfileLocation
+                city={professional.city}
+                location={location}
+                onlineOnly={professional.online_only}
+              />
+            </RevealOnScroll>
+            <RevealOnScroll delay={0}>
+              <ProfileDetails
+                specialties={professional.specialties}
+                practiceLabels={practiceLabels}
+                serviceTypeLabels={serviceTypeLabels}
+                modalityLabels={modalityLabels}
+              />
+            </RevealOnScroll>
+          </div>
+        ) : (
+          <RevealOnScroll delay={0}>
+            <ProfileDetails
+              specialties={professional.specialties}
+              practiceLabels={practiceLabels}
+              serviceTypeLabels={serviceTypeLabels}
+              modalityLabels={modalityLabels}
+            />
+          </RevealOnScroll>
+        )}
+
+        {/* 4. Full-width: existing reviews (hidden when none) */}
+        <RevealOnScroll delay={0}>
+          <ProfileReviews
+            ratingAverage={professional.rating_average}
+            ratingCount={professional.rating_count}
+            reviews={reviews}
+          />
+        </RevealOnScroll>
+
+        {/* 5. Full-width: open review form */}
+        <ProfileReviewForm professionalSlug={professional.slug} />
 
         <p className="text-xs text-muted text-center pt-2">
           Tu privacidad primero: nadie recibe tus datos hasta que vos escribas.

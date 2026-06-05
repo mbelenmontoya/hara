@@ -24,5 +24,10 @@ export const supabaseAdmin = createClient(
       autoRefreshToken: false,
       persistSession: false,
     },
+    global: {
+      // Opt out of Next.js fetch cache — admin queries must always hit the DB fresh
+      fetch: (url: RequestInfo | URL, options: RequestInit = {}) =>
+        fetch(url, { ...options, cache: 'no-store' }),
+    },
   }
 )

@@ -9,16 +9,13 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getAdminUserId } from '@/lib/admin-auth'
 import { bustPracticesCache } from '@/lib/practices'
 import { logError } from '@/lib/monitoring'
+import { CURATED_SPECIALTY_KEYS } from '@/lib/design-constants'
 
 export const runtime = 'nodejs'
 
 const KEBAB_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/
 
-const VALID_SPECIALTY_KEYS = new Set([
-  'anxiety', 'depression', 'stress', 'trauma', 'relationships',
-  'self-esteem', 'grief', 'addiction', 'eating-disorders', 'couples',
-  'family', 'children',
-])
+const VALID_SPECIALTY_KEYS = new Set(CURATED_SPECIALTY_KEYS)
 
 interface UpdateInput {
   label?: string

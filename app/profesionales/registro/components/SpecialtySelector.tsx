@@ -6,20 +6,7 @@
 import { useState } from 'react'
 import { SPECIALTY_MAP, CURATED_SPECIALTY_KEYS } from '@/lib/design-constants'
 
-const SPECIALTIES = [
-  { value: 'anxiety', label: 'Ansiedad' },
-  { value: 'depression', label: 'Depresión' },
-  { value: 'stress', label: 'Estrés' },
-  { value: 'trauma', label: 'Trauma' },
-  { value: 'relationships', label: 'Relaciones' },
-  { value: 'self-esteem', label: 'Autoestima' },
-  { value: 'grief', label: 'Duelo' },
-  { value: 'addiction', label: 'Adicciones' },
-  { value: 'eating-disorders', label: 'Trastornos alimentarios' },
-  { value: 'couples', label: 'Terapia de pareja' },
-  { value: 'family', label: 'Terapia familiar' },
-  { value: 'children', label: 'Niños y adolescentes' },
-]
+const SPECIALTIES = Object.entries(SPECIALTY_MAP).map(([value, label]) => ({ value, label }))
 
 // Spanish labels for curated specialties (for duplicate detection)
 const CURATED_LABELS = Object.values(SPECIALTY_MAP).map(l => l.toLowerCase())

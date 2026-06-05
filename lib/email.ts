@@ -369,3 +369,26 @@ export async function notifyProfessionalRejected({
     `,
   })
 }
+
+export async function notifyContactForm(
+  name: string,
+  email: string,
+  message: string
+): Promise<boolean> {
+  const safeName    = escapeHtml(name)
+  const safeEmail   = escapeHtml(email)
+  const safeMessage = escapeHtml(message)
+  return sendEmail({
+    to: ADMIN_EMAIL,
+    subject: `Nueva consulta de ${safeName}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 16px; color: #1F1A24;">
+        <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Nueva consulta desde Hara Vital</h2>
+        <p style="margin-bottom: 8px;"><strong>Nombre:</strong> ${safeName}</p>
+        <p style="margin-bottom: 8px;"><strong>Email:</strong> <a href="mailto:${safeEmail}">${safeEmail}</a></p>
+        <p style="margin-bottom: 4px;"><strong>Mensaje:</strong></p>
+        <p style="background: #F6F0E8; border-radius: 8px; padding: 12px 16px; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${safeMessage}</p>
+      </div>
+    `,
+  })
+}

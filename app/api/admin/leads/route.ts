@@ -7,6 +7,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { logError } from '@/lib/monitoring'
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 interface MatchRecommendation {
   rank: number

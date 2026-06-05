@@ -77,20 +77,20 @@ export const DRAG_RESISTANCE_FACTOR = 3.5
 // SHARED DATA MAPS
 // ============================================================================
 
-/** English specialty keys → Spanish display labels (all 12 curated specialties) */
+/** Holistic specialty keys → Spanish display labels (all 12 curated specialties) */
 export const SPECIALTY_MAP: Record<string, string> = {
-  anxiety: 'Ansiedad',
-  depression: 'Depresión',
-  stress: 'Estrés',
-  trauma: 'Trauma',
-  relationships: 'Relaciones',
-  'self-esteem': 'Autoestima',
-  grief: 'Duelo',
-  addiction: 'Adicciones',
-  'eating-disorders': 'Trastornos alimentarios',
-  couples: 'Terapia de pareja',
-  family: 'Terapia familiar',
-  children: 'Niños y adolescentes',
+  'estres-ansiedad':      'Estrés y ansiedad',
+  'bloqueos-emocionales': 'Bloqueos emocionales',
+  'autoconocimiento':     'Autoconocimiento',
+  'duelo-perdidas':       'Duelo y pérdidas',
+  'vinculos-relaciones':  'Vínculos y relaciones',
+  'pareja':               'Pareja',
+  'familia-linaje':       'Familia y linaje',
+  'miedos-creencias':     'Miedos y creencias limitantes',
+  'proposito-vida':       'Propósito y dirección vital',
+  'equilibrio-energetico':'Equilibrio energético',
+  'transiciones-vitales': 'Transiciones vitales',
+  'trauma-heridas':       'Heridas del pasado',
 }
 
 /** All curated specialty keys — use to distinguish curated vs custom */
@@ -98,18 +98,18 @@ export const CURATED_SPECIALTY_KEYS = Object.keys(SPECIALTY_MAP)
 
 /** Specialty key → Tailwind color classes (using sp-* tokens from globals.css) */
 export const SPECIALTY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  anxiety:          { bg: 'bg-sp-teal-weak',    text: 'text-sp-teal',    border: 'border-sp-teal/20' },
-  depression:       { bg: 'bg-sp-indigo-weak',  text: 'text-sp-indigo',  border: 'border-sp-indigo/20' },
-  stress:           { bg: 'bg-sp-amber-weak',   text: 'text-sp-amber',   border: 'border-sp-amber/20' },
-  trauma:           { bg: 'bg-sp-rose-weak',    text: 'text-sp-rose',    border: 'border-sp-rose/20' },
-  relationships:    { bg: 'bg-sp-violet-weak',  text: 'text-sp-violet',  border: 'border-sp-violet/20' },
-  'self-esteem':    { bg: 'bg-sp-cyan-weak',    text: 'text-sp-cyan',    border: 'border-sp-cyan/20' },
-  grief:            { bg: 'bg-sp-slate-weak',   text: 'text-sp-slate',   border: 'border-sp-slate/20' },
-  addiction:        { bg: 'bg-sp-orange-weak',  text: 'text-sp-orange',  border: 'border-sp-orange/20' },
-  'eating-disorders': { bg: 'bg-sp-fuchsia-weak', text: 'text-sp-fuchsia', border: 'border-sp-fuchsia/20' },
-  couples:          { bg: 'bg-sp-pink-weak',    text: 'text-sp-pink',    border: 'border-sp-pink/20' },
-  family:           { bg: 'bg-sp-emerald-weak', text: 'text-sp-emerald', border: 'border-sp-emerald/20' },
-  children:         { bg: 'bg-sp-sky-weak',     text: 'text-sp-sky',     border: 'border-sp-sky/20' },
+  'estres-ansiedad':       { bg: 'bg-sp-teal-weak',    text: 'text-sp-teal',    border: 'border-sp-teal/20' },
+  'bloqueos-emocionales':  { bg: 'bg-sp-indigo-weak',  text: 'text-sp-indigo',  border: 'border-sp-indigo/20' },
+  'autoconocimiento':      { bg: 'bg-sp-cyan-weak',    text: 'text-sp-cyan',    border: 'border-sp-cyan/20' },
+  'duelo-perdidas':        { bg: 'bg-sp-slate-weak',   text: 'text-sp-slate',   border: 'border-sp-slate/20' },
+  'vinculos-relaciones':   { bg: 'bg-sp-violet-weak',  text: 'text-sp-violet',  border: 'border-sp-violet/20' },
+  'pareja':                { bg: 'bg-sp-pink-weak',    text: 'text-sp-pink',    border: 'border-sp-pink/20' },
+  'familia-linaje':        { bg: 'bg-sp-emerald-weak', text: 'text-sp-emerald', border: 'border-sp-emerald/20' },
+  'miedos-creencias':      { bg: 'bg-sp-amber-weak',   text: 'text-sp-amber',   border: 'border-sp-amber/20' },
+  'proposito-vida':        { bg: 'bg-sp-orange-weak',  text: 'text-sp-orange',  border: 'border-sp-orange/20' },
+  'equilibrio-energetico': { bg: 'bg-sp-fuchsia-weak', text: 'text-sp-fuchsia', border: 'border-sp-fuchsia/20' },
+  'transiciones-vitales':  { bg: 'bg-sp-rose-weak',    text: 'text-sp-rose',    border: 'border-sp-rose/20' },
+  'trauma-heridas':        { bg: 'bg-sp-sky-weak',     text: 'text-sp-sky',     border: 'border-sp-sky/20' },
 }
 
 /** Modality key → Spanish display label (merged from all display surfaces) */

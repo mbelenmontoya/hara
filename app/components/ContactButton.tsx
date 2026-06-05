@@ -94,7 +94,7 @@ export function ContactButton({
       data-testid={`contact-button-${professionalSlug}`}
       className={`inline-flex items-center justify-center px-6 py-3.5 bg-brand text-white font-semibold rounded-full shadow-elevated hover:bg-brand-hover hover:shadow-strong btn-press-glow transition-all duration-150 ${className} ${isTracking ? 'opacity-90' : ''}`}
     >
-      {isTracking ? `Contactando a ${professionalName}...` : 'Abrir WhatsApp'}
+      {isTracking ? `Contactando a ${professionalName}...` : 'Contactar por WhatsApp'}
     </a>
   )
 }

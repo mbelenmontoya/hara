@@ -98,7 +98,7 @@ export function PracticesList({ practices }: PracticesListProps) {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Link href={`/admin/practices/${p.key}/edit`}>
+                <Link href={`/admin/practices/${p.key}/edit`} prefetch={false}>
                   <Button variant="secondary">Editar</Button>
                 </Link>
                 {p.active ? (

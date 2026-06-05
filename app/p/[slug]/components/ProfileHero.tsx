@@ -9,6 +9,8 @@ interface ProfileHeroProps {
   location: string
   acceptingNewClients: boolean
   isDestacado: boolean
+  ratingAverage: number
+  ratingCount: number
 }
 
 export function ProfileHero({
@@ -18,6 +20,8 @@ export function ProfileHero({
   location,
   acceptingNewClients,
   isDestacado,
+  ratingAverage,
+  ratingCount,
 }: ProfileHeroProps) {
   return (
     <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6">
@@ -40,6 +44,12 @@ export function ProfileHero({
       <h1 className="text-2xl font-bold text-foreground text-center mb-1">
         {name}
       </h1>
+
+      {ratingCount > 0 && (
+        <p className="text-sm text-muted text-center mb-2">
+          {'★'.repeat(Math.round(ratingAverage))} {ratingAverage.toFixed(1)} · {ratingCount} {ratingCount === 1 ? 'reseña' : 'reseñas'}
+        </p>
+      )}
 
       {isDestacado && (
         <div className="flex justify-center mb-2">

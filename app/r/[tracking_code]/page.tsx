@@ -13,7 +13,6 @@ import { useIsDesktop } from './hooks/useMediaQuery'
 import { DeckView } from './components/DeckView'
 import { GridView } from './components/GridView'
 import { BottomSheet } from './components/BottomSheet'
-import { BackgroundPicker } from './components/BackgroundPicker'
 import { LoadingSkeleton } from './components/CardSkeleton'
 import { PageBackground } from '@/app/components/ui/PageBackground'
 import {
@@ -32,7 +31,6 @@ export default function RecommendationsPage() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [cardsHidden, setCardsHidden] = useState(false)
-  const [backgroundPath, setBackgroundPath] = useState<string | null>('/assets/illustrations/rizki-kurniawan-SSp6eC-LKBU-unsplash.svg')
 
   const shouldShowReveal = !isDesktop && revealing
 
@@ -82,7 +80,7 @@ export default function RecommendationsPage() {
       className="min-h-screen bg-background relative overflow-hidden"
       data-testid="recommendations-page"
     >
-      <PageBackground image={backgroundPath} />
+      <PageBackground />
 
       {/* Reveal screen — mobile only */}
       {(shouldShowReveal || isTransitioning) && (
@@ -185,10 +183,6 @@ export default function RecommendationsPage() {
         />
       )}
 
-      <BackgroundPicker
-        currentBackground={backgroundPath}
-        onBackgroundChange={setBackgroundPath}
-      />
     </div>
   )
 }

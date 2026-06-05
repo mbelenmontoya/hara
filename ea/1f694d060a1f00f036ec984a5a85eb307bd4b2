@@ -1,0 +1,253 @@
+migrations/015_holistic_specialty_keys.sql
+  s_7acdb32d8c12e6::t_4e7533e48ad625 1-64
+app/components/ContactFooterForm.tsx
+  s_3346621917e7cc::t_3ee234ecc19eff 1-2,5-8,10-44,49-52,90-91,93-94,110-111
+  s_3346621917e7cc::t_c66bd072af8709 3-4,9,46-47,54-56,58-89,92,95-108
+  s_3346621917e7cc::t_5c55348336df8f 45,48,53,57,109
+app/profesionales/registro/components/SpecialtySelector.test.tsx
+  s_7acdb32d8c12e6::t_b95d0d44b19719 39
+  s_7acdb32d8c12e6::t_21699645813c1b 8-11,17-18,20-21
+app/p/[slug]/components/ProfileReviewForm.tsx
+  s_3346621917e7cc::t_c1053fcf8d8d4d 1-2,5-13,16-19,21-33,41-45,47-65,67-84,86,88-91,113-120,122-127,137-140
+  s_3346621917e7cc::t_904762e71831a8 92-112
+  s_3346621917e7cc::t_7af91b50f9b0f2 85,87
+  s_3346621917e7cc::t_f35da2eb335b6d 3-4,14-15,20,34-40,46,66,121
+  s_3346621917e7cc::t_b7dd367e6c6bd1 128-136
+app/r/[tracking_code]/components/RecommendationCard.tsx
+  s_3346621917e7cc::t_729807f5a9a012 28
+app/profesionales/registro/RegistroForm.test.tsx
+  s_2182ac727f921d::t_e5db715c2d19be 1-42
+app/page.tsx
+  s_3346621917e7cc::t_15c8a8d79d0e7b 1,4
+app/p/[slug]/components/ProfileLocation.test.tsx
+  s_3346621917e7cc::t_187b474f020c44 31
+  s_3346621917e7cc::t_f7b6a665a8a52e 1-30,32-39
+app/admin/practices/PracticesList.tsx
+  s_7acdb32d8c12e6::t_dc90ba450b338b 101
+app/components/SiteHeader.tsx
+  s_2182ac727f921d::t_f9762ff297e5e3 28
+  s_721dc3d185f815::t_b860cad9f98cec 40-43
+  s_2182ac727f921d::t_64b25bf8f2f7bf 3,6,22,59-76,78-87,92-109
+  s_721dc3d185f815::t_15335fa78b4dc3 88-91
+  s_2182ac727f921d::t_e22cb3cacf64ee 13
+__tests__/integration/api-events.test.ts
+  s_7acdb32d8c12e6::t_d20df1ab540cc3 2-7,32-63,65-66,68-76,78,90-99,219-220,252,259,274,286
+app/profesionales/page.tsx
+  s_3346621917e7cc::t_670d744b869fbd 57-58
+  s_3346621917e7cc::t_429616257a1729 8
+  s_7027825961f2ac::t_dd3e08a5112383 37
+  s_7027825961f2ac::t_3c9e40260e9760 2,6,9,11,19,34-36,38-40,54-55
+  s_3346621917e7cc::t_4de37bfb934fc6 10
+__tests__/integration/admin-matching.test.ts
+  s_7acdb32d8c12e6::t_86588222c20206 1-5,32-35,37-49,52-54,56-62,64-70,74,76-81,83-84,87-90,115-116,127,171-172,178-179,182-183,203-204,210-212,230-231,253,268,275,277,280,299,306,308,315,318-319,336,349,367-368,385,395
+  s_7acdb32d8c12e6::t_c490a4c2e37a3c 232,238
+migrations/018_reviewer_email_on_reviews.sql
+  s_3346621917e7cc::t_b3bb5b2cae4486 1-10
+lib/practices.ts
+  s_7acdb32d8c12e6::t_7a276bddb744df 5-7,22-23,30-31,40-41,48-49,59-60
+  s_7acdb32d8c12e6::t_4c0fbe722ccd73 26
+docs/plans/2026-06-02-search-professionals-directory.md
+  s_3346621917e7cc::t_26e268293de944 6
+  s_7027825961f2ac::t_6d847478d0036d 7
+  s_7027825961f2ac::t_04f77fb7cfaffd 46
+  s_7027825961f2ac::t_1064a8c129a153 13-45,48-57,59,61-123,125-161,173-176,178-183
+  s_7027825961f2ac::t_d2b320e27f1c66 47
+  s_7027825961f2ac::t_4b446b525f1162 162-172
+  s_7027825961f2ac::t_5cfbf8fc487f7b 1-5,8-12,58,60,124,177
+.claude/plans/main.md
+  s_7027825961f2ac::t_12da522521a791 273-290
+  s_3346621917e7cc::t_57880e21e34531 237
+  s_7027825961f2ac::t_0b457a410f48b5 467
+  s_7027825961f2ac::t_51e0e7e2384c9a 715-716
+  s_7027825961f2ac::t_0338477d04eb07 238-239,241,243,248,252,255,258,261,264,267
+app/profesionales/components/ProfessionalsDirectory.test.tsx
+  s_3346621917e7cc::t_2f105bc5e2ee3c 3
+  s_7027825961f2ac::t_de7695d278f255 1,4-105
+  s_3346621917e7cc::t_f0921a23965857 113,128-146
+  s_3346621917e7cc::t_b682ff930ecd23 110
+  s_3346621917e7cc::t_042ec938e8648f 2
+  s_3346621917e7cc::t_69b2c91da07c1f 120,123-125
+  s_3346621917e7cc::t_e5a8fc7f2b7053 106-109,111-112,147
+  s_3346621917e7cc::t_776509aba7725d 114-119,121-122,126-127
+app/p/[slug]/components/ProfileLocation.tsx
+  s_3346621917e7cc::t_20d7db68f3208e 1-49
+lib/practices.test.ts
+  s_7acdb32d8c12e6::t_7a8e5a865c21c9 2-3,48,56,59-61,64-65,67,70,74-76,88,96,103,108,113-115,135-139,146-148
+app/api/contact/route.ts
+  s_3346621917e7cc::t_a823d4be88e353 1-51
+app/profesionales/registro/RegistroForm.tsx
+  s_721dc3d185f815::t_5db77d3dd0d4af 631
+  s_2182ac727f921d::t_6bcbc84b383643 234
+  s_2182ac727f921d::t_526b6e522657ba 255
+app/layout.tsx
+  s_2182ac727f921d::t_b9c825ad2fdca7 3
+app/api/admin/leads/route.ts
+  s_7acdb32d8c12e6::t_26c540fbc731c6 10
+app/p/[slug]/components/ProfileContact.tsx
+  s_3346621917e7cc::t_e2bafb83a8675a 4,7-14,29-30,35-45,47
+app/components/ui/PageBackground.tsx
+  s_3346621917e7cc::t_065c614c240962 16
+  s_3346621917e7cc::t_7be2ce72edb16a 10
+app/r/[tracking_code]/components/GridView.tsx
+  s_3346621917e7cc::t_4d19af13064e4a 53
+app/globals.css
+  s_3346621917e7cc::t_ab2bfa7c61e4f4 177-178
+  s_3346621917e7cc::t_e025aeabee3e29 14
+  s_3346621917e7cc::t_5fc40dba97546f 155-159
+  s_3346621917e7cc::t_165458c060d6b0 19
+app/p/[slug]/components/ProfileReviewForm.test.tsx
+  s_3346621917e7cc::t_3ce08c6ed43380 1-25,27,30-33,35-37,39-46,48-53
+  s_3346621917e7cc::t_6b6fa47aed13c5 26,28-29,34,38,47
+app/profesionales/registro/components/SpecialtySelector.tsx
+  s_7acdb32d8c12e6::t_34b443375d21e0 9
+lib/email.ts
+  s_3346621917e7cc::t_e5a8fa5c1e7e49 372-394
+docs/prd/2026-06-02-search-professionals-directory.md
+  s_7027825961f2ac::t_ecc84738eb40d3 1-100
+app/p/[slug]/components/ProfileDetails.tsx
+  s_3346621917e7cc::t_4c8cef84c99203 1-67
+app/profesionales/components/ProfessionalsDirectory.tsx
+  s_3346621917e7cc::t_6b7133ef96be14 154
+  s_3346621917e7cc::t_e16c0261357a65 257
+  s_7027825961f2ac::t_a945943a379ad1 1-90,92,115,120-131,134-138,140-141,144-153,155-173,175-178,181,201-204,219-220,222-256,258-268,270-289,298,315-317
+  s_3346621917e7cc::t_6bae1a13fd1290 91,93-114,116-119,132-133,139,142-143,174,179-180,182-200,207-218,221
+  s_3346621917e7cc::t_6ef9c114453376 269
+  s_3346621917e7cc::t_e4a4c40104e868 205-206
+  s_7027825961f2ac::t_5cad6e6e3dc2fd 290-297,299-314
+lib/supabase-admin.ts
+  s_7acdb32d8c12e6::t_efc02d8d09638f 27-31
+migrations/017_sync_ranking_trigger.sql
+  s_7acdb32d8c12e6::t_d841cfcc814711 1-118
+app/api/admin/practices/[key]/route.ts
+  s_7acdb32d8c12e6::t_49c04701d61ff3 12,18
+app/r/[tracking_code]/page.tsx
+  s_3346621917e7cc::t_8bb889309ebeae 83
+app/components/ContactButton.tsx
+  s_3346621917e7cc::t_79ac6528fe9a42 97
+app/api/admin/practices/dismiss/route.ts
+  s_7acdb32d8c12e6::t_d8d7cfe3b3c27a 1-46
+app/p/[slug]/components/ProfileContact.test.tsx
+  s_3346621917e7cc::t_76839d7a53b9d3 6
+  s_3346621917e7cc::t_761e9d2a2be25c 1-5,7-43
+docs/plans/2026-06-03-profile-page-redesign.md
+  s_3346621917e7cc::t_7dcc2ab34d69f9 329-335,337
+  s_3346621917e7cc::t_c075c79d330b68 124
+  s_3346621917e7cc::t_3a74f63ddddc86 60
+  s_3346621917e7cc::t_9683cb11e297df 18
+  s_3346621917e7cc::t_2250f859e2262a 126
+  s_3346621917e7cc::t_56e7c6980ee712 273-274
+  s_3346621917e7cc::t_a47167b973810e 363-371
+  s_3346621917e7cc::t_c38cb4287a013f 122
+  s_3346621917e7cc::t_9d30ac01eddf20 7
+  s_3346621917e7cc::t_e1acba662addf3 13-17,19-59,61-120,127-163,165-176,179-272,275-328,336,338-360,362,372-376,378-380
+  s_3346621917e7cc::t_9c85df04f3d967 125
+  s_3346621917e7cc::t_58aabf2fc23e73 177
+  s_3346621917e7cc::t_5854fd9e7405f0 123
+  s_3346621917e7cc::t_9c5139af8215cc 1-5,8-12,164,178,361,377
+  s_3346621917e7cc::t_3053f1bda36ef8 121
+  s_3346621917e7cc::t_e357f126a6e984 6
+app/api/admin/practices/dismiss/route.test.ts
+  s_7acdb32d8c12e6::t_ebd3dec8f5ced2 23
+  s_7acdb32d8c12e6::t_9d81c51a694c59 1-22,24-74
+app/admin/professionals/[id]/review/components/PracticeMapper.tsx
+  s_7acdb32d8c12e6::t_e5e90da164fba7 21-24,26-35
+app/p/[slug]/page.tsx
+  s_3346621917e7cc::t_2aec406f631de3 17-20,103-104,124-141,143-144,146-150,153-154,156-161,166-171,175-196
+app/api/contact/route.test.ts
+  s_3346621917e7cc::t_467d0a3b117d0d 1-28,30-64
+  s_3346621917e7cc::t_6853a48e0936b0 29
+app/p/[slug]/components/ProfileHero.test.tsx
+  s_3346621917e7cc::t_a8f8476bb07374 1-33
+migrations/014_dismiss_specialty_suggestion.sql
+  s_7acdb32d8c12e6::t_c13226e4744138 1-23
+app/api/reviews/direct/route.ts
+  s_3346621917e7cc::t_0e3932ad54baa4 3,14-15,22,24,37-40,43-44,63-75,86
+  s_3346621917e7cc::t_decc22d2cd310c 1-2,4-13,16-21,23,25-36,41-42,50-62,76-85,87-100
+  s_3346621917e7cc::t_ea2848c2156f26 45-49
+lib/design-constants.ts
+  s_7acdb32d8c12e6::t_f31e501caf0cea 80,82-93,101-112
+app/admin/practices/SuggestedPractices.tsx
+  s_7acdb32d8c12e6::t_8f5b90cad55999 37
+  s_7acdb32d8c12e6::t_dcceb86dcfcf8d 40,63
+  s_7acdb32d8c12e6::t_60a8c944000aa9 23,42
+  s_7acdb32d8c12e6::t_98c6337fccaf1e 120
+  s_7acdb32d8c12e6::t_5aebb79c846a12 21,24,26-36,38-39,41,82,97,100-104,119,121,137,149
+migrations/016_new_practices_and_mappings.sql
+  s_7acdb32d8c12e6::t_614b1f911c0533 10-16
+app/components/SiteHeader.test.tsx
+  s_2182ac727f921d::t_609670aac3a479 45
+  s_2182ac727f921d::t_340f9bf6b9ac1e 29-44,46-52
+  s_2182ac727f921d::t_99dc650e272e22 24-25
+  s_721dc3d185f815::t_56a471cccec7aa 53-61
+  s_2182ac727f921d::t_3a2891fa585832 23,26
+  s_2182ac727f921d::t_85c0bfb790cff6 3-15,17,19-21,27-28,62-69
+  s_2182ac727f921d::t_61cc3c58b1b5b3 1-2
+  s_2182ac727f921d::t_c73273873e92df 16,18
+  s_2182ac727f921d::t_4451f375f9baa9 22
+app/admin/professionals/[id]/review/components/SpecialtyMapper.test.tsx
+  s_7acdb32d8c12e6::t_c1db7b120d98f3 8-10
+  s_7acdb32d8c12e6::t_fd9ddc236d0eaa 39-40
+  s_7acdb32d8c12e6::t_b6a1809abd2d55 20,27-28
+app/api/reviews/direct/route.test.ts
+  s_3346621917e7cc::t_ce98f89299b4ca 1-6,8,10-17,24-49,51-56,58-78,89-100,102-107,109-113,130-146
+  s_3346621917e7cc::t_5233a5a7c251e6 7,9,18-23,50,57,79-88,101,108,114-129
+app/components/ui/Chip.test.tsx
+  s_7acdb32d8c12e6::t_67a1548e8303e1 18-19
+  s_7acdb32d8c12e6::t_cd5e644931420e 42
+  s_7acdb32d8c12e6::t_852d30c38e2adf 25-27
+app/p/[slug]/components/ProfileHero.tsx
+  s_3346621917e7cc::t_34e263f6a76b32 12-13,23-24,48-52
+app/p/[slug]/components/ProfileDetails.test.tsx
+  s_3346621917e7cc::t_680bae496a9d04 1-51
+app/components/ContactFooterForm.test.tsx
+  s_3346621917e7cc::t_6a156cfa5a57c2 7
+  s_3346621917e7cc::t_59a9b3c4aa24df 1-6,8-40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "ea1f694d060a1f00f036ec984a5a85eb307bd4b2",
+  "prompts": {},
+  "sessions": {
+    "s_2182ac727f921d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "98983764-0369-4878-96a7-2649e538d11f",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "mbelenmontoya <mariabmontoya@gmail.com>"
+    },
+    "s_3346621917e7cc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8c4ead71-e717-44b4-8d47-41b8ce279c9c",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "mbelenmontoya <mariabmontoya@gmail.com>"
+    },
+    "s_7027825961f2ac": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7309d8ad-d6f3-41f7-b0c0-d0da8a61ae0f",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "mbelenmontoya <mariabmontoya@gmail.com>"
+    },
+    "s_721dc3d185f815": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "19deba8b-5f02-4b24-a31e-50d1128d92ab",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "mbelenmontoya <mariabmontoya@gmail.com>"
+    },
+    "s_7acdb32d8c12e6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8300687c-7db0-4ce1-add8-f744ae716477",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "mbelenmontoya <mariabmontoya@gmail.com>"
+    }
+  }
+}

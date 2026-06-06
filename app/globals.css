@@ -14,28 +14,54 @@
   --color-muted: #7A6E68;           /* Warm-toned muted text */
 
   /* Brand — terracotta clay (autumn season, Argentina) */
-  --color-brand: #B87060;           /* Terracotta clay */
-  --color-brand-weak: #ECCEC4;      /* Light blush tint */
-  --color-brand-hover: #A06050;     /* Darker terracotta hover */
+  --color-brand-light: #F5E0D8;     /* Very light blush — hover backgrounds */
+  --color-brand-weak: #ECCEC4;      /* Light blush tint — badges, chips */
+  --color-brand: #B87060;           /* Terracotta clay — primary brand */
+  --color-brand-hover: #A06050;     /* Darker terracotta — hover state */
+  --color-brand-dark: #7A4038;      /* Deep terracotta — emphasis, pressed */
 
   /* Primary alias for components */
   --color-primary: #B87060;
   --color-primary-hover: #A06050;
   --color-primary-light: #ECCEC4;
 
-  /* Feedback states — autumn/winter palette */
-  --color-success: #1A7060;         /* Deep forest teal */
+  /* Feedback states — autumn/winter palette (light / base / dark) */
+  --color-success-light: #E8F7F3;   /* Very soft teal */
   --color-success-weak: #D4EDE8;    /* Soft teal tint */
-  --color-warning: #F0A030;         /* Warm amber-orange */
+  --color-success: #1A7060;         /* Deep forest teal */
+  --color-success-dark: #0F5045;    /* Deeper teal — emphasis */
+
+  --color-warning-light: #FEF6E4;   /* Very soft amber */
   --color-warning-weak: #FAECD4;    /* Soft amber tint */
-  --color-danger: #E05840;          /* Coral red */
+  --color-warning: #F0A030;         /* Warm amber-orange */
+  --color-warning-dark: #C07818;    /* Deep amber — emphasis */
+
+  --color-danger-light: #FEF0EC;    /* Very soft coral */
   --color-danger-weak: #FCE4DF;     /* Soft coral tint */
-  --color-info: #8090B0;            /* Slate blue */
+  --color-danger: #E05840;          /* Coral red */
+  --color-danger-dark: #B03828;     /* Deep coral — emphasis */
+
+  --color-info-light: #EEF3FC;      /* Very soft slate */
   --color-info-weak: #E0E8F8;       /* Soft slate tint */
+  --color-info: #8090B0;            /* Slate blue */
+  --color-info-dark: #506080;       /* Deep slate — emphasis */
 
   /* Error alias */
   --color-error: #E05840;
   --color-error-bg: #FCE4DF;
+
+  /* Warm gray scale — neutral tones for layouts, text, borders, dividers */
+  /* Based on foreground (#1F1A24) blended toward background (#F5EDE6) */
+  --color-gray-50:  #FAF7F4;        /* Near-white warm */
+  --color-gray-100: #F0EBE4;
+  --color-gray-200: #E4DDD4;
+  --color-gray-300: #CEC5BC;        /* Light dividers */
+  --color-gray-400: #B5A89E;
+  --color-gray-500: #9A8E84;        /* Placeholder text */
+  --color-gray-600: #7A6E68;        /* = --color-muted */
+  --color-gray-700: #5C5250;        /* Secondary text */
+  --color-gray-800: #3E3836;        /* Strong text */
+  --color-gray-900: #1F1A24;        /* = --color-foreground */
 
   /* Specialty colors — curated specialty palette (12 hues, each distinct) */
   --color-sp-teal: #1A7A65;        /* Ansiedad — distinct from --color-success (#2F8A73) */

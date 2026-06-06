@@ -1,0 +1,19 @@
+app/globals.css
+  s_cb24d04937a990::t_3a069bed9a88cd 17-21,28-29,31-34,36-39,41-44,46-47,53-64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "e2114cd92c44936e97a7946d51a62b7ef1878594",
+  "prompts": {},
+  "sessions": {
+    "s_cb24d04937a990": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c96a3a56-da33-4a46-9f84-cf2f22ab80eb",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "mbelenmontoya <mariabmontoya@gmail.com>"
+    }
+  }
+}

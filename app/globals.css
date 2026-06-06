@@ -243,7 +243,8 @@ p + p {
 .btn-press-glow:active,
 .btn-press-glow:focus:active {
   filter: brightness(1.2) !important;
-  box-shadow: 0 0 0 5px rgba(75, 43, 191, 0.3), 0 6px 16px rgba(75, 43, 191, 0.35) !important;
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-brand) 30%, transparent),
+              0 6px 16px color-mix(in srgb, var(--color-brand) 35%, transparent) !important;
   transition: filter 0.05s ease-out, box-shadow 0.05s ease-out !important;
 }
 
@@ -263,7 +264,8 @@ p + p {
 @media (hover: hover) {
   .btn-press-glow:hover {
     filter: brightness(1.08);
-    box-shadow: 0 0 0 3px rgba(75, 43, 191, 0.18), 0 4px 12px rgba(75, 43, 191, 0.22);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 18%, transparent),
+                0 4px 12px color-mix(in srgb, var(--color-brand) 22%, transparent);
     transition: filter 150ms ease, box-shadow 150ms ease;
   }
 

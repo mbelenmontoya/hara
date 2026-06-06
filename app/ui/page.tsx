@@ -52,7 +52,7 @@ export default function UIPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <div className="h-14 bg-brand rounded-lg mb-2 flex items-center justify-center">
-                    <span className="text-xs text-white font-medium">#4B2BBF</span>
+                    <span className="text-xs text-white font-medium">#B87060</span>
                   </div>
                   <p className="text-xs text-muted">Brand</p>
                 </div>

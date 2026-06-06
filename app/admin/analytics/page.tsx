@@ -36,9 +36,9 @@ function getCssVar(variable: string, fallback: string): string {
 }
 
 const CHART_COLORS = {
-  views:     () => getCssVar('--color-brand',   '#4B2BBF'),
-  whatsapp:  () => getCssVar('--color-success', '#2F8A73'),
-  instagram: () => getCssVar('--color-warning', '#F2A43A'),
+  views:     () => getCssVar('--color-brand',   '#B87060'),
+  whatsapp:  () => getCssVar('--color-success', '#1A7060'),
+  instagram: () => getCssVar('--color-warning', '#F0A030'),
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────

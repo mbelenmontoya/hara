@@ -1,15 +1,19 @@
 import './globals.css'
-import { Crimson_Pro, Manrope } from 'next/font/google'
+import { Poppins, Montserrat } from 'next/font/google'
 import Script from 'next/script'
 import { SiteHeader } from '@/app/components/SiteHeader'
 
-const crimsonPro = Crimson_Pro({
+// Poppins — brand display font (titles, headings, nav)
+const poppins = Poppins({
+  weight: ['400', '600', '700'],
   subsets: ['latin'],
   variable: '--font-display',
   display: 'swap',
 })
 
-const manrope = Manrope({
+// Montserrat — brand body font (reading text, UI labels)
+const montserrat = Montserrat({
+  weight: ['400', '500', '600'],
   subsets: ['latin'],
   variable: '--font-body',
   display: 'swap',
@@ -47,7 +51,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es" className={`${crimsonPro.variable} ${manrope.variable}`}>
+    <html lang="es" className={`${poppins.variable} ${montserrat.variable}`}>
       <body>
         <SiteHeader />
         {children}

@@ -4,6 +4,7 @@
 // Excluded from admin, concierge, and review routes (they have their own navigation).
 
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -25,13 +26,24 @@ export function SiteHeader() {
   if (EXCLUDED_PREFIXES.some((prefix) => pathname.startsWith(prefix))) return null
 
   return (
-    <header className="relative z-10 bg-transparent">
-      <div className="container-public py-4 flex items-center">
+    <header className="relative z-10 bg-brand">
+      <div className="container-public py-3 flex items-center">
         <Link
           href="/"
-          className="text-xl font-semibold text-foreground hover:text-brand transition-colors duration-150"
+          className="flex items-center gap-2.5 shrink-0"
+          aria-label="Hara — inicio"
         >
-          Hara
+          <Image
+            src="/assets/logo/isotipo_negativo.png"
+            alt="Hara"
+            width={34}
+            height={36}
+            className="object-contain"
+            priority
+          />
+          <span className="font-semibold text-white text-xl tracking-wide font-display">
+            Hara
+          </span>
         </Link>
 
         {/* Desktop nav — hidden below 1024px */}
@@ -47,8 +59,8 @@ export function SiteHeader() {
                 href={href}
                 className={`text-sm transition-colors duration-150 ${
                   isActive
-                    ? 'text-foreground font-medium underline underline-offset-4 decoration-brand/50'
-                    : 'text-muted hover:text-foreground'
+                    ? 'text-white font-semibold underline underline-offset-4 decoration-white/50'
+                    : 'text-white/75 hover:text-white'
                 }`}
               >
                 {label}
@@ -59,7 +71,7 @@ export function SiteHeader() {
 
         {/* Hamburger button — visible below 1024px */}
         <button
-          className="lg:hidden ml-auto p-2 text-foreground hover:text-brand transition-colors duration-150"
+          className="lg:hidden ml-auto p-2 text-white hover:text-white/75 transition-colors duration-150"
           onClick={() => setIsOpen((prev) => !prev)}
           aria-label={isOpen ? 'Cerrar menú' : 'Abrir menú'}
           aria-expanded={isOpen}

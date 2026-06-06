@@ -16,14 +16,14 @@ describe('SiteHeader', () => {
   it('renders home link and nav on public pages with correct z-index', () => {
     mockUsePathname.mockReturnValue('/profesionales')
     const { container } = render(<SiteHeader />)
-    expect(screen.getByRole('link', { name: 'Hara' })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', { name: 'Hara — inicio' })).toHaveAttribute('href', '/')
     expect(screen.getByRole('link', { name: 'Profesionales' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Pedí recomendación' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Soy profesional' })).toHaveAttribute('href', '/profesionales/registro')
-    // Must sit above the fixed PageBackground (z-0) with transparent bg so the page background shows through
+    // Must sit above the fixed PageBackground (z-0) with brand background
     const header = container.querySelector('header')
     expect(header).toHaveClass('z-10')
-    expect(header).toHaveClass('bg-transparent')
+    expect(header).toHaveClass('bg-brand')
   })
 
   it('shows hamburger button and toggles mobile nav on click', async () => {

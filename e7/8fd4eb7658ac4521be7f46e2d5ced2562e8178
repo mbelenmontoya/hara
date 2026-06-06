@@ -1,0 +1,27 @@
+app/globals.css
+  s_cb24d04937a990::t_e103415dcc4634 101,104
+app/components/SiteHeader.test.tsx
+  s_cb24d04937a990::t_a658bd8a5a4f8d 19,23,26
+app/layout.tsx
+  s_cb24d04937a990::t_ab8f2ce80b428f 54
+  s_cb24d04937a990::t_36f2d7753a505c 2,6-8,14-16
+app/components/SiteHeader.tsx
+  s_cb24d04937a990::t_f0bec17dacf84c 7
+  s_cb24d04937a990::t_62c46daafebac8 29-30,33-34,36-46,62-63,74
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "e78fd4eb7658ac4521be7f46e2d5ced2562e8178",
+  "prompts": {},
+  "sessions": {
+    "s_cb24d04937a990": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c96a3a56-da33-4a46-9f84-cf2f22ab80eb",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "mbelenmontoya <mariabmontoya@gmail.com>"
+    }
+  }
+}

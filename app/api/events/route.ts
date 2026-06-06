@@ -3,11 +3,12 @@
 // Security: Validates signed tokens (concierge) or professional slug (direct),
 //           bypasses RLS with service role.
 //
-// Two branches:
-//   1. Concierge: attribution_token present → verify JWT, existing billing path
-//   2. Direct:    professional_slug present → look up professional, synthetic tracking_code
+// Three branches:
+//   1. Concierge:         attribution_token present → verify JWT, billing path
+//   2. Profile analytics: professional_slug + event_type in PROFILE_EVENT_TYPES → analytics only
+//   3. Direct contact:    professional_slug (no analytics event_type) → contact_click for reviews cron
 //
-// If neither is present → 400
+// If none apply → 400
 
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
@@ -18,6 +19,11 @@ import { logError } from '@/lib/monitoring'
 import { nanoid } from 'nanoid'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+// Event types that come from the profile page (/p/[slug]) for analytics.
+// These are NOT billing events — they don't create PQL records or trigger cron jobs.
+const PROFILE_EVENT_TYPES = ['profile_view', 'whatsapp_click', 'instagram_click'] as const
+type ProfileEventType = typeof PROFILE_EVENT_TYPES[number]
 
 export async function POST(req: Request) {
   const contentType = req.headers.get('content-type') || ''
@@ -82,11 +88,75 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, event_id: data.id })
   }
 
-  // ── Branch 2: Direct profile contact — professional_slug present ─────────────
+  // ── Branches 2 & 3: professional_slug required ────────────────────────────────
   if (body.professional_slug && typeof body.professional_slug === 'string') {
-    const slug = body.professional_slug.trim()
+    const slug      = body.professional_slug.trim()
+    const eventType = typeof body.event_type === 'string' ? body.event_type : null
 
-    // Look up active professional by slug
+    // ── Branch 2: Profile analytics — event_type is a known analytics type ─────
+    if (eventType && (PROFILE_EVENT_TYPES as readonly string[]).includes(eventType)) {
+      const profileEventType = eventType as ProfileEventType
+
+      // Extra rate limit for profile_view to prevent page-refresh inflation.
+      // Always enforced: session-keyed when available, IP-keyed as fallback
+      // (sendBeacon does not always forward session cookies in all browsers).
+      if (profileEventType === 'profile_view') {
+        const rlKey = sessionId
+          ? `profile_view:session:${sessionId}:${slug}`
+          : clientIP
+          ? `profile_view:ip:${clientIP}:${slug}`
+          : null
+        if (rlKey) {
+          const { success } = await ratelimit.limit(rlKey, { limit: 1, window: '10 m' })
+          if (!success) return NextResponse.json({ error: 'Rate limit (profile_view)' }, { status: 429 })
+        }
+      }
+
+      const { data: pro, error: proErr } = await supabaseAdmin
+        .from('professionals')
+        .select('id, status, slug')
+        .eq('slug', slug)
+        .eq('status', 'active')
+        .single()
+
+      if (proErr || !pro) {
+        return NextResponse.json({ error: 'Professional not found or inactive' }, { status: 404 })
+      }
+
+      const { data, error } = await supabaseAdmin.from('events').insert({
+        event_type:       profileEventType,
+        professional_id:  pro.id,
+        tracking_code:    `profile-${slug}`,
+        match_id:         null,
+        lead_id:          null,
+        fingerprint_hash: fingerprintHash,
+        session_id:       sessionId,
+        ip_address:       clientIP,
+        user_agent:       req.headers.get('user-agent'),
+        referrer:         req.headers.get('referer'),
+        event_data:       {
+          ip_missing:        !clientIP,
+          fingerprint_valid: !!fingerprintHash,
+        },
+      }).select().single()
+
+      if (error) {
+        logError(new Error(error.message), { source: `POST /api/events (${profileEventType})` })
+        return NextResponse.json({ error: 'Insert failed' }, { status: 500 })
+      }
+
+      return NextResponse.json({ success: true, event_id: data.id })
+    }
+
+    // Reject unrecognised non-null event_type values before falling through to Branch 3
+    if (eventType && eventType !== 'contact_click') {
+      return NextResponse.json(
+        { error: `Unknown event_type: ${eventType}` },
+        { status: 400 },
+      )
+    }
+
+    // ── Branch 3: Direct profile contact — contact_click for reviews cron ─────
     const { data: pro, error: proErr } = await supabaseAdmin
       .from('professionals')
       .select('id, status, slug')
@@ -108,22 +178,21 @@ export async function POST(req: Request) {
     const reviewerEmail = rawEmail && EMAIL_RE.test(rawEmail) ? rawEmail : null
 
     const { data, error } = await supabaseAdmin.from('events').insert({
-      event_type:       'contact_click',
-      professional_id:  pro.id,
-      tracking_code:    trackingCode,
-      attribution_token: null,
-      match_id:         null,
-      lead_id:          null,
-      fingerprint_hash: fingerprintHash,
-      session_id:       sessionId,
-      ip_address:       clientIP,
-      user_agent:       req.headers.get('user-agent'),
-      referrer:         req.headers.get('referer'),
-      event_data:       {
-        ip_missing:         !clientIP,
-        fingerprint_valid:  !!fingerprintHash,
-        email:              reviewerEmail,
-        direct_contact:     true,
+      event_type:        'contact_click',
+      professional_id:   pro.id,
+      tracking_code:     trackingCode,
+      match_id:          null,
+      lead_id:           null,
+      fingerprint_hash:  fingerprintHash,
+      session_id:        sessionId,
+      ip_address:        clientIP,
+      user_agent:        req.headers.get('user-agent'),
+      referrer:          req.headers.get('referer'),
+      event_data:        {
+        ip_missing:        !clientIP,
+        fingerprint_valid: !!fingerprintHash,
+        email:             reviewerEmail,
+        direct_contact:    true,
       },
     }).select().single()
 
@@ -136,7 +205,6 @@ export async function POST(req: Request) {
   }
 
   // ── Neither token nor slug ────────────────────────────────────────────────────
-  // Returns 400 (not 403) — see plan Task 2 DoD note about the error code change.
   return NextResponse.json(
     { error: 'Provide either attribution_token (concierge) or professional_slug (direct)' },
     { status: 400 },

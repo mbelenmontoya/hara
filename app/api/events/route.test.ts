@@ -107,8 +107,8 @@ describe('direct contact: professional_slug provided, no attribution_token', () 
     const insertCall = (mockInsert.mock.calls[0] as unknown[])[0] as Record<string, unknown>
     expect(typeof insertCall?.tracking_code).toBe('string')
     expect((insertCall?.tracking_code as string).startsWith('direct-')).toBe(true)
-    expect(insertCall?.attribution_token).toBeNull()
     expect(insertCall?.professional_id).toBe('pro-uuid-123')
+    // attribution_token is not a column on events — intentionally not included in insert
   })
 
   it('includes reviewer_email in event_data when provided and valid', async () => {

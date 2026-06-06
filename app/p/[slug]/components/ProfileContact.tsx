@@ -2,8 +2,11 @@
 
 // Card 5: Contact — "How do I reach them?"
 // Shows Instagram link + WhatsApp button only. No raw phone number displayed.
+// Fires analytics events: instagram_click on IG link, whatsapp_click on WhatsApp button.
+// The ContactButton also fires contact_click (for the reviews cron) independently.
 
 import { ContactButton } from '@/app/components/ContactButton'
+import { fireProfileEvent } from '@/lib/profile-events'
 
 function normalizeInstagram(raw: string): { href: string; label: string } {
   const handle = raw
@@ -40,6 +43,7 @@ export function ProfileContact({
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm text-brand hover:underline"
+            onClick={() => fireProfileEvent('instagram_click', slug)}
           >
             {ig.label}
           </a>
@@ -52,6 +56,7 @@ export function ProfileContact({
         whatsappNumber={whatsapp}
         trackingCode="direct-profile-visit"
         rank={0}
+        onBeforeNavigate={() => fireProfileEvent('whatsapp_click', slug)}
       />
     </div>
   )

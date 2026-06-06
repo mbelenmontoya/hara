@@ -23,6 +23,7 @@ const supabaseAdmin = createClient(
 describe('/api/events Integration Tests', () => {
   let testMatchId: string
   let testProId: string
+  let testProSlug: string
   let testLeadId: string
   let testTrackingCode: string
   let validToken: string
@@ -32,7 +33,7 @@ describe('/api/events Integration Tests', () => {
     // Load real active professional
     const { data: pro, error: proErr } = await supabaseAdmin
       .from('professionals')
-      .select('id')
+      .select('id, slug')
       .eq('status', 'active')
       .limit(1)
       .single()
@@ -45,6 +46,7 @@ describe('/api/events Integration Tests', () => {
     }
 
     testProId = pro.id
+    testProSlug = pro.slug
 
     // Load most recent real lead
     const { data: lead, error: leadErr } = await supabaseAdmin
@@ -284,4 +286,101 @@ describe('/api/events Integration Tests', () => {
 
     expect(hitLimit).toBe(true)
   }, 30000)
+
+  // Test 6: Branch 3 — profile_view event stored with correct tracking_code
+  it('stores profile_view event with tracking_code = profile-{slug}', async () => {
+    const response = await fetch('http://localhost:3000/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event_type: 'profile_view',
+        professional_slug: testProSlug,
+        session_id: getUniqueSession(),
+      }),
+    })
+
+    const json = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(json.success).toBe(true)
+    expect(json.event_id).toBeDefined()
+
+    const { data: events } = await supabaseAdmin
+      .from('events')
+      .select('*')
+      .eq('id', json.event_id)
+
+    expect(events).toHaveLength(1)
+    expect(events![0].event_type).toBe('profile_view')
+    expect(events![0].tracking_code).toBe(`profile-${testProSlug}`)
+    expect(events![0].match_id).toBeNull()
+    expect(events![0].lead_id).toBeNull()
+    expect(events![0].professional_id).toBe(testProId)
+  })
+
+  // Test 7: Branch 3 — whatsapp_click returns 200 with correct event type
+  it('stores whatsapp_click event with correct tracking_code', async () => {
+    const response = await fetch('http://localhost:3000/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event_type: 'whatsapp_click',
+        professional_slug: testProSlug,
+        session_id: getUniqueSession(),
+      }),
+    })
+
+    const json = await response.json()
+    expect(response.status).toBe(200)
+    expect(json.success).toBe(true)
+
+    const { data: events } = await supabaseAdmin
+      .from('events')
+      .select('event_type, tracking_code, match_id')
+      .eq('id', json.event_id)
+    expect(events![0].event_type).toBe('whatsapp_click')
+    expect(events![0].tracking_code).toBe(`profile-${testProSlug}`)
+    expect(events![0].match_id).toBeNull()
+  })
+
+  // Test 8: Branch 3 — instagram_click returns 200 with correct event type
+  it('stores instagram_click event with correct tracking_code', async () => {
+    const response = await fetch('http://localhost:3000/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event_type: 'instagram_click',
+        professional_slug: testProSlug,
+        session_id: getUniqueSession(),
+      }),
+    })
+
+    const json = await response.json()
+    expect(response.status).toBe(200)
+    expect(json.success).toBe(true)
+
+    const { data: events } = await supabaseAdmin
+      .from('events')
+      .select('event_type, tracking_code')
+      .eq('id', json.event_id)
+    expect(events![0].event_type).toBe('instagram_click')
+    expect(events![0].tracking_code).toBe(`profile-${testProSlug}`)
+  })
+
+  // Test 9: Branch 3 — unknown event_type returns 400
+  it('rejects unknown event_type with 400', async () => {
+    const response = await fetch('http://localhost:3000/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event_type: 'bad_type',
+        professional_slug: testProSlug,
+      }),
+    })
+
+    const json = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(json.error).toBeDefined()
+  })
 })

@@ -2,9 +2,14 @@
 // Purpose: Data display for admin lists
 // Accessibility: proper table markup, mobile horizontal scroll
 
-import { ReactNode } from 'react'
+import { ReactNode, HTMLAttributes } from 'react'
 
 interface TableProps {
+  children: ReactNode
+  className?: string
+}
+
+interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {
   children: ReactNode
   className?: string
 }
@@ -27,8 +32,8 @@ export function TableBody({ children }: TableProps) {
   return <tbody className="bg-surface divide-y divide-outline">{children}</tbody>
 }
 
-export function TableRow({ children, className = '' }: TableProps) {
-  return <tr className={`hover:bg-subtle transition-colors ${className}`}>{children}</tr>
+export function TableRow({ children, className = '', ...props }: TableRowProps) {
+  return <tr className={`hover:bg-subtle transition-colors ${className}`} {...props}>{children}</tr>
 }
 
 export function TableHead({ children, className = '' }: TableProps) {

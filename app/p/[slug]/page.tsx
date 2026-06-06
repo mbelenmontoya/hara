@@ -11,6 +11,7 @@ import { MODALITY_MAP, SERVICE_TYPE_MAP } from '@/lib/design-constants'
 import { getAllPractices } from '@/lib/practices'
 import { PageBackground } from '@/app/components/ui/PageBackground'
 import { isEffectivelyDestacado } from '@/lib/ranking'
+import { ProfileViewTracker } from './components/ProfileViewTracker'
 import { ProfileHero } from './components/ProfileHero'
 import { ProfileAbout } from './components/ProfileAbout'
 import { ProfileContact } from './components/ProfileContact'
@@ -106,6 +107,7 @@ export default async function ProfessionalProfilePage({
   return (
     <div className="min-h-screen bg-background" data-testid="professional-profile">
       <PageBackground />
+      <ProfileViewTracker slug={professional.slug} />
 
       <div className="relative z-10 container-public pt-8 pb-12 space-y-4">
 

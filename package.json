@@ -35,12 +35,14 @@
     "@upstash/ratelimit": "^1.0.0",
     "@upstash/redis": "^1.28.0",
     "dotenv": "^17.2.3",
+    "html2canvas": "^1.4.1",
     "jose": "^5.2.0",
     "libphonenumber-js": "^1.12.39",
     "nanoid": "^5.1.6",
     "next": "^14.2.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
+    "recharts": "^3.8.1",
     "resend": "^6.9.3"
   },
   "devDependencies": {

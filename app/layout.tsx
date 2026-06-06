@@ -1,5 +1,6 @@
 import './globals.css'
 import { Crimson_Pro, Manrope } from 'next/font/google'
+import Script from 'next/script'
 import { SiteHeader } from '@/app/components/SiteHeader'
 
 const crimsonPro = Crimson_Pro({
@@ -50,6 +51,18 @@ export default function RootLayout({
       <body>
         <SiteHeader />
         {children}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-67WHY8ZN8J"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-67WHY8ZN8J');
+          `}
+        </Script>
       </body>
     </html>
   )

@@ -1,0 +1,31 @@
+app/not-found.tsx
+  s_c774d13a2242c6::t_b8249b7abcaa2f 34
+app/error.tsx
+  s_c774d13a2242c6::t_a8f3e82dada9fb 65
+app/components/PublicLayout.tsx
+  s_c774d13a2242c6::t_97c3692f9d7e99 65-66
+  s_c774d13a2242c6::t_7af093b71fe325 17
+app/components/ui/Disclosure.tsx
+  s_c774d13a2242c6::t_07ad93a0a92264 2
+app/components/SiteHeader.test.tsx
+  s_c774d13a2242c6::t_54e3817eb921a2 47
+app/r/[tracking_code]/page.tsx
+  s_c774d13a2242c6::t_b14a824f317e13 64
+  s_c774d13a2242c6::t_95fe642b6d1420 62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "42d6f114976c45e31821f7e220aea059987ff1e5",
+  "prompts": {},
+  "sessions": {
+    "s_c774d13a2242c6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5022c7af-b2c2-4365-99e8-f39e435cecce",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "mbelenmontoya <mariabmontoya@gmail.com>"
+    }
+  }
+}

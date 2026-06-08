@@ -1,15 +1,13 @@
 // Hara Vital — Blog Post Detail
 // Public page. Only renders published posts; anything else → 404.
-// body_html is sanitized on render (defense-in-depth — never trust the stored value).
+// body_html is sanitized at write time by POST /api/blog (sanitizeBlogHtml + DOMPurify).
 // Professional link-back only shown when professional_link_confirmed=true (admin-confirmed).
 
 export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'  // required: sanitizeBlogHtml uses DOMPurify (Node only)
 
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { sanitizeBlogHtml } from '@/lib/sanitize'
 import { PageBackground } from '@/app/components/ui/PageBackground'
 import { logError } from '@/lib/monitoring'
 
@@ -33,7 +31,8 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
     notFound()
   }
 
-  const safeBody = sanitizeBlogHtml(post.body_html)
+  // body_html is pre-sanitized at storage time by POST /api/blog
+  const safeBody = post.body_html ?? ''
 
   // Resolve professional for link-back — only when admin-confirmed
   let professional: { slug: string; full_name: string } | null = null

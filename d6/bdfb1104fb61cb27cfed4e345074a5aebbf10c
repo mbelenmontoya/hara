@@ -1,0 +1,23 @@
+app/que-es-hara/page.tsx
+  s_2ba089d7cd7645::t_3abf374b2b8d05 1-2,7,14-77,84-85,92,96-137,140,142-152,154-250,252-255,257-272,274-292,294-310,313
+app/que-es-hara/page.test.tsx
+  s_2ba089d7cd7645::t_5aa3c819383ff2 23
+  s_2ba089d7cd7645::t_cb002b85a3cdc5 1-21,25-38
+  s_2ba089d7cd7645::t_04c93f4465a540 22,24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "d6bdfb1104fb61cb27cfed4e345074a5aebbf10c",
+  "prompts": {},
+  "sessions": {
+    "s_2ba089d7cd7645": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3bc18545-92a0-40e1-bb34-94e6b9b67654",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "mbelenmontoya <mariabmontoya@gmail.com>"
+    }
+  }
+}

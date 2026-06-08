@@ -1,0 +1,100 @@
+lib/sanitize.ts
+  s_b5f749cd954677::t_ac33a41e163d4a 1,3-5
+app/api/admin/blog/[id]/route.test.ts
+  s_b5f749cd954677::t_640c40e5e698a6 76
+  s_b5f749cd954677::t_f3d306a8de6c3d 151-168,171-180
+  s_b5f749cd954677::t_a57bf37afeece5 169-170
+app/api/admin/blog/route.ts
+  s_b5f749cd954677::t_442f32a1bbb78f 14
+app/blog/escribir/parse-markdown.test.ts
+  s_b5f749cd954677::t_7f496fc328e8a3 61-67
+  s_b5f749cd954677::t_86bda98d30ef7e 1-60,68-93
+app/blog/[slug]/page.tsx
+  s_b5f749cd954677::t_f6711ff9a3f8b5 76-84
+  s_b5f749cd954677::t_56f45697598dd8 25
+app/blog/escribir/EscribirForm.tsx
+  s_b5f749cd954677::t_b7698e6aa0c424 4-6,15,25-26,28-32,34-37,42,58-67,73-75,81-82,157,159-178,180-227
+docs/plans/2026-06-07-blog-md-upload.md
+  s_b5f749cd954677::t_a6b8474933aea3 69,77-78
+  s_b5f749cd954677::t_5119b8bb9bd148 43
+  s_b5f749cd954677::t_ffaf4c69fdcb7a 48
+  s_b5f749cd954677::t_b947379f318484 6
+  s_b5f749cd954677::t_0eb8cdc5723e4b 47
+  s_b5f749cd954677::t_63f734ce81a7a8 1-5,8-12,162,166,171
+  s_b5f749cd954677::t_c20608605cc854 13-42,44-46,49-68,70-76,79-92,94,98-105,108,110,112-161,163-165,167-170,172-174
+  s_b5f749cd954677::t_170c13b54c2292 7
+  s_b5f749cd954677::t_972ac9d47fe057 93,95-97
+  s_b5f749cd954677::t_58a5fda3ead36e 106-107,109,111
+  s_b5f749cd954677::t_0d05c4fe7bbd4e 175-185
+lib/email.ts
+  s_b5f749cd954677::t_dbcb8dfd3949e9 2-3
+  s_b5f749cd954677::t_7c71990a4a6232 11
+  s_b5f749cd954677::t_3f31dbae8524cd 4-6
+  s_b5f749cd954677::t_101e8883ca51b1 62,69-73,76
+app/blog/escribir/MarkdownUpload.tsx
+  s_b5f749cd954677::t_ace4616dd5507c 1-115
+KNOWN_ISSUES.md
+  s_b5f749cd954677::t_87401da3939461 83-90,92,95-97,101-111
+  s_b5f749cd954677::t_84baead30704a6 3
+  s_b5f749cd954677::t_b99cfbe0308530 91,93-94,98-100
+app/api/admin/blog/[id]/route.ts
+  s_b5f749cd954677::t_75c750306f8ded 94-101
+  s_b5f749cd954677::t_bafef8fc24db7d 147
+  s_b5f749cd954677::t_b415440d4fe67d 44
+  s_b5f749cd954677::t_76ace0aa330b73 138-141
+  s_b5f749cd954677::t_03c164108442bf 77-78
+app/admin/blog/page.tsx
+  s_b5f749cd954677::t_7bb89d9ec30d4b 117-121
+  s_b5f749cd954677::t_b49e5356c49517 25
+package.json
+  s_b5f749cd954677::t_c5dc3bdd8a15ad 46
+app/blog/escribir/parse-markdown.ts
+  s_b5f749cd954677::t_a6bc1e30649f95 1-26,32-35,37-57
+  s_b5f749cd954677::t_c39f11c77d23fa 27-31,36
+docs/plans/2026-06-08-hara-vital-author.md
+  s_b5f749cd954677::t_1429edc10818b7 188-192,196-197
+  s_b5f749cd954677::t_54e965fafdb471 7
+  s_b5f749cd954677::t_e590d9bc1c670a 45
+  s_b5f749cd954677::t_f7048feb348e45 193-195
+  s_b5f749cd954677::t_fec14310498053 1-5,8-12,170,175,180
+  s_b5f749cd954677::t_8b4da5bbab8c4b 6
+  s_b5f749cd954677::t_1997b26e707e53 44
+  s_b5f749cd954677::t_8f54a5abd99819 139,141
+  s_b5f749cd954677::t_09f8ed601d4af1 13-43,47-63,81-86,88-103,105-138,140,142-169,171-174,176-179,181-187
+  s_b5f749cd954677::t_446c8ead6cbd40 46
+  s_b5f749cd954677::t_81fb84b30ce3a3 64-80,87
+  s_b5f749cd954677::t_c2744a2d89d855 104
+app/admin/blog/[id]/BlogReviewClient.tsx
+  s_b5f749cd954677::t_4f1ab7bb1985e9 113,118-124
+app/blog/page.tsx
+  s_b5f749cd954677::t_b4cccc4d81d599 26
+  s_b5f749cd954677::t_1faa07152b5670 93-102
+  s_b5f749cd954677::t_ed61c89599222c 36
+.claude/plans/main.md
+  s_b5f749cd954677::t_a70f2d0b21eacd 364
+  s_b5f749cd954677::t_87906cfbd31f8c 273-286
+  s_b5f749cd954677::t_aba0a168146792 260-263
+package-lock.json
+  ai_agent 26,4454-4463
+app/blog/escribir/MarkdownUpload.test.tsx
+  s_b5f749cd954677::t_749c966b112b61 1
+  s_b5f749cd954677::t_13a450de8d2e0b 2-43,48-104,107-111,113-114,116-118
+  s_b5f749cd954677::t_2fbc9f5d1b5876 44-47
+  s_b5f749cd954677::t_ae07be4142272e 105-106,112,115
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "01bdf46ba634ebf634922ca11d69a40dddca1db1",
+  "prompts": {},
+  "sessions": {
+    "s_b5f749cd954677": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c66e9b92-8990-4048-b045-7375165db4bb",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "mbelenmontoya <mariabmontoya@gmail.com>"
+    }
+  }
+}

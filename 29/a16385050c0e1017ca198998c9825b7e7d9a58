@@ -1,0 +1,21 @@
+.claude/plans/main.md
+  s_2ba089d7cd7645::t_a54f2ed3b85f26 260-267
+  s_2ba089d7cd7645::t_31a6eebeb301e4 272-288
+  s_2ba089d7cd7645::t_368619b9567dee 405
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "29a16385050c0e1017ca198998c9825b7e7d9a58",
+  "prompts": {},
+  "sessions": {
+    "s_2ba089d7cd7645": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3bc18545-92a0-40e1-bb34-94e6b9b67654",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "mbelenmontoya <mariabmontoya@gmail.com>"
+    }
+  }
+}

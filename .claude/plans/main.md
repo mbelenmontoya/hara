@@ -64,7 +64,7 @@ The product ships in 4 phase gates. Each phase has a clear definition of done. *
 
 0. ~~**Resume the Supabase database.**~~ ✅ Done 2026-05-01.
 1. ~~**Apply migrations 004 + 005 + 006 to Supabase.**~~ ✅ Done 2026-05-01 via SQL Editor. All three verified end-to-end (RLS active, RPCs functional, triggers chaining correctly).
-2. ~~**Verify Resend domain + swap `FROM_EMAIL`.**~~ ✅ Done 2026-05-01. `haravital.app` verified, `lib/email.ts` updated to `Hara Vital <hola@haravital.app>` with `replyTo: centrovitalhara@gmail.com`.
+2. ~~**Verify Resend domain + swap `FROM_EMAIL`.**~~ ✅ Done 2026-05-01 + updated 2026-06-08. `haravital.app` was verified but wrong — sending domain is `mail.greenbit.info` (Greenbit's subdomain). `lib/email.ts` updated 2026-06-08 to `Hara Vital <automations@mail.greenbit.info>` with `replyTo: centrovitalhara@gmail.com`. See KNOWN_ISSUES.md §2.
 3. **Smoke test 3 flows on prod** — *Bel-tested in parallel.* Browse / Concierge / Onboarding flows. Bel runs on real device, surfaces specific bugs as they appear.
 4. **Visual QA pass** — *Bel-tested in parallel.* Mobile viewport sweep across all routes.
 5. **Image upload end-to-end verification** — *Bel-tested in parallel.*
@@ -270,7 +270,7 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 ## Session Log
 
-### Session — 2026-06-08 (Blog .md upload + Hara Vital author override — both VERIFIED)
+### Session — 2026-06-08 (Blog .md upload + Hara Vital author + blog 500 production fix)
 
 **Completed:**
 - **Blog `.md` upload feature** (`docs/plans/2026-06-07-blog-md-upload.md` — VERIFIED): new write/upload mode toggle on `/blog/escribir`; `MarkdownUpload.tsx` sub-component (`.md`-only, async `file.text()`, `parseMarkdownDoc` + `sanitizeBlogHtml`, preview); `parse-markdown.ts` pure helper (YAML frontmatter + H1 title extraction, 140-char clamp at single exit); `marked` dep added; `lib/sanitize.ts` comment clarified. Code review: hardened frontmatter delimiter from `indexOf('\n---')` → `/^---$/m` (prevents false matches on `---note` lines). 67/67 test files, 462 tests all green.
@@ -278,6 +278,7 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 - **Email FROM address fixed**: `lib/email.ts` FROM changed from `hola@haravital.app` (unverified domain) to `automations@mail.greenbit.info` (Greenbit's verified sending subdomain). Also fixed Resend SDK silent error swallowing — SDK returns `{error}` not throws; added proper error check and logging.
 - **`KNOWN_ISSUES.md` §2 added**: documents Resend domain verification requirement (mail.greenbit.info must be verified in Resend dashboard) so this never gets lost again.
 - `migrations/021_blog_posts.sql` applied to Supabase — blog feature fully live.
+- **Blog 500 production fix** (`962f7a0`): all blog post detail pages (`/blog/[slug]`) were returning 500 in Vercel but worked locally. Root cause: `isomorphic-dompurify` initializes a jsdom window at runtime; Vercel's Node.js Lambda sandbox is stripped-down and jsdom fails silently there. Local dev uses a full Node.js process where jsdom works. Fix: removed render-side `sanitizeBlogHtml` call from `app/blog/[slug]/page.tsx` — body_html is already sanitized by `POST /api/blog` before storage, so the render-side call was redundant. Also removed `export const runtime = 'nodejs'` directive (no longer needed). Two intermediate commits (`7ab1afc` moving jsdom to deps, `01bdf46` the features) were red herrings — `962f7a0` was the actual fix.
 
 **Blockers:**
 - `migrations/020_complete_specialty_mappings.sql` still not applied to Supabase production DB.
@@ -567,6 +568,14 @@ The product is not yet live. The items below are speculative polish, pre-mature 
 - Supabase Auth chosen because we already use Supabase and professionals will need accounts later for `/pro/*` portal
 - Middleware changed from fail-closed-503 to redirect-to-login pattern
 - Admin user created manually in Supabase Auth dashboard for now
+
+### isomorphic-dompurify + Vercel — DO NOT use for server-side render
+
+`isomorphic-dompurify` uses jsdom to fake a browser DOM on the server. jsdom works in local Node.js processes but **crashes in Vercel's stripped-down Node.js Lambda sandbox**. Symptoms: 500 on any page that calls `sanitizeBlogHtml` at render time; no error visible in build logs; works perfectly locally.
+
+**Rule:** Only call `sanitizeBlogHtml` at **write time** (in API routes before DB storage), never at render time. The stored `body_html` is already clean. If server-side sanitization at render is needed in the future, use a DOM-free approach (regex-based or a library that doesn't need jsdom).
+
+---
 
 ### Infrastructure decisions
 

@@ -23,7 +23,7 @@ export interface Practice {
 export async function getActivePractices(): Promise<Practice[]> {
   const { data, error } = await supabaseAdmin
     .from('practices')
-    .select('key, label, slug, sort_order, active, aliases')
+    .select('key, label, slug, sort_order, active, aliases, specialties')
     .eq('active', true)
     .order('sort_order', { ascending: true })
     .order('key', { ascending: true })
@@ -53,7 +53,7 @@ export function bustPracticesCache(): void {}
 export async function getAllPractices(): Promise<Practice[]> {
   const { data, error } = await supabaseAdmin
     .from('practices')
-    .select('key, label, slug, sort_order, active')
+    .select('key, label, slug, sort_order, active, specialties')
     .order('sort_order', { ascending: true })
     .order('key', { ascending: true })
   if (error) throw new Error(`Failed to load practices catalog: ${error.message}`)

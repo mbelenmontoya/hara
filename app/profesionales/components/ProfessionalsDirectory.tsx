@@ -3,10 +3,12 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import type { Practice } from '@/lib/practices'
+import { SPECIALTY_MAP } from '@/lib/design-constants'
 import { GlassCard } from '@/app/components/ui/GlassCard'
 import { EmptyState } from '@/app/components/ui/EmptyState'
 import { Chip } from '@/app/components/ui/Chip'
 import { isEffectivelyDestacado } from '@/lib/ranking'
+import { WelcomeHint } from './WelcomeHint'
 
 export interface DirectoryProfessional {
   slug: string
@@ -26,6 +28,7 @@ export interface DirectoryProfessional {
   rating_count: number | null
   subscription_tier: string | null
   tier_expires_at: string | null
+  ranking_score: number | null
 }
 
 // Lowercase + strip NFD diacritics — same logic as lib/admin-practices.ts:50
@@ -33,7 +36,7 @@ export function normalize(s: string): string {
   return s.toLowerCase().trim().normalize('NFD').replace(/[̀-ͯ]/g, '')
 }
 
-// Pre-computes normalized searchable terms per practice key (key + label + aliases)
+// Pre-computes normalized searchable terms per practice key (key + label + aliases + specialty labels)
 export function buildPracticeIndex(practices: Practice[]): Map<string, string[]> {
   const index = new Map<string, string[]>()
   for (const p of practices) {
@@ -41,6 +44,7 @@ export function buildPracticeIndex(practices: Practice[]): Map<string, string[]>
       normalize(p.key),
       normalize(p.label),
       ...(p.aliases ?? []).map(normalize),
+      ...(p.specialties ?? []).map(key => normalize(SPECIALTY_MAP[key] ?? key)),
     ]
     index.set(p.key, terms)
   }
@@ -123,14 +127,16 @@ function ProfessionalCard({ professional: pro }: { professional: DirectoryProfes
   const rating = Number(pro.rating_average ?? 0)
   const ratingCount = Number(pro.rating_count ?? 0)
   const isDestacado = isEffectivelyDestacado(pro.subscription_tier, pro.tier_expires_at)
+  const score = pro.ranking_score != null && pro.ranking_score > 0 ? Math.round(pro.ranking_score) : null
+  const scoreColor = score == null ? '' : score >= 51 ? 'text-success' : score >= 30 ? 'text-warning' : 'text-brand'
 
   return (
     <article data-testid="professional-card" className="h-full">
       <Link href={`/p/${pro.slug}`} className="block h-full">
         <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-5 hover:shadow-strong transition-shadow h-full flex flex-col">
 
-          {/* Top: avatar + identity — vertically centered */}
-          <div className="flex items-center gap-3 mb-3">
+          {/* Top: avatar + identity + score — vertically centered */}
+          <div className="flex items-start gap-3 mb-3">
             <div className="flex-shrink-0">
               {pro.profile_image_url?.startsWith('http') ? (
                 <img
@@ -167,6 +173,13 @@ function ProfessionalCard({ professional: pro }: { professional: DirectoryProfes
                 </p>
               )}
             </div>
+
+            {score != null && (
+              <div className="flex-shrink-0 text-right" data-testid="ranking-score">
+                <div className="text-[9px] font-medium text-muted/70 leading-none mb-0.5 tracking-wide uppercase">Índice Hara</div>
+                <div className={`text-base font-bold leading-none ${scoreColor}`}>{score}</div>
+              </div>
+            )}
           </div>
 
           {/* Short description */}
@@ -253,6 +266,9 @@ export function ProfessionalsDirectory({ professionals, practices }: Props) {
 
   return (
     <div className="space-y-4">
+      {/* Inline welcome hint — collapsible, first visit opens automatically */}
+      <WelcomeHint />
+
       {/* Search input */}
       <div role="search" className="relative">
         <svg
@@ -271,7 +287,7 @@ export function ProfessionalsDirectory({ professionals, practices }: Props) {
           onChange={(e) => setSearchValue(e.target.value)}
           placeholder="Buscá por nombre, práctica o síntoma..."
           aria-label="Buscar profesionales"
-          className="w-full pl-9 pr-9 py-3 bg-surface/80 backdrop-blur-sm border border-outline rounded-2xl text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all shadow-soft"
+          className="w-full pl-9 pr-9 py-3 bg-surface/80 backdrop-blur-sm border border-outline rounded-2xl text-base md:text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all shadow-soft"
         />
         {searchValue && (
           <button

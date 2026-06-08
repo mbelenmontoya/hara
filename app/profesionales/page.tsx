@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic'
 async function getProfessionals(): Promise<DirectoryProfessional[]> {
   const { data, error } = await supabaseAdmin
     .from('professionals')
-    .select('slug, full_name, specialties, practices, modality, short_description, city, country, online_only, profile_image_url, price_range_min, price_range_max, currency, rating_average, rating_count, subscription_tier, tier_expires_at')
+    .select('slug, full_name, specialties, practices, modality, short_description, city, country, online_only, profile_image_url, price_range_min, price_range_max, currency, rating_average, rating_count, subscription_tier, tier_expires_at, ranking_score')
     .eq('status', 'active')
     .eq('accepting_new_clients', true)
     .order('ranking_score', { ascending: false })

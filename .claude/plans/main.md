@@ -236,20 +236,11 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 1. ~~**Approve search motor spec**~~ ✅ **VERIFIED 2026-06-03** — Bel manually tested name/practice/accent search and approved. Spec `docs/plans/2026-06-02-search-professionals-directory.md` flipped to VERIFIED.
 
-2. **Apply migration 013** (`migrations/013_score_overrides_and_aliases.sql`)
-   - What: Run in Supabase SQL Editor. Adds `score_overrides jsonb` on professionals and `aliases text[]` on practices. Both idempotent.
-   - Why: Required for score override editing on review page and alias mapping to work. Also required for alias search to work end-to-end (without this, `practices.aliases` is empty in prod → alias search returns 0 results).
+2. ~~**Apply migrations 012, 013, 014–018 to Supabase**~~ ✅ **Done 2026-06-05** — all applied.
 
-3. **Debug and fix `SuggestedPractices` mapping feature** — BROKEN
-   - What: The `append_alias` API endpoint is correct and saves to DB. The list exclusion logic is correct (verified via Node.js simulation). But entries reappear in the suggestions list on navigation. Suspected cause: Next.js router cache or `revalidatePath` not working as expected. `router.refresh()` is called client-side after each mapping.
-   - Files: `app/admin/practices/SuggestedPractices.tsx`, `app/api/admin/practices/[key]/route.ts`, `lib/admin-practices.ts`
-   - Known: `append_alias` atomic server-side append is correct. `loadPracticeSuggestions` correctly excludes aliases (including accent-normalized). `revalidatePath('/admin/practices')` called on PATCH success.
+3. ~~**Debug and fix `SuggestedPractices` mapping feature**~~ ✅ **Done** — dismiss route (`/api/admin/practices/dismiss`) calls `dismiss_specialty_suggestion` RPC (migration 014), removing entries from the DB directly. `router.refresh()` after both dismiss and map operations.
 
-4. **Apply migration 012** (`migrations/012_practices_specialty_mapping.sql`)
-   - What: Adds `specialties text[]` to `practices` table with seeded research-based specialty mappings for all 15 practices.
-   - Why: Required for the practice ↔ specialty mapping on the practices edit page.
-
-5. **Fix metadata in `app/layout.tsx`** — old copy still present
+4. **Fix metadata in `app/layout.tsx`** — old copy still present
    - What: `title`, `description`, `openGraph`, and `twitter` fields still reference "terapeuta ideal", "verificados", "psicólogo argentina" — language that conflicts with the holistic-wellness positioning and the copy fixes applied this session.
 
 6. **Complete profile image scoring discussion** — next session
@@ -269,6 +260,19 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 ---
 
 ## Session Log
+
+### Session — 2026-06-05 (Nav double-active bug + registration form centering fix)
+
+**Completed:**
+- Fixed nav showing two active items simultaneously on `/profesionales/registro`: `SiteHeader.tsx` desktop and mobile `isActive` logic now uses "most specific match wins" — prefix-match only activates when no other nav link claims the same path more specifically. Root cause: `pathname.startsWith('/profesionales/')` matched `/profesionales/registro`, which is itself a nav entry.
+- Fixed registration form terms text not centered: added `mx-auto` to the `max-w-sm` paragraph in `RegistroForm.tsx:631`. `text-center` centers text within the element; `mx-auto` was missing to center the constrained-width element itself within its parent.
+- Created `app/components/SiteHeader.test.tsx` (TDD — wrote failing test before fix): 4 tests covering home link + z-index, hamburger toggle, the specific double-active regression on `/profesionales/registro`, and excluded-routes returning null. All 4 pass.
+- Committed and pushed to Vercel production. Pre-push hook ran the full 360-test unit suite — all green.
+
+**Deviations:**
+- This session opened as a continuation of the `/end-session` workflow from the previous session (which hit context limits mid-update). Plan file duplicate-step cleanup and this session log entry were completed here.
+
+---
 
 ### Session — 2026-06-02 (Search motor — `/profesionales` client-side filtering)
 
@@ -422,47 +426,9 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 ---
 
-### Session — 2026-05-14 (Soft Launch Push Item 6: Desktop responsive UI pass — plan COMPLETE, awaiting manual approval)
-
-**Completed — PRD + spec workflow end-to-end on Item 6:**
-- PRD `docs/prd/2026-05-14-desktop-responsive-ui-pass.md` (Status: Final). Standard research tier — researched responsive patterns, directory/profile/concierge desktop layouts, hover/animation patterns. Key decisions in PRD: two-tier breakpoint only (mobile / lg:1024), extend `.container-public` to 1024px at lg:, directory 2-column grid, profile two-column + sticky contact sidebar, concierge 3-card grid + modal, no card hover (calm aesthetic), scroll reveals on home + profile.
-- Plan `docs/plans/2026-05-14-desktop-responsive-ui-pass.md` (Status: COMPLETE pending Bel manual approval). 11 tasks, all implemented.
-
-**Completed — 11 implementation tasks:**
-- **Task 1 (Foundation):** Extended `.container-public` in `app/globals.css` to scale from 640px → 1024px at `lg:`. Updated `useIsDesktop` threshold from 768px → 1024px in `app/r/[tracking_code]/hooks/useMediaQuery.ts`. Added `@media (hover: hover)` hover refinement to `.btn-press-glow` / `.btn-press-inset`.
-- **Task 2 (Container migration):** Replaced `max-w-md md:max-w-[960px] mx-auto px-4` → `container-public` across 9 pages: `app/page.tsx`, `app/ayuda/page.tsx`, `app/gracias/page.tsx`, `app/preview/page.tsx`, `app/solicitar/SolicitarForm.tsx`, `app/components/TermsAndPrivacyPage.tsx`, `app/profesionales/registro/RegistroForm.tsx`, `app/profesionales/registro/confirmacion/page.tsx`, `app/r/review/[token]/page.tsx`.
-- **Task 3 (Nav — dead code fixed in verify):** Added desktop nav to `app/components/PublicLayout.tsx` — but `PublicLayout` is unused by any page. Fixed during spec-verify: extracted `app/components/SiteHeader.tsx` (logo + `hidden lg:flex` nav with `usePathname` active state), added to `app/layout.tsx` root layout with exclusions for `/admin`, `/r/` routes. 3 nav links: Profesionales, Pedí recomendación, Ayuda.
-- **Task 4 (Profile extraction):** `/p/[slug]/page.tsx` (397 lines → 181 lines) — extracted 6 sub-components: `ProfileHero`, `ProfileExpertise`, `ProfileAbout`, `ProfileReviews`, `ProfileLogistics`, `ProfileContact` (into `app/p/[slug]/components/`). Shared types moved to `app/p/[slug]/types.ts`.
-- **Task 5 (Concierge extraction):** `/r/[tracking_code]/page.tsx` (402 lines → 191 lines) — extracted `RecommendationCard`, `DeckView` into `app/r/[tracking_code]/components/`. Mobile swipe deck behavior preserved.
-- **Task 6 (RevealOnScroll):** Created `app/components/ui/RevealOnScroll.tsx` — `IntersectionObserver` wrapper, fade-up animation (opacity 0 → 1, translateY 16 → 0, 500ms), `prefers-reduced-motion` respected, `delay` prop for stagger, unobserves after first reveal.
-- **Task 7 (Directory layout):** `/profesionales/page.tsx` — `lg:grid-cols-2 lg:gap-5` (was `md:grid-cols-3`).
-- **Task 8 (Profile desktop layout):** `/p/[slug]/page.tsx` — two-column at `lg:` with `grid-cols-[1fr_360px]`; left column has ProfileHero + content; right column has `lg:sticky lg:top-8` ProfileContact as sticky sidebar.
-- **Task 9 (Concierge desktop grid):** Created `app/r/[tracking_code]/components/GridView.tsx` — 3-card grid with `container-public`; `attribution_token` preserved on each card's ContactButton. Wired `isDesktop` switch in page.tsx.
-- **Task 10 (BottomSheet modal):** `app/r/[tracking_code]/components/BottomSheet.tsx` — `lg:items-center lg:justify-center` on backdrop, `lg:rounded-3xl lg:max-w-2xl` on content, scale 0.95 → 1 entry animation on desktop (slide-up on mobile), drag handle `lg:hidden`, Escape-key close.
-- **Task 11 (Scroll reveals):** Applied `<RevealOnScroll>` with stagger to home page (waitlist card + footer) and profile page (all sub-components below ProfileHero).
-
-**Completed — spec-verify Phase A + B:**
-- Build clean, tsc clean, 49/63 integration tests pass (14 pre-existing Supabase connectivity failures — same count confirmed before and after the pass, no regression introduced).
-- E2E (playwright-cli): TS-001 container 1024px desktop / 640px mobile ✓, TS-002 profile sticky sidebar CSS confirmed in build output ✓, TS-003 GridView grid-cols-3 + attribution_token confirmed in source ✓, TS-004 mobile regression check ✓, TS-005 desktop nav 3 links visible at 1280px + active state ✓ (required a verification fix — see Deviations).
-- TS-006 (scroll reveals) not live-verified — RevealOnScroll in source + reduced-motion branch present, but animation requires manual browser test.
-
-**Modified from plan:**
-- `PublicLayout.tsx` consumer gap — the plan specified adding nav to `PublicLayout`, but `PublicLayout` has zero consumers (discovered again, same finding as Item 8 session). Fixed inline during spec-verify by extracting `SiteHeader.tsx` added to `app/layout.tsx`. `SiteHeader` excludes `/admin/*` and `/r/*` routes.
-
-**Deviations:**
-- Item 6 was described in the plan as a "desktop polish pass" — this session promoted it to a full `/spec` workflow with PRD, plan, 11 implementation tasks, and spec-verify. Scope matched the PRD exactly.
-- `PublicLayout` zero-consumer issue re-surfaced for the second time (first noted in Item 8 session). `PublicLayout.tsx` itself was updated (kept as a reference artifact) but the actual nav uses the new `SiteHeader` in the root layout.
-- The dev server during E2E had a stale `.next` cache conflict; required a `rm -rf .next` + restart. Non-blocking.
-
-**Blockers:**
-- Bel's manual approval pending (spec-verify Step 10 gate). Plan status is `COMPLETE` not yet `VERIFIED`. The app is running at `http://localhost:3000` — test Softs, scroll reveals, nav links, container width at 1024px+.
-- All changes uncommitted. This is a clean separable commit: "feat(ui): desktop responsive UI pass (Soft Launch Push Item 6)".
-
-**Tests:** build clean · tsc clean · 49/63 integration pass (14 pre-existing).
-
----
-
 ### Archived Sessions
+
+- **2026-05-14**: Soft Launch Push Item 6 — Desktop responsive UI pass via /spec: PRD + plan + 11 implementation tasks (container-public 1024px, SiteHeader extracted to root layout, profile 6 sub-components, DeckView/RecommendationCard extracted, RevealOnScroll, directory 2-col, profile sticky sidebar, GridView 3-col, BottomSheet modal-on-desktop, scroll reveals). Build/tsc clean, 49/63 integration pass (14 pre-existing failures). COMPLETE pending Bel manual browser verification.
 
 - **2026-05-12**: Brand rename Hara Match → Hara Vital (105 files), plan corrections (Item 4 → Final Go-Live Gate, Item 8 added), Item 8 `/ayuda` VERIFIED via /spec (4 tasks, /terminosyprivacidad Disclosure extraction, 4 entry points, new not-found.tsx, DB integration test leak fixed with afterAll cleanup), Item 7 PRD finalized (wording pass, voice-doc-anchored, no Claude-proposed copy).
 - **2026-05-08**: Soft Launch Push Item 3: Pro approval/rejection emails — VERIFIED via /spec. Migration 011 (resubmit cooldown + partial UNIQUE + email index), `emailBaseUrl()` + `escapeHtml()` helpers, 3 pro-facing email functions, registration cooldown, admin PATCH email firing, Reject modal copy. 251/251 unit, 3/3 integration, partial-UNIQUE smoke. Migration 011 applied by Bel.

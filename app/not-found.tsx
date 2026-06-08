@@ -31,12 +31,6 @@ export default function NotFound() {
           No encontramos esta página. Puede que el link esté roto o que haya cambiado.
         </p>
 
-        <Link
-          href="/"
-          className="block w-full bg-brand text-white px-6 py-4 rounded-full shadow-elevated hover:shadow-strong active:scale-[0.98] transition-all font-semibold mb-3"
-        >
-          Volver al inicio
-        </Link>
         <Link href="/ayuda" className="block text-muted hover:text-foreground transition-colors text-sm py-2">
           ¿Necesitás ayuda?
         </Link>

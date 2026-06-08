@@ -370,6 +370,134 @@ export async function notifyProfessionalRejected({
   })
 }
 
+// ─── Blog notifications ───────────────────────────────────────────────────────
+
+/** Notify admin when a new blog post is submitted for review */
+export async function notifyNewBlogPost({
+  id,
+  title,
+  author_name,
+  author_email,
+}: {
+  id: string
+  title: string
+  author_name: string
+  author_email: string
+}): Promise<boolean> {
+  const baseUrl = emailBaseUrl()
+  const reviewUrl = `${baseUrl}/admin/login?redirect=${encodeURIComponent(`/admin/blog/${id}`)}`
+  const safeTitle = escapeHtml(title)
+  const safeName  = escapeHtml(author_name)
+  const safeEmail = escapeHtml(author_email)
+
+  return sendEmail({
+    to: ADMIN_EMAIL,
+    subject: `Nueva nota para revisar — ${safeTitle}`,
+    html: `
+      <div style="font-family: system-ui, sans-serif; max-width: 500px; margin: 0 auto;">
+        <h2 style="color: #1F1A24;">Nueva nota en el blog</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 8px 0; color: #6B6374; font-size: 14px;">Título</td>
+            <td style="padding: 8px 0; color: #1F1A24; font-size: 14px; font-weight: 500;">${safeTitle}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #6B6374; font-size: 14px;">Autor</td>
+            <td style="padding: 8px 0; color: #1F1A24; font-size: 14px;">${safeName}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #6B6374; font-size: 14px;">Email</td>
+            <td style="padding: 8px 0; color: #1F1A24; font-size: 14px;">${safeEmail}</td>
+          </tr>
+        </table>
+        <div style="margin-top: 24px;">
+          <a href="${reviewUrl}" style="display: inline-block; padding: 12px 24px; background-color: #4B2BBF; color: #ffffff; text-decoration: none; border-radius: 9999px; font-size: 14px; font-weight: 600;">
+            Revisar nota
+          </a>
+        </div>
+        <p style="margin-top: 16px; font-size: 13px; color: #6B6374;">
+          O copiá este enlace: ${reviewUrl}
+        </p>
+      </div>
+    `,
+  })
+}
+
+/** Notify author when their blog post is published */
+export async function notifyBlogPostPublished({
+  to,
+  title,
+  url,
+}: {
+  to: string
+  title: string
+  url: string
+}): Promise<boolean> {
+  const safeTitle = escapeHtml(title)
+  return sendEmail({
+    to,
+    subject: `Tu nota está publicada en Hara — ${safeTitle}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 16px; color: #1F1A24;">
+        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;">
+          ¡Tu nota ya está online!
+        </h2>
+        <p style="font-size: 15px; color: #1F1A24; line-height: 1.6; margin-bottom: 24px;">
+          Revisamos <strong>${safeTitle}</strong> y ya está publicada en Hara. Podés compartirla con quien quieras.
+        </p>
+        <div style="margin: 24px 0;">
+          <a href="${url}" target="_blank" rel="noopener"
+             style="display: inline-block; padding: 14px 28px; background-color: #4B2BBF; color: #ffffff;
+                    text-decoration: none; border-radius: 9999px; font-size: 15px; font-weight: 600;">
+            Ver mi nota
+          </a>
+        </div>
+        <p style="margin-top: 12px; font-size: 13px; color: #6B6374;">
+          O copiá el enlace: ${url}
+        </p>
+        <p style="font-size: 14px; color: #6B6374; line-height: 1.6; margin-top: 24px;">
+          Gracias por compartir tu perspectiva con la comunidad de Hara.
+        </p>
+      </div>
+    `,
+  })
+}
+
+/** Notify author when their blog post is rejected */
+export async function notifyBlogPostRejected({
+  to,
+  title,
+  reason,
+}: {
+  to: string
+  title: string
+  reason: string
+}): Promise<boolean> {
+  const safeTitle  = escapeHtml(title)
+  const safeReason = escapeHtml(reason.trim())
+  return sendEmail({
+    to,
+    subject: `Sobre tu nota en Hara — ${safeTitle}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 16px; color: #1F1A24;">
+        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;">
+          No pudimos publicar tu nota
+        </h2>
+        <p style="font-size: 15px; color: #1F1A24; line-height: 1.6; margin-bottom: 16px;">
+          Revisamos <strong>${safeTitle}</strong> y por ahora no vamos a publicarla en Hara.
+        </p>
+        <p style="font-size: 14px; color: #6B6374; margin-top: 24px; margin-bottom: 8px;">
+          <strong style="color: #1F1A24;">Motivo:</strong>
+        </p>
+        <blockquote style="margin: 0 0 24px 0; padding: 12px 16px; border-left: 3px solid #4B2BBF; background-color: #F6F0E8; font-style: italic; color: #1F1A24; white-space: pre-line; font-size: 15px; line-height: 1.6;">${safeReason}</blockquote>
+        <p style="font-size: 15px; color: #1F1A24; line-height: 1.6;">
+          Si tenés preguntas, escribinos a ${ADMIN_EMAIL}.
+        </p>
+      </div>
+    `,
+  })
+}
+
 export async function notifyContactForm(
   name: string,
   email: string,

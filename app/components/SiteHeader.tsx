@@ -12,7 +12,9 @@ const NAV_LINKS = [
   { href: '/profesionales', label: 'Profesionales' },
   { href: '/solicitar', label: 'Pedí recomendación' },
   { href: '/profesionales/registro', label: 'Soy profesional' },
+  { href: '/blog', label: 'Notas' },
   { href: '/ayuda', label: 'Ayuda' },
+  { href: '/que-es-hara', label: 'Qué es Hara' },
 ]
 
 const EXCLUDED_PREFIXES = ['/admin', '/r/', '/r/review']

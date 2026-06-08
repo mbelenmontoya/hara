@@ -56,12 +56,6 @@ export default function ConfirmationPage() {
             </div>
           </div>
 
-          <a
-            href="/"
-            className="inline-flex items-center justify-center w-full px-6 py-3.5 bg-brand text-white font-semibold rounded-full shadow-elevated hover:shadow-strong btn-press-glow transition-all"
-          >
-            Volver al inicio
-          </a>
         </div>
       </div>
     </div>

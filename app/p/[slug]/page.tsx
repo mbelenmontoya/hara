@@ -19,6 +19,7 @@ import { ProfileLocation } from './components/ProfileLocation'
 import { ProfileDetails } from './components/ProfileDetails'
 import { ProfileReviews } from './components/ProfileReviews'
 import { ProfileReviewForm } from './components/ProfileReviewForm'
+import { ProfilePosts } from './components/ProfilePosts'
 import { RevealOnScroll } from '@/app/components/ui/RevealOnScroll'
 import type { Professional, Review } from './types'
 
@@ -90,6 +91,17 @@ export default async function ProfessionalProfilePage({
 
   const reviews = await getRecentReviews(professional.id)
   const catalogPractices = await getAllPractices()
+
+  // Fetch confirmed published posts by this professional (limit 10)
+  const { data: blogPostsData } = await supabaseAdmin
+    .from('blog_posts')
+    .select('id, slug, title, published_at')
+    .eq('professional_id', professional.id)
+    .eq('status', 'published')
+    .eq('professional_link_confirmed', true)
+    .order('published_at', { ascending: false })
+    .limit(10)
+  const blogPosts = (blogPostsData ?? []) as { id: string; slug: string; title: string; published_at: string | null }[]
 
   const practiceLabelMap = Object.fromEntries(catalogPractices.map((p) => [p.key, p.label]))
   const modalityLabels = professional.modality.map((m) => MODALITY_MAP[m] || m)
@@ -194,7 +206,17 @@ export default async function ProfessionalProfilePage({
           />
         </RevealOnScroll>
 
-        {/* 5. Full-width: open review form */}
+        {/* 5. Full-width: professional's published blog posts (empty → renders nothing) */}
+        {blogPosts.length > 0 && (
+          <RevealOnScroll delay={0}>
+            <ProfilePosts
+              posts={blogPosts}
+              firstName={professional.name.split(' ')[0]}
+            />
+          </RevealOnScroll>
+        )}
+
+        {/* 6. Full-width: open review form */}
         <ProfileReviewForm professionalSlug={professional.slug} />
 
         <p className="text-xs text-muted text-center pt-2">

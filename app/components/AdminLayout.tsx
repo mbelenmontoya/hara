@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { href: '/admin/practices', label: 'Prácticas' },
   { href: '/admin/pqls', label: 'PQLs' },
   { href: '/admin/analytics', label: 'Analíticas' },
+  { href: '/admin/blog', label: 'Blog' },
 ]
 
 interface AdminLayoutProps {

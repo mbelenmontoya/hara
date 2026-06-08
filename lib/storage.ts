@@ -16,6 +16,47 @@ export interface UploadError {
   error: string
 }
 
+const BLOG_BUCKET = 'blog-images'
+
+/**
+ * Upload a blog post image to Supabase Storage.
+ * Stores as `{postId}-{slot}.{ext}` where slot is 'cover' or 'secondary'.
+ */
+export async function uploadBlogImage(
+  file: File,
+  postId: string,
+  slot: 'cover' | 'secondary'
+): Promise<UploadResult | UploadError> {
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    return { error: 'Formato no soportado. Usá JPG, PNG o WebP.' }
+  }
+
+  if (file.size > MAX_FILE_SIZE) {
+    return { error: 'La imagen no puede pesar más de 5 MB.' }
+  }
+
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+  const path = `${postId}-${slot}.${ext}`
+
+  const { error } = await supabaseAdmin.storage
+    .from(BLOG_BUCKET)
+    .upload(path, file, {
+      upsert: true,
+      contentType: file.type,
+    })
+
+  if (error) {
+    console.error('Blog image upload error:', error)
+    return { error: 'Error al subir la imagen.' }
+  }
+
+  const { data: urlData } = supabaseAdmin.storage
+    .from(BLOG_BUCKET)
+    .getPublicUrl(path)
+
+  return { url: urlData.publicUrl }
+}
+
 /**
  * Upload a profile image to Supabase Storage.
  * Stores as `{professionalId}.{ext}` — one image per professional, overwrites on re-upload.

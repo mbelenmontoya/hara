@@ -19,13 +19,6 @@ export function TermsAndPrivacyPage({
       <PageBackground />
 
       <div className="relative z-10 container-public pt-8 pb-12">
-        <Link
-          href="/"
-          className="inline-flex items-center text-sm text-muted hover:text-foreground transition-colors mb-6"
-        >
-          ← Volver al inicio
-        </Link>
-
         <p className="text-xs font-semibold uppercase tracking-wide text-muted mb-3">
           Legal
         </p>

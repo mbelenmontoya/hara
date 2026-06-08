@@ -62,12 +62,6 @@ export default function Error({
           Intentar de nuevo
         </button>
 
-        <button
-          onClick={() => (window.location.href = '/')}
-          className="w-full text-muted hover:text-foreground transition-colors text-sm py-2"
-        >
-          Volver al inicio
-        </button>
         <Link href="/ayuda" className="block text-muted hover:text-foreground transition-colors text-sm py-2">
           ¿Necesitás ayuda?
         </Link>

@@ -20,6 +20,7 @@ describe('SiteHeader', () => {
     expect(screen.getByRole('link', { name: 'Profesionales' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Pedí recomendación' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Soy profesional' })).toHaveAttribute('href', '/profesionales/registro')
+    expect(screen.getByRole('link', { name: 'Qué es Hara' })).toHaveAttribute('href', '/que-es-hara')
     // Must sit above the fixed PageBackground (z-0) with transparent background
     const header = container.querySelector('header')
     expect(header).toHaveClass('z-10')

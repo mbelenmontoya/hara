@@ -58,7 +58,6 @@ export function SolicitarForm({ practices }: Props) {
   const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const [showAdvanced, setShowAdvanced] = useState(false)
 
   const [intentTags, setIntentTags] = useState<string[]>([])
   const [country, setCountry] = useState('')
@@ -69,13 +68,14 @@ export function SolicitarForm({ practices }: Props) {
   const [urgency, setUrgency] = useState('')
   const [whatsapp, setWhatsapp] = useState('')
   const [phoneError, setPhoneError] = useState<string | null>(null)
+  const [email, setEmail] = useState('')
+  const [emailError, setEmailError] = useState<string | null>(null)
 
   // Advanced fields
   const [practicePreference, setPracticePreference] = useState<string[]>([])
   const [budgetMin, setBudgetMin] = useState('')
   const [budgetMax, setBudgetMax] = useState('')
   const [currency, setCurrency] = useState('USD')
-  const [email, setEmail] = useState('')
 
   function toggleIntent(value: string) {
     setIntentTags(prev =>
@@ -119,6 +119,21 @@ export function SolicitarForm({ practices }: Props) {
     }
   }
 
+  function handleEmailChange(value: string) {
+    setEmail(value)
+    if (!value) { setEmailError(null); return }
+    const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+    setEmailError(isValid ? null : 'El email no parece válido')
+  }
+
+  const isFormValid =
+    intentTags.length > 0 &&
+    (!!countryCode || !!country) &&
+    !!whatsapp &&
+    !phoneError &&
+    !!email.trim() &&
+    !emailError
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSubmitError(null)
@@ -127,6 +142,8 @@ export function SolicitarForm({ practices }: Props) {
     if (!countryCode && !country) { setSubmitError('Buscá y seleccioná tu ubicación'); return }
     if (!whatsapp) { setSubmitError('Ingresá tu WhatsApp'); return }
     if (phoneError) { setSubmitError('Corregí el número de WhatsApp'); return }
+    if (!email.trim()) { setSubmitError('Ingresá tu email'); return }
+    if (emailError) { setSubmitError('Corregí el email'); return }
 
     setSubmitting(true)
     try {
@@ -165,30 +182,56 @@ export function SolicitarForm({ practices }: Props) {
 
         <form onSubmit={handleSubmit}>
 
-          {/* Card: What are you looking for */}
-          <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6 mb-4">
-            <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">
-              ¿En qué necesitás ayuda? *
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {INTENT_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => toggleIntent(opt.value)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${
-                    intentTags.includes(opt.value)
-                      ? 'bg-brand text-white border-brand'
-                      : 'bg-surface-2 text-foreground border-outline hover:border-brand/50'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
+          {/* Desktop: intent + urgency side by side | Mobile: stacked */}
+          <div className="space-y-4 md:grid md:grid-cols-2 md:gap-4 md:space-y-0 mb-4">
+            {/* Card: What are you looking for */}
+            <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6">
+              <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">
+                ¿En qué necesitás ayuda? *
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {INTENT_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => toggleIntent(opt.value)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${
+                      intentTags.includes(opt.value)
+                        ? 'bg-brand text-white border-brand'
+                        : 'bg-surface-2 text-foreground border-outline hover:border-brand/50'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Card: Urgency */}
+            <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6">
+              <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">
+                ¿Qué tan urgente es?
+              </h2>
+              <div className="space-y-2">
+                {URGENCY_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setUrgency(opt.value)}
+                    className={`w-full px-4 py-3 text-sm text-left rounded-xl border transition-all ${
+                      urgency === opt.value
+                        ? 'bg-brand text-white border-brand'
+                        : 'bg-surface border-outline text-foreground hover:border-brand/50'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Card: Location + modality */}
+          {/* Card: Location + modality — full width */}
           <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6 mb-4">
             <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">
               ¿Dónde estás? *
@@ -226,137 +269,99 @@ export function SolicitarForm({ practices }: Props) {
             </div>
           </div>
 
-          {/* Card: Urgency */}
-          <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6 mb-4">
-            <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">
-              ¿Qué tan urgente es?
-            </h2>
-            <div className="space-y-2">
-              {URGENCY_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setUrgency(opt.value)}
-                  className={`w-full px-4 py-3 text-sm text-left rounded-xl border transition-all ${
-                    urgency === opt.value
-                      ? 'bg-brand text-white border-brand'
-                      : 'bg-surface border-outline text-foreground hover:border-brand/50'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Card: WhatsApp */}
+          {/* Card: WhatsApp + Email */}
           <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6 mb-4">
             <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">
               ¿Cómo te contactamos? *
             </h2>
-            <div>
-              <label className={LABEL_CLASS}>WhatsApp</label>
-              <input
-                type="tel"
-                value={whatsapp}
-                onChange={(e) => handleWhatsappChange(e.target.value)}
-                placeholder={countryCode ? `Ej: +${getCountryCallingCode(countryCode as CountryCode)}...` : 'Ej: +5491123456789'}
-                className={`${INPUT_CLASS} ${phoneError ? 'border-danger focus:ring-danger/50 focus:border-danger' : ''}`}
-              />
-              {phoneError
-                ? <p className={ERROR_CLASS}>{phoneError}</p>
-                : <p className={HELPER_CLASS}>Solo te escribimos para enviarte las recomendaciones.</p>
-              }
+            <div className="space-y-4">
+              <div>
+                <label className={LABEL_CLASS}>WhatsApp</label>
+                <input
+                  type="tel"
+                  value={whatsapp}
+                  onChange={(e) => handleWhatsappChange(e.target.value)}
+                  placeholder={countryCode ? `Ej: +${getCountryCallingCode(countryCode as CountryCode)}...` : 'Ej: +5491123456789'}
+                  className={`${INPUT_CLASS} ${phoneError ? 'border-danger focus:ring-danger/50 focus:border-danger' : ''}`}
+                />
+                {phoneError
+                  ? <p className={ERROR_CLASS}>{phoneError}</p>
+                  : <p className={HELPER_CLASS}>Solo te escribimos para enviarte las recomendaciones.</p>
+                }
+              </div>
+              <div>
+                <label className={LABEL_CLASS}>Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => handleEmailChange(e.target.value)}
+                  placeholder="tu@email.com"
+                  className={`${INPUT_CLASS} ${emailError ? 'border-danger focus:ring-danger/50 focus:border-danger' : ''}`}
+                />
+                {emailError
+                  ? <p className={ERROR_CLASS}>{emailError}</p>
+                  : <p className={HELPER_CLASS}>También te enviamos las recomendaciones por email.</p>
+                }
+              </div>
             </div>
           </div>
 
-          {/* Advanced toggle */}
-          <button
-            type="button"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="w-full text-sm text-brand font-medium mb-4 flex items-center justify-center gap-1"
-          >
-            {showAdvanced ? 'Ocultar opciones adicionales' : 'Más opciones'}
-            <svg
-              className={`w-4 h-4 transition-transform ${showAdvanced ? 'rotate-180' : ''}`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
+          {/* Advanced fields — always visible */}
+          <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6 mb-4">
+            <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">
+              Opciones adicionales
+            </h2>
+            <div className="space-y-5">
+              <PracticePicker
+                practices={practices}
+                selected={practicePreference}
+                onChange={setPracticePreference}
+                label="Tipo de práctica que preferís"
+                helperText="Si no sabés, no te preocupes — nosotros lo consideramos."
+                includeNoPreference
+              />
 
-          {/* Advanced fields */}
-          {showAdvanced && (
-            <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6 mb-4">
-              <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">
-                Opciones adicionales
-              </h2>
-              <div className="space-y-5">
-                <PracticePicker
-                  practices={practices}
-                  selected={practicePreference}
-                  onChange={setPracticePreference}
-                  label="Tipo de práctica que preferís"
-                  helperText="Si no sabés, no te preocupes — nosotros lo consideramos."
-                  includeNoPreference
-                />
-
-                <div>
-                  <label className={LABEL_CLASS}>Presupuesto por sesión</label>
-                  <div className="flex gap-2 items-center">
-                    <select
-                      value={currency}
-                      onChange={(e) => setCurrency(e.target.value)}
-                      className="px-3 py-3 bg-surface border border-outline rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50 transition-all w-24"
-                    >
-                      {CURRENCIES.map(c => (
-                        <option key={c.value} value={c.value}>{c.label}</option>
-                      ))}
-                    </select>
-                    <input
-                      type="number"
-                      value={budgetMin}
-                      onChange={(e) => setBudgetMin(e.target.value)}
-                      placeholder="Mín"
-                      className={`flex-1 ${INPUT_CLASS}`}
-                    />
-                    <span className="text-muted">–</span>
-                    <input
-                      type="number"
-                      value={budgetMax}
-                      onChange={(e) => setBudgetMax(e.target.value)}
-                      placeholder="Máx"
-                      className={`flex-1 ${INPUT_CLASS}`}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className={LABEL_CLASS}>Email</label>
+              <div>
+                <label className={LABEL_CLASS}>Presupuesto por sesión</label>
+                <div className="flex gap-2 items-center">
+                  <select
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value)}
+                    className="px-3 py-3 bg-surface border border-outline rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50 transition-all w-24"
+                  >
+                    {CURRENCIES.map(c => (
+                      <option key={c.value} value={c.value}>{c.label}</option>
+                    ))}
+                  </select>
                   <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="tu@email.com"
-                    className={INPUT_CLASS}
+                    type="number"
+                    value={budgetMin}
+                    onChange={(e) => setBudgetMin(e.target.value)}
+                    placeholder="Mín"
+                    className={`flex-1 ${INPUT_CLASS}`}
                   />
-                  <p className={HELPER_CLASS}>Opcional. Te lo enviamos también por email.</p>
+                  <span className="text-muted">–</span>
+                  <input
+                    type="number"
+                    value={budgetMax}
+                    onChange={(e) => setBudgetMax(e.target.value)}
+                    placeholder="Máx"
+                    className={`flex-1 ${INPUT_CLASS}`}
+                  />
                 </div>
               </div>
+
             </div>
-          )}
+          </div>
 
           {submitError && <Alert variant="error">{submitError}</Alert>}
 
           <button
             type="submit"
-            disabled={submitting || !!phoneError}
+            disabled={submitting || !isFormValid}
             className="w-full px-6 py-4 bg-brand text-white font-semibold rounded-full shadow-elevated hover:shadow-strong btn-press-glow transition-all disabled:opacity-50"
           >
-            {submitting ? 'Enviando...' : 'Encontrar mis 3 opciones'}
+            {submitting ? 'Enviando...' : 'Enviar respuestas'}
           </button>
 
           <p className="text-xs text-muted text-center mt-4">

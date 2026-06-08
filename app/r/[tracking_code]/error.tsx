@@ -63,12 +63,7 @@ export default function RecommendationsError({
           Reintentar
         </button>
 
-        <button
-          onClick={() => (window.location.href = '/')}
-          className="w-full text-muted hover:text-foreground transition-colors text-sm py-2"
-        >
-          Volver al inicio
-        </button>
+
       </div>
     </div>
   )

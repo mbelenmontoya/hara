@@ -1,0 +1,20 @@
+app/blog/[slug]/page.tsx
+  s_b5f749cd954677::t_f81ab56ed7ecaa 3
+  s_b5f749cd954677::t_dde593231768f6 34-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "962f7a0a40c6022248608e3b25f6dec980f92ed8",
+  "prompts": {},
+  "sessions": {
+    "s_b5f749cd954677": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c66e9b92-8990-4048-b045-7375165db4bb",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "mbelenmontoya <mariabmontoya@gmail.com>"
+    }
+  }
+}

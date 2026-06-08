@@ -1,0 +1,21 @@
+package.json
+  s_b5f749cd954677::t_e7493859d689ca 44
+package-lock.json
+  ai_agent 25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "7ab1afcec2506283058538be5afa0a2649ca9fba",
+  "prompts": {},
+  "sessions": {
+    "s_b5f749cd954677": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c66e9b92-8990-4048-b045-7375165db4bb",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "mbelenmontoya <mariabmontoya@gmail.com>"
+    }
+  }
+}

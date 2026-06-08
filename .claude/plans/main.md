@@ -257,9 +257,34 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 10. **Phase 1 — first 10 pros, 5 concierge requests, Sentry + Vercel Analytics**
 
+11. **Apply migrations 020 + 021 to Supabase**
+    - What: `migrations/020_complete_specialty_mappings.sql` and `migrations/021_blog_posts.sql` are committed but not yet applied to the production DB
+    - Why: blog feature requires the `blog_posts` table; specialty mappings update is a data improvement
+
+12. **Update nav: point "Ayuda" to `/que-es-hara` or redirect `/ayuda`**
+    - What: SiteHeader still links "Ayuda" to `/ayuda`; the content is now merged into `/que-es-hara`. Either redirect `/ayuda` → `/que-es-hara`, or update the nav link label/target
+    - Considerations: `/ayuda` still works standalone — redirect is the cleaner option
+
 ---
 
 ## Session Log
+
+### Session — 2026-06-07 (Ranking scores, WelcomeHint, blog fix, que-es-hara + ayuda merge)
+
+**Completed:**
+- Professionals directory: added `ranking_score` to SELECT query and `DirectoryProfessional` interface; added "ÍNDICE HARA" badge to each professional card, color-coded by score tier (green `text-success` ≥51, amber `text-warning` 30–50, terracotta `text-brand` <30); ordering preserved from DB ORDER BY ranking_score DESC, `.filter()` maintains it through search
+- WelcomeHint collapsible dropdown: fixed broken toggle — went through multiple approaches (localStorage guard broken by React Strict Mode double-mount, `useState` toggle stuck open due to stale `.next` HMR cache); final implementation uses native `<details>`/`<summary>` HTML — zero React state, browser-native toggle, reliable in all conditions
+- Large catch-up commit (`82d7982`): committed all previously untracked files — blog feature (public index, post detail, write form, admin review queue, API routes + tests), WelcomeModal, Qué es Hara page, ProfilePosts, SolicitarForm updates, SiteHeader + AdminLayout + error/not-found/gracias/ayuda/confirmacion updates, `lib/email.ts` + `lib/storage.ts` + `lib/sanitize.ts`, migrations 020 + 021, assets reorganized to `public/assets/bg/`, new fonts + logo, package deps updated; 439/439 unit tests green
+- Qué es Hara + Ayuda merged (`d6bdfb1`): `/que-es-hara` redesigned as document-style page — sticky left sidebar TOC on desktop (7 sections, anchor links), horizontal TOC on mobile, all original content preserved verbatim, FAQ sections (usuarios + profesionales from `/ayuda`) + contact section appended; 443/443 unit tests green
+- Blog 404 fixed: `.next/server/app/blog/` cache corrupted by HMR during WelcomeHint rewrites; cleared cache + restarted dev server (`pkill -f "next dev"`, restart)
+
+**Deviations:**
+- Ranking score display, WelcomeHint fix, and merged page were unplanned improvements requested by Bel during the session
+
+**Blockers:**
+- Migrations 020 (specialty mappings) and 021 (blog_posts) need to be applied to Supabase — both committed but not applied to prod DB yet
+
+---
 
 ### Session — 2026-06-05 (Nav double-active bug + registration form centering fix)
 
@@ -375,58 +400,9 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 **Tests:** 293/293 unit pass · tsc clean (0 errors)
 
-### Session — 2026-05-20 (Soft Launch Push Items 6 + 7 committed/applied + Node 26 test compat fix)
-
-**Completed — Cleared committed-state debt from 2026-05-13/14:**
-- `/start-session` discovery surfaced 2026-05-13 gap not in the plan: Item 7 wording pass had been committed (`e7e7c20`) and reverted same day (`fc575a5`) by Bel. Item 6 was still uncommitted from the 2026-05-14 session. Between sessions Bel created `content/` directory with 13 JSON files (per-page copy + `voice.json`) as the new source-of-truth for copy.
-- Bel asked to commit + push everything. Single-commit choice. Added `.playwright-cli/` and `.claude/test-analyses/` to `.gitignore` (tooling output, local only). Created commit `4dd2ad0` `feat(ui): desktop responsive UI pass + content files (Soft Launch Push Item 6)` — 46 files (Item 6 UI changes + 6 new profile sub-components + `SiteHeader`, `RevealOnScroll`, `GridView`/`DeckView`/`RecommendationCard` + `content/*.json` + plan/PRD docs).
-
-**Completed — Pre-existing test failure investigation + fix:**
-- Push blocked by pre-push hook — 6 test failures in `ContactButton.test.tsx` + `ReviewerEmailCapture.test.tsx`. Not introduced by Item 6 (those files weren't touched in the commit). Root cause: Node 26.0.0 defines `localStorage` as experimental global (returns `undefined` without `--localstorage-file`); shadows jsdom 29.0.1's `window.localStorage`. Direct-contact path in `ContactButton` threw on `localStorage.getItem(...)` before `sendBeacon` fired.
-- Three-part fix: (1) `vitest.workspace.ts` — added `environmentOptions.jsdom.url = 'http://localhost'` (jsdom needs a URL origin for storage APIs); (2) `__tests__/setup/component-setup.ts` — added `vi.stubGlobal('localStorage', …)` shim with stateful Map-backed implementation; (3) `app/components/ContactButton.tsx` — guarded the access via `typeof window !== 'undefined' && window.localStorage` so production code is defensive too.
-- 251/251 unit tests passing after fix. Commit `98f79be` `fix(tests): localStorage shim for Node 26 + jsdom URL for sendBeacon`. Pushed cleanly.
-
-**Completed — Item 7 (Wording pass) applied via JSON-driven approach:**
-- Bel: *"i did correct them but i feel not all the text in the app are in the json file. can you update all the text based on the new changes?"*. New approach (different from the 2026-05-13 reverted attempt): Bel writes the finalized copy in `content/*.json`, Claude does the mechanical apply to app files. No Claude-written copy decisions — addresses why the 2026-05-13 attempt was reverted.
-- Quick-mode file-by-file plus a "flag and ask for gaps" choice via `AskUserQuestion`. TaskList with 13 tasks.
-- **21 string changes across 7 files; 7 files already matched JSON:**
-  - `app/preview/page.tsx` (7): hero subtitle drops "personalizadas/verificados" filler, "Únete" → "Sumarte", 3 step pairs reworded ("Recibí 3 opciones", "Conectá directamente", "Hablás por WhatsApp, sin intermediarios, cuando quieras").
-  - `app/solicitar/SolicitarForm.tsx` (4): modality label "¿Cómo preferís las sesiones?" → "¿Cómo preferís que sea?", practice picker label, email helper, phone error.
-  - `app/r/review/[token]/page.tsx` (2): expired + invalid bodies drop "de reseña" filler.
-  - `app/profesionales/registro/RegistroForm.tsx` (3): description helper, bio placeholder, experience placeholder — all shortened.
-  - `app/profesionales/registro/confirmacion/page.tsx` (1): step3 "leads" → "solicitudes".
-  - `lib/email.ts` (3): `notifyProfessionalApproved` — "llene" → "complete", "click en el botón de contacto de tu perfil" → "click en tu perfil", "escribinos a … y te lo cambiamos" → "escribinos a …".
-  - `app/not-found.tsx` (1): body drops "la dirección".
-  - **Matched without changes:** `app/page.tsx` + `WaitlistForm`, `app/profesionales/page.tsx`, `app/gracias/page.tsx`, `app/p/[slug]/page.tsx` + 6 sub-components, `app/r/[tracking_code]/page.tsx`, `ReviewSubmitForm.tsx`, `app/error.tsx`.
-- Bel also corrected `content/*.json` source-of-truth files during the session (7 JSONs touched).
-- 251/251 unit tests · tsc clean. No test assertions on changed strings (grep verified). Commit `f8f2471` `feat(copy): apply wording pass from content/*.json (Soft Launch Push Item 7)`. Pushed cleanly.
-
-**Gaps surfaced (app strings NOT in `content/*.json`, left unchanged per Bel's "flag and ask" choice):**
-- `WaitlistForm`: `'Enviando…'` (submit loading state).
-- Directory cards (`/profesionales`): dynamic modality labels (`'Online'`/`'Presencial'`), location format separator, `'desde'`/`'hasta'` price prefixes.
-- `ProfileReviews`: `'Anónimo'` fallback for null `reviewer_name`, star glyphs, `'es-AR'` date format.
-- `SolicitarForm`: currency labels (`'ARS'`, `'USD'`, `'EUR'`, `'MXN'`), `'Mín'`/`'Máx'` budget placeholders, `'Ej: +5491123456789'` phone fallback, ` para ${country}` phone error suffix.
-- `RegistroForm`: currency labels with descriptions (`'ARS (Peso argentino)'`, etc.), `'Ej: 50'`/`'Ej: 100'` price placeholders, `'Vista previa'` image alt, dev-only bg-picker strings.
-- `lib/email.ts`: `notifyNewLead` + `notifyNewProfessional` (admin emails — explicitly out of scope per `emails.json` description).
-
-**Modified from plan:**
-- Item 7 plan said "/spec docs/prd/2026-05-12-wording-pass.md, Bel writes Spanish copy" — this session executed it as quick-mode apply from `content/*.json` instead (Bel had already written copy in JSON files between sessions). Outcome is the same; ceremony was lighter because the copy authorship question was already settled in her favor.
-- Item 6 carries from "uncommitted COMPLETE" (2026-05-14) → "committed, awaiting Bel's manual browser test for VERIFIED stamp".
-
-**Deviations:**
-- Pre-push hook test failure that blocked Item 6 commit was not previously known. Surfaced because Node 26 changed `localStorage` semantics between the 2026-05-14 session and today. Fixed inline before push.
-- A git stash conflict cropped up mid-investigation (stash pop tried to restore a file deleted by upstream `fc575a5` revert). Resolved with `git rm` + `stash drop` — no work lost.
-
-**Blockers:**
-- None resolved. **Open:** Bel's manual browser test of Items 6 + 7 (visual sanity check) to flip them to VERIFIED. Decision needed on the 6 gap-string categories (add to JSON, accept, or update with voice rules).
-
-**Tests:** 251/251 unit pass · tsc clean · pre-push hook green on both pushes.
-
-**Commits this session:** `4dd2ad0` (Item 6), `98f79be` (Node 26 test fix), `f8f2471` (Item 7).
-
----
-
 ### Archived Sessions
+
+- **2026-05-20**: Soft Launch Push Items 6 + 7 — committed desktop UI pass (`4dd2ad0`) + wording pass from content/*.json (`f8f2471`) + Node 26 localStorage shim (`98f79be`); 251/251 unit tests; awaiting Bel manual browser verification for Items 6 + 7 VERIFIED stamps.
 
 - **2026-05-14**: Soft Launch Push Item 6 — Desktop responsive UI pass via /spec: PRD + plan + 11 implementation tasks (container-public 1024px, SiteHeader extracted to root layout, profile 6 sub-components, DeckView/RecommendationCard extracted, RevealOnScroll, directory 2-col, profile sticky sidebar, GridView 3-col, BottomSheet modal-on-desktop, scroll reveals). Build/tsc clean, 49/63 integration pass (14 pre-existing failures). COMPLETE pending Bel manual browser verification.
 

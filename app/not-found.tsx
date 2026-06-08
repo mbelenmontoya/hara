@@ -31,7 +31,7 @@ export default function NotFound() {
           No encontramos esta página. Puede que el link esté roto o que haya cambiado.
         </p>
 
-        <Link href="/ayuda" className="block text-muted hover:text-foreground transition-colors text-sm py-2">
+        <Link href="/que-es-hara" className="block text-muted hover:text-foreground transition-colors text-sm py-2">
           ¿Necesitás ayuda?
         </Link>
       </div>

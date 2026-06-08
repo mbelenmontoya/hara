@@ -13,7 +13,6 @@ const NAV_LINKS = [
   { href: '/solicitar', label: 'Pedí recomendación' },
   { href: '/profesionales/registro', label: 'Soy profesional' },
   { href: '/blog', label: 'Notas' },
-  { href: '/ayuda', label: 'Ayuda' },
   { href: '/que-es-hara', label: 'Qué es Hara' },
 ]
 

@@ -62,7 +62,7 @@ export default function Error({
           Intentar de nuevo
         </button>
 
-        <Link href="/ayuda" className="block text-muted hover:text-foreground transition-colors text-sm py-2">
+        <Link href="/que-es-hara" className="block text-muted hover:text-foreground transition-colors text-sm py-2">
           ¿Necesitás ayuda?
         </Link>
       </div>

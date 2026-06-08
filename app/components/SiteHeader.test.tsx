@@ -44,7 +44,7 @@ describe('SiteHeader', () => {
     expect(within(mobileNav).getByRole('link', { name: 'Profesionales' })).toHaveAttribute('href', '/profesionales')
     expect(within(mobileNav).getByRole('link', { name: 'Pedí recomendación' })).toHaveAttribute('href', '/solicitar')
     expect(within(mobileNav).getByRole('link', { name: 'Soy profesional' })).toHaveAttribute('href', '/profesionales/registro')
-    expect(within(mobileNav).getByRole('link', { name: 'Ayuda' })).toHaveAttribute('href', '/ayuda')
+    expect(within(mobileNav).getByRole('link', { name: 'Qué es Hara' })).toHaveAttribute('href', '/que-es-hara')
 
     // Click again closes it
     await userEvent.click(screen.getByRole('button', { name: 'Cerrar menú' }))

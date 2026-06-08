@@ -1,5 +1,5 @@
 // Reusable accordion disclosure primitives.
-// Shared by TermsAndPrivacyPage (/terminosyprivacidad) and AyudaPage (/ayuda).
+// Shared by TermsAndPrivacyPage (/terminosyprivacidad) and QueEsHaraPage (/que-es-hara).
 
 'use client'
 

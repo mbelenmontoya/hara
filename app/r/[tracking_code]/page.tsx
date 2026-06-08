@@ -59,9 +59,9 @@ export default function RecommendationsPage() {
           </h2>
           <p className="text-muted leading-relaxed mb-6">
             {error === 'expired' ? (
-              <>¿Perdiste tu link? <Link href="/ayuda" className="text-brand hover:underline">Visitá /ayuda</Link></>
+              <>¿Perdiste tu link? <Link href="/que-es-hara" className="text-brand hover:underline">¿Cómo funciona Hara?</Link></>
             ) : (
-              <>Probá de nuevo. <Link href="/ayuda" className="text-brand hover:underline">¿Necesitás ayuda?</Link></>
+              <>Probá de nuevo. <Link href="/que-es-hara" className="text-brand hover:underline">¿Necesitás ayuda?</Link></>
             )}
           </p>
           <button

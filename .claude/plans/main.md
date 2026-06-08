@@ -257,9 +257,10 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 10. **Phase 1 — first 10 pros, 5 concierge requests, Sentry + Vercel Analytics**
 
-11. **Apply migrations 020 + 021 to Supabase**
-    - What: `migrations/020_complete_specialty_mappings.sql` and `migrations/021_blog_posts.sql` are committed but not yet applied to the production DB
-    - Why: blog feature requires the `blog_posts` table; specialty mappings update is a data improvement
+11. **Apply migration 020 to Supabase**
+    - What: `migrations/020_complete_specialty_mappings.sql` is committed but not yet applied to the production DB
+    - Why: specialty mappings update is a data improvement
+    - Note: `migrations/021_blog_posts.sql` was applied this session (2026-06-08) — blog feature is now live
 
 12. **Update nav: point "Ayuda" to `/que-es-hara` or redirect `/ayuda`**
     - What: SiteHeader still links "Ayuda" to `/ayuda`; the content is now merged into `/que-es-hara`. Either redirect `/ayuda` → `/que-es-hara`, or update the nav link label/target
@@ -268,6 +269,20 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 ---
 
 ## Session Log
+
+### Session — 2026-06-08 (Blog .md upload + Hara Vital author override — both VERIFIED)
+
+**Completed:**
+- **Blog `.md` upload feature** (`docs/plans/2026-06-07-blog-md-upload.md` — VERIFIED): new write/upload mode toggle on `/blog/escribir`; `MarkdownUpload.tsx` sub-component (`.md`-only, async `file.text()`, `parseMarkdownDoc` + `sanitizeBlogHtml`, preview); `parse-markdown.ts` pure helper (YAML frontmatter + H1 title extraction, 140-char clamp at single exit); `marked` dep added; `lib/sanitize.ts` comment clarified. Code review: hardened frontmatter delimiter from `indexOf('\n---')` → `/^---$/m` (prevents false matches on `---note` lines). 67/67 test files, 462 tests all green.
+- **Hara Vital author override** (`docs/plans/2026-06-08-hara-vital-author.md` — VERIFIED): admin blog review dropdown gets "✦ Hara Vital (editorial)" option; `PATCH /api/admin/blog/[id]` handles `'hara-vital'` sentinel (first branch, bypasses professional lookup, sets `author_name='Hara Vital'`, `is_hara_editorial=true`, `professional_id=null`); email suppression covers both first-assignment AND re-approval paths; admin blog list shows Hara Vital pill badge; `/blog` listing and `/blog/[slug]` detail page show Hara isotipo logo instead of plain author name. DB migration applied: `ALTER TABLE blog_posts ADD COLUMN is_hara_editorial BOOLEAN NOT NULL DEFAULT FALSE;`. Code review: fixed email firing on first assignment (pre-update `post.is_hara_editorial=false` → added `professional_id !== 'hara-vital'` guard). 464 tests all green, all 3 E2E scenarios verified live.
+- **Email FROM address fixed**: `lib/email.ts` FROM changed from `hola@haravital.app` (unverified domain) to `automations@mail.greenbit.info` (Greenbit's verified sending subdomain). Also fixed Resend SDK silent error swallowing — SDK returns `{error}` not throws; added proper error check and logging.
+- **`KNOWN_ISSUES.md` §2 added**: documents Resend domain verification requirement (mail.greenbit.info must be verified in Resend dashboard) so this never gets lost again.
+- `migrations/021_blog_posts.sql` applied to Supabase — blog feature fully live.
+
+**Blockers:**
+- `migrations/020_complete_specialty_mappings.sql` still not applied to Supabase production DB.
+
+---
 
 ### Session — 2026-06-07 (Ranking scores, WelcomeHint, blog fix, que-es-hara + ayuda merge)
 
@@ -344,63 +359,9 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 - `SuggestedPractices` alias mapping still broken (entries reappear on navigation)
 - `app/layout.tsx` metadata still has old copy ("terapeuta ideal", "verificados") — added as Next Step 4
 
-### Session — 2026-05-30/31 (Admin UI overhaul + score system + practices mapping — partial, BROKEN)
-
-**Completed — Admin bugs fixed:**
-- `app/admin/page.tsx` — added redirect to `/admin/leads` (navigating to `/admin` was showing 404 custom page instead of dashboard)
-- `@types/google.maps` installed + `global.d.ts` created — fixed 3 pre-existing TypeScript errors (PlacesAutocomplete google namespace, CSS import)
-- Admin professionals card (`app/admin/professionals/page.tsx`) — full redesign: vertical layout, colored status dot (green/yellow/red), star for Destacado, 2 chips + `+N` expandable, location/date on separate rows, actions row (Revisar | Destacar | 🗑️ | ↓)
-- `GlassCard` — added `contentClassName` and `overflowHidden` props
-- Admin professionals list: equal-height cards via `h-full flex flex-col`
-
-**Completed — DB cleanup:**
-- 274 test leads deleted from DB (had raw filenames as `profile_image_url`, no whatsapp/email). 2 real leads preserved.
-- Profile images: all 45 professionals had raw browser filenames (e.g. `PicsArt_05.jpg`) stored in `profile_image_url` instead of Supabase Storage URLs. Nulled all 45 rows. Orphan storage file deleted.
-- Image display guard: all 3 surfaces (`/profesionales`, `/p/[slug]`, admin review) now check `startsWith('http')` before rendering `<img>`.
-
-**Completed — Professional review page redesign:**
-- Layout: full-width header + back button outside card + ScoreRing in header top-right + 2-col (Score | Bio+Contact) + full-width Perfil profesional + bare right-aligned action buttons
-- Header: status dot next to name, tier/ranking/ratings line, clickable avatar with camera overlay → uploads to Supabase Storage via `POST /api/admin/professionals/[id]/image`
-- All fields now shown: `short_description`, `experience_description`, `service_type`, `accepting_new_clients`, `offers_courses_online`, `courses_presencial_location`, `subscription_tier`, `ranking_score`, `rating_average`
-- `PracticeMapper` component replaces `SpecialtyMapper` + `PracticeReclassificationBanner`: maps free-text `professionals.specialties` entries to canonical practice keys, saves to `professionals.practices`
-- `ScoreBreakdown`: inline editable score (click number → input, 0–max), ℹ️ tooltip per criterion, dot reflects 0/partial/full, override saved to DB on approve
-
-**Completed — Score system overhaul (`lib/profile-score.ts`):**
-- `evaluate` function changed from `boolean` to `number` (0–1 fraction) enabling partial scoring
-- `textTier(text, minChars, fullChars)` helper for 3-tier text scoring
-- New weights — mandatory (5pts each): whatsapp, modality, specialties→practices, bio. Optional (10–15pts each): profileImage, shortDescription, experienceDescription, serviceType, locationClarity, instagram. Total = 100.
-- `shortDescription` (15pts): 0–24→0, 25–49→7, 50+→15
-- `bio` (5pts): 0–99→0, 100–249→2, 250+→5
-- `experienceDescription` (15pts): 0–49→0, 50–149→7, 150+→15
-- `modality` (5pts): binary (any modality = 5pts — not partial, can't penalize for business model)
-- `practices` (5pts): binary (≥1 practice = 5pts)
-- `calculateProfileScore(profile, overrides: Record<string, number>)` — admin overrides per criterion stored as numbers in `professionals.score_overrides`
-- Criterion key renamed `specialties` → `practices` throughout (score, type, hint, review page)
-- Profile image criterion: uses `startsWith('http')` guard (no raw filenames count)
-- `lib/profile-score.test.ts` — 26 tests covering all criteria, 3-tier thresholds, overrides, edge cases
-- `ScoreDisplay.test.tsx` — 5 tests for editable breakdown behavior
-
-**Completed — Practices catalog enhancements:**
-- `migrations/012_practices_specialty_mapping.sql` — adds `specialties text[]` to `practices` table with seeded research-based mappings for all 15 practices
-- `migrations/013_score_overrides_and_aliases.sql` — adds `score_overrides jsonb` to professionals, `aliases text[]` to practices
-- `PracticeForm` — added `Especialidades que cubre` section (12 checkboxes from SPECIALTY_MAP), `Aliases mapeados` read-only display, `?label=` URL param pre-fill in create mode
-- `lib/admin-practices.ts` — `loadPracticeSuggestions()` aggregates free-text entries from `professionals.specialties` not in catalog, sorted by frequency, accent-normalized exclusion
-- `SuggestedPractices.tsx` — collapsible section at top of practices page: 3 actions per entry: Descartar (local dismiss), Nueva práctica (link to `/admin/practices/new?label=...`), Agregar a práctica (maps as alias via `append_alias`)
-- `append_alias` API path in `PATCH /api/admin/practices/[key]` — atomic: fetches current aliases from DB, appends new one, saves. Never overwrites.
-- `revalidatePath('/admin/practices')` + `router.refresh()` added to invalidate Next.js router cache after mapping.
-- 294 → 293 unit tests (net change due to modality binary revert removing 1 test)
-
-**Deviations:**
-- Score system redesign was unplanned — emerged from Bel's review of professionals during approval workflow. Became a deep refactor of scoring weights, partial scoring, and override system.
-- `SuggestedPractices` mapping feature was partially unplanned — emerged from Bel noticing free-text practice names not matching catalog.
-
-**Blockers — OPEN:**
-- `SuggestedPractices` alias mapping is BROKEN. Entries reappear in the list after mapping despite aliases being correctly saved in DB and exclusion logic being verified as correct via Node.js simulation. Root cause not fully identified. Hypotheses: Next.js router cache, `revalidatePath` not behaving as expected, or subtle component state issue. Handed to another AI for fresh diagnosis.
-- Migrations 012 and 013 NOT applied to Supabase yet. Both must be applied before score overrides, alias mapping, or practices specialty mapping work in production.
-
-**Tests:** 293/293 unit pass · tsc clean (0 errors)
-
 ### Archived Sessions
+
+- **2026-05-30/31**: Admin UI overhaul + score system + practices mapping — admin professionals card redesign, DB cleanup (274 test leads deleted, 45 raw profile_image_url nulled), review page full rebuild (ScoreRing, ScoreBreakdown editable, PracticeMapper), profile-score.ts overhaul (partial scoring, 10 criteria, 100pts, 26 tests), practices catalog: migs 012+013 (specialties[] + score_overrides + aliases), PracticeForm checkboxes, lib/admin-practices.ts suggestions, SuggestedPractices.tsx; SuggestedPractices alias mapping BROKEN at session end (reappear bug, handed off); 293/293 tests.
 
 - **2026-05-20**: Soft Launch Push Items 6 + 7 — committed desktop UI pass (`4dd2ad0`) + wording pass from content/*.json (`f8f2471`) + Node 26 localStorage shim (`98f79be`); 251/251 unit tests; awaiting Bel manual browser verification for Items 6 + 7 VERIFIED stamps.
 

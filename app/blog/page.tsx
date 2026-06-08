@@ -23,6 +23,7 @@ interface BlogPost {
   author_name: string
   cover_image_url: string | null
   published_at: string
+  is_hara_editorial: boolean
 }
 
 function formatDate(iso: string) {
@@ -32,7 +33,7 @@ function formatDate(iso: string) {
 export default async function BlogIndexPage() {
   const { data } = await supabaseAdmin
     .from('blog_posts')
-    .select('id, slug, title, excerpt, author_name, cover_image_url, published_at')
+    .select('id, slug, title, excerpt, author_name, cover_image_url, published_at, is_hara_editorial')
     .eq('status', 'published')
     .order('published_at', { ascending: false })
 
@@ -89,7 +90,16 @@ export default async function BlogIndexPage() {
                           </p>
                         )}
                         <p className="text-xs text-muted">
-                          por {post.author_name} · {post.published_at ? formatDate(post.published_at) : ''}
+                          {post.is_hara_editorial ? (
+                            <span className="inline-flex items-center gap-1.5">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src="/assets/logo/isotipo.png" alt="Hara" className="w-4 h-4 object-contain" />
+                              Hara Vital
+                            </span>
+                          ) : (
+                            <>por {post.author_name}</>
+                          )}
+                          {' · '}{post.published_at ? formatDate(post.published_at) : ''}
                         </p>
                       </div>
                     </div>

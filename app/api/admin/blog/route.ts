@@ -11,7 +11,7 @@ export const runtime = 'nodejs'
 export async function GET() {
   const { data, error } = await supabaseAdmin
     .from('blog_posts')
-    .select('id, slug, title, author_name, author_email, status, created_at, professional_id, professional_link_confirmed')
+    .select('id, slug, title, author_name, author_email, status, created_at, professional_id, professional_link_confirmed, is_hara_editorial')
     .order('created_at', { ascending: false })
 
   if (error) {

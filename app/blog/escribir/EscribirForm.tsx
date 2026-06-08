@@ -1,9 +1,9 @@
 'use client'
 
 // Blog post submission form.
-// TipTap WYSIWYG editor for the body; title / name / email / images as plain inputs.
-// Body HTML is read from the editor at submit time; all structural fields must be
-// filled before the submit button is enabled. Body emptiness is validated on submit.
+// Two body-input modes: "write" (TipTap WYSIWYG) and "upload" (.md file).
+// In upload mode the editor is hidden; MarkdownUpload parses + sanitizes the file
+// and reports { title, html } back here. Submit always sends body_html to /api/blog.
 
 import { useState, useRef } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
@@ -12,6 +12,7 @@ import Link from '@tiptap/extension-link'
 import Underline from '@tiptap/extension-underline'
 import { Alert } from '@/app/components/ui/Alert'
 import { PageBackground } from '@/app/components/ui/PageBackground'
+import { MarkdownUpload } from './MarkdownUpload'
 
 const INPUT_CLASS   = 'w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all'
 const LABEL_CLASS   = 'block text-sm font-medium text-foreground mb-2'
@@ -21,19 +22,24 @@ function validateEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
+type Mode = 'write' | 'upload'
+
 export function EscribirForm() {
-  const [title,        setTitle]        = useState('')
-  const [authorName,   setAuthorName]   = useState('')
-  const [authorEmail,  setAuthorEmail]  = useState('')
-  const [coverFile,    setCoverFile]    = useState<File | null>(null)
+  const [mode,          setMode]          = useState<Mode>('write')
+  const [title,         setTitle]         = useState('')
+  const [authorName,    setAuthorName]    = useState('')
+  const [authorEmail,   setAuthorEmail]   = useState('')
+  const [coverFile,     setCoverFile]     = useState<File | null>(null)
   const [secondaryFile, setSecondaryFile] = useState<File | null>(null)
-  const [submitting,   setSubmitting]   = useState(false)
-  const [error,        setError]        = useState<string | null>(null)
-  const [submitted,    setSubmitted]    = useState(false)
+  const [uploadedHtml,  setUploadedHtml]  = useState('')
+  const [submitting,    setSubmitting]    = useState(false)
+  const [error,         setError]         = useState<string | null>(null)
+  const [submitted,     setSubmitted]     = useState(false)
 
   const coverRef     = useRef<HTMLInputElement>(null)
   const secondaryRef = useRef<HTMLInputElement>(null)
 
+  // Editor is always created (React hook rules) — hidden in upload mode.
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: { levels: [2, 3] }, codeBlock: false }),
@@ -49,18 +55,31 @@ export function EscribirForm() {
     },
   })
 
+  function switchMode(next: Mode) {
+    if (next === mode) return
+    setError(null)
+    if (next === 'write') {
+      // Entering write mode: discard upload state so no stale preview on re-toggle
+      setUploadedHtml('')
+    }
+    setMode(next)
+  }
+
   const isFormValid =
     title.trim().length >= 4 &&
     title.trim().length <= 140 &&
     authorName.trim().length > 0 &&
     validateEmail(authorEmail) &&
-    !!coverFile
+    !!coverFile &&
+    // Upload mode requires a parsed file; write mode keeps its existing submit-time check
+    (mode === 'write' || uploadedHtml.trim().length > 0)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!isFormValid || submitting) return
 
-    const bodyHtml = editor?.getHTML() ?? ''
+    const bodyHtml = mode === 'upload' ? uploadedHtml : (editor?.getHTML() ?? '')
+
     if (!coverFile) {
       setError('La imagen de portada es requerida.')
       return
@@ -135,36 +154,77 @@ export function EscribirForm() {
           <p className={HELPER_CLASS}>{title.length}/140 caracteres</p>
         </div>
 
-        {/* Rich text editor */}
+        {/* Content — mode toggle + editor or upload */}
         <div>
-          <label className={LABEL_CLASS}>Contenido *</label>
-          {/* Toolbar */}
-          <div className="flex flex-wrap gap-1 mb-1 p-2 bg-surface-2 border border-outline rounded-t-xl">
-            <button type="button" onClick={() => editor?.chain().focus().toggleBold().run()}
-              className={`px-2 py-1 text-xs font-bold rounded transition-all ${editor?.isActive('bold') ? 'bg-brand text-white' : 'hover:bg-outline'}`}>
-              B
-            </button>
-            <button type="button" onClick={() => editor?.chain().focus().toggleItalic().run()}
-              className={`px-2 py-1 text-xs italic rounded transition-all ${editor?.isActive('italic') ? 'bg-brand text-white' : 'hover:bg-outline'}`}>
-              I
-            </button>
-            <button type="button" onClick={() => editor?.chain().focus().toggleUnderline().run()}
-              className={`px-2 py-1 text-xs underline rounded transition-all ${editor?.isActive('underline') ? 'bg-brand text-white' : 'hover:bg-outline'}`}>
-              U
-            </button>
-            <button type="button" onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
-              className={`px-2 py-1 text-xs rounded transition-all ${editor?.isActive('heading', { level: 2 }) ? 'bg-brand text-white' : 'hover:bg-outline'}`}>
-              H2
-            </button>
-            <button type="button" onClick={() => editor?.chain().focus().toggleBulletList().run()}
-              className={`px-2 py-1 text-xs rounded transition-all ${editor?.isActive('bulletList') ? 'bg-brand text-white' : 'hover:bg-outline'}`}>
-              •
-            </button>
+          <div className="flex items-center gap-1 mb-3">
+            <span className={LABEL_CLASS} style={{ margin: 0 }}>Contenido *</span>
+            <div className="ml-auto flex gap-1 p-1 bg-surface-2 border border-outline rounded-lg">
+              <button
+                type="button"
+                onClick={() => switchMode('write')}
+                className={`px-3 py-1 text-xs rounded transition-all ${mode === 'write' ? 'bg-brand text-white shadow-sm' : 'text-muted hover:bg-outline'}`}
+                aria-pressed={mode === 'write'}
+              >
+                Escribir
+              </button>
+              <button
+                type="button"
+                onClick={() => switchMode('upload')}
+                className={`px-3 py-1 text-xs rounded transition-all ${mode === 'upload' ? 'bg-brand text-white shadow-sm' : 'text-muted hover:bg-outline'}`}
+                aria-pressed={mode === 'upload'}
+              >
+                Subir .md
+              </button>
+            </div>
           </div>
-          <div className="border border-outline border-t-0 rounded-b-xl bg-surface overflow-hidden">
-            <EditorContent editor={editor} />
-          </div>
-          <p className={HELPER_CLASS}>Usá el editor para dar formato a tu nota.</p>
+
+          {mode === 'write' && (
+            <>
+              {/* Toolbar */}
+              <div className="flex flex-wrap gap-1 mb-1 p-2 bg-surface-2 border border-outline rounded-t-xl">
+                <button type="button" onClick={() => editor?.chain().focus().toggleBold().run()}
+                  className={`px-2 py-1 text-xs font-bold rounded transition-all ${editor?.isActive('bold') ? 'bg-brand text-white' : 'hover:bg-outline'}`}>
+                  B
+                </button>
+                <button type="button" onClick={() => editor?.chain().focus().toggleItalic().run()}
+                  className={`px-2 py-1 text-xs italic rounded transition-all ${editor?.isActive('italic') ? 'bg-brand text-white' : 'hover:bg-outline'}`}>
+                  I
+                </button>
+                <button type="button" onClick={() => editor?.chain().focus().toggleUnderline().run()}
+                  className={`px-2 py-1 text-xs underline rounded transition-all ${editor?.isActive('underline') ? 'bg-brand text-white' : 'hover:bg-outline'}`}>
+                  U
+                </button>
+                <button type="button" onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
+                  className={`px-2 py-1 text-xs rounded transition-all ${editor?.isActive('heading', { level: 2 }) ? 'bg-brand text-white' : 'hover:bg-outline'}`}>
+                  H2
+                </button>
+                <button type="button" onClick={() => editor?.chain().focus().toggleBulletList().run()}
+                  className={`px-2 py-1 text-xs rounded transition-all ${editor?.isActive('bulletList') ? 'bg-brand text-white' : 'hover:bg-outline'}`}>
+                  •
+                </button>
+              </div>
+              <div className="border border-outline border-t-0 rounded-b-xl bg-surface overflow-hidden">
+                <EditorContent editor={editor} />
+              </div>
+              <p className={HELPER_CLASS}>Usá el editor para dar formato a tu nota.</p>
+            </>
+          )}
+
+          {mode === 'upload' && (
+            // Mounting a fresh MarkdownUpload on every upload→write→upload cycle
+            // ensures no stale preview or file state survives the toggle.
+            <MarkdownUpload
+              onParsed={({ title: mdTitle, html }) => {
+                setUploadedHtml(html)
+                if (mdTitle) setTitle(mdTitle)
+                setError(null)
+              }}
+              onError={(msg) => {
+                setUploadedHtml('')
+                setError(msg)
+              }}
+            />
+          )}
         </div>
 
         {/* Author name */}

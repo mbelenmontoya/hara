@@ -1,8 +1,8 @@
-// Blog HTML sanitization — server-side only.
+// Blog HTML sanitization.
 // Strips all content except a strict allowlist matching the TipTap editor config.
-// Used: (1) before storing body_html in the DB (Task 3 API) and
-//       (2) on render of stored body_html (Tasks 8/9) — defense-in-depth.
-// Requires Node runtime; do NOT import in Edge functions.
+// Safe to import in browser bundles and Node API routes.
+// Do NOT import in Next.js Edge middleware or Edge API routes (isomorphic-dompurify
+// requires DOM APIs not available in the Edge runtime).
 
 import DOMPurify from 'isomorphic-dompurify'
 

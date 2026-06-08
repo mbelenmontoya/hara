@@ -73,6 +73,7 @@ const SUBMITTED_POST = {
   author_email: 'autor@example.com',
   professional_id: null,
   professional_link_confirmed: false,
+  is_hara_editorial: false,
 }
 
 beforeEach(() => {
@@ -146,6 +147,36 @@ describe('PATCH /api/admin/blog/[id]', () => {
       mockSelectSingle.mockResolvedValue({ data: SUBMITTED_POST, error: null })
       await PATCH(makeReq({ action: 'approve' }), PARAMS)
       expect(mockPublished).toHaveBeenCalledTimes(1)
+    })
+
+    it('sets author_name=Hara Vital, is_hara_editorial=true, professional_id=null when hara-vital sentinel', async () => {
+      mockSelectSingle.mockResolvedValue({ data: SUBMITTED_POST, error: null })
+      const res = await PATCH(
+        makeReq({ action: 'approve', professional_id: 'hara-vital' }),
+        PARAMS
+      )
+      expect(res.status).toBe(200)
+      expect(mockUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          author_name: 'Hara Vital',
+          is_hara_editorial: true,
+          professional_id: null,
+          professional_link_confirmed: false,
+        })
+      )
+      // professionals table must NOT be queried for the sentinel
+      expect(mockProSelectSingle).not.toHaveBeenCalled()
+      // email must NOT fire even on first assignment (post.is_hara_editorial=false in DB at fetch time)
+      expect(mockPublished).not.toHaveBeenCalled()
+    })
+
+    it('does NOT call notifyBlogPostPublished when is_hara_editorial is true', async () => {
+      mockSelectSingle.mockResolvedValue({
+        data: { ...SUBMITTED_POST, is_hara_editorial: true },
+        error: null,
+      })
+      await PATCH(makeReq({ action: 'approve' }), PARAMS)
+      expect(mockPublished).not.toHaveBeenCalled()
     })
   })
 

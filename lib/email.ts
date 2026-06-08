@@ -1,11 +1,14 @@
 // Hara Vital — Email utility
-// Uses Resend for transactional emails
-// Fails gracefully — email failures never block the main operation
+// Uses Resend for transactional emails. Fails gracefully — email failures never block the main operation.
+//
+// ⚠️  SETUP REQUIRED: mail.greenbit.info must be a verified sending domain in Resend.
+//     All emails go out from automations@mail.greenbit.info. Without domain verification,
+//     sends fail with 403. Steps: resend.com/domains → verify mail.greenbit.info. See KNOWN_ISSUES.md §2.
 
 import { Resend } from 'resend'
 
 const ADMIN_EMAIL = 'centrovitalhara@gmail.com'
-const FROM_EMAIL = 'Hara Vital <hola@haravital.app>'
+const FROM_EMAIL = 'Hara Vital <automations@mail.greenbit.info>'
 const REPLY_TO   = 'centrovitalhara@gmail.com'
 
 let resend: Resend | null = null
@@ -56,16 +59,21 @@ async function sendEmail(options: EmailOptions): Promise<boolean> {
   if (!client) return false
 
   try {
-    await client.emails.send({
+    const { error } = await client.emails.send({
       from:    FROM_EMAIL,
       to:      options.to,
       replyTo: REPLY_TO,
       subject: options.subject,
       html:    options.html,
     })
+    if (error) {
+      // Resend returns errors in the response body (not as thrown exceptions)
+      console.error('Email send failed:', error.name, error.message)
+      return false
+    }
     return true
   } catch (error) {
-    console.error('Email send failed:', error)
+    console.error('Email send failed (network):', error)
     return false
   }
 }

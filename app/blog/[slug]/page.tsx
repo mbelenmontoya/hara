@@ -22,7 +22,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
 
   const { data: post, error } = await supabaseAdmin
     .from('blog_posts')
-    .select('id, slug, title, body_html, cover_image_url, secondary_image_url, author_name, published_at, professional_id, professional_link_confirmed')
+    .select('id, slug, title, body_html, cover_image_url, secondary_image_url, author_name, published_at, professional_id, professional_link_confirmed, is_hara_editorial')
     .eq('slug', slug)
     .eq('status', 'published')
     .single()
@@ -73,7 +73,15 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
         </h1>
 
         <div className="flex flex-wrap items-center gap-3 text-sm text-muted mb-8">
-          <span>por <span className="font-medium text-foreground">{post.author_name}</span></span>
+          {post.is_hara_editorial ? (
+            <span className="inline-flex items-center gap-1.5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/assets/logo/isotipo.png" alt="Hara" className="w-4 h-4 object-contain" />
+              <span className="font-medium text-foreground">Hara Vital</span>
+            </span>
+          ) : (
+            <span>por <span className="font-medium text-foreground">{post.author_name}</span></span>
+          )}
           {post.published_at && (
             <span>· {formatDate(post.published_at)}</span>
           )}

@@ -110,11 +110,18 @@ export function BlogReviewClient({ post, professionals }: Props) {
           className="w-full px-3 py-2.5 bg-surface border border-outline rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50 disabled:opacity-60"
         >
           <option value="">Sin vínculo</option>
+          <option value="hara-vital">✦ Hara Vital (editorial)</option>
           {professionals.map(p => (
             <option key={p.id} value={p.id}>{p.full_name}</option>
           ))}
         </select>
-        <p className="text-xs text-muted mt-1.5">Si la nota pertenece a un profesional de Hara, seleccionalo.</p>
+        {selectedProId === 'hara-vital' ? (
+          <div className="mt-2 px-3 py-2 rounded-xl bg-brand-weak border border-brand/20 text-xs text-brand">
+            Esta nota se va a publicar como contenido editorial de Hara Vital. El nombre del autor va a mostrarse como &quot;Hara Vital&quot; con el logo de Hara.
+          </div>
+        ) : (
+          <p className="text-xs text-muted mt-1.5">Si la nota pertenece a un profesional de Hara, seleccionalo.</p>
+        )}
       </div>
 
       {/* Rejection reason (for reject action) */}

@@ -41,7 +41,7 @@ export async function PATCH(
   // Load the current post
   const { data: post, error: fetchError } = await supabaseAdmin
     .from('blog_posts')
-    .select('id, slug, title, status, author_email, professional_id, professional_link_confirmed')
+    .select('id, slug, title, status, author_email, professional_id, professional_link_confirmed, is_hara_editorial')
     .eq('id', id)
     .single()
 
@@ -74,6 +74,8 @@ export async function PATCH(
     rejection_reason?: string
     professional_id?: string | null
     professional_link_confirmed?: boolean
+    author_name?: string
+    is_hara_editorial?: boolean
   }
   const update: UpdatePayload = {
     status: action === 'approve' ? 'published' : 'rejected',
@@ -89,7 +91,14 @@ export async function PATCH(
   }
 
   if ('professional_id' in (body as object)) {
-    if (professional_id === null) {
+    if (professional_id === 'hara-vital') {
+      // Editorial override — post published as Hara Vital, not linked to a professional
+      // DB migration required: ALTER TABLE blog_posts ADD COLUMN is_hara_editorial BOOLEAN NOT NULL DEFAULT FALSE;
+      update.author_name = 'Hara Vital'
+      update.is_hara_editorial = true
+      update.professional_id = null
+      update.professional_link_confirmed = false
+    } else if (professional_id === null) {
       update.professional_id = null
       update.professional_link_confirmed = false
     } else if (typeof professional_id === 'string' && professional_id) {
@@ -126,13 +135,16 @@ export async function PATCH(
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ??
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
 
-  if (action === 'approve') {
+  // Suppress email when: (a) post was already editorial before this request, OR
+  // (b) this request is the first-time Hara Vital assignment (sentinel sent now,
+  //     but post.is_hara_editorial is still false in the pre-update fetch).
+  if (action === 'approve' && !post.is_hara_editorial && professional_id !== 'hara-vital') {
     notifyBlogPostPublished({
       to:    post.author_email,
       title: post.title,
       url:   `${baseUrl}/blog/${post.slug}`,
     }).catch(() => {})
-  } else {
+  } else if (action === 'reject') {
     notifyBlogPostRejected({
       to:     post.author_email,
       title:  post.title,

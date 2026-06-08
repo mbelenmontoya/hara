@@ -22,6 +22,7 @@ interface BlogPost {
   created_at: string
   professional_id: string | null
   professional_link_confirmed: boolean
+  is_hara_editorial: boolean
 }
 
 const STATUS_OPTIONS = [
@@ -113,6 +114,11 @@ export default function AdminBlogPage() {
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusConfig.className}`}>
                           {statusConfig.label}
                         </span>
+                        {post.is_hara_editorial && (
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-brand bg-brand-weak rounded-full px-2 py-0.5">
+                            Hara Vital
+                          </span>
+                        )}
                         {post.professional_id && !post.professional_link_confirmed && (
                           <span className="text-xs px-2 py-0.5 rounded-full bg-info-weak text-info font-medium">
                             Vínculo pendiente

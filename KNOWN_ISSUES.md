@@ -1,6 +1,6 @@
 # Known Issues
 
-**Last Updated:** 2026-01-07
+**Last Updated:** 2026-06-08
 
 ---
 
@@ -77,6 +77,35 @@ Chrome's rendering engine couples backdrop-filter recalculation with any transfo
 - May be fixed by browsers in future
 
 Monitor: If users complain, implement Option B (remove scale).
+
+---
+
+## 2. Resend — Sending Domain Must Be Verified
+
+**Location:** `lib/email.ts` — all transactional emails
+**Severity:** Blocking (emails silently fail without it)
+**Status:** Required setup step — verify once, works forever
+
+### What breaks
+
+All notification emails (blog post submitted, professional registered, lead received, etc.) fail silently if the sending domain `mail.greenbit.info` is not verified in Resend. The API returns a 403 validation error; without the fix in `lib/email.ts` this was swallowed by a bare `.catch(() => {})` and looked like success.
+
+Emails are sent **from** `automations@mail.greenbit.info` (Greenbit's verified subdomain), not from `haravital.app`.
+
+### Setup (do this once per Resend account)
+
+1. Go to **https://resend.com/domains**
+2. Confirm `mail.greenbit.info` is listed and verified (green checkmark)
+3. If not: Click **Add domain** → enter `mail.greenbit.info` → add the SPF + DKIM DNS records → Verify
+4. Test: run `npm run dev`, submit any form that triggers an email, check the server logs. You should see no `Email send failed` line.
+
+### Environment variable
+
+```
+RESEND_API_KEY=re_...   # in .env.local — must be a live key, not the test key
+```
+
+The variable name is `RESEND_API_KEY`. It is read in `lib/email.ts` via `process.env.RESEND_API_KEY`.
 
 ---
 

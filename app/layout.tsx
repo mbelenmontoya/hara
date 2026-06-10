@@ -2,6 +2,8 @@ import './globals.css'
 import { Poppins, Montserrat } from 'next/font/google'
 import Script from 'next/script'
 import { SiteHeader } from '@/app/components/SiteHeader'
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 
 // Poppins — brand display font (titles, headings, nav)
 const poppins = Poppins({
@@ -67,6 +69,8 @@ export default function RootLayout({
             gtag('config', 'G-67WHY8ZN8J');
           `}
         </Script>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )

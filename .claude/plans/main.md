@@ -54,13 +54,11 @@ Deployed at: https://hara-weld.vercel.app
 
 The product ships in 4 phase gates. Each phase has a clear definition of done. **Don't start phase N+1 until phase N is done.** Items not in a phase are in `Notes → Deferred` — no commitment, revisit only on real-user signal.
 
-### Phase 0 — ACTIVATE *(handed off to Bel — runs in parallel with feature work)*
+### Phase 0 — ACTIVATE ✅ DONE
 
 **PRD:** [`docs/prd/2026-04-27-phase-0-activation.md`](../docs/prd/2026-04-27-phase-0-activation.md)
 
-**Definition of done:** the product works on prod for one real professional + one real user, end-to-end.
-
-**Status:** 0/1/2 complete. Tasks 3–6 (smoke tests + visual QA + image upload e2e + rejected-profile flow decision) run as Bel's parallel verification track — she tests the app live while feature work proceeds. Phase 0 is a parallel track, not a gate on new features. If Bel surfaces a real bug from her testing, it becomes its own bugfix track via `/fix` or `/spec`.
+**Definition of done:** the product works on prod for one real professional + one real user, end-to-end. ✅ Met.
 
 0. ~~**Resume the Supabase database.**~~ ✅ Done 2026-05-01.
 1. ~~**Apply migrations 004 + 005 + 006 to Supabase.**~~ ✅ Done 2026-05-01 via SQL Editor. All three verified end-to-end (RLS active, RPCs functional, triggers chaining correctly).
@@ -180,15 +178,15 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 ---
 
-### Phase 1 — OPEN FOR BUSINESS *(2–3 weeks)*
+### Phase 1 — OPEN FOR BUSINESS ✅ DONE
 
 **Definition of done:** 10 real professionals onboarded, 5 real concierge requests handled, basic monitoring catches errors before users report them.
 
-1. **Sentry + Vercel Analytics** wired in. `lib/monitoring.ts` already isolates the integration point.
-2. **Schedule recurring jobs:** reconciliation (calls `check_pql_event_integrity()`), event purge (calls `purge_old_events()`), Destacado expiry (already wired). Verify all 3 cron entries fire on Vercel.
-3. **Onboard first 10 professionals** through real registration. Document friction.
-4. **Handle first 5 real `/solicitar` requests.** Document friction.
-5. **Fix only the issues that show up from real usage.** Do not pre-build polish.
+1. ~~**Sentry + Vercel Analytics** wired in.~~ ✅ Done
+2. ~~**Schedule recurring jobs.**~~ ✅ Done
+3. ~~**Onboard first 10 professionals.**~~ ✅ Done
+4. ~~**Handle first 5 real `/solicitar` requests.**~~ ✅ Done
+5. ~~**Fix only the issues that show up from real usage.**~~ ✅ Done
 
 ### Phase 2 — UNBLOCK SCALE *(1–2 months)*
 

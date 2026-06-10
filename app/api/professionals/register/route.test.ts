@@ -136,6 +136,40 @@ describe('POST /api/professionals/register — practices field', () => {
     expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ practices: [] }))
   })
 
+  it('(e) latitude/longitude in body → insert includes exact coordinate values', async () => {
+    const { validatePracticeKeys } = await import('@/lib/practices')
+    vi.mocked(validatePracticeKeys).mockResolvedValue({ ok: true })
+    setupCooldownNoMatch()
+    setupSlugMock()
+    setupInsertMock()
+
+    const { POST } = await import('./route')
+    const res = await POST(makeJsonRequest({
+      ...VALID_FIELDS,
+      latitude: -31.4135,
+      longitude: -64.1811,
+    }))
+    expect(res.status).toBe(200)
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ latitude: -31.4135, longitude: -64.1811 })
+    )
+  })
+
+  it('(f) omitting coordinates → insert proceeds with null coords', async () => {
+    const { validatePracticeKeys } = await import('@/lib/practices')
+    vi.mocked(validatePracticeKeys).mockResolvedValue({ ok: true })
+    setupCooldownNoMatch()
+    setupSlugMock()
+    setupInsertMock()
+
+    const { POST } = await import('./route')
+    const res = await POST(makeJsonRequest(VALID_FIELDS))
+    expect(res.status).toBe(200)
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ latitude: null, longitude: null })
+    )
+  })
+
   it('(d) legacy style field in body is not inserted into practices column', async () => {
     const { validatePracticeKeys } = await import('@/lib/practices')
     vi.mocked(validatePracticeKeys).mockResolvedValue({ ok: true })

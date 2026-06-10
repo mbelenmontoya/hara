@@ -59,6 +59,8 @@ interface FormData {
   instagram: string
   country: string
   city: string
+  latitude: number | null
+  longitude: number | null
   modality: string[]
   online_only: boolean
   specialties: string[]
@@ -81,6 +83,8 @@ const initialFormData: FormData = {
   instagram: '',
   country: '',
   city: '',
+  latitude: null,
+  longitude: null,
   modality: [],
   online_only: false,
   specialties: [],
@@ -199,6 +203,8 @@ export function RegistroForm({ practices }: Props) {
       payload.append('instagram', formData.instagram)
       payload.append('country', formData.country)
       payload.append('city', formData.city)
+      payload.append('latitude', formData.latitude != null ? String(formData.latitude) : '')
+      payload.append('longitude', formData.longitude != null ? String(formData.longitude) : '')
       payload.append('online_only', String(formData.online_only))
       payload.append('modality', JSON.stringify(formData.modality))
       payload.append('specialties', JSON.stringify(formData.specialties))
@@ -295,17 +301,40 @@ export function RegistroForm({ practices }: Props) {
                       if (placeData) {
                         updateField('city', placeData.city)
                         updateField('country', placeData.countryCode)
+                        updateField('latitude', placeData.lat ?? null)
+                        updateField('longitude', placeData.lng ?? null)
                         const code = placeData.countryCode as CountryCode
                         setPhoneCountry(code)
                         if (formData.whatsapp) handleWhatsappChange(formData.whatsapp, code)
                       } else {
                         updateField('city', value)
+                        updateField('latitude', null)
+                        updateField('longitude', null)
                       }
                     }}
                     placeholder="Buscar ciudad..."
                     className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all"
                   />
                   <p className="text-xs text-muted mt-1.5">Empezá a escribir y seleccioná tu ciudad</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Dirección exacta <span className="text-muted font-normal">(opcional)</span>
+                  </label>
+                  <PlacesAutocomplete
+                    value=""
+                    onChange={(_value, placeData) => {
+                      if (placeData) {
+                        updateField('latitude', placeData.lat ?? null)
+                        updateField('longitude', placeData.lng ?? null)
+                      }
+                    }}
+                    types={['establishment', 'geocode']}
+                    placeholder="Ej: Av. Corrientes 1234, Buenos Aires"
+                    className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all"
+                  />
+                  <p className="text-xs text-muted mt-1.5">Para mostrar un pin preciso en el mapa. Si lo dejás vacío, usamos el centro de tu ciudad.</p>
                 </div>
 
                 <div>

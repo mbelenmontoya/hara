@@ -27,6 +27,8 @@ CREATE TABLE professionals (
   whatsapp TEXT NOT NULL,
   country TEXT NOT NULL,
   city TEXT,
+  latitude DOUBLE PRECISION,
+  longitude DOUBLE PRECISION,
   online_only BOOLEAN DEFAULT false,
   modality TEXT[] NOT NULL,
   specialties TEXT[] NOT NULL,

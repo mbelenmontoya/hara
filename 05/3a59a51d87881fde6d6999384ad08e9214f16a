@@ -1,0 +1,82 @@
+app/profesionales/components/ProfessionalsDirectory.test.tsx
+  s_3a01840fab432b::t_bb70fcc4525d2d 224-268
+  s_3a01840fab432b::t_ef27f28dafe632 3
+  s_cfb22b07c1663a::t_4cea700140f8f5 17-18
+  s_3a01840fab432b::t_edbff019864481 205-208,210-214,220-222
+  s_3a01840fab432b::t_613e95a8e97f27 6
+  s_cfb22b07c1663a::t_2aa225086a0529 5
+  s_3a01840fab432b::t_4cad2f18a7c14b 32-38
+  s_3a01840fab432b::t_178f7c70e9307e 270,272-293,296,314-360,362-364
+  s_92ce6a2f7d165b::t_68f4f461dfde15 140-146
+  s_cfb22b07c1663a::t_50e03811bd435d 271
+  s_3a01840fab432b::t_f550c5d8c3e5ac 294-295,297-313
+  s_cfb22b07c1663a::t_d00d31f5d2cae5 361,365-393
+  s_3a01840fab432b::t_5c74bdb9375451 2
+app/profesionales/components/ProfessionalsDirectory.tsx
+  s_3a01840fab432b::t_ac93e94cb83bae 73,81,88-97,103
+  s_cfb22b07c1663a::t_080b8e7f9a1038 98-102
+  s_92ce6a2f7d165b::t_67611d6d56e3f9 193-195,197,213-242,244,250
+  s_cfb22b07c1663a::t_f6deadaa379d3b 212
+  s_cfb22b07c1663a::t_59718438f82f91 25-26
+  s_3a01840fab432b::t_13b44f32f9cd27 74-78,80,82-87
+  s_3a01840fab432b::t_5fbad3027b0c5b 3
+  s_92ce6a2f7d165b::t_2640bdc761eb85 196,198-211,243,245-249,251-253
+  s_3a01840fab432b::t_d315f7058f5587 79
+  s_3a01840fab432b::t_67c9bdd3bafe4f 10
+  s_cfb22b07c1663a::t_6c477eb15a0c87 12
+  s_cfb22b07c1663a::t_5a929904f5b6a1 13
+  s_cfb22b07c1663a::t_d4ba70716caf8f 139-140
+  s_3a01840fab432b::t_fc1e7f3c212684 115-116,121-125,128,130-138,149-152,254,276-277,279,288-289,294,299,302-309
+  s_92ce6a2f7d165b::t_122b306e47ce80 141-146
+  s_92ce6a2f7d165b::t_87a46eb4ee008f 6
+  s_3a01840fab432b::t_217ae52e24970b 11
+  s_cfb22b07c1663a::t_d40327523ca258 117
+  s_cfb22b07c1663a::t_f416eb324c942d 255-273,283-285,300-301
+  s_3a01840fab432b::t_df15641caa966b 129
+  s_cfb22b07c1663a::t_7ce3e3664bb7b3 14
+app/profesionales/components/WelcomeHint.test.tsx
+  s_92ce6a2f7d165b::t_fef3514a02d764 6,8,11,16,19,22,24-26
+app/profesionales/components/WelcomeHint.tsx
+  s_92ce6a2f7d165b::t_d070ba9dcd6ec2 20
+app/profesionales/components/DirectoryFilters.tsx
+  s_3a01840fab432b::t_7d46090a12cf43 4,6-7,65-67,70-80,88-97,99-115,134-137,164,166,168-179
+  s_cfb22b07c1663a::t_e24a5898567b64 68-69
+  s_cfb22b07c1663a::t_be5cc5af31c71e 8-16,22,29
+  s_92ce6a2f7d165b::t_f2b8805e61583d 53,61
+  s_3a01840fab432b::t_81174af60bbba9 3,32-47,63-64,81-87,98,116-133
+  s_3a01840fab432b::t_5cd2fa89a64ee6 1-2,5,17-18,20-21,23-28,30-31,48-51,54-55,180
+  s_3a01840fab432b::t_cd4b4790edd1f1 19,52,56-60,62,167
+  s_92ce6a2f7d165b::t_c1657e056091f0 138-163,165
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "053a59a51d87881fde6d6999384ad08e9214f16a",
+  "prompts": {},
+  "sessions": {
+    "s_3a01840fab432b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "25365110-a5da-4ecb-b73a-8542d5b5f80d",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "mbelenmontoya <mariabmontoya@gmail.com>"
+    },
+    "s_92ce6a2f7d165b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c8a7cc25-eed6-410e-9807-fc577cdb7a44",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "mbelenmontoya <mariabmontoya@gmail.com>"
+    },
+    "s_cfb22b07c1663a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6bfe5632-4d5c-416b-9c06-a0d2e884e3e3",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "mbelenmontoya <mariabmontoya@gmail.com>"
+    }
+  }
+}

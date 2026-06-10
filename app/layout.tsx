@@ -45,6 +45,11 @@ export const metadata = {
     index: true,
     follow: true,
   },
+  icons: {
+    icon: '/assets/logo/isotipo.png',
+    shortcut: '/assets/logo/isotipo.png',
+    apple: '/assets/logo/isotipo.png',
+  },
 }
 
 export default function RootLayout({

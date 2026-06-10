@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
-import { normalize, buildPracticeIndex, matchesProfessional, ProfessionalsDirectory } from './ProfessionalsDirectory'
+import { render, screen, fireEvent, within } from '@testing-library/react'
+import { normalize, buildPracticeIndex, matchesProfessional, matchesFilters, ProfessionalsDirectory } from './ProfessionalsDirectory'
 import type { DirectoryProfessional } from './ProfessionalsDirectory'
+import type { FilterState, LocationFilterValue } from './DirectoryFilters'
+import type { Practice } from '@/lib/practices'
 
 const makePro = (overrides: Partial<DirectoryProfessional>): DirectoryProfessional => ({
   slug: 'test',
@@ -12,6 +14,8 @@ const makePro = (overrides: Partial<DirectoryProfessional>): DirectoryProfession
   short_description: null,
   city: null,
   country: 'AR',
+  latitude: null,
+  longitude: null,
   online_only: false,
   profile_image_url: null,
   price_range_min: null,
@@ -23,6 +27,13 @@ const makePro = (overrides: Partial<DirectoryProfessional>): DirectoryProfession
   tier_expires_at: null,
   ranking_score: null,
   ...overrides,
+})
+
+const makePros = (n: number, overrides: Partial<DirectoryProfessional> = {}): DirectoryProfessional[] =>
+  Array.from({ length: n }, (_, i) => makePro({ slug: `pro-${i}`, full_name: `Pro ${i}`, ...overrides }))
+
+const makePractice = (key: string, label: string): Practice => ({
+  key, label, slug: key, sort_order: 1, active: true,
 })
 
 describe('normalize', () => {
@@ -126,6 +137,13 @@ describe('matchesProfessional', () => {
 })
 
 describe('ProfessionalsDirectory component', () => {
+  it('filtros section starts collapsed', () => {
+    const { container } = render(<ProfessionalsDirectory professionals={[]} practices={[]} />)
+    const filtrosDetails = container.querySelector('details[data-testid="filtros-section"]')
+    expect(filtrosDetails).toBeInTheDocument()
+    expect(filtrosDetails?.hasAttribute('open')).toBe(false)
+  })
+
   it('has font-size >= 16px on mobile to prevent iOS auto-zoom on focus', () => {
     render(<ProfessionalsDirectory professionals={[]} practices={[]} />)
     const input = screen.getByLabelText('Buscar profesionales')
@@ -184,19 +202,194 @@ describe('ProfessionalsDirectory component', () => {
     const pro = makePro({ specialties: ['reiki', 'yoga', 'meditacion', 'tarot', 'registros'] })
     render(<ProfessionalsDirectory professionals={[pro]} practices={[]} />)
 
+    // Scope card-chip assertions to within the card — DirectoryFilters also renders
+    // specialty chips for the same labels, so screen-level getByText would find duplicates.
+    const card = screen.getByTestId('professional-card')
+
     // Initially only 3 chips shown + expand button
-    expect(screen.getByText('reiki')).toBeInTheDocument()
-    expect(screen.getByText('yoga')).toBeInTheDocument()
-    expect(screen.getByText('meditacion')).toBeInTheDocument()
-    expect(screen.queryByText('tarot')).not.toBeInTheDocument()
-    expect(screen.queryByText('registros')).not.toBeInTheDocument()
+    expect(within(card).getByText('reiki')).toBeInTheDocument()
+    expect(within(card).getByText('yoga')).toBeInTheDocument()
+    expect(within(card).getByText('meditacion')).toBeInTheDocument()
+    expect(within(card).queryByText('tarot')).not.toBeInTheDocument()
+    expect(within(card).queryByText('registros')).not.toBeInTheDocument()
     const expandBtn = screen.getByRole('button', { name: /\+2/i })
     expect(expandBtn).toBeInTheDocument()
 
     // Click expand — all chips visible, button gone
     fireEvent.click(expandBtn)
-    expect(screen.getByText('tarot')).toBeInTheDocument()
-    expect(screen.getByText('registros')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /\+/i })).not.toBeInTheDocument()
+    expect(within(card).getByText('tarot')).toBeInTheDocument()
+    expect(within(card).getByText('registros')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /\+2/i })).not.toBeInTheDocument()
+  })
+
+  it('shows 12 professionals initially when more than 12 exist', () => {
+    render(<ProfessionalsDirectory professionals={makePros(15)} practices={[]} />)
+    expect(screen.getAllByTestId('professional-card')).toHaveLength(12)
+  })
+
+  it('"Cargar más" button appears and appends more cards on click', () => {
+    render(<ProfessionalsDirectory professionals={makePros(15)} practices={[]} />)
+    const btn = screen.getByRole('button', { name: /Cargar más/i })
+    expect(btn).toBeInTheDocument()
+    fireEvent.click(btn)
+    expect(screen.getAllByTestId('professional-card')).toHaveLength(15)
+    expect(screen.queryByRole('button', { name: /Cargar más/i })).not.toBeInTheDocument()
+  })
+
+  it('visibleCount resets to 12 when search changes after Cargar más', () => {
+    render(<ProfessionalsDirectory professionals={makePros(25)} practices={[]} />)
+    fireEvent.click(screen.getByRole('button', { name: /Cargar más/i }))
+    expect(screen.getAllByTestId('professional-card')).toHaveLength(24)
+    fireEvent.change(screen.getByLabelText('Buscar profesionales'), { target: { value: 'Pro' } })
+    expect(screen.getAllByTestId('professional-card')).toHaveLength(12)
+  })
+
+  it('shows "N de M resultados" when Modalidad filter is active', () => {
+    const practices = [makePractice('reiki', 'Reiki'), makePractice('masajes', 'Masajes')]
+    render(<ProfessionalsDirectory professionals={makePros(5)} practices={practices} />)
+    fireEvent.click(screen.getByRole('button', { name: /Filtrar por Online/i }))
+    expect(screen.getByText('0 de 5 resultados')).toBeInTheDocument()
+  })
+
+  it('"Limpiar filtros" is not visible when no filter is active', () => {
+    const practices = [makePractice('reiki', 'Reiki'), makePractice('masajes', 'Masajes')]
+    render(<ProfessionalsDirectory professionals={makePros(3)} practices={practices} />)
+    expect(screen.queryByText('Limpiar filtros')).not.toBeInTheDocument()
+  })
+
+  it('"Limpiar filtros" appears when a filter is active and resets on click', () => {
+    const practices = [makePractice('reiki', 'Reiki'), makePractice('masajes', 'Masajes')]
+    render(<ProfessionalsDirectory professionals={makePros(3)} practices={practices} />)
+    fireEvent.click(screen.getByRole('button', { name: /Filtrar por Online/i }))
+    const clearBtn = screen.getByText('Limpiar filtros')
+    expect(clearBtn).toBeInTheDocument()
+    fireEvent.click(clearBtn)
+    expect(screen.queryByText('Limpiar filtros')).not.toBeInTheDocument()
+  })
+})
+
+const noFilters: FilterState = { practices: [], specialties: [], modality: 'all', location: null }
+
+describe('matchesFilters', () => {
+  it('returns true for default empty filters', () => {
+    const pro = makePro({ practices: ['reiki'], specialties: ['Ansiedad'], online_only: false })
+    expect(matchesFilters(pro, noFilters)).toBe(true)
+  })
+
+  it('practice filter: returns true when pro has a selected practice', () => {
+    const pro = makePro({ practices: ['reiki', 'masajes-terapeuticos'] })
+    expect(matchesFilters(pro, { ...noFilters, practices: ['reiki'] })).toBe(true)
+  })
+
+  it('practice filter: returns false when pro has no matching practice', () => {
+    const pro = makePro({ practices: ['masajes-terapeuticos'] })
+    expect(matchesFilters(pro, { ...noFilters, practices: ['reiki'] })).toBe(false)
+  })
+
+  it('practice filter: OR within dimension — matches any of the selected practices', () => {
+    const pro = makePro({ practices: ['biodanza'] })
+    expect(matchesFilters(pro, { ...noFilters, practices: ['reiki', 'biodanza'] })).toBe(true)
+  })
+
+  it('practice filter: returns false when pro.practices is null and no free-text fallback', () => {
+    const pro = makePro({ practices: null, specialties: null })
+    expect(matchesFilters(pro, { ...noFilters, practices: ['reiki'] })).toBe(false)
+  })
+
+  it('practice filter: fallback to free-text specialties when practices is null', () => {
+    // Pros registered before practices catalog: practices=null but specialties has free-text
+    const pro = makePro({ practices: null, specialties: ['reiki usui', 'reiki lunar'] })
+    const index = buildPracticeIndex([
+      { key: 'reiki', label: 'Reiki', aliases: ['equilibrio chakras'], slug: 'reiki', sort_order: 1, active: true },
+    ])
+    expect(matchesFilters(pro, { ...noFilters, practices: ['reiki'] }, index)).toBe(true)
+  })
+
+  it('practice filter: fallback does not over-match unrelated specialties', () => {
+    const pro = makePro({ practices: null, specialties: ['biodanza', 'yoga'] })
+    const index = buildPracticeIndex([
+      { key: 'reiki', label: 'Reiki', aliases: [], slug: 'reiki', sort_order: 1, active: true },
+    ])
+    expect(matchesFilters(pro, { ...noFilters, practices: ['reiki'] }, index)).toBe(false)
+  })
+
+  it('specialty filter: returns true when pro has a selected specialty', () => {
+    const pro = makePro({ specialties: ['Ansiedad', 'Insomnio'] })
+    expect(matchesFilters(pro, { ...noFilters, specialties: ['Ansiedad'] })).toBe(true)
+  })
+
+  it('specialty filter: returns false when pro has no matching specialty', () => {
+    const pro = makePro({ specialties: ['Duelo'] })
+    expect(matchesFilters(pro, { ...noFilters, specialties: ['Ansiedad'] })).toBe(false)
+  })
+
+  it('modality online: matches pro with online_only=true', () => {
+    const pro = makePro({ online_only: true, modality: null })
+    expect(matchesFilters(pro, { ...noFilters, modality: 'online' })).toBe(true)
+  })
+
+  it('modality online: matches pro with modality includes online', () => {
+    const pro = makePro({ online_only: false, modality: ['online', 'presencial'] })
+    expect(matchesFilters(pro, { ...noFilters, modality: 'online' })).toBe(true)
+  })
+
+  it('modality online: rejects presencial-only pro', () => {
+    const pro = makePro({ online_only: false, modality: ['presencial'] })
+    expect(matchesFilters(pro, { ...noFilters, modality: 'online' })).toBe(false)
+  })
+
+  it('modality presencial: matches pro with presencial in modality', () => {
+    const pro = makePro({ online_only: false, modality: ['presencial'] })
+    expect(matchesFilters(pro, { ...noFilters, modality: 'presencial' })).toBe(true)
+  })
+
+  it('modality presencial: matches pro with no modality set (defaults to presencial)', () => {
+    const pro = makePro({ online_only: false, modality: null })
+    expect(matchesFilters(pro, { ...noFilters, modality: 'presencial' })).toBe(true)
+  })
+
+  it('modality presencial: rejects online_only pro', () => {
+    const pro = makePro({ online_only: true, modality: ['online'] })
+    expect(matchesFilters(pro, { ...noFilters, modality: 'presencial' })).toBe(false)
+  })
+
+  it('AND across dimensions: practice AND modality must both match', () => {
+    const onlineReiki = makePro({ practices: ['reiki'], online_only: true, modality: null })
+    const presencialReiki = makePro({ practices: ['reiki'], online_only: false, modality: ['presencial'] })
+    const onlineMasajes = makePro({ practices: ['masajes-terapeuticos'], online_only: true, modality: null })
+
+    const filter: FilterState = { practices: ['reiki'], specialties: [], modality: 'online', location: null }
+    expect(matchesFilters(onlineReiki, filter)).toBe(true)
+    expect(matchesFilters(presencialReiki, filter)).toBe(false) // reiki but not online
+    expect(matchesFilters(onlineMasajes, filter)).toBe(false)  // online but not reiki
+  })
+
+  it('location filter: matches presencial pro in the filtered city', () => {
+    const loc: LocationFilterValue = { city: 'Córdoba', country: 'AR', lat: -31.4, lng: -64.2 }
+    const pro = makePro({ city: 'Córdoba', online_only: false })
+    expect(matchesFilters(pro, { ...noFilters, location: loc })).toBe(true)
+  })
+
+  it('location filter: excludes presencial pro in a different city', () => {
+    const loc: LocationFilterValue = { city: 'Córdoba', country: 'AR', lat: -31.4, lng: -64.2 }
+    const pro = makePro({ city: 'Buenos Aires', online_only: false })
+    expect(matchesFilters(pro, { ...noFilters, location: loc })).toBe(false)
+  })
+
+  it('location filter: excludes online_only pro even if city matches', () => {
+    const loc: LocationFilterValue = { city: 'Córdoba', country: 'AR', lat: -31.4, lng: -64.2 }
+    const pro = makePro({ city: 'Córdoba', online_only: true })
+    expect(matchesFilters(pro, { ...noFilters, location: loc })).toBe(false)
+  })
+
+  it('location filter: null location allows online_only pros through', () => {
+    const pro = makePro({ city: null, online_only: true })
+    expect(matchesFilters(pro, { ...noFilters, location: null })).toBe(true)
+  })
+
+  it('location filter: city match is accent-insensitive', () => {
+    const loc: LocationFilterValue = { city: 'Cordoba', country: 'AR', lat: -31.4, lng: -64.2 }
+    const pro = makePro({ city: 'Córdoba', online_only: false })
+    expect(matchesFilters(pro, { ...noFilters, location: loc })).toBe(true)
   })
 })

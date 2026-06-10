@@ -17,7 +17,7 @@ const BENEFITS = [
 
 export function WelcomeHint() {
   return (
-    <details open className="rounded-2xl overflow-hidden border border-success/15 group">
+    <details className="rounded-2xl overflow-hidden border border-success/15 group">
       <summary className="flex items-center justify-between gap-3 px-4 py-3 bg-success-weak hover:bg-success-weak/70 transition-colors cursor-pointer list-none">
         <span className="flex items-center gap-2 text-sm font-medium text-success">
           <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">

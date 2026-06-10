@@ -1,14 +1,17 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import Link from 'next/link'
+import { useState, useMemo, useEffect } from 'react'
 import type { Practice } from '@/lib/practices'
 import { SPECIALTY_MAP } from '@/lib/design-constants'
+import { Chip } from '@/app/components/ui/Chip'
 import { GlassCard } from '@/app/components/ui/GlassCard'
 import { EmptyState } from '@/app/components/ui/EmptyState'
-import { Chip } from '@/app/components/ui/Chip'
-import { isEffectivelyDestacado } from '@/lib/ranking'
 import { WelcomeHint } from './WelcomeHint'
+import { DirectoryFilters, DEFAULT_FILTERS } from './DirectoryFilters'
+import type { FilterState } from './DirectoryFilters'
+import { LocationFilter } from './LocationFilter'
+import { ProfessionalCard } from './ProfessionalCard'
+import { DirectoryMap } from './DirectoryMap'
 
 export interface DirectoryProfessional {
   slug: string
@@ -19,6 +22,8 @@ export interface DirectoryProfessional {
   short_description: string | null
   city: string | null
   country: string
+  latitude: number | null
+  longitude: number | null
   online_only: boolean
   profile_image_url: string | null
   price_range_min: number | null
@@ -65,183 +70,37 @@ export function matchesProfessional(
   return false
 }
 
-// ─── Format helpers (moved from app/profesionales/page.tsx) ──────────────────
-
-function formatLocation(pro: DirectoryProfessional): string {
-  if (pro.online_only) return 'Online'
-  return [pro.city, pro.country].filter(Boolean).join(', ')
-}
-
-function formatPrice(pro: DirectoryProfessional): string | null {
-  const { price_range_min: min, price_range_max: max, currency } = pro
-  if (min == null && max == null) return null
-  const cur = currency ?? 'USD'
-  const fmt = (n: number) => `${cur === 'ARS' ? '$' : 'US$'}${n.toLocaleString('es-AR')}`
-  if (min != null && max != null) return `${fmt(min)}–${fmt(max)}`
-  if (min != null) return `desde ${fmt(min)}`
-  return `hasta ${fmt(max!)}`
-}
-
-function formatModality(pro: DirectoryProfessional): string | null {
-  if (pro.online_only) return null
-  const mods = pro.modality ?? []
-  if (mods.length === 0) return null
-  const labels = mods.map((m) =>
-    m === 'online' ? 'Online' : m === 'presencial' ? 'Presencial' : m
-  )
-  return labels.join(' · ')
-}
-
-// ─── Specialty color palette — 12 colors cycling by label hash ───────────────
-
-const LABEL_COLORS = [
-  { bg: 'bg-sp-teal-weak',    text: 'text-sp-teal',    border: 'border-sp-teal/20' },
-  { bg: 'bg-sp-indigo-weak',  text: 'text-sp-indigo',  border: 'border-sp-indigo/20' },
-  { bg: 'bg-sp-violet-weak',  text: 'text-sp-violet',  border: 'border-sp-violet/20' },
-  { bg: 'bg-sp-pink-weak',    text: 'text-sp-pink',    border: 'border-sp-pink/20' },
-  { bg: 'bg-sp-emerald-weak', text: 'text-sp-emerald', border: 'border-sp-emerald/20' },
-  { bg: 'bg-sp-amber-weak',   text: 'text-sp-amber',   border: 'border-sp-amber/20' },
-  { bg: 'bg-sp-fuchsia-weak', text: 'text-sp-fuchsia', border: 'border-sp-fuchsia/20' },
-  { bg: 'bg-sp-rose-weak',    text: 'text-sp-rose',    border: 'border-sp-rose/20' },
-  { bg: 'bg-sp-sky-weak',     text: 'text-sp-sky',     border: 'border-sp-sky/20' },
-  { bg: 'bg-sp-orange-weak',  text: 'text-sp-orange',  border: 'border-sp-orange/20' },
-  { bg: 'bg-sp-slate-weak',   text: 'text-sp-slate',   border: 'border-sp-slate/20' },
-  { bg: 'bg-sp-cyan-weak',    text: 'text-sp-cyan',    border: 'border-sp-cyan/20' },
-]
-
-function colorForLabel(s: string) {
-  const hash = s.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
-  return LABEL_COLORS[hash % LABEL_COLORS.length]
-}
-
-// ─── Card ─────────────────────────────────────────────────────────────────────
-
-function ProfessionalCard({ professional: pro }: { professional: DirectoryProfessional }) {
-  const [expanded, setExpanded] = useState(false)
-  const allSpecialties = pro.specialties ?? []
-  const visibleSpecialties = expanded ? allSpecialties : allSpecialties.slice(0, 3)
-  const overflow = allSpecialties.length - 3
-  const location = formatLocation(pro)
-  const price = formatPrice(pro)
-  const modality = formatModality(pro)
-  const rating = Number(pro.rating_average ?? 0)
-  const ratingCount = Number(pro.rating_count ?? 0)
-  const isDestacado = isEffectivelyDestacado(pro.subscription_tier, pro.tier_expires_at)
-  const score = pro.ranking_score != null && pro.ranking_score > 0 ? Math.round(pro.ranking_score) : null
-  const scoreColor = score == null ? '' : score >= 51 ? 'text-success' : score >= 30 ? 'text-warning' : 'text-brand'
-
-  return (
-    <article data-testid="professional-card" className="h-full">
-      <Link href={`/p/${pro.slug}`} className="block h-full">
-        <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-5 hover:shadow-strong transition-shadow h-full flex flex-col">
-
-          {/* Top: avatar + identity + score — vertically centered */}
-          <div className="flex items-start gap-3 mb-3">
-            <div className="flex-shrink-0">
-              {pro.profile_image_url?.startsWith('http') ? (
-                <img
-                  src={pro.profile_image_url}
-                  alt={pro.full_name}
-                  className="w-12 h-12 rounded-full object-cover shadow-soft border-2 border-white/60"
-                />
-              ) : (
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-weak to-info-weak flex items-center justify-center shadow-soft border-2 border-white/60">
-                  <span className="text-lg font-semibold text-brand">
-                    {pro.full_name.charAt(0)}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <h3
-                  data-testid="professional-name"
-                  className={`text-base font-semibold text-foreground truncate${ratingCount > 0 ? ' mb-1' : ' mb-0'}`}
-                >
-                  {pro.full_name}
-                </h3>
-                {isDestacado && (
-                  <span data-testid="destacado-chip">
-                    <Chip variant="brand" label="Destacado" className="text-[10px] px-2 py-0.5" />
-                  </span>
-                )}
-              </div>
-              {ratingCount > 0 && (
-                <p className="text-xs text-muted mt-0.5">
-                  {rating.toFixed(1)} ★ · {ratingCount} {ratingCount === 1 ? 'reseña' : 'reseñas'}
-                </p>
-              )}
-            </div>
-
-            {score != null && (
-              <div className="flex-shrink-0 text-right" data-testid="ranking-score">
-                <div className="text-[9px] font-medium text-muted/70 leading-none mb-0.5 tracking-wide uppercase">Índice Hara</div>
-                <div className={`text-base font-bold leading-none ${scoreColor}`}>{score}</div>
-              </div>
-            )}
-          </div>
-
-          {/* Short description */}
-          {pro.short_description && (
-            <p className="text-xs text-muted leading-relaxed mb-3 line-clamp-2">
-              {pro.short_description}
-            </p>
-          )}
-
-          {/* Specialty chips — color-coded, with expand button */}
-          {allSpecialties.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1.5 mb-3">
-              {visibleSpecialties.map((s) => {
-                const c = colorForLabel(s)
-                return (
-                  <span
-                    key={s}
-                    className={`px-2 py-1 text-[11px] font-medium rounded-full border ${c.bg} ${c.text} ${c.border}`}
-                  >
-                    {s}
-                  </span>
-                )
-              })}
-              {!expanded && overflow > 0 && (
-                <button
-                  type="button"
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setExpanded(true) }}
-                  className="px-2 py-1 text-[11px] font-medium rounded-full border bg-surface-2 text-muted border-outline hover:bg-surface hover:text-foreground transition-colors"
-                >
-                  +{overflow}
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Meta — pinned to bottom, location left, modality right */}
-          <div className="mt-auto pt-2 text-xs text-muted space-y-1">
-            {(location || modality) && (
-              <div className="flex items-center justify-between gap-2">
-                {location && (
-                  <span className="flex items-center gap-1 min-w-0">
-                    <span aria-hidden>📍</span>
-                    <span className="truncate">{location}</span>
-                  </span>
-                )}
-                {modality && (
-                  <span className="flex-shrink-0">{modality}</span>
-                )}
-              </div>
-            )}
-            {price && (
-              <p className="flex items-center gap-1">
-                <span aria-hidden>💰</span>
-                <span className="truncate">{price}</span>
-              </p>
-            )}
-          </div>
-
-        </div>
-      </Link>
-    </article>
-  )
+// Chip-filter predicate — AND across dimensions, OR within each dimension.
+// practiceIndex is used as a fallback for pros with sparse `practices` data:
+// if the structured key is missing, we check practice terms against free-text specialties.
+export function matchesFilters(
+  pro: DirectoryProfessional,
+  filters: FilterState,
+  practiceIndex: Map<string, string[]> = new Map()
+): boolean {
+  if (filters.practices.length > 0) {
+    const hasPracticeMatch = filters.practices.some(filterKey => {
+      if (pro.practices?.includes(filterKey)) return true
+      const terms = practiceIndex.get(filterKey) ?? []
+      return terms.some(term => pro.specialties?.some(s => normalize(s).includes(term)))
+    })
+    if (!hasPracticeMatch) return false
+  }
+  if (filters.specialties.length > 0) {
+    if (!pro.specialties?.some(s => filters.specialties.includes(s))) return false
+  }
+  if (filters.modality === 'online') {
+    if (!pro.online_only && !pro.modality?.includes('online')) return false
+  } else if (filters.modality === 'presencial') {
+    if (pro.online_only) return false
+    if (pro.modality && pro.modality.length > 0 && !pro.modality.includes('presencial')) return false
+  }
+  if (filters.location) {
+    if (pro.online_only) return false
+    if (!pro.city) return false
+    if (normalize(pro.city) !== normalize(filters.location.city)) return false
+  }
+  return true
 }
 
 // ─── Main export ─────────────────────────────────────────────────────────────
@@ -253,16 +112,44 @@ interface Props {
 
 export function ProfessionalsDirectory({ professionals, practices }: Props) {
   const [searchValue, setSearchValue] = useState('')
+  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS)
+  const [visibleCount, setVisibleCount] = useState(12)
+  const [view, setView] = useState<'list' | 'map'>('list')
 
   const practiceIndex = useMemo(() => buildPracticeIndex(practices), [practices])
 
+  const specialtyOptions = useMemo(
+    () => [...new Set(professionals.flatMap(p => p.specialties ?? []))].sort(),
+    [professionals]
+  )
+
   const filtered = useMemo(() => {
     const q = searchValue.trim()
-    return professionals.filter((pro) => matchesProfessional(pro, q, practiceIndex))
-  }, [professionals, searchValue, practiceIndex])
+    return professionals.filter(pro =>
+      matchesProfessional(pro, q, practiceIndex) && matchesFilters(pro, filters, practiceIndex)
+    )
+  }, [professionals, searchValue, practiceIndex, filters])
+
+  // Reset visible page whenever search or chip filters change
+  useEffect(() => { setVisibleCount(12) }, [searchValue, filters])
+
+  const hasActiveFilters =
+    filters.practices.length > 0 ||
+    filters.specialties.length > 0 ||
+    filters.modality !== 'all' ||
+    filters.location !== null
+
+  const activeFilterCount =
+    filters.practices.length +
+    filters.specialties.length +
+    (filters.modality !== 'all' ? 1 : 0) +
+    (filters.location !== null ? 1 : 0)
 
   const isSearching = searchValue.trim().length > 0
-  const resultCount = filtered.length
+  const showCount = isSearching || hasActiveFilters
+
+  const visiblePros = filtered.slice(0, visibleCount)
+  const remaining = filtered.length - visibleCount
 
   return (
     <div className="space-y-4">
@@ -303,28 +190,123 @@ export function ProfessionalsDirectory({ professionals, practices }: Props) {
         )}
       </div>
 
+      {/* Filtros collapsible — transparent, blends with page background */}
+      <details data-testid="filtros-section" className="group">
+        <summary className="flex items-center gap-2 py-2 cursor-pointer list-none select-none hover:opacity-70 transition-opacity">
+          <svg className="w-3.5 h-3.5 text-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M7 8h10M11 12h2" />
+          </svg>
+          <span className="text-sm font-medium text-foreground">Filtros</span>
+          {activeFilterCount > 0 && (
+            <span className="text-xs font-semibold bg-brand text-white rounded-full px-1.5 min-w-[1.25rem] h-[1.25rem] flex items-center justify-center">
+              {activeFilterCount}
+            </span>
+          )}
+          <svg
+            className="ml-auto w-4 h-4 text-muted/60 shrink-0 transition-transform duration-200 group-open:rotate-180"
+            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </summary>
+
+        <div className="pt-3 space-y-4">
+          {/* Row: Ubicación (left) + Modalidad (right) — side by side on desktop */}
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:gap-8">
+            <div className="md:flex-1">
+              <LocationFilter
+                value={filters.location}
+                onChange={(loc) => setFilters(f => ({ ...f, location: loc }))}
+              />
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold tracking-wider text-muted uppercase mb-1.5">Modalidad</p>
+              <div className="flex flex-wrap gap-2">
+                {(['online', 'presencial'] as const).map(value => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setFilters(f => ({ ...f, modality: f.modality === value ? 'all' : value }))}
+                    aria-pressed={filters.modality === value}
+                    aria-label={`Filtrar por ${value === 'online' ? 'Online' : 'Presencial'}`}
+                  >
+                    <Chip
+                      variant={filters.modality === value ? 'brand' : 'neutral'}
+                      label={value === 'online' ? 'Online' : 'Presencial'}
+                      className="cursor-pointer transition-colors"
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Práctica chips + Limpiar filtros */}
+          <DirectoryFilters
+            filters={filters}
+            onChange={setFilters}
+            practiceOptions={practices.map(p => ({ key: p.key, label: p.label }))}
+            specialtyOptions={specialtyOptions}
+            showModalidad={false}
+          />
+        </div>
+      </details>
+
+      {/* Lista / Mapa toggle */}
+      <div className="flex items-center gap-1 p-1 bg-surface-2 rounded-xl w-fit border border-outline">
+        {(['list', 'map'] as const).map(v => (
+          <button
+            key={v}
+            type="button"
+            onClick={() => setView(v)}
+            aria-pressed={view === v}
+            className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              view === v
+                ? 'bg-surface text-foreground shadow-soft'
+                : 'text-muted hover:text-foreground'
+            }`}
+          >
+            {v === 'list' ? 'Lista' : 'Mapa'}
+          </button>
+        ))}
+      </div>
+
       {/* Live region — announces filter changes to screen readers */}
       <div aria-live="polite" aria-atomic="false" className="space-y-4">
-        {/* Result count (only when searching) */}
-        {isSearching && (
+        {/* Unified result count — shown when searching or any chip filter active */}
+        {showCount && (
           <p className="text-xs text-muted">
-            {resultCount === 1 ? '1 resultado' : `${resultCount} resultados`}
+            {filtered.length} de {professionals.length} resultados
           </p>
         )}
 
-        {/* Grid or empty state */}
-        {filtered.length === 0 ? (
+        {view === 'map' ? (
+          <DirectoryMap professionals={filtered} />
+        ) : filtered.length === 0 ? (
           <GlassCard>
             <EmptyState
-              title={isSearching ? 'Sin resultados' : 'Todavía no hay profesionales disponibles.'}
-              description={isSearching ? 'Probá con otro término.' : 'Volvé pronto.'}
+              title={isSearching || hasActiveFilters ? 'Sin resultados' : 'Todavía no hay profesionales disponibles.'}
+              description={isSearching || hasActiveFilters ? 'Probá con otro término o limpiá los filtros.' : 'Volvé pronto.'}
             />
           </GlassCard>
         ) : (
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-5">
-            {filtered.map((pro) => (
+            {visiblePros.map((pro) => (
               <ProfessionalCard key={pro.slug} professional={pro} />
             ))}
+          </div>
+        )}
+
+        {/* Cargar más — only in list view */}
+        {view === 'list' && remaining > 0 && (
+          <div className="flex justify-center pt-2">
+            <button
+              type="button"
+              onClick={() => setVisibleCount(c => c + 12)}
+              className="px-6 py-3 rounded-full bg-surface border border-outline text-sm text-foreground hover:bg-surface-2 transition-colors shadow-soft"
+            >
+              Cargar más ({remaining} restantes)
+            </button>
           </div>
         )}
       </div>

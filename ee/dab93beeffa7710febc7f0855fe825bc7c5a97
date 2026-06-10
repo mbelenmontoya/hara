@@ -1,0 +1,21 @@
+app/layout.test.ts
+  s_f21e89f7b49c9d::t_de059c57fe7da1 1-26
+app/layout.tsx
+  s_f21e89f7b49c9d::t_bcafa5279045a9 48-52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "eedab93beeffa7710febc7f0855fe825bc7c5a97",
+  "prompts": {},
+  "sessions": {
+    "s_f21e89f7b49c9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4521f958-caed-4abf-876d-35f784bce6c0",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "mbelenmontoya <mariabmontoya@gmail.com>"
+    }
+  }
+}

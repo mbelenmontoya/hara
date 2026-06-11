@@ -2,7 +2,7 @@
 
 ## What Is This
 
-Curated marketplace for **terapias alternativas y bienestar holístico** in Spanish-speaking markets (LATAM + Spain, Argentina home base). Practitioners are reikistas, masajistas, facilitadores de constelaciones familiares, expertos en diseño humano, lectores de registros akáshicos, terapeutas florales/energéticos, instructores de meditación, y otras prácticas afines. The match is symptom → holistic modality: a user atravesando ansiedad/insomnio/duelo gets paired with whichever holistic practice resonates. Two ways in: **Browse** (`/profesionales` — directory ranked by reputation, primary path) and **Concierge** (`/solicitar` — admin hand-picks 3 recommendations delivered via `/r/{tracking_code}`). Professionals register at `/profesionales/registro`. Revenue is supply-funded via subscription tiers (Básico free, Destacado paid). Concierge leads (PQL infra) are preserved as an optional premium layer after the Apr 2026 pivot away from PQL-only billing.
+Curated marketplace for **terapias alternativas y bienestar holístico** in Spanish-speaking markets (LATAM + Spain, Argentina home base). Practitioners are reikistas, masajistas, facilitadores de constelaciones familiares, expertos en diseño humano, lectores de registros akáshicos, terapeutas florales/energéticos, instructores de meditación, y otras prácticas afines. The match is symptom → holistic modality: a user atravesando ansiedad/insomnio/duelo gets paired with whichever holistic practice resonates. Three user-facing surfaces: **Browse** (`/profesionales` — directory with filters + map, primary path), **Concierge** (`/solicitar` — admin hand-picks 3 recommendations delivered via `/r/{tracking_code}`), and **Blog** (`/blog` — editorial content for SEO + trust). Professionals register at `/profesionales/registro` and self-manage their profile at `/pro/perfil`. Revenue is supply-funded via subscription tiers (Básico free, Destacado paid). Concierge leads (PQL infra) are preserved as an optional premium layer after the Apr 2026 pivot away from PQL-only billing.
 
 **📖 Read [`PRODUCT.md`](./PRODUCT.md) for the full product context — what we're building, who it's for, why it exists, and how we measure success.** This file (CLAUDE.md) is engineering context only; PRODUCT.md is the canonical answer to "what is this product?"
 
@@ -15,7 +15,7 @@ Curated marketplace for **terapias alternativas y bienestar holístico** in Span
 - **Next.js 14.2** (App Router) + **TypeScript**
 - **Tailwind CSS v4** (`@theme` directive in `globals.css`, NOT `theme.extend`)
 - **Supabase** (PostgreSQL) + **Upstash Redis** (rate limiting)
-- **Clerk** (auth — pending config, don't implement)
+- **Supabase Auth** (professional portal `/pro` — email+password, invite-link onboarding)
 - **Vitest** (integration tests) + **Playwright** (E2E)
 
 ## Project Structure
@@ -25,9 +25,28 @@ app/
 ├── r/[tracking_code]/        # Recommendations (card deck, swipe, bottom sheet)
 │   ├── hooks/                # useRecommendations, useSwipeGesture, useRevealTransition, useMediaQuery
 │   └── components/           # BottomSheet, BackgroundPicker, CardSkeleton
-├── p/[slug]/                 # Professional public profile (needs polish)
-├── profesionales/registro/   # 4-step registration form + confirmacion page
-├── admin/                    # Admin dashboard (leads, professionals, PQLs)
+├── p/[slug]/                 # Professional public profile
+├── profesionales/            # Directory page + 4-step registration form
+│   ├── components/           # ProfessionalsDirectory, ProfessionalCard, DirectoryFilters,
+│   │                         #   LocationFilter, DirectoryMap, WelcomeHint
+│   ├── hooks/                # useCityGeocode
+│   └── registro/             # Registration form + confirmacion page
+├── pro/                      # Professional self-service portal
+│   ├── login/                # Auth entry point
+│   ├── set-password/         # First-login password setup (from approval email link)
+│   └── perfil/               # Profile editor + live Hara score panel
+├── blog/                     # Editorial blog
+│   ├── [slug]/               # Article detail page
+│   └── escribir/             # Admin: write/upload .md post
+├── solicitar/                # Concierge request form
+├── que-es-hara/              # Support / onboarding doc (replaces /ayuda)
+├── admin/                    # Admin dashboard
+│   ├── analytics/            # Interaction analytics per professional (charts + download)
+│   ├── blog/                 # Blog post approval queue
+│   ├── leads/                # Concierge lead management
+│   ├── professionals/        # Professional approval + management
+│   ├── practices/            # Holistic practice catalog management
+│   └── pqls/                 # PQL tracking
 ├── api/                      # API routes (see "Don't Touch" below)
 ├── components/               # ContactButton, PlacesAutocomplete, PublicLayout, AdminLayout
 │   └── ui/                   # Alert, Badge, Button, Card, EmptyState, Input, Modal, Table
@@ -38,11 +57,20 @@ lib/
 ├── attribution-tokens.ts     # JWT generation/verification
 ├── rate-limit.ts             # Upstash config
 ├── env.ts                    # Environment validation
-├── monitoring.ts             # Error logging (Sentry-ready) — use this, NOT console.log
+├── monitoring.ts             # Error logging (Sentry) — use this, NOT console.log
 ├── validation.ts             # IP, fingerprint, session validators
 ├── tracking-code.ts          # Tracking code utilities
 ├── crypto-utils.ts           # SHA-256 hashing
 ├── billing-month.ts          # Billing period utilities
+├── profile-score.ts          # Hara score computation (profile completeness → ranking)
+├── ranking.ts                # Directory ranking logic
+├── practices.ts              # Holistic practice catalog helpers
+├── pro-invite.ts             # Professional portal invite/auth helpers
+├── profile-events.ts         # Event tracking helpers (profile_view, whatsapp_click, etc.)
+├── sanitize.ts               # HTML sanitization (blog content)
+├── google-maps-loader.ts     # Google Maps JS API loader (singleton)
+├── storage.ts                # Supabase Storage helpers
+├── email.ts                  # Resend email sending
 └── translations/             # i18n structure (es.ts)
 ```
 

@@ -232,41 +232,63 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 ## Next Steps
 
-1. ~~**Approve search motor spec**~~ ✅ **VERIFIED 2026-06-03** — Bel manually tested name/practice/accent search and approved. Spec `docs/plans/2026-06-02-search-professionals-directory.md` flipped to VERIFIED.
+1. **Apply migration 022 to Supabase** ← unblock portal in production
+   - What: `migrations/022_professional_user_id.sql` adds `professionals.user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL` + unique partial index. Required before any portal sign-in works in production.
+   - Considerations: migration is idempotent; rollback comment is in the file.
 
-2. ~~**Apply migrations 012, 013, 014–018 to Supabase**~~ ✅ **Done 2026-06-05** — all applied.
+2. **Commit + push portal files** ← 18 files staged, zero `??` portal files
+   - What: `git commit -m "feat: professional self-service portal (/pro/*)"` then `git push`. All staged files are the portal implementation (login, set-password, perfil, API routes, pro-invite helper, email additions, middleware update, migration 022).
+   - Note: spec plan is at `Status: COMPLETE` — type "approve" to Bel-verify and mark VERIFIED.
 
-3. ~~**Debug and fix `SuggestedPractices` mapping feature**~~ ✅ **Done** — dismiss route (`/api/admin/practices/dismiss`) calls `dismiss_specialty_suggestion` RPC (migration 014), removing entries from the DB directly. `router.refresh()` after both dismiss and map operations.
+3. **Fix metadata in `app/layout.tsx`** — old copy still present
+   - What: `title`, `description`, `openGraph`, and `twitter` fields still reference "terapeuta ideal", "verificados", "psicólogo argentina" — language that conflicts with the holistic-wellness positioning.
 
-4. **Fix metadata in `app/layout.tsx`** — old copy still present
-   - What: `title`, `description`, `openGraph`, and `twitter` fields still reference "terapeuta ideal", "verificados", "psicólogo argentina" — language that conflicts with the holistic-wellness positioning and the copy fixes applied this session.
+4. **Apply migration 020 to Supabase**
+   - What: `migrations/020_complete_specialty_mappings.sql` is committed but not yet applied to the production DB.
 
-6. **Complete profile image scoring discussion** — next session
-   - What: `profileImage` criterion (10pts) is now binary (has http URL or not). Admin can override via score editor. No AI image analysis implemented — left to admin judgment.
+5. **Update nav: point "Ayuda" to `/que-es-hara` or redirect `/ayuda`**
+   - What: SiteHeader still links "Ayuda" to `/ayuda`; the content is now merged into `/que-es-hara`. Redirect is the cleaner option.
 
-7. **Bel manual browser test of remaining pages** (carried over from 2026-05-20)
-   - What: Homepage layout + copy verified this session. Remaining: desktop nav, 2-col directory, scroll reveals, sticky sidebar on /p/[slug], container widths.
+6. **Bel manual browser test of remaining pages** (carried over from 2026-05-20)
+   - What: Desktop nav, 2-col directory, scroll reveals, sticky sidebar on /p/[slug], container widths.
 
-8. **Decide on Item 7 gap strings** (carried over)
+7. **Decide on Item 7 gap strings** (carried over)
    - Considerations: `'Enviando…'` (WaitlistForm), directory chip labels, profile review fallbacks, Solicitar currency labels, Registro currency descriptions, admin emails (out of scope).
 
-9. **Item 4 (Public home flip)** — deferred until Phase 1 done
+8. **Item 4 (Public home flip)** — deferred until Phase 1 done
    - What: See Final Go-Live Gate section for prerequisite checklist.
 
-10. **Phase 1 — first 10 pros, 5 concierge requests, Sentry + Vercel Analytics**
-
-11. **Apply migration 020 to Supabase**
-    - What: `migrations/020_complete_specialty_mappings.sql` is committed but not yet applied to the production DB
-    - Why: specialty mappings update is a data improvement
-    - Note: `migrations/021_blog_posts.sql` was applied this session (2026-06-08) — blog feature is now live
-
-12. **Update nav: point "Ayuda" to `/que-es-hara` or redirect `/ayuda`**
-    - What: SiteHeader still links "Ayuda" to `/ayuda`; the content is now merged into `/que-es-hara`. Either redirect `/ayuda` → `/que-es-hara`, or update the nav link label/target
-    - Considerations: `/ayuda` still works standalone — redirect is the cleaner option
+9. **Phase 1 — first 10 pros, 5 concierge requests, Sentry + Vercel Analytics**
 
 ---
 
 ## Session Log
+
+### Session — 2026-06-10 (Professional self-service portal — /pro/*)
+
+**Completed:**
+- **Phase 2 + 3 roadmap review**: confirmed Phase 2 item 2 (directory filters + maps) is already done (code existed, plan hadn't been updated). Remaining Phase 2 blocker: MercadoPago checkout (item 1). Identified the missing Phase 3 prerequisite: professional auth + self-edit portal, which became today's spec.
+- **Professional self-service portal via `/spec`** (`docs/plans/2026-06-10-professional-self-service-portal.md` — `Status: COMPLETE`, awaiting Bel approval to flip VERIFIED). 8 tasks, 553/553 unit tests, TypeScript clean:
+  - `migrations/022_professional_user_id.sql` — adds `professionals.user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL` + unique partial index
+  - `lib/pro-invite.ts` — `generateProAccessLink()`: calls `supabaseAdmin.auth.admin.generateLink` (invite then recovery fallback), builds branded `/pro/set-password?token_hash=…&type=…` URL, writes `user_id` back to professionals row when null. `emailBaseUrl` exported from `lib/email.ts`.
+  - `lib/email.ts` + `lib/email.test.ts` — `notifyProfessionalApproved` gains optional `setupUrl` (renders "Configurá tu acceso" CTA or fallback copy); `notifyProPasswordReset` added; 16/16 email tests.
+  - `app/api/admin/professionals/[id]/route.ts` — approve handler now awaits `generateProAccessLink` and passes `setupUrl` to approval email.
+  - `middleware.ts` + `middleware.test.ts` — `/pro/` and `/api/pro/` routes protected (with trailing slash to avoid `/profesionales` collision); `/pro/login`, `/pro/set-password`, `/api/pro/forgot-password` stay public; authenticated `/pro/login` → redirect to `/pro/perfil`.
+  - `app/pro/login/page.tsx` — mirrors admin login; includes collapsible forgot-password form that POSTs to `/api/pro/forgot-password`.
+  - `app/api/pro/forgot-password/route.ts` — rate-limited, no-enumeration, `active`-only status filter (submitted/rejected accounts cannot set passwords).
+  - `app/pro/set-password/page.tsx` — `verifyOtp({ token_hash, type })` on mount; shows invalid-link state on error; password form with match check; `updateUser({ password })` on submit → `/pro/perfil`.
+  - `app/api/pro/profile/route.ts` — resolves professional by `session.user.id` → `user_id` (never by client-supplied id); never writes `email`; full validation (WhatsApp, bio, modality, practices); accepts JSON (tests) and multipart/form-data (browser).
+  - `app/pro/perfil/page.tsx` + `ProfileEditForm.tsx` — server component resolves pro by `user_id`; `ProfileEditForm` is a single flat form with all registration fields, email read-only; live Hara score via `useMemo(calculateProfileScore)` with NO overrides; `ReadOnlyScorePanel` wrapper structurally prevents `onOverride` from being passed to `ScoreBreakdown`.
+  - `app/api/admin/professionals/[id]/invite/route.ts` + review page button — admin can re-send access link for active pros; shows Alert on success/failure.
+- **Live E2E verified**: `/pro/login` 200 ✅; `/pro/perfil` unauthenticated → `/pro/login?redirect=...` ✅; `/pro/set-password?token_hash=invalid` → "Enlace inválido o vencido" ✅; `/profesionales` stays public (no prefix collision) ✅; forgot-password toggle reveals form ✅.
+- All 18 files staged (git add); zero portal-related `??` in git status.
+
+**Blockers:**
+- Migration 022 not yet applied to Supabase production DB — portal login cannot work until applied.
+- Spec plan at `Status: COMPLETE` — Bel needs to type "approve" to mark VERIFIED.
+- 3 unrelated untracked files remain (`ig-engage` skill, instagram engagement docs) — not part of this feature.
+
+---
 
 ### Session — 2026-06-08 (Blog .md upload + Hara Vital author + blog 500 production fix)
 
@@ -331,34 +353,9 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 ---
 
-### Session — 2026-06-01 (Copy audit + homepage layout fixes)
-
-**Completed:**
-- Pushed backlog from 2026-05-30/31 session (32 files, `515df17`) — pre-push hook was blocked by missing `vi.mock('next/cache', ...)` in `app/api/admin/practices/[key]/route.test.ts`; added mock, 293/293 tests pass
-- Homepage copy pass triggered by Bel's review of live site:
-  - `waitlist_card_title`: "¿Querés saber cuando abramos?" → "¿Te querés enterar primera?"
-  - `waitlist_card_body` and `WaitlistForm` button: "Avisame cuando abran" → "Anotame", body rewritten
-  - Full audit of all 13 content JSON files + source files — removed clinical language across all pages:
-    - "pacientes" (3×) → "consultas" / "quienes te consulten" (ProfileHero, RegistroForm)
-    - `/preview` h1: "Te conectamos con tu terapeuta ideal" → "Encontrá tu profesional de bienestar"
-    - "Cuéntanos" → "Contanos" (voseo fix on /preview)
-    - `step3_short_description_placeholder`: "Psicóloga especializada en ansiedad y estrés laboral" → "Facilitadora de constelaciones familiares y diseño humano"
-    - Review page footer: "verificados" removed
-  - 8 source files + 4 content JSON files updated
-- Homepage layout fixes after Bel reported mobile scroll:
-  - `SiteHeader` excluded from `/` (was adding ~56px logo bar on mobile)
-  - `pt-16` → `pt-8`, added `justify-center`, hero `mb-10` → `mb-6`
-  - Bel confirmed scroll resolved on mobile
-
-**Deviations:**
-- Copy audit and layout fixes were unplanned — surfaced from Bel's live testing session
-
-**Blockers (carried over):**
-- Migrations 012 + 013 not yet applied to Supabase
-- `SuggestedPractices` alias mapping still broken (entries reappear on navigation)
-- `app/layout.tsx` metadata still has old copy ("terapeuta ideal", "verificados") — added as Next Step 4
-
 ### Archived Sessions
+
+- **2026-06-01**: Copy audit + homepage layout fixes — pushed 2026-05-30/31 backlog (32 files, `515df17`), removed clinical language across 13 content JSON + source files (pacientes→consultas, terapeuta ideal→profesional de bienestar, voseo fixes), homepage scroll fix on mobile (SiteHeader excluded from `/`, spacing adjustments); Bel confirmed scroll resolved.
 
 - **2026-05-30/31**: Admin UI overhaul + score system + practices mapping — admin professionals card redesign, DB cleanup (274 test leads deleted, 45 raw profile_image_url nulled), review page full rebuild (ScoreRing, ScoreBreakdown editable, PracticeMapper), profile-score.ts overhaul (partial scoring, 10 criteria, 100pts, 26 tests), practices catalog: migs 012+013 (specialties[] + score_overrides + aliases), PracticeForm checkboxes, lib/admin-practices.ts suggestions, SuggestedPractices.tsx; SuggestedPractices alias mapping BROKEN at session end (reappear bug, handed off); 293/293 tests.
 

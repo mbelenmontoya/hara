@@ -10,15 +10,30 @@ The match is **"lo que estás atravesando → quién puede acompañarte desde ot
 
 The product is the *trust*.
 
-## Two ways in
+## Product surfaces
+
+### Users seeking help
 
 1. **Browse (Directory)** — `/profesionales`
-   The discovery-first path. Users land, browse cards ranked by reputation, pick someone, and contact via WhatsApp. Most users will end up here.
+   The discovery-first path. Users land, browse cards ranked by reputation, filter by practice (reiki, masajes, etc.), modality (online/presencial), specialty, or location. They can switch to a map view. Most users will end up here.
 
 2. **Concierge (Solicitar)** — `/solicitar`
    The high-trust differentiator. User describes what they need (situation, modality, location, budget, urgency) → admin reads it → admin hand-picks 3 recommendations → user gets a tracking link → contacts via WhatsApp. This is the "we pick for you" moat.
 
-Both paths end the same way: a WhatsApp conversation between user and professional, on the user's terms, on their timing.
+3. **Blog** — `/blog`
+   Editorial content published by the Hara Vital team. Articles on holistic wellness modalities, symptom-to-practice guides, and community stories. Admin-approved; serves as an SEO and trust-building layer that draws users who aren't yet ready to browse.
+
+Both discovery paths end the same way: a WhatsApp conversation between user and professional, on the user's terms, on their timing.
+
+### Professionals
+
+4. **Professional portal** — `/pro`
+   Approved professionals log in and edit their own profile at `/pro/perfil` — bio, practices, specialties, photos, social links, modality — without admin involvement. The portal also shows them a live Hara score so they understand what drives their ranking. Admin can re-send the access link from the admin dashboard.
+
+### Support
+
+5. **¿Qué es Hara?** — `/que-es-hara`
+   A single document-style page with sidebar TOC that covers what Hara is, how the concierge works, how to find a professional, and privacy. This page is the answer to every user support question and is linked from error pages, empty states, and the site footer.
 
 ## Who it's for
 
@@ -73,6 +88,7 @@ Supply-funded. Users pay nothing.
    - **Básico (free):** listed in directory, default ranking
    - **Destacado (paid):** higher ranking, visual badge, featured placement
    - More tiers can be added over time as we learn what professionals will pay for
+   - **Retention lever:** admin can pull interaction analytics (profile views, WhatsApp clicks, Instagram clicks) per professional and share them as proof-of-value screenshots in renewal conversations
 
 2. **Concierge leads** *(future, optional — billing unsolved)*
    - The existing PQL/attribution infrastructure can be repurposed to charge professionals per curated lead delivered through `/solicitar` → `/r/[code]`
@@ -83,14 +99,16 @@ Supply-funded. Users pay nothing.
 
 The product ships in **4 phase gates**, each defined by real-user evidence rather than feature checklists. Detail lives in `.claude/plans/main.md`.
 
-| Phase | What "done" means |
-|-------|-------------------|
-| **0 — ACTIVATE** | Works on prod for 1 real pro + 1 real user, end-to-end |
-| **1 — OPEN FOR BUSINESS** | 10 pros onboarded, 5 concierge requests handled, monitoring catches errors before users report them |
-| **2 — UNBLOCK SCALE** | Admin no longer in the critical path for payments or directory navigation |
-| **3 — TWO-SIDED MARKETPLACE** | Professionals self-manage without admin involvement |
+| Phase | What "done" means | Status |
+|-------|-------------------|--------|
+| **0 — ACTIVATE** | Works on prod for 1 real pro + 1 real user, end-to-end | ✅ Done |
+| **1 — OPEN FOR BUSINESS** | 10 pros onboarded, 5 concierge requests handled, monitoring catches errors before users report them | ✅ Done |
+| **2 — UNBLOCK SCALE** | Admin no longer in the critical path for payments or directory navigation | 🔄 Active |
+| **3 — TWO-SIDED MARKETPLACE** | Professionals self-manage without admin involvement | — |
 
 Each phase is gated on real-user signal — we start phase N+1 only when phase N is real.
+
+> **Note on Phase 2/3 overlap (2026-06-10):** The professional self-service portal (`/pro`) — originally scoped for Phase 3 — was pulled forward and shipped during Phase 2, because it unblocks profile quality improvements without adding admin load. The Phase 3 milestone remains valid; what moves there now is analytics visibility for professionals, lead management (`/pro/leads`), and a full Destacado self-checkout.
 
 ## Voice and tone
 
@@ -114,6 +132,7 @@ Open product questions, tracked here so they stay visible:
 
 - `.claude/plans/main.md` — operational plan with phase-by-phase roadmap and session log
 - `docs/prd/` — feature-level PRDs (one per shipped feature)
+- `docs/plans/` — implementation plans for features in flight
 - `CLAUDE.md` — engineering context (stack, conventions, working rules)
 - `FINAL_SPEC.md` — database schema and API contracts
 - `docs/DONE.md` — completed work history

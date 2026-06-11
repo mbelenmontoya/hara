@@ -26,7 +26,7 @@ import type { Professional, Review } from './types'
 async function getProfessional(slug: string): Promise<Professional | null> {
   const { data, error } = await supabaseAdmin
     .from('professionals')
-    .select('id, slug, full_name, specialties, modality, practices, bio, short_description, experience_description, instagram, service_type, offers_courses_online, courses_presencial_location, whatsapp, country, city, online_only, price_range_min, price_range_max, currency, accepting_new_clients, profile_image_url, subscription_tier, tier_expires_at, rating_average, rating_count')
+    .select('id, slug, full_name, specialties, modality, practices, bio, short_description, experience_description, instagram, email, service_type, offers_courses_online, courses_presencial_location, whatsapp, country, city, online_only, price_range_min, price_range_max, currency, accepting_new_clients, profile_image_url, subscription_tier, tier_expires_at, rating_average, rating_count')
     .eq('slug', slug)
     .eq('status', 'active')
     .single()
@@ -44,6 +44,7 @@ async function getProfessional(slug: string): Promise<Professional | null> {
     short_description: data.short_description,
     experience_description: data.experience_description,
     instagram: data.instagram,
+    email: data.email,
     service_type: data.service_type ?? [],
     offers_courses_online: data.offers_courses_online ?? false,
     courses_presencial_location: data.courses_presencial_location,
@@ -162,6 +163,7 @@ export default async function ProfessionalProfilePage({
                 name={professional.name}
                 whatsapp={professional.whatsapp}
                 instagram={professional.instagram}
+                email={professional.email}
               />
             </RevealOnScroll>
           </div>

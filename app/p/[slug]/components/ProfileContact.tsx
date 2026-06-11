@@ -21,6 +21,7 @@ interface ProfileContactProps {
   name: string
   whatsapp: string
   instagram: string | null
+  email: string
 }
 
 export function ProfileContact({
@@ -28,6 +29,7 @@ export function ProfileContact({
   name,
   whatsapp,
   instagram,
+  email,
 }: ProfileContactProps) {
   const ig = instagram ? normalizeInstagram(instagram) : null
 
@@ -50,14 +52,28 @@ export function ProfileContact({
         </div>
       )}
 
-      <ContactButton
-        professionalSlug={slug}
-        professionalName={name}
-        whatsappNumber={whatsapp}
-        trackingCode="direct-profile-visit"
-        rank={0}
-        onBeforeNavigate={() => fireProfileEvent('whatsapp_click', slug)}
-      />
+      {email && (
+        <div className="mb-4">
+          <h3 className="text-xs text-muted mb-1">Email</h3>
+          <a
+            href={`mailto:${email}`}
+            className="text-sm text-brand hover:underline"
+          >
+            {email}
+          </a>
+        </div>
+      )}
+
+      {whatsapp && (
+        <ContactButton
+          professionalSlug={slug}
+          professionalName={name}
+          whatsappNumber={whatsapp}
+          trackingCode="direct-profile-visit"
+          rank={0}
+          onBeforeNavigate={() => fireProfileEvent('whatsapp_click', slug)}
+        />
+      )}
     </div>
   )
 }

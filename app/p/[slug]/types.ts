@@ -11,6 +11,7 @@ export interface Professional {
   short_description: string | null
   experience_description: string | null
   instagram: string | null
+  email: string
   service_type: string[]
   offers_courses_online: boolean
   courses_presencial_location: string | null

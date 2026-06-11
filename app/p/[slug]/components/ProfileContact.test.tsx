@@ -24,6 +24,7 @@ describe('ProfileContact', () => {
     name: 'Silvia Ferrer',
     whatsapp: '+5492615551234',
     instagram: null,
+    email: 'silvia@example.com',
   }
 
   beforeEach(() => {
@@ -49,7 +50,7 @@ describe('ProfileContact', () => {
 
   it('hides Instagram section when instagram is null', () => {
     render(<ProfileContact {...baseProps} instagram={null} />)
-    expect(screen.queryByRole('link')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /^@/ })).not.toBeInTheDocument()
   })
 
   it('does not render ReviewerEmailCapture', () => {
@@ -71,5 +72,21 @@ describe('ProfileContact', () => {
     const button = screen.getByRole('button', { name: /contactar por whatsapp/i })
     await user.click(button)
     expect(mockFireProfileEvent).toHaveBeenCalledWith('whatsapp_click', 'silvia-ferrer')
+  })
+
+  it('hides WhatsApp button when whatsapp is empty string', () => {
+    render(<ProfileContact {...baseProps} whatsapp="" />)
+    expect(screen.queryByRole('button', { name: /contactar por whatsapp/i })).not.toBeInTheDocument()
+  })
+
+  it('shows email link when email is provided', () => {
+    render(<ProfileContact {...baseProps} email="silvia@example.com" />)
+    const link = screen.getByRole('link', { name: /silvia@example.com/i })
+    expect(link).toHaveAttribute('href', 'mailto:silvia@example.com')
+  })
+
+  it('hides email section when email is empty string', () => {
+    render(<ProfileContact {...baseProps} email="" />)
+    expect(screen.queryByRole('link', { name: /@/i })).not.toBeInTheDocument()
   })
 })

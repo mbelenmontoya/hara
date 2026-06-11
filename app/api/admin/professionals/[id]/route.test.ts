@@ -53,6 +53,16 @@ vi.mock('@/lib/practices', () => ({
   validatePracticeKeys: vi.fn().mockResolvedValue({ ok: true }),
 }))
 
+// vi.mock factories are hoisted before const declarations — use vi.hoisted() so
+// SETUP_URL is available both inside the factory and in test assertions.
+const { SETUP_URL } = vi.hoisted(() => ({
+  SETUP_URL: 'https://haravital.app/pro/set-password?token_hash=h&type=invite',
+}))
+
+vi.mock('@/lib/pro-invite', () => ({
+  generateProAccessLink: vi.fn().mockResolvedValue({ setupUrl: SETUP_URL, kind: 'invite' }),
+}))
+
 const ID = '11111111-2222-3333-4444-555555555555'
 
 function makeReq(): NextRequest {
@@ -138,20 +148,41 @@ describe('PATCH /api/admin/professionals/[id] — approve/reject email firing', 
     slug: 'laura-giraudo',
   }
 
-  it('approve fires notifyProfessionalApproved with { to, full_name, slug }', async () => {
+  it('approve fires notifyProfessionalApproved with { to, full_name, slug, setupUrl }', async () => {
     const { notifyProfessionalApproved } = await import('@/lib/email')
+    const { generateProAccessLink } = await import('@/lib/pro-invite')
     builders.fetchSingle.mockResolvedValue({ data: SUBMITTED_PRO, error: null })
     builders.proUpdateEq.mockResolvedValue({ error: null })
 
     const res = await PATCH(makePatchReq({ action: 'approve' }), { params: { id: ID } })
 
     expect(res.status).toBe(200)
+    expect(generateProAccessLink).toHaveBeenCalledWith({
+      email: 'pro@example.com',
+      professionalId: ID,
+    })
     expect(notifyProfessionalApproved).toHaveBeenCalledTimes(1)
     expect(notifyProfessionalApproved).toHaveBeenCalledWith({
       to: 'pro@example.com',
       full_name: 'Laura Giraudo',
       slug: 'laura-giraudo',
+      setupUrl: SETUP_URL,
     })
+  })
+
+  it('approve passes setupUrl=undefined when generateProAccessLink returns null', async () => {
+    const { notifyProfessionalApproved } = await import('@/lib/email')
+    const { generateProAccessLink } = await import('@/lib/pro-invite')
+    vi.mocked(generateProAccessLink).mockResolvedValueOnce(null)
+    builders.fetchSingle.mockResolvedValue({ data: SUBMITTED_PRO, error: null })
+    builders.proUpdateEq.mockResolvedValue({ error: null })
+
+    const res = await PATCH(makePatchReq({ action: 'approve' }), { params: { id: ID } })
+
+    expect(res.status).toBe(200)
+    expect(notifyProfessionalApproved).toHaveBeenCalledWith(
+      expect.objectContaining({ setupUrl: undefined })
+    )
   })
 
   it('approve still returns 200 even if email send rejects (fire-and-forget)', async () => {

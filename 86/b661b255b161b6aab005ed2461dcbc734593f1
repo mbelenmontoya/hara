@@ -1,0 +1,41 @@
+app/p/[slug]/page.tsx
+  s_a3e1cf6985eff4::t_b327f2aa63705f 29
+  s_a3e1cf6985eff4::t_49cc985daca59f 47
+  s_a3e1cf6985eff4::t_44bbc5f4c1c7a1 166
+app/p/[slug]/components/ProfileContact.test.tsx
+  s_a3e1cf6985eff4::t_d2c84159718116 76-91
+  s_a3e1cf6985eff4::t_ae5a89ae3cee7c 27
+  s_a3e1cf6985eff4::t_caa1419153b98c 53
+app/p/[slug]/types.ts
+  s_a3e1cf6985eff4::t_7c9f640a4abe1b 14
+app/p/[slug]/components/ProfileContact.tsx
+  s_a3e1cf6985eff4::t_f65620d1226c63 24,32,55-76
+app/api/admin/professionals/[id]/route.test.ts
+  s_7a3ddc09e9e428::t_ece8652572e457 151,153,160-163,169,173-185
+  s_a3e1cf6985eff4::t_0c5f64f7afbbc5 56-60
+  s_7a3ddc09e9e428::t_50b90df026ac5b 61-65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "86b661b255b161b6aab005ed2461dcbc734593f1",
+  "prompts": {},
+  "sessions": {
+    "s_7a3ddc09e9e428": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "23ac1f14-b2a7-4253-bf8b-7675911d6132",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "mbelenmontoya <mariabmontoya@gmail.com>"
+    },
+    "s_a3e1cf6985eff4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d6ffc6c5-408c-41dc-b3ba-7581bb0c1719",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "mbelenmontoya <mariabmontoya@gmail.com>"
+    }
+  }
+}

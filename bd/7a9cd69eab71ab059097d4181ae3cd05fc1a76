@@ -1,0 +1,113 @@
+CLAUDE.md
+  s_a3e1cf6985eff4::t_1b79f2b3affe9c 18
+  s_a3e1cf6985eff4::t_c750ee3fd512b1 5
+  s_a3e1cf6985eff4::t_59610e60c75010 28-49,60,65-73
+app/pro/login/page.tsx
+  s_7a3ddc09e9e428::t_e64c665983711d 1-180
+app/pro/set-password/page.tsx
+  s_7a3ddc09e9e428::t_d3eb3553c1e760 1-181
+migrations/022_professional_user_id.sql
+  s_7a3ddc09e9e428::t_969e6bb3a87e21 1-18
+app/api/admin/professionals/[id]/invite/route.ts
+  s_7a3ddc09e9e428::t_1e31bad7ddf7ba 1-61
+docs/plans/2026-06-10-professional-self-service-portal.md
+  s_7a3ddc09e9e428::t_764914f4a1d367 7
+  s_7a3ddc09e9e428::t_c606c4b0b044fc 245,251
+  s_7a3ddc09e9e428::t_a38b54a6b3b4df 189,193,200
+  s_7a3ddc09e9e428::t_e3032248dae224 6
+  s_7a3ddc09e9e428::t_d79deaecf9c0aa 168,175
+  s_7a3ddc09e9e428::t_9afb0229567219 293
+  s_7a3ddc09e9e428::t_77a0a59ed803b6 122
+  s_7a3ddc09e9e428::t_2eb96b3afb28f9 1-5,8-12,321,325,327
+  s_7a3ddc09e9e428::t_c042fabf0cdac6 13-102,104-115,124-140,143-148,150-167,169-174,176-188,190-192,194-199,201-217,221-224,228-244,246-250,252-292,294,296-300,302-320,322-324,326,328
+  s_7a3ddc09e9e428::t_7815132fb29bac 116
+  s_7a3ddc09e9e428::t_eaf1bdc5016022 218-220,225-227
+  s_7a3ddc09e9e428::t_a7b97fa6bb94ed 118
+  s_7a3ddc09e9e428::t_ccd2399d6cf9f8 117
+  s_7a3ddc09e9e428::t_46f2e99e6b8ade 121
+  s_7a3ddc09e9e428::t_36987dadc2629d 295,301
+  s_7a3ddc09e9e428::t_5648dff76553c9 141-142,149
+  s_7a3ddc09e9e428::t_79c765d67c68bd 119
+  s_7a3ddc09e9e428::t_6aba92f6e3f2d1 123
+  s_7a3ddc09e9e428::t_5428ec5c077e2b 103
+  s_7a3ddc09e9e428::t_ad34af92651e00 120
+.claude/plans/main.md
+  s_7a3ddc09e9e428::t_42f6663fbaad97 267-292
+  s_7a3ddc09e9e428::t_74a02bf8baf48e 358
+  s_7a3ddc09e9e428::t_684e79ca24b25d 235-237,239-241,243-244,246-247,249-250,252-253,255,258,261
+lib/pro-invite.ts
+  s_7a3ddc09e9e428::t_e97090ef2320ce 1-75
+app/api/pro/forgot-password/route.test.ts
+  s_7a3ddc09e9e428::t_79183127352713 1-139
+app/pro/set-password/page.test.tsx
+  s_7a3ddc09e9e428::t_8b53208f3980dc 1-66,69-143
+  s_7a3ddc09e9e428::t_253b1f0e13764c 67-68
+PRODUCT.md
+  s_a3e1cf6985eff4::t_46a14eadbfcd5c 13-15,18,23-36
+  s_a3e1cf6985eff4::t_7e2dcf89aaff26 102-107,111
+  s_a3e1cf6985eff4::t_741c2100f72803 135
+  s_a3e1cf6985eff4::t_9fb25a76e731af 91
+app/api/pro/forgot-password/route.ts
+  s_7a3ddc09e9e428::t_1704c1b6d3375d 1-60
+app/api/pro/profile/route.test.ts
+  s_7a3ddc09e9e428::t_6eeef9179026f0 59-71,73,76-77
+  s_7a3ddc09e9e428::t_403ab06aa0a89d 1-22,25-32,37-51,53-58,72,74-75,78-82,84-93,95-103,105-113,115-125,132-138,140-148,150-158,160-163
+  s_7a3ddc09e9e428::t_8a4b8e988be8d0 127-131
+  s_7a3ddc09e9e428::t_1f77735405bb0d 149
+  s_7a3ddc09e9e428::t_d315fd3ff5a795 23-24,33-36
+  s_7a3ddc09e9e428::t_d93df14e7bea79 126
+  s_7a3ddc09e9e428::t_92752788d3a5be 83
+  s_7a3ddc09e9e428::t_edce6d35ede3cf 159
+  s_7a3ddc09e9e428::t_16289c76cc1d56 52
+  s_7a3ddc09e9e428::t_771ed44eb8c906 94,104,114
+  s_7a3ddc09e9e428::t_3f54157e6bef43 139
+app/pro/perfil/ProfileEditForm.test.tsx
+  s_7a3ddc09e9e428::t_b9ae371bf8e94f 1-7,9-13,16-25,28-43,46-47,49,51,53-55,63-66,68-69,72,74-116,122-138
+  s_7a3ddc09e9e428::t_9296878332210a 44-45,48,50,52,56-62,67,70-71
+  s_7a3ddc09e9e428::t_97d591a48cefc9 26-27
+  s_7a3ddc09e9e428::t_751d8fec579d76 73
+  s_7a3ddc09e9e428::t_59398f419e4bc9 117-121
+  s_7a3ddc09e9e428::t_bcba3de7e7943a 8
+  s_7a3ddc09e9e428::t_0fc11ae0f3ac56 14-15
+app/api/admin/professionals/[id]/invite/route.test.ts
+  s_7a3ddc09e9e428::t_c6e0754c86e295 1-113
+middleware.test.ts
+  s_7a3ddc09e9e428::t_31bd74de5c0270 1-117
+app/pro/perfil/ProfileEditForm.tsx
+  s_7a3ddc09e9e428::t_32f56638aedf7e 45
+  s_7a3ddc09e9e428::t_6765998c91b572 1-44,46-247,255,257-290,293,295-427
+  s_7a3ddc09e9e428::t_79105c2f7a2c68 291-292,294
+  s_7a3ddc09e9e428::t_e3bb69c57f31a7 248-254,256
+app/api/pro/profile/route.ts
+  s_7a3ddc09e9e428::t_852e49491fc9c8 1-19,22-30,111-130,141,143-224
+  s_7a3ddc09e9e428::t_e41571f0968359 20-21,31-110,131-140,142
+app/pro/perfil/page.tsx
+  s_7a3ddc09e9e428::t_c992bd9ee983b6 51
+  s_7a3ddc09e9e428::t_480841d3eb6043 1-50,52-68
+lib/pro-invite.test.ts
+  s_7a3ddc09e9e428::t_a3a743224d3add 1-185
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "bd7a9cd69eab71ab059097d4181ae3cd05fc1a76",
+  "prompts": {},
+  "sessions": {
+    "s_7a3ddc09e9e428": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "23ac1f14-b2a7-4253-bf8b-7675911d6132",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "mbelenmontoya <mariabmontoya@gmail.com>"
+    },
+    "s_a3e1cf6985eff4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d6ffc6c5-408c-41dc-b3ba-7581bb0c1719",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "mbelenmontoya <mariabmontoya@gmail.com>"
+    }
+  }
+}

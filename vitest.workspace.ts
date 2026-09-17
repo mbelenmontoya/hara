@@ -15,7 +15,7 @@ export default defineWorkspace([
       environmentOptions: {
         jsdom: { url: 'http://localhost' },
       },
-      include: ['app/**/*.test.{ts,tsx}', 'lib/**/*.test.ts'],
+      include: ['app/**/*.test.{ts,tsx}', 'lib/**/*.test.ts', 'middleware.test.ts'],
       setupFiles: ['__tests__/setup/component-setup.ts'],
       globals: true,
       env: {

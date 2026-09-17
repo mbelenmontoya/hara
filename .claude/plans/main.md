@@ -33,7 +33,7 @@ Deployed at: https://hara-weld.vercel.app
 - [x] DB supports `rejected` status and `rejection_reason`
 - [x] Specialty color system — 12 curated colors, custom specialty support, admin mapping
 - [x] 3-level testing infrastructure — 26 component tests + E2E + visual regression
-- [ ] All pages visually match the design system (liquid-glass, tokens, pill buttons, identical page shells) — desktop responsive pass (Item 6) + JSON-driven wording pass (Item 7) committed 2026-05-20, awaiting Bel manual browser verification to flip to VERIFIED
+- [x] All pages visually match the design system (liquid-glass, tokens, pill buttons, identical page shells) — desktop responsive pass (Item 6) + JSON-driven wording pass (Item 7) committed 2026-05-20, browser-verified 2026-06-12 by Bel
 - [x] Public directory page (`/profesionales`) with reputation-based ranking — shipped 2026-04-24 (migration 004: ranking columns + trigger; /profesionales server component; home page 3rd CTA)
 - [x] Home page redesign with dual CTA (concierge + directory) — "Ver profesionales" CTA added 2026-04-24
 - [x] Destacado tier MVP — admin-gated payment recording, expiry-aware ranking, public Destacado chip, daily cron cleanup (shipped 2026-04-27, migration 005)
@@ -84,7 +84,7 @@ The product ships in 4 phase gates. Each phase has a clear definition of done. *
 4. ~~**Public home flip**~~ — **Moved 2026-05-12 to the *Final Go-Live Gate* at the end of this plan.** The app is not ready to open yet; the home flip is the actual go-live moment, not a launch-readiness item. Item number kept (do not renumber) so session-log references to "Item 4" stay valid.
 5. **Rejected-profile policy decision** — ✅ **Decided 2026-05-07: Soft no with 60-day cooldown.** Rejected pros can reapply after 60 days. Implementation: `resubmit_after TIMESTAMPTZ` on `professionals` (set on rejection to `NOW() + INTERVAL '60 days'`), registration handler blocks re-registration with the same email until `resubmit_after` passes. Rejection email (item 3) says: warm explanation + `rejection_reason` + *"Podés volver a aplicar a partir del [fecha]"*. **Now unblocks Item 3.**
 6. ~~**Desktop UI polish pass**~~ ✅ **Built 2026-05-14, committed/pushed 2026-05-20 (`4dd2ad0`). Awaiting Bel manual browser verification to flip to VERIFIED.** PRD `docs/prd/2026-05-14-desktop-responsive-ui-pass.md`, plan `docs/plans/2026-05-14-desktop-responsive-ui-pass.md`. 11 tasks: `.container-public` extended to 1024px at `lg:`, `SiteHeader` with desktop nav (3 links + active state) wired to root layout, `/p/[slug]` decomposed into 6 sub-components + sticky contact sidebar, `/r/[tracking_code]` extracted into `DeckView`/`GridView`/`RecommendationCard`, `RevealOnScroll` with `prefers-reduced-motion`, `/profesionales` 2-col grid at `lg:`, BottomSheet modal-on-desktop.
-7. ~~**Final wording pass**~~ ✅ **Applied 2026-05-20 (`f8f2471`). Awaiting Bel manual browser verification to flip to VERIFIED.** JSON-driven approach (different from the 2026-05-13 reverted attempt): Bel writes finalized Spanish copy in `content/*.json` (13 files), Claude mechanically applies to app files. 21 string changes across 7 files (preview, solicitar, r/review, registro, registro/confirmacion, lib/email, not-found); 7 files already matched JSON. 6 categories of gap-strings documented in 2026-05-20 session log for follow-up.
+7. ~~**Final wording pass**~~ ✅ **VERIFIED 2026-06-12.** Applied 2026-05-20 (`f8f2471`), browser-verified 2026-06-12 by Bel. Gap strings (WaitlistForm 'Enviando…', chip labels, review fallbacks, currency labels) no longer actioned — copy is acceptable as-is.
 8. **`/ayuda` — Public support page** *(added 2026-05-12 from route-inventory audit)* — Lead-facing route for link recovery ("perdí mi link de recomendaciones"), common errors, and basic support contact. Lightweight static page or simple form. Launch-relevant: a user who loses their `/r/[tracking_code]` link today has no recovery path. Surface: new `app/ayuda/page.tsx`, link from footer + error states.
 
 #### Operational admin routes (added 2026-05-12 from route-inventory audit)
@@ -204,9 +204,9 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 1. **`/pro/*` portal** — auth-bind `professionals.user_id` to Supabase Auth, build `/pro` home, `/pro/leads`, `/pro/profile` edit, tier visibility. (PRD: `docs/prd/` — to be written.)
 2. **Admin detail pages** that depend on the portal: `/admin/professionals/[id]` (reviews, rating, tier history), `/admin/analytics` (funnel + MRR + active Destacado).
 
-### Final Go-Live Gate — Public home flip *(end of plan; do not start until earlier work is done)*
+### Final Go-Live Gate — Public home flip ✅ DONE 2026-06-12
 
-**Status:** Deferred to end of plan as of 2026-05-12. The app is not ready to open. This gate exists so the home-flip decisions captured during Soft Launch Push discussions don't get lost — but the flip itself happens *after* everything above is done.
+**Status:** Done. Public home is live.
 
 **Was Soft Launch Push Item 4.** Moved here because flipping `/` from *Próximamente* to the open-doors home is the actual go-live moment, not launch-readiness work. Item 4's number is preserved earlier in this plan (struck through with a redirect) so session-log references stay valid.
 
@@ -232,37 +232,59 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 ## Next Steps
 
-1. **Apply migration 022 to Supabase** ← unblock portal in production
-   - What: `migrations/022_professional_user_id.sql` adds `professionals.user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL` + unique partial index. Required before any portal sign-in works in production.
-   - Considerations: migration is idempotent; rollback comment is in the file.
-
-2. **Commit + push portal files** ← 18 files staged, zero `??` portal files
-   - What: `git commit -m "feat: professional self-service portal (/pro/*)"` then `git push`. All staged files are the portal implementation (login, set-password, perfil, API routes, pro-invite helper, email additions, middleware update, migration 022).
-   - Note: spec plan is at `Status: COMPLETE` — type "approve" to Bel-verify and mark VERIFIED.
-
-3. **Fix metadata in `app/layout.tsx`** — old copy still present
-   - What: `title`, `description`, `openGraph`, and `twitter` fields still reference "terapeuta ideal", "verificados", "psicólogo argentina" — language that conflicts with the holistic-wellness positioning.
-
-4. **Apply migration 020 to Supabase**
-   - What: `migrations/020_complete_specialty_mappings.sql` is committed but not yet applied to the production DB.
-
-5. **Update nav: point "Ayuda" to `/que-es-hara` or redirect `/ayuda`**
-   - What: SiteHeader still links "Ayuda" to `/ayuda`; the content is now merged into `/que-es-hara`. Redirect is the cleaner option.
-
-6. **Bel manual browser test of remaining pages** (carried over from 2026-05-20)
-   - What: Desktop nav, 2-col directory, scroll reveals, sticky sidebar on /p/[slug], container widths.
-
-7. **Decide on Item 7 gap strings** (carried over)
-   - Considerations: `'Enviando…'` (WaitlistForm), directory chip labels, profile review fallbacks, Solicitar currency labels, Registro currency descriptions, admin emails (out of scope).
-
-8. **Item 4 (Public home flip)** — deferred until Phase 1 done
-   - What: See Final Go-Live Gate section for prerequisite checklist.
-
-9. **Phase 1 — first 10 pros, 5 concierge requests, Sentry + Vercel Analytics**
+1. **Commit + push all pending changes**
+   - What: Stage and commit the full batch — `app/layout.tsx` (metadata), `app/admin/login/page.tsx` (background fix + new test), `app/pro/` (portal: login, set-password, perfil, background fixes, login test), `app/api/pro/`, `lib/pro-invite.*`, `middleware.ts`, `middleware.test.ts`, `migrations/022`, `app/api/admin/professionals/[id]/invite/`, modified `email.ts`, `email.test.ts`, `vitest.workspace.ts`, admin review page. Run full test suite first (568 tests currently green).
+   - Considerations: after push, mark `docs/plans/2026-06-10-professional-self-service-portal.md` as VERIFIED.
 
 ---
 
 ## Session Log
+
+### Session — 2026-06-16 (Portal testing + metadata + background fix)
+
+**Completed:**
+- **Plan Next Steps updated** — cleaned up after Bel confirmed: migrations 020 + 022 applied, Phase 1 done, Item 4 (home flip) done, Item 7 (wording pass) no longer needed, browser testing done. Next Steps trimmed to one remaining item (commit + push).
+- **`app/layout.tsx` metadata fixed** — replaced pre-pivot copy ("terapeuta ideal", "psicólogo argentina") with holistic-wellness copy: `title` → "Bienestar holístico en Argentina", `description`/`keywords` updated to reiki/masajes/constelaciones vocabulary, OG URL changed to `https://haravital.app`.
+- **`/pro` portal tested end-to-end** (locally, against dev server) — `/pro/login` renders correctly; unauthenticated `/pro/perfil` → redirects to `/pro/login?redirect=%2Fpro%2Fperfil`; invalid set-password token → "Enlace inválido o vencido"; forgot-password toggle reveals email form; authenticated `/pro/perfil` → correct empty-state when no profile linked.
+- **Blue background bug fixed** (`/fix`) — `/pro/login`, `/pro/set-password`, `/pro/perfil`, `/admin/login` all had `jo-yee-leong…svg` (blue illustration) overriding `PageBackground`'s default warm illustration. Root cause: explicit `const BG = …` passed as `image={BG}`. Fix: removed the constant + prop from all 4 files. 2 reproducing tests added (`app/pro/login/page.test.tsx`, `app/admin/login/page.test.tsx`). 568/568 tests green.
+
+**Blockers:**
+- All work above is uncommitted — waiting for Bel to decide to push.
+
+---
+
+### Session — 2026-06-16 (Instagram growth strategy analysis)
+
+**Completed:**
+- Reviewed ig-engage skill end-to-end (commenting loop + DM outreach cycles, cron scheduling, brand voice, log structure).
+- Researched Instagram algorithm 2025: the 3 confirmed ranking factors are watch time, likes per reach, and DM shares per reach. Outbound commenting on others' posts does not move any of these for Hara's account.
+- Researched ManyChat (comment-to-DM automation via Meta's official API): concluded it's a conversion tool, not an acquisition tool — useless before there's an engaged audience. Can be replicated with the Meta API when needed, no reason to pay for it now.
+- Researched what agencies actually do to grow from 0: every case study that worked fast combined content + advocates/influencers + paid media. Pure organic commenting is the slowest path and no serious agency relies on it alone.
+- Key unresolved question surfaced: no data exists on what ig-engage has actually generated (profile visits, DMs received, registrations attributed). Without that, any strategy change is another assumption.
+
+**Open questions added:**
+- What has ig-engage actually converted? Audit the log files for total comments posted and cross-reference with any registrations or DMs received.
+- Does Hara have any budget for paid ads, even minimal? Are any existing professionals willing to act as advocates/mention Hara?
+
+---
+
+### Session — 2026-06-11 (Docs sync + ProfileContact fix)
+
+**Completed:**
+- **PRODUCT.md synced** with current codebase state: "Two ways in" → "Product surfaces" (5 surfaces: browse with filters+map, concierge, blog, `/pro` portal, `/que-es-hara`); phase table updated (Phase 0 ✅, Phase 1 ✅, Phase 2 🔄); analytics retention lever added to Destacado value prop; note on Phase 2/3 overlap (portal pulled forward); `docs/plans/` added to source-of-truth references.
+- **CLAUDE.md synced**: "What Is This" paragraph updated to 3 surfaces + `/pro/perfil`; Stack updated (Clerk `pending` → Supabase Auth active); Project Structure `app/` expanded with all new routes (`pro/`, `blog/`, `que-es-hara/`, `admin/analytics`, `admin/blog`, `admin/practices`, full `profesionales/` component tree); `lib/` expanded with 8 new modules (`profile-score`, `ranking`, `practices`, `pro-invite`, `profile-events`, `sanitize`, `google-maps-loader`, `storage`, `email`).
+- **ProfileContact bug fix** — 3 bugs patched via `/fix` (TDD, RED → GREEN): (1) WhatsApp button rendered unconditionally — guarded with `{whatsapp && ...}`; (2) `email` field never fetched/typed/displayed — added to SELECT query, `Professional` type, and contact card; (3) existing test `hides Instagram section when instagram is null` was asserting `queryByRole('link')` too broadly — tightened to `queryByRole('link', { name: /^@/ })` (Instagram handles start with `@`; emails don't). Also fixed pre-existing `vi.hoisted()` bug in `app/api/admin/professionals/[id]/route.test.ts` (SETUP_URL referenced before initialization due to vi.mock factory hoisting).
+- **Fake reviews deleted** from Silvia Ferrer's profile (2 rows — "Ana García", 2026-06-03). `rating_average` and `rating_count` auto-reset to 0 via DB trigger.
+- 2 commits pushed: `f3fb8b7` (docs), `86b661b` (fix). 566/566 tests green pre-push.
+
+**Deviations:**
+- `/pro` portal files deliberately left uncommitted — Bel decided not to push until fully tested. Next step 2 updated to reflect this.
+
+**Blockers:**
+- `/pro` portal: migration 022 not applied to Supabase production DB.
+- `/pro` portal files: uncommitted in working tree (modified: email.ts, email.test.ts, middleware.ts, vitest.workspace.ts, admin review page; untracked: app/pro/\*, app/api/pro/\*, lib/pro-invite.\*, middleware.test.ts, migrations/022, ig-engage skill).
+
+---
 
 ### Session — 2026-06-10 (Professional self-service portal — /pro/*)
 
@@ -305,55 +327,13 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 ---
 
-### Session — 2026-06-07 (Ranking scores, WelcomeHint, blog fix, que-es-hara + ayuda merge)
-
-**Completed:**
-- Professionals directory: added `ranking_score` to SELECT query and `DirectoryProfessional` interface; added "ÍNDICE HARA" badge to each professional card, color-coded by score tier (green `text-success` ≥51, amber `text-warning` 30–50, terracotta `text-brand` <30); ordering preserved from DB ORDER BY ranking_score DESC, `.filter()` maintains it through search
-- WelcomeHint collapsible dropdown: fixed broken toggle — went through multiple approaches (localStorage guard broken by React Strict Mode double-mount, `useState` toggle stuck open due to stale `.next` HMR cache); final implementation uses native `<details>`/`<summary>` HTML — zero React state, browser-native toggle, reliable in all conditions
-- Large catch-up commit (`82d7982`): committed all previously untracked files — blog feature (public index, post detail, write form, admin review queue, API routes + tests), WelcomeModal, Qué es Hara page, ProfilePosts, SolicitarForm updates, SiteHeader + AdminLayout + error/not-found/gracias/ayuda/confirmacion updates, `lib/email.ts` + `lib/storage.ts` + `lib/sanitize.ts`, migrations 020 + 021, assets reorganized to `public/assets/bg/`, new fonts + logo, package deps updated; 439/439 unit tests green
-- Qué es Hara + Ayuda merged (`d6bdfb1`): `/que-es-hara` redesigned as document-style page — sticky left sidebar TOC on desktop (7 sections, anchor links), horizontal TOC on mobile, all original content preserved verbatim, FAQ sections (usuarios + profesionales from `/ayuda`) + contact section appended; 443/443 unit tests green
-- Blog 404 fixed: `.next/server/app/blog/` cache corrupted by HMR during WelcomeHint rewrites; cleared cache + restarted dev server (`pkill -f "next dev"`, restart)
-
-**Deviations:**
-- Ranking score display, WelcomeHint fix, and merged page were unplanned improvements requested by Bel during the session
-
-**Blockers:**
-- Migrations 020 (specialty mappings) and 021 (blog_posts) need to be applied to Supabase — both committed but not applied to prod DB yet
-
----
-
-### Session — 2026-06-05 (Nav double-active bug + registration form centering fix)
-
-**Completed:**
-- Fixed nav showing two active items simultaneously on `/profesionales/registro`: `SiteHeader.tsx` desktop and mobile `isActive` logic now uses "most specific match wins" — prefix-match only activates when no other nav link claims the same path more specifically. Root cause: `pathname.startsWith('/profesionales/')` matched `/profesionales/registro`, which is itself a nav entry.
-- Fixed registration form terms text not centered: added `mx-auto` to the `max-w-sm` paragraph in `RegistroForm.tsx:631`. `text-center` centers text within the element; `mx-auto` was missing to center the constrained-width element itself within its parent.
-- Created `app/components/SiteHeader.test.tsx` (TDD — wrote failing test before fix): 4 tests covering home link + z-index, hamburger toggle, the specific double-active regression on `/profesionales/registro`, and excluded-routes returning null. All 4 pass.
-- Committed and pushed to Vercel production. Pre-push hook ran the full 360-test unit suite — all green.
-
-**Deviations:**
-- This session opened as a continuation of the `/end-session` workflow from the previous session (which hit context limits mid-update). Plan file duplicate-step cleanup and this session log entry were completed here.
-
----
-
-### Session — 2026-06-02 (Search motor — `/profesionales` client-side filtering)
-
-**Completed:**
-- PRD `docs/prd/2026-06-02-search-professionals-directory.md` (Status: Final) — search by name, practice (key/label/alias), specialty free-text; client-side filtering; accent normalization; key decisions: single free-text input, useMemo, alias matching critical.
-- Spec plan `docs/plans/2026-06-02-search-professionals-directory.md` (Status: COMPLETE — awaiting Bel's manual approval to flip VERIFIED).
-- Created `app/profesionales/components/ProfessionalsDirectory.tsx` (276 lines, `'use client'`): exports `DirectoryProfessional` interface (adds `practices: string[] | null`), `normalize` (NFD accent strip), `buildPracticeIndex`, `matchesProfessional` (all exported for unit testing); `ProfessionalCard` + format helpers moved here from `page.tsx`; search input with lupa icon + ✕ clear button; result count (only when searching); `aria-live="polite"` on results region for screen readers; `useMemo` for `practiceIndex` (once) and `filtered` (per keystroke).
-- Created `app/profesionales/components/ProfessionalsDirectory.test.tsx` — 12 unit tests covering `normalize`, `buildPracticeIndex`, `matchesProfessional` (name, specialty, practice label, alias, accent-insensitive, empty query, no match).
-- Updated `app/profesionales/page.tsx`: 222 → 67 lines; adds `practices` to SELECT; `Promise.all([getProfessionals(), getActivePractices().catch(...)])` — graceful fallback to `[]` if catalog fails; delegates rendering to `ProfessionalsDirectory`; removed moved code.
-- 306/306 unit tests pass, tsc clean, build clean (`/profesionales` 4.01 kB).
-- Changes-review: compliance=high, quality=high, goal=achieved, 7/7 truths verified. Single suggestion (aria-live) applied inline.
-- E2E: TS-001 name search PASS, TS-002 practice+clear PASS, TS-003 alias NOT_APPLICABLE (no professional has `constelaciones-familiares` mapped in `practices` column yet — requires migration 013 + alias population in DB), TS-004 empty state + accent normalization PASS.
-
-**Blockers:**
-- Alias search end-to-end requires migration 013 applied to Supabase (adds `aliases text[]` to `practices` table) + aliases to be seeded via `migrations/016_new_practices_and_mappings.sql`. Until then, alias matching only works in unit tests.
-- Spec waiting for Bel's manual approval (Step 1 above).
-
----
-
 ### Archived Sessions
+
+- **2026-06-07**: Ranking score badges on directory cards (ÍNDICE HARA, tiered colors), WelcomeHint fixed with native `<details>` HTML, large catch-up commit `82d7982` (blog, que-es-hara, WelcomeModal, email/storage/sanitize libs, migrations 020+021, 439 tests), que-es-hara+ayuda merged with document-style sidebar TOC `d6bdfb1`.
+
+- **2026-06-05**: Nav double-active bug on `/profesionales/registro` + registration form centering fix; SiteHeader.test.tsx TDD (4 tests); full suite green, pushed to prod.
+
+- **2026-06-02**: Search motor (`/profesionales` client-side filtering) — `ProfessionalsDirectory.tsx` with `normalize`/`buildPracticeIndex`/`matchesProfessional`, search input + result count + aria-live; `page.tsx` 222→67 lines; 306/306 tests; E2E TS-001+002+004 PASS, TS-003 NOT_APPLICABLE (alias migration 013 pending). Alias matching works in unit tests only until migration applied.
 
 - **2026-06-01**: Copy audit + homepage layout fixes — pushed 2026-05-30/31 backlog (32 files, `515df17`), removed clinical language across 13 content JSON + source files (pacientes→consultas, terapeuta ideal→profesional de bienestar, voseo fixes), homepage scroll fix on mobile (SiteHeader excluded from `/`, spacing adjustments); Bel confirmed scroll resolved.
 
@@ -386,6 +366,9 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 - **2026-03-11/12**: Documentation cleanup (16→8 MD files), Claude Code tooling (8 milestones: CLAUDE.md, rules, skills, commands, agents, hooks), design system extraction (Phases 1-2: constants + Chip), professional profile `/p/[slug]` full rebuild (5 glass cards, 6 new DB columns), recommendations page fixes, production deployment fixes (liquid-glass, Upstash Redis), full page/workflow map (27 routes)
 
 ## Open Questions
+
+- [ ] **Instagram strategy — what has ig-engage actually converted?** Audit `scripts/instagram-engage.log.json` for total comments posted and DMs sent, then cross-reference with any registrations or inbound DMs received. Without this data, any strategy change is another assumption.
+- [ ] **Instagram strategy — growth levers available?** Does Hara have any budget for paid ads (even minimal)? Are any existing professionals willing to act as advocates and mention Hara on their own accounts?
 
 - [x] What happens when a profile is rejected? Keep data? Allow resubmission? Notify the professional? → **Resolved 2026-05-07/08:** soft no with 60-day cooldown; verbatim rejection_reason emailed to the pro; row preserved (partial UNIQUE excludes rejected from the live-row uniqueness invariant). See Item 3 above.
 - [x] What data should each card in the admin professionals list show? → Name, up to 3 specialty chips (colored), location, status badge (implemented in specialty color system)

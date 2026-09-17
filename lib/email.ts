@@ -29,7 +29,8 @@ function getResend(): Resend | null {
 // previous inline pattern which had an operator-precedence bug
 // (`A || B ? X : Y` parses as `(A || B) ? X : Y`, so NEXT_PUBLIC_SITE_URL
 // was read but never used).
-function emailBaseUrl(): string {
+// Exported for use in lib/pro-invite.ts — keep in sync with that module.
+export function emailBaseUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL ??
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
@@ -262,10 +263,12 @@ export async function notifyProfessionalApproved({
   to,
   full_name,
   slug,
+  setupUrl,
 }: {
   to: string
   full_name: string
   slug: string
+  setupUrl?: string
 }): Promise<boolean> {
   const safeName = escapeHtml(full_name)
   // slug is URL-safe by construction (app/api/professionals/register/route.ts:22-30
@@ -307,12 +310,29 @@ export async function notifyProfessionalApproved({
           Cuando alguien hace click en tu perfil, se abre un chat de WhatsApp directo a tu número. No filtramos ni intermediamos — la conversación es entre vos y el cliente.
         </p>
 
+        ${setupUrl ? `
+        <h3 style="font-size: 16px; font-weight: 600; margin-top: 24px; margin-bottom: 8px; color: #1F1A24;">
+          Configurá tu acceso
+        </h3>
+        <p style="font-size: 14px; color: #1F1A24; line-height: 1.6; margin-bottom: 16px;">
+          Creá tu contraseña para poder editar tu perfil cuando quieras.
+        </p>
+        <div style="margin: 16px 0 24px;">
+          <a href="${setupUrl}" target="_blank" rel="noopener"
+             style="display: inline-block; padding: 14px 28px; background-color: #4B2BBF; color: #ffffff;
+                    text-decoration: none; border-radius: 9999px; font-size: 15px; font-weight: 600;">
+            Configurá tu acceso
+          </a>
+        </div>
+        <p style="margin-top: 8px; font-size: 12px; color: #6B6374;">
+          O copiá el enlace: ${setupUrl}
+        </p>` : `
         <h3 style="font-size: 16px; font-weight: 600; margin-top: 24px; margin-bottom: 8px; color: #1F1A24;">
           ¿Querés actualizar algo?
         </h3>
         <p style="font-size: 14px; color: #1F1A24; line-height: 1.6; margin-bottom: 24px;">
           Por ahora, escribinos a ${ADMIN_EMAIL}. Pronto vas a poder editarlo vos directamente.
-        </p>
+        </p>`}
 
         <p style="font-size: 15px; color: #6B6374; line-height: 1.6; margin-top: 24px;">
           Te damos la bienvenida a Hara.
@@ -500,6 +520,44 @@ export async function notifyBlogPostRejected({
         <blockquote style="margin: 0 0 24px 0; padding: 12px 16px; border-left: 3px solid #4B2BBF; background-color: #F6F0E8; font-style: italic; color: #1F1A24; white-space: pre-line; font-size: 15px; line-height: 1.6;">${safeReason}</blockquote>
         <p style="font-size: 15px; color: #1F1A24; line-height: 1.6;">
           Si tenés preguntas, escribinos a ${ADMIN_EMAIL}.
+        </p>
+      </div>
+    `,
+  })
+}
+
+// ─── Pro-facing: password reset ───────────────────────────────────────────────
+
+export async function notifyProPasswordReset({
+  to,
+  setupUrl,
+}: {
+  to: string
+  setupUrl: string
+}): Promise<boolean> {
+  return sendEmail({
+    to,
+    subject: 'Restablecé tu contraseña en Hara',
+    html: `
+      <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 16px; color: #1F1A24;">
+        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;">
+          Restablecé tu contraseña
+        </h2>
+        <p style="font-size: 15px; color: #1F1A24; line-height: 1.6; margin-bottom: 24px;">
+          Usá el botón de abajo para crear una nueva contraseña. El enlace vence en 24 horas.
+        </p>
+        <div style="margin: 24px 0;">
+          <a href="${setupUrl}" target="_blank" rel="noopener"
+             style="display: inline-block; padding: 14px 28px; background-color: #4B2BBF; color: #ffffff;
+                    text-decoration: none; border-radius: 9999px; font-size: 15px; font-weight: 600;">
+            Crear nueva contraseña
+          </a>
+        </div>
+        <p style="margin-top: 12px; font-size: 12px; color: #6B6374;">
+          O copiá el enlace: ${setupUrl}
+        </p>
+        <p style="font-size: 13px; color: #6B6374; margin-top: 24px; line-height: 1.5;">
+          Si no pediste restablecer tu contraseña, ignorá este mensaje.
         </p>
       </div>
     `,

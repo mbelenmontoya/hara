@@ -89,7 +89,7 @@ describe('notifyProfessionalApproved', () => {
     expect(getSentEmail().subject).toBe('¡Tu perfil en Hara está activo!')
   })
 
-  it('includes a link to /p/{slug} and the three explainer headings', async () => {
+  it('includes a link to /p/{slug} and the three explainer headings (no setupUrl = fallback)', async () => {
     const { notifyProfessionalApproved } = await import('./email')
 
     await notifyProfessionalApproved({
@@ -103,6 +103,26 @@ describe('notifyProfessionalApproved', () => {
     expect(html).toContain('¿Cómo te encuentran?')
     expect(html).toContain('¿Cómo te contactan?')
     expect(html).toContain('¿Querés actualizar algo?')
+    // no setupUrl → no access-setup CTA
+    expect(html).not.toContain('Configurá tu acceso')
+  })
+
+  it('renders "Configurá tu acceso" button when setupUrl is provided', async () => {
+    const { notifyProfessionalApproved } = await import('./email')
+
+    const setupUrl = 'https://haravital.app/pro/set-password?token_hash=abc&type=invite'
+    await notifyProfessionalApproved({
+      to: 'pro@example.com',
+      full_name: 'Laura',
+      slug: 'laura-giraudo',
+      setupUrl,
+    })
+
+    const { html } = getSentEmail()
+    expect(html).toContain('Configurá tu acceso')
+    expect(html).toContain(setupUrl)
+    // fallback copy is replaced by the CTA
+    expect(html).not.toContain('¿Querés actualizar algo?')
   })
 })
 
@@ -217,10 +237,35 @@ describe('notifyProfessionalRejected', () => {
   })
 })
 
+// ── notifyProPasswordReset ────────────────────────────────────────────────────
+
+describe('notifyProPasswordReset', () => {
+  const SETUP_URL = 'https://haravital.app/pro/set-password?token_hash=abc&type=recovery'
+
+  it('sends an email with the reset subject', async () => {
+    const { notifyProPasswordReset } = await import('./email')
+
+    const ok = await notifyProPasswordReset({ to: 'pro@example.com', setupUrl: SETUP_URL })
+
+    expect(ok).toBe(true)
+    expect(getSentEmail().subject).toContain('Restablecé')
+  })
+
+  it('includes the setupUrl as a CTA button in the email body', async () => {
+    const { notifyProPasswordReset } = await import('./email')
+
+    await notifyProPasswordReset({ to: 'pro@example.com', setupUrl: SETUP_URL })
+
+    const { html } = getSentEmail()
+    expect(html).toContain(SETUP_URL)
+    expect(html).toContain('Crear nueva contraseña')
+  })
+})
+
 // ── Graceful failure (parameterized) ─────────────────────────────────────────
 
 describe('graceful-fail contract', () => {
-  it('returns false (does not throw) when RESEND_API_KEY is unset — all 3 functions', async () => {
+  it('returns false (does not throw) when RESEND_API_KEY is unset — all 4 functions', async () => {
     delete process.env.RESEND_API_KEY
     vi.resetModules()
 
@@ -234,14 +279,16 @@ describe('graceful-fail contract', () => {
       rejection_reason: 'r',
       resubmit_after: new Date('2026-07-15T12:00:00Z'),
     })
+    const d = await email.notifyProPasswordReset({ to: 'x@y.com', setupUrl: 'https://x/pro/set-password' })
 
     expect(a).toBe(false)
     expect(b).toBe(false)
     expect(c).toBe(false)
+    expect(d).toBe(false)
     expect(mockSend).not.toHaveBeenCalled()
   })
 
-  it('returns false (does not throw) when resend.emails.send rejects — all 3 functions', async () => {
+  it('returns false (does not throw) when resend.emails.send rejects — all 4 functions', async () => {
     mockSend.mockReset()
     mockSend.mockRejectedValue(new Error('Resend API down'))
 
@@ -255,9 +302,11 @@ describe('graceful-fail contract', () => {
       rejection_reason: 'r',
       resubmit_after: new Date('2026-07-15T12:00:00Z'),
     })
+    const d = await email.notifyProPasswordReset({ to: 'x@y.com', setupUrl: 'https://x/pro/set-password' })
 
     expect(a).toBe(false)
     expect(b).toBe(false)
     expect(c).toBe(false)
+    expect(d).toBe(false)
   })
 })

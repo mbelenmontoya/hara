@@ -67,3 +67,10 @@ Desktop.ini
 # Tooling output (local only)
 .playwright-cli/
 .claude/test-analyses/
+
+# Instagram engagement skills — personal config and session logs (not committed)
+scripts/instagram-engage.config.json
+scripts/instagram-engage.log.json
+scripts/instagram-dm.config.json
+scripts/instagram-dm.log.json
+scripts/hara-brand-voice.json

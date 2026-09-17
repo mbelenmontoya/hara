@@ -9,8 +9,6 @@ import { createClient } from '@/lib/supabase/client'
 import { PageBackground } from '@/app/components/ui/PageBackground'
 import { GlassCard } from '@/app/components/ui/GlassCard'
 
-const ADMIN_BG = '/assets/illustrations/jo-yee-leong-8ekcOvJnLlo-unsplash.svg'
-
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -45,7 +43,7 @@ function LoginForm() {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageBackground image={ADMIN_BG} />
+      <PageBackground />
 
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4">
         <div className="w-full max-w-sm">

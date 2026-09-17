@@ -22,16 +22,16 @@ const montserrat = Montserrat({
 })
 
 export const metadata = {
-  title: 'Hara Vital | Conectá con tu terapeuta ideal',
-  description: 'Plataforma que conecta personas con profesionales de bienestar. Encuentra tu terapeuta ideal: recomendaciones personalizadas, profesionales verificados, primero contacto libre.',
-  keywords: 'terapia online, psicólogo argentina, terapeuta online, salud mental, bienestar emocional',
+  title: 'Hara Vital | Bienestar holístico en Argentina',
+  description: 'El directorio de terapias alternativas y bienestar holístico en Argentina. Reiki, masajes terapéuticos, constelaciones familiares, diseño humano y más. Encontrá tu práctica ideal.',
+  keywords: 'reiki argentina, masajes terapéuticos, constelaciones familiares, diseño humano, registros akáshicos, bienestar holístico, terapias alternativas, terapia energética',
   authors: [{ name: 'Hara Vital' }],
   creator: 'Hara Vital',
   publisher: 'Hara Vital',
   openGraph: {
-    title: 'Hara Vital | Tu terapeuta ideal',
-    description: 'Conectamos personas con profesionales de bienestar verificados',
-    url: 'https://hara.com',
+    title: 'Hara Vital | Bienestar holístico en Argentina',
+    description: 'Directorio curado de terapias alternativas en Argentina. Reiki, masajes, constelaciones familiares, diseño humano y más.',
+    url: 'https://haravital.app',
     siteName: 'Hara Vital',
     locale: 'es_AR',
     type: 'website',
@@ -39,7 +39,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Hara Vital',
-    description: 'Conectá con tu terapeuta ideal',
+    description: 'El directorio de terapias alternativas en Argentina. Encontrá tu práctica de bienestar ideal.',
   },
   robots: {
     index: true,

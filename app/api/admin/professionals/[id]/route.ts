@@ -14,6 +14,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { logError } from '@/lib/monitoring'
 import { getActivePractices, validatePracticeKeys } from '@/lib/practices'
 import { notifyProfessionalApproved, notifyProfessionalRejected } from '@/lib/email'
+import { generateProAccessLink } from '@/lib/pro-invite'
 
 export const runtime = 'nodejs'
 
@@ -235,11 +236,19 @@ export async function PATCH(
     return NextResponse.json({ error: 'Error al aprobar el perfil' }, { status: 500 })
   }
 
+  // Generate invite link — await because setupUrl is needed for the email.
+  // Failure is non-blocking: null → email uses fallback copy.
+  const accessLink = await generateProAccessLink({
+    email: existing.email,
+    professionalId: id,
+  })
+
   // Fire-and-forget — email failure must not block the status update.
   notifyProfessionalApproved({
     to: existing.email,
     full_name: existing.full_name,
     slug: existing.slug,
+    setupUrl: accessLink?.setupUrl,
   }).catch(() => {})
 
   return NextResponse.json({ success: true, status: 'active' })

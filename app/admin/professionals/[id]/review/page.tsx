@@ -90,6 +90,9 @@ export default function ProfessionalReviewPage() {
   const [imageError, setImageError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const [inviteLoading, setInviteLoading] = useState(false)
+  const [inviteResult, setInviteResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -167,6 +170,24 @@ export default function ProfessionalReviewPage() {
       modality: professional.modality,
     }
     setScore(calculateProfileScore(scorable, next))
+  }
+
+  async function handleResendInvite() {
+    setInviteLoading(true)
+    setInviteResult(null)
+    try {
+      const res = await fetch(`/api/admin/professionals/${id}/invite`, { method: 'POST' })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        setInviteResult({ type: 'error', message: body.error ?? 'No se pudo reenviar el acceso' })
+      } else {
+        setInviteResult({ type: 'success', message: 'Enlace de acceso enviado exitosamente' })
+      }
+    } catch {
+      setInviteResult({ type: 'error', message: 'Error de red al reenviar el acceso' })
+    } finally {
+      setInviteLoading(false)
+    }
   }
 
   async function handleApprove() {
@@ -541,6 +562,28 @@ export default function ProfessionalReviewPage() {
             </div>
             <p className="text-xs text-muted">
               Aprobar hace el perfil visible en el directorio. Rechazar requiere un motivo.
+            </p>
+          </div>
+        )}
+
+        {/* Reenviar acceso — shown for active professionals */}
+        {professional.status === 'active' && (
+          <div className="flex flex-col items-end gap-2">
+            {inviteResult && (
+              <Alert variant={inviteResult.type === 'success' ? 'success' : 'error'}>
+                {inviteResult.message}
+              </Alert>
+            )}
+            <Button
+              variant="secondary"
+              size="sm"
+              loading={inviteLoading}
+              onClick={handleResendInvite}
+            >
+              Reenviar acceso
+            </Button>
+            <p className="text-xs text-muted">
+              Envía un nuevo enlace para que el profesional configure su contraseña.
             </p>
           </div>
         )}

@@ -170,7 +170,9 @@ The host in `UPSTASH_REDIS_REST_URL` (`sacred-calf-69756.upstash.io`) no longer 
 
 Measured locally: the recommendations API takes about 5 seconds, of which the rate limiter is 4.4 seconds and the three database calls are about 0.8 seconds. Production uses whatever Upstash variables are set in Vercel, which were not checked.
 
-**Idea:** create a new Upstash Redis database, put its URL and token in `.env.local` and in Vercel, and check that `ratelimit.limit` answers in milliseconds. Separately, give the limiter a short timeout so a dead Redis costs a fraction of a second instead of 4.
+Fixed in part on 2026-10-16: `lib/rate-limit.ts` now waits at most 800 ms for Redis (the library default was 5 seconds), so a dead database costs 0.8 seconds instead of 4.4.
+
+**Still to do:** create a new Upstash Redis database, put its URL and token in `.env.local` and in Vercel, and check that `ratelimit.limit` answers in milliseconds.
 
 ## Done
 

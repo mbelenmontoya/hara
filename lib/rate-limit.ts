@@ -11,6 +11,10 @@ import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import { logError } from '@/lib/monitoring'
 
+// How long to wait for Redis before letting the request through. The library default is 5 s,
+// so an unreachable database used to add seconds to every public request.
+const REDIS_TIMEOUT_MS = 800
+
 interface RateLimitOptions {
   limit: number
   window: '1 m' | '5 m' | '10 m' | '1 h'
@@ -49,6 +53,7 @@ export const ratelimit = {
           (options?.window || '1 m') as '1 m'
         ),
         analytics: true,
+        timeout: REDIS_TIMEOUT_MS,
       })
 
       return await limiter.limit(namespacedKey)

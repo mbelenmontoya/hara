@@ -80,15 +80,14 @@ The `destello` SVG exported from Claude Design renders as a dot, even in the ori
 
 **Idea:** re-export `destello` from the design tool as a clean, single-shape SVG, and trim the others.
 
-### 7. Build, install and lint are not working in a fresh checkout
+### 7. Lint is not working in a fresh checkout
 
 **Found:** 2026-09-30.
 
-- `npm ci` fails because `package-lock.json` is out of sync with `package.json`.
-- `npm run build` fails type-checking `vitest.workspace.ts` because two different `vite` versions are installed.
 - `npm run lint` has no ESLint config, so it asks to set one up.
+- Fixed 2026-10-16: `npm ci` works again (the lockfile was refreshed), and `npm run build` passes (`vitest.workspace.ts` is left out of the build's type check in `tsconfig.json`).
 
-**Idea:** refresh the lockfile, fix the duplicate `vite`, and add an ESLint config.
+**Idea:** add an ESLint config.
 
 ### 8. `.env.local` has two odd lines
 

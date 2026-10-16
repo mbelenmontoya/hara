@@ -98,16 +98,16 @@ test.describe('TS-001 — Review submission via valid token', () => {
     await expect(page.getByRole('status')).toBeVisible({ timeout: 5000 })
   })
 
-  test('shows "ya enviada" when token is already consumed', async ({ page }) => {
+  test('reopens the saved review with "Editar mi reseña" when the link was already used', async ({ page }) => {
     test.skip(!migration006Applied, 'Migration 006 not applied')
 
     // Token was consumed in the previous test
     await page.goto(`/r/review/${testToken}`)
     await page.waitForLoadState('networkidle')
 
-    // Should show consumed state (no form)
-    await expect(page.getByRole('form').count()).resolves.toBe(0)
-    await expect(page.locator('text=/ya fue enviada/i')).toBeVisible()
+    await expect(page.getByRole('status')).toBeVisible()
+    await expect(page.getByLabel('4 de 5 estrellas')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Editar mi reseña' })).toBeVisible()
   })
 })
 

@@ -1,5 +1,6 @@
 // Review submission API
-// POST: validates token, calls submit_review() RPC atomically (inserts review + consumes token),
+// POST: validates token and tags, calls submit_review() RPC atomically (inserts the review and consumes
+//       the token, or updates the review when the same link is used again before it expires),
 //       returns 201 { review_id, professional_id } or 400 with friendly error message.
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -7,6 +8,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { ratelimit } from '@/lib/rate-limit'
 import { extractClientIP } from '@/lib/validation'
 import { logError } from '@/lib/monitoring'
+import { cleanTagList, publicReviewerName } from '@/lib/review-form'
 
 export const runtime = 'nodejs'
 
@@ -27,7 +29,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Body requerido' }, { status: 400 })
   }
 
-  const { token, rating, text, reviewer_name } = body as Record<string, unknown>
+  const { token, rating, text, reviewer_name, tags } = body as Record<string, unknown>
 
   if (typeof token !== 'string' || !token.trim()) {
     return NextResponse.json({ error: 'Token requerido' }, { status: 400 })
@@ -36,6 +38,11 @@ export async function POST(request: NextRequest) {
   const numRating = Number(rating)
   if (!Number.isInteger(numRating) || numRating < 1 || numRating > 5) {
     return NextResponse.json({ error: 'La calificación debe ser entre 1 y 5' }, { status: 400 })
+  }
+
+  const tagList = cleanTagList(tags)
+  if (!tagList) {
+    return NextResponse.json({ error: 'Etiquetas inválidas' }, { status: 400 })
   }
 
   // Rate limit per IP — 5 submits per hour prevents spam
@@ -50,7 +57,8 @@ export async function POST(request: NextRequest) {
       p_token:         token.trim(),
       p_rating:        numRating,
       p_text:          typeof text === 'string' && text.trim() ? text.trim() : null,
-      p_reviewer_name: typeof reviewer_name === 'string' && reviewer_name.trim() ? reviewer_name.trim() : null,
+      p_reviewer_name: typeof reviewer_name === 'string' ? publicReviewerName(reviewer_name) : null,
+      p_tags:          tagList,
     })
 
     if (error) {

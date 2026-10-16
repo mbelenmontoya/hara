@@ -1,7 +1,8 @@
-// Unit tests for ReviewSubmitForm component
+// Unit tests for the review link form (design 9d): stars, tags, words, name, anonymous switch,
+// sending, the thank-you preview and editing the same review.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ReviewSubmitForm } from './ReviewSubmitForm'
 
@@ -10,65 +11,108 @@ globalThis.fetch = mockFetch
 
 beforeEach(() => { vi.clearAllMocks() })
 
-const BASE_PROPS = { token: 'test-token', professionalName: 'Ana García' }
+const PROFESSIONAL = { name: 'Lucía Paz', photoUrl: null, practice: 'Reiki', specialtyKey: 'estres-ansiedad' }
+const BASE_PROPS = { token: 'test-token', professional: PROFESSIONAL, savedReview: null }
+const publish = () => screen.getByRole('button', { name: 'Publicar reseña' })
+const sentBody = () => JSON.parse((mockFetch.mock.calls.at(-1) as [string, RequestInit])[1].body as string) as Record<string, unknown>
+
+async function fillForm(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: '4 estrellas' }))
+  await user.click(screen.getByRole('button', { name: 'Puntual' }))
+  await user.click(screen.getByRole('button', { name: 'Volvería' }))
+  await user.type(screen.getByLabelText('En tus palabras'), 'Salí más tranquila')
+  await user.type(screen.getByLabelText('Tu nombre'), 'prueba claude')
+}
 
 describe('ReviewSubmitForm', () => {
-  it('submit is disabled when no rating selected', () => {
-    render(<ReviewSubmitForm {...BASE_PROPS} />)
-    expect(screen.getByRole('button', { name: /enviar/i })).toBeDisabled()
-  })
-
-  it('enables submit after selecting a star rating', async () => {
+  it('shows the professional and keeps Publicar disabled until a star is picked', async () => {
     const user = userEvent.setup()
     render(<ReviewSubmitForm {...BASE_PROPS} />)
-    await user.click(screen.getByRole('button', { name: /4 estrella/i }))
-    expect(screen.getByRole('button', { name: /enviar/i })).not.toBeDisabled()
+
+    expect(screen.getByText('Lucía Paz')).toBeInTheDocument()
+    expect(screen.getByText('Reiki')).toBeInTheDocument()
+    expect(screen.getByText('Tocá para calificar')).toBeInTheDocument()
+    expect(publish()).toBeDisabled()
+
+    await user.click(screen.getByRole('button', { name: '4 estrellas' }))
+    expect(screen.getByText('Muy bien')).toBeInTheDocument()
+    expect(publish()).not.toBeDisabled()
   })
 
-  it('calls POST /api/reviews/submit with correct payload', async () => {
+  it('sends the stars, tags, words and name, then shows the preview', async () => {
     mockFetch.mockResolvedValue({ ok: true, json: async () => ({ review_id: 'rev-1' }) })
     const user = userEvent.setup()
     render(<ReviewSubmitForm {...BASE_PROPS} />)
-    await user.click(screen.getByRole('button', { name: /5 estrella/i }))
-    await user.type(screen.getByPlaceholderText(/experiencia/i), 'Muy buena sesion')
-    await user.type(screen.getByPlaceholderText(/María/i), 'María')
-    await user.click(screen.getByRole('button', { name: /enviar/i }))
-    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1))
-    const [url, opts] = mockFetch.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('/api/reviews/submit')
-    const body = JSON.parse(opts.body as string) as Record<string, unknown>
-    expect(body.token).toBe('test-token')
-    expect(body.rating).toBe(5)
-    expect(body.text).toBe('Muy buena sesion')
-    expect(body.reviewer_name).toBe('María')
+
+    await fillForm(user)
+    expect(screen.getByText('Se mostrará como “Prueba C.”')).toBeInTheDocument()
+    await user.click(publish())
+
+    expect(mockFetch).toHaveBeenCalledWith('/api/reviews/submit', expect.objectContaining({ method: 'POST' }))
+    expect(sentBody()).toEqual({
+      token: 'test-token', rating: 4, text: 'Salí más tranquila', reviewer_name: 'prueba claude', tags: ['puntual', 'volveria'],
+    })
+    expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent('Gracias, Prueba.')
+    expect(screen.getByLabelText('4 de 5 estrellas')).toHaveTextContent('★★★★')
+    expect(screen.getByText('“Salí más tranquila”')).toBeInTheDocument()
+    expect(screen.getByText('Prueba C. · Puntual · Volvería')).toBeInTheDocument()
   })
 
-  it('shows thank-you message on success', async () => {
+  it('sends no name when published anonymously and shows "Anónimo"', async () => {
     mockFetch.mockResolvedValue({ ok: true, json: async () => ({ review_id: 'rev-1' }) })
     const user = userEvent.setup()
     render(<ReviewSubmitForm {...BASE_PROPS} />)
-    await user.click(screen.getByRole('button', { name: /3 estrella/i }))
-    await user.click(screen.getByRole('button', { name: /enviar/i }))
-    await waitFor(() => expect(screen.getByRole('status')).toBeInTheDocument())
+
+    await fillForm(user)
+    await user.click(screen.getByRole('switch', { name: 'Publicar sin mi nombre' }))
+    expect(screen.getByText('Se mostrará como “Anónimo”')).toBeInTheDocument()
+    await user.click(publish())
+
+    expect(sentBody().reviewer_name).toBeNull()
+    expect(await screen.findByText('Anónimo · Puntual · Volvería')).toBeInTheDocument()
   })
 
-  it('shows error alert on API failure', async () => {
-    mockFetch.mockResolvedValue({ ok: false, json: async () => ({ error: 'Token vencido' }) })
-    const user = userEvent.setup()
-    render(<ReviewSubmitForm {...BASE_PROPS} />)
-    await user.click(screen.getByRole('button', { name: /2 estrella/i }))
-    await user.click(screen.getByRole('button', { name: /enviar/i }))
-    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())
-  })
-
-  it('does not include reviewer_name when left empty', async () => {
+  it('goes back to the filled form with "Editar mi reseña" and sends the change', async () => {
     mockFetch.mockResolvedValue({ ok: true, json: async () => ({ review_id: 'rev-1' }) })
     const user = userEvent.setup()
     render(<ReviewSubmitForm {...BASE_PROPS} />)
-    await user.click(screen.getByRole('button', { name: /5 estrella/i }))
-    await user.click(screen.getByRole('button', { name: /enviar/i }))
-    await waitFor(() => expect(mockFetch).toHaveBeenCalled())
-    const body = JSON.parse((mockFetch.mock.calls[0][1] as RequestInit).body as string) as Record<string, unknown>
-    expect(body.reviewer_name).toBeNull()
+
+    await fillForm(user)
+    await user.click(publish())
+    await user.click(await screen.findByRole('button', { name: 'Editar mi reseña' }))
+
+    expect(screen.getByLabelText('En tus palabras')).toHaveValue('Salí más tranquila')
+    expect(screen.getByRole('button', { name: 'Puntual' })).toHaveAttribute('aria-pressed', 'true')
+    await user.click(screen.getByRole('button', { name: '5 estrellas' }))
+    await user.click(publish())
+
+    expect(sentBody()).toMatchObject({ rating: 5, tags: ['puntual', 'volveria'] })
+    expect(await screen.findByLabelText('5 de 5 estrellas')).toHaveTextContent('★★★★★')
+  })
+
+  it('opens on the preview of an already saved review', () => {
+    render(
+      <ReviewSubmitForm
+        {...BASE_PROPS}
+        savedReview={{ rating: 3, text: null, reviewerName: null, tags: ['precio-justo'] }}
+      />
+    )
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Gracias.')
+    expect(screen.getByLabelText('3 de 5 estrellas')).toHaveTextContent('★★★')
+    expect(screen.getByText('Anónimo · Precio justo')).toBeInTheDocument()
+    expect(screen.queryByText(/“/)).toBeNull()
+  })
+
+  it('shows the error and keeps the form filled when sending fails', async () => {
+    mockFetch.mockResolvedValue({ ok: false, json: async () => ({ error: 'El enlace de reseña venció.' }) })
+    const user = userEvent.setup()
+    render(<ReviewSubmitForm {...BASE_PROPS} />)
+
+    await fillForm(user)
+    await user.click(publish())
+
+    expect(await screen.findByText('El enlace de reseña venció.')).toBeInTheDocument()
+    expect(screen.getByLabelText('En tus palabras')).toHaveValue('Salí más tranquila')
   })
 })

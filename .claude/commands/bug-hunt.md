@@ -1,6 +1,6 @@
 ---
 description: Systematically hunt for bugs in a component or feature
-argument-hint: "Component or feature to investigate - e.g., 'BottomSheet', 'card swipe', 'registration form'"
+argument-hint: "Component or feature to investigate - e.g., 'CartaPick', 'review form', 'registration form'"
 ---
 
 ## Investigation Target

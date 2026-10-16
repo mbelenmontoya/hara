@@ -1,6 +1,6 @@
 ---
 description: Generate tests for a component, hook, or utility
-argument-hint: "Path to file needing tests - e.g., 'app/r/[tracking_code]/hooks/useSwipeGesture.ts'"
+argument-hint: "Path to file needing tests - e.g., 'app/r/[tracking_code]/hooks/useRecommendations.ts'"
 ---
 
 ## Target File

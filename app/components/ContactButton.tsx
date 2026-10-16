@@ -24,6 +24,7 @@ interface ContactButtonProps {
   attributionToken?: string // Optional: JWT token for concierge (attributed) visits
   className?: string
   unstyled?: boolean // Optional: drop the default button look; the caller supplies all visual classes
+  label?: string // Optional: button text (default "Contactar por WhatsApp")
   onBeforeNavigate?: () => void // Optional: Called before opening WhatsApp
 }
 
@@ -36,6 +37,7 @@ export function ContactButton({
   attributionToken,
   className = '',
   unstyled = false,
+  label = 'Contactar por WhatsApp',
   onBeforeNavigate,
 }: ContactButtonProps) {
   const [isTracking, setIsTracking] = useState(false)
@@ -99,7 +101,7 @@ export function ContactButton({
       data-testid={`contact-button-${professionalSlug}`}
       className={`inline-flex items-center justify-center ${unstyled ? '' : DEFAULT_LOOK} ${className} ${isTracking ? 'opacity-90' : ''}`}
     >
-      {isTracking ? `Contactando a ${professionalName}...` : 'Contactar por WhatsApp'}
+      {isTracking ? `Contactando a ${professionalName}...` : label}
     </a>
   )
 }

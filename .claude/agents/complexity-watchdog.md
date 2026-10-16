@@ -55,7 +55,7 @@ Count decision points per function (if, else if, for, while, case, catch, ternar
 When a file needs splitting, follow established patterns from `app/r/[tracking_code]/`:
 
 - **`hooks/`** — `use<Name>.ts` for extracted logic (data fetching, gestures, animations)
-- **`components/`** — Sub-components by purpose (BottomSheet, CardSkeleton)
+- **`components/`** — Sub-components by purpose (CartaPick, CardSkeleton)
 - **Named constants** — Group at top of file with category comments
 
 ## Output Format

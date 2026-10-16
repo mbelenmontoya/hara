@@ -1,40 +1,32 @@
-// Hook for fetching recommendations data
+// Hook for fetching the concierge Carta data
 // Handles loading, error states, and data fetching logic
 
 import { useState, useEffect } from 'react'
+import type { CartaPick } from '@/lib/carta'
 
-export interface Professional {
-  slug: string
-  name: string
-  specialty: string
-  whatsapp: string
-  bio?: string
-  profile_image_url?: string
+export interface CartaHeader {
+  first_name: string | null
+  sent_at: string
 }
 
-export interface Recommendation {
-  id: string
-  rank: number
-  reasons: string[]
-  attribution_token: string
-  professional: Professional
-}
+export type CartaError = 'not-found' | 'fetch' | 'network'
 
 interface UseRecommendationsResult {
-  recommendations: Recommendation[]
+  carta: CartaHeader | null
+  recommendations: CartaPick[]
   loading: boolean
-  error: 'expired' | 'fetch' | 'network' | null
+  error: CartaError | null
 }
 
 /**
- * Fetches match recommendations for a given tracking code
+ * Fetches the Carta (person's first name, date and recommended professionals) for a tracking code
  * @param trackingCode - Match tracking code (format: M-timestamp-id)
- * @returns Loading state, recommendations data, and error state
  */
 export function useRecommendations(trackingCode: string): UseRecommendationsResult {
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<'expired' | 'fetch' | 'network' | null>(null)
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([])
+  const [error, setError] = useState<CartaError | null>(null)
+  const [carta, setCarta] = useState<CartaHeader | null>(null)
+  const [recommendations, setRecommendations] = useState<CartaPick[]>([])
 
   useEffect(() => {
     if (!trackingCode) {
@@ -42,33 +34,26 @@ export function useRecommendations(trackingCode: string): UseRecommendationsResu
       return
     }
 
-    async function fetchRecommendations() {
+    async function fetchCarta() {
       try {
-        const res = await fetch(`/api/public/recommendations?tracking_code=${trackingCode}`)
-
-        if (res.status === 404) {
-          setError('expired')
-          setLoading(false)
-          return
-        }
-
-        if (!res.ok) {
+        const res = await fetch(`/api/public/recommendations?tracking_code=${encodeURIComponent(trackingCode)}`)
+        if (res.status === 404 || res.status === 400) {
+          setError('not-found')
+        } else if (!res.ok) {
           setError('fetch')
-          setLoading(false)
-          return
+        } else {
+          const data = await res.json()
+          setCarta(data.carta ?? null)
+          setRecommendations(data.recommendations ?? [])
         }
-
-        const data = await res.json()
-        setRecommendations(data.recommendations || [])
-        setLoading(false)
-      } catch (err) {
+      } catch {
         setError('network')
-        setLoading(false)
       }
+      setLoading(false)
     }
 
-    fetchRecommendations()
+    fetchCarta()
   }, [trackingCode])
 
-  return { recommendations, loading, error }
+  return { carta, recommendations, loading, error }
 }

@@ -4,7 +4,7 @@ description: Systematically hunt for bugs in a component or feature
 author: hara
 arguments:
   - name: target
-    description: Component or feature to investigate (e.g., "BottomSheet", "card swipe")
+    description: Component or feature to investigate (e.g., "CartaPick", "review form")
 ---
 
 # Bug Hunt Command

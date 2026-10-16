@@ -82,33 +82,34 @@ function modalityOf(p: HomeProfessional): string | null {
   return labels.length > 0 ? labels.join(' · ') : null
 }
 
+/** The ready-to-render row for one professional (also used by the concierge Carta). */
+export function toHomeRow(p: HomeProfessional, catalog: Practice[]): HomeRow {
+  const resolved = resolveProfileSpecialties(
+    { practiceKeys: p.practices ?? [], specialties: p.specialties ?? [] },
+    catalog
+  )
+  const firstPractice = resolved.practiceKeys[0]
+  return {
+    slug: p.slug,
+    name: p.full_name,
+    quote: p.short_description,
+    photoUrl: p.profile_image_url?.startsWith('http') ? p.profile_image_url : null,
+    practice: firstPractice ? catalog.find((c) => c.key === firstPractice)?.label ?? null : null,
+    where: placeOf(p),
+    price: formatHomePrice(p.price_range_min, p.price_range_max, p.currency),
+    rating: p.rating_average != null && (p.rating_count ?? 0) > 0 ? p.rating_average : null,
+    ratingCount: p.rating_count ?? 0,
+    specialtyKeys: resolved.specialtyKeys,
+    chips: resolved.specialtyKeys.map((key) => ({ key, label: SPECIALTY_MAP[key] ?? key })),
+    score: p.ranking_score != null && p.ranking_score > 0 ? Math.round(p.ranking_score) : null,
+    modality: modalityOf(p),
+    destacado: isEffectivelyDestacado(p.subscription_tier, p.tier_expires_at),
+  }
+}
+
 /** Cards and rows, with rows in the order given (the directory ranking). */
 export function buildHomeData(pros: HomeProfessional[], catalog: Practice[]): HomeData {
-  const labelOf = new Map(catalog.map((p) => [p.key, p.label]))
-
-  const rows: HomeRow[] = pros.map((p) => {
-    const resolved = resolveProfileSpecialties(
-      { practiceKeys: p.practices ?? [], specialties: p.specialties ?? [] },
-      catalog
-    )
-    const firstPractice = resolved.practiceKeys[0]
-    return {
-      slug: p.slug,
-      name: p.full_name,
-      quote: p.short_description,
-      photoUrl: p.profile_image_url?.startsWith('http') ? p.profile_image_url : null,
-      practice: firstPractice ? labelOf.get(firstPractice) ?? null : null,
-      where: placeOf(p),
-      price: formatHomePrice(p.price_range_min, p.price_range_max, p.currency),
-      rating: p.rating_average != null && (p.rating_count ?? 0) > 0 ? p.rating_average : null,
-      ratingCount: p.rating_count ?? 0,
-      specialtyKeys: resolved.specialtyKeys,
-      chips: resolved.specialtyKeys.map((key) => ({ key, label: SPECIALTY_MAP[key] ?? key })),
-      score: p.ranking_score != null && p.ranking_score > 0 ? Math.round(p.ranking_score) : null,
-      modality: modalityOf(p),
-      destacado: isEffectivelyDestacado(p.subscription_tier, p.tier_expires_at),
-    }
-  })
+  const rows: HomeRow[] = pros.map((p) => toHomeRow(p, catalog))
 
   const counts = new Map<string, number>()
   for (const row of rows) {

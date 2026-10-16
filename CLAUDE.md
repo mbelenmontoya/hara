@@ -22,9 +22,9 @@ Curated marketplace for **terapias alternativas y bienestar holístico** in Span
 
 ```
 app/
-├── r/[tracking_code]/        # Recommendations (card deck, swipe, bottom sheet)
-│   ├── hooks/                # useRecommendations, useSwipeGesture, useRevealTransition, useMediaQuery
-│   └── components/           # BottomSheet, BackgroundPicker, CardSkeleton
+├── r/[tracking_code]/        # Concierge Carta: the 3 recommendations (almanac list)
+│   ├── hooks/                # useRecommendations (Carta data)
+│   └── components/           # CartaPick, CardSkeleton
 ├── p/[slug]/                 # Professional public profile
 ├── registro/                 # Professional registration form (4 steps) + confirmacion page
 ├── profesionales/            # Old directory components, kept for the new home design (no page, no route)

@@ -1,20 +1,27 @@
 {
   "route": "/r/[tracking_code]",
-  "file": "app/r/[tracking_code]/page.tsx",
-  "description": "Recommendations card deck. Shown when a user receives their 3 curated professionals. Has a reveal screen (mobile) and card deck.",
+  "files": [
+    "app/r/[tracking_code]/page.tsx",
+    "app/r/[tracking_code]/components/CartaPick.tsx",
+    "app/r/[tracking_code]/error.tsx"
+  ],
+  "description": "Concierge Carta (design 9c). The link the team sends by WhatsApp: a greeting with the person's first name and the date, then the 3 recommended professionals.",
   "strings": {
-    "reveal_h1": "Tus 3 opciones están listas",
-    "reveal_body": "Elegimos profesionales que encajan con lo que nos contaste.",
-    "reveal_button": "Ver mis 3 opciones",
-    "reveal_privacy": "Tu info se comparte recién cuando vos escribís.",
-    "error_expired_h2": "Este link venció",
-    "error_expired_body_link_text": "Visitá /ayuda",
-    "error_expired_body": "¿Perdiste tu link?",
-    "error_load_h2": "No pudimos cargar",
-    "error_load_body_link_text": "¿Necesitás ayuda?",
-    "error_load_body": "Probá de nuevo.",
-    "error_retry_button": "Reintentar",
-    "nav_prev_aria": "Anterior profesional",
-    "nav_next_aria": "Siguiente profesional"
+    "label_for": "Para {first_name}",
+    "h1_with_name": "{first_name}, estas son tus tres.",
+    "h1_without_name": "Estas son tus tres.",
+    "pick_why": "Por qué pensé en {professional_first_name}",
+    "pick_whatsapp": "Escribirle por WhatsApp",
+    "pick_profile": "Perfil",
+    "footer_h2": "¿Ninguna te convence?",
+    "footer_body": "Respondé el mensaje donde te llegó este link y te proponemos otras tres, sin costo.",
+    "not_found_h1": "No encontramos esta carta",
+    "not_found_body": "Revisá que el link esté completo. Si no, contanos de nuevo qué estás buscando.",
+    "not_found_button": "Pedir una recomendación",
+    "load_error_h1": "No pudimos cargar tu carta",
+    "load_error_body": "Probá de nuevo en un momento.",
+    "network_error_body": "Revisá tu conexión y probá de nuevo.",
+    "boundary_body": "Hubo un problema al abrirla. Probá de nuevo en un momento.",
+    "retry_button": "Reintentar"
   }
 }

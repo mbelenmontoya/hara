@@ -65,7 +65,7 @@ docs: update TODO.md with email feature requirements
 
 chore: add test artifacts to .gitignore
 
-perf(recommendations): lazy load BottomSheet component
+perf(recommendations): lazy load CartaPick photos
 ```
 
 ### Multi-line Example

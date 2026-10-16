@@ -23,48 +23,25 @@ export default function RecommendationsError({
   }, [error])
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="bg-surface backdrop-blur-xl rounded-3xl shadow-elevated p-8 max-w-md w-full text-center">
-        <div className="w-16 h-16 bg-warning-weak rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg
-            className="w-8 h-8 text-warning"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-        </div>
-
-        <h2 className="text-2xl font-semibold text-foreground mb-3">
-          No pudimos cargar tus opciones
-        </h2>
-
-        <p className="text-muted leading-relaxed mb-6">
-          Hubo un problema al cargar las recomendaciones. Por favor, intentá de nuevo o
-          pedí un nuevo link por email.
-        </p>
-
+    <main className="font-almanac flex min-h-screen items-center justify-center bg-background px-4 text-foreground">
+      <div className="w-full max-w-sm rounded-[26px] bg-gray-50 p-8 text-center shadow-soft">
+        <h1 className="font-almanac-serif mb-0 text-[30px]" style={{ lineHeight: 1.05, letterSpacing: 0 }}>
+          No pudimos cargar tu carta
+        </h1>
+        <span className="mt-3 block text-sm leading-[1.5] text-gray-700">
+          Hubo un problema al abrirla. Probá de nuevo en un momento.
+        </span>
         {error.digest && (
-          <p className="text-xs text-muted/60 mb-6 font-mono">
-            Código de error: {error.digest}
-          </p>
+          <span className="mt-3 block font-mono text-xs text-muted">Código de error: {error.digest}</span>
         )}
-
         <button
+          type="button"
           onClick={() => reset()}
-          className="w-full bg-brand text-white px-6 py-4 rounded-full shadow-elevated hover:shadow-strong active:scale-[0.98] transition-all font-semibold mb-3"
+          className="btn-press-glow mt-6 w-full rounded-[15px] bg-brand-dark p-[13px] text-[14.5px] font-medium text-gray-50"
         >
           Reintentar
         </button>
-
-
       </div>
-    </div>
+    </main>
   )
 }

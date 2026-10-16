@@ -15,8 +15,8 @@ description: Enforce checking existing code before creating new implementations 
 |-----------|---------|
 | `app/components/ui/` | Design system: Alert, Badge, Button, Card, EmptyState, Input, Modal, Table |
 | `app/components/` | Shared: ContactButton, PlacesAutocomplete, PublicLayout, AdminLayout |
-| `app/r/[tracking_code]/components/` | Route-specific: BottomSheet, CardSkeleton, BackgroundPicker |
-| `app/r/[tracking_code]/hooks/` | Custom hooks: useRecommendations, useSwipeGesture, useRevealTransition, useMediaQuery |
+| `app/r/[tracking_code]/components/` | Route-specific: CartaPick, CardSkeleton |
+| `app/r/[tracking_code]/hooks/` | Custom hooks: useRecommendations |
 | `lib/` | Utilities: supabase-admin, attribution-tokens, rate-limit, env, monitoring, validation, crypto-utils, tracking-code, billing-month |
 | `lib/translations/` | i18n: es.ts (Spanish strings) |
 | `app/globals.css` | Design tokens, utility classes (.liquid-glass, .btn-press-glow) |
@@ -25,17 +25,13 @@ description: Enforce checking existing code before creating new implementations 
 
 | Hook | Purpose |
 |------|---------|
-| `useRecommendations()` | Fetch recommendations by tracking code |
-| `useSwipeGesture()` | Horizontal swipe with drag offset |
-| `useRevealTransition()` | Reveal → deck crossfade animation |
-| `useIsDesktop()` | Media query for desktop breakpoint |
+| `useRecommendations()` | Fetch the Carta (first name, date, picks) by tracking code |
 
 ## Existing UI Components (Do Not Recreate)
 
 | Component | Purpose |
 |-----------|---------|
 | `ContactButton` | WhatsApp CTA with sendBeacon event tracking |
-| `BottomSheet` | iOS-style slide-up modal with liquid-glass |
 | `CardSkeleton` / `LoadingSkeleton` | Loading placeholder |
 | `PlacesAutocomplete` | Google Places location input |
 | `PublicLayout` / `AdminLayout` | Page layout wrappers |

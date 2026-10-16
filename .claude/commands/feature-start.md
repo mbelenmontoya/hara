@@ -24,8 +24,8 @@ Feature: $ARGUMENTS
 |----------|-----------|
 | `app/components/ui/` | Alert, Badge, Button, Card, EmptyState, Input, Modal, Table |
 | `app/components/` | ContactButton, PlacesAutocomplete, PublicLayout, AdminLayout |
-| `app/r/[tracking_code]/hooks/` | useRecommendations, useSwipeGesture, useRevealTransition, useMediaQuery |
-| `app/r/[tracking_code]/components/` | BottomSheet, CardSkeleton, BackgroundPicker |
+| `app/r/[tracking_code]/hooks/` | useRecommendations |
+| `app/r/[tracking_code]/components/` | CartaPick, CardSkeleton |
 | `lib/` | supabase-admin, attribution-tokens, monitoring, validation, env, translations |
 | `app/globals.css` | Utility classes: .liquid-glass, .btn-press-glow, .btn-press-inset |
 

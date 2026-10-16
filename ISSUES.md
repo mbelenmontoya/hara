@@ -152,6 +152,26 @@ Checking the form in the browser sends a real lead to Supabase. Those test leads
 
 **Idea:** delete each test lead from the admin after a check. If matching without a practice turns out hard, add the question back as an optional chip row in step 1.
 
+### 15. Review tags are saved but not shown on the profile yet
+
+**Found:** 2026-10-16, while building the new review link (design 9d).
+
+The review page now asks "¿Qué fue cierto?" with six tags, and saves them in `reviews.tags` (migration 024). The same link can also edit the review until it expires. The tags show on the review's thank-you preview, but the public profile's reviews section does not show them, because the profile design has no place for them.
+
+The tag labels come from the design. One of them ("Me sentí escuchada") is written in the feminine.
+
+**Idea:** when the profile reviews get their almanac design, show the tags there. Decide then whether the labels need neutral wording.
+
+### 16. The Upstash rate limiter is gone, and every rate-limited request waits about 4 seconds
+
+**Found:** 2026-10-16, while checking the Carta in the browser (it took about 5 seconds to load).
+
+The host in `UPSTASH_REDIS_REST_URL` (`sacred-calf-69756.upstash.io`) no longer exists in DNS (`getaddrinfo ENOTFOUND`). That usually means the free Upstash database was deleted for inactivity. `lib/rate-limit.ts` fails open, so requests still go through, but each one first waits about 4.4 seconds for the lookup to fail. This slows every endpoint that calls `ratelimit.limit`: the Carta data, review submissions, contact events and the other public routes. Nothing is being rate limited right now.
+
+Measured locally: the recommendations API takes about 5 seconds, of which the rate limiter is 4.4 seconds and the three database calls are about 0.8 seconds. Production uses whatever Upstash variables are set in Vercel, which were not checked.
+
+**Idea:** create a new Upstash Redis database, put its URL and token in `.env.local` and in Vercel, and check that `ratelimit.limit` answers in milliseconds. Separately, give the limiter a short timeout so a dead Redis costs a fraction of a second instead of 4.
+
 ## Done
 
 - 2026-10-02: removed the old directory page `/profesionales` but kept its components for the new design (it redirects to `/`), moved sign-up from `/profesionales/registro` to `/registro` (old addresses redirect), and pointed the nav, other pages, emails, docs and tests to the new places.

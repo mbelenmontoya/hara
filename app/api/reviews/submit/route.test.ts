@@ -33,7 +33,7 @@ const VALID = { token: 'abc123', rating: 5, text: 'Excelente!', reviewer_name: '
 
 beforeEach(() => { vi.clearAllMocks() })
 
-describe('POST /api/reviews/submit — validation', () => {
+describe('POST /api/reviews/submit: validation', () => {
   it('returns 400 when token is missing', async () => {
     const res = await POST(makePost({ rating: 5 }))
     expect(res.status).toBe(400)
@@ -55,7 +55,7 @@ describe('POST /api/reviews/submit — validation', () => {
   })
 })
 
-describe('POST /api/reviews/submit — RPC error mapping', () => {
+describe('POST /api/reviews/submit: RPC error mapping', () => {
   it('returns 400 with friendly message for invalid_token error', async () => {
     mockRpc.mockResolvedValue({ data: null, error: { message: 'invalid_token' } })
     const res = await POST(makePost(VALID))
@@ -73,12 +73,41 @@ describe('POST /api/reviews/submit — RPC error mapping', () => {
   })
 })
 
-describe('POST /api/reviews/submit — success', () => {
+describe('POST /api/reviews/submit: success', () => {
   it('returns 201 with review_id when RPC succeeds', async () => {
     mockRpc.mockResolvedValue({ data: { review_id: 'rev-123', professional_id: 'pro-456' }, error: null })
     const res = await POST(makePost(VALID))
     expect(res.status).toBe(201)
     const body = await res.json()
     expect(body.review_id).toBe('rev-123')
+  })
+})
+
+describe('POST /api/reviews/submit: payload', () => {
+  it('sends the tags and the shortened public name to the RPC', async () => {
+    mockRpc.mockResolvedValue({ data: { review_id: 'r1', professional_id: 'p1' }, error: null })
+    const res = await POST(makePost({ token: ' abc123 ', rating: 4, text: ' Muy bien ', reviewer_name: 'prueba claude', tags: ['puntual', 'volveria'] }))
+    expect(res.status).toBe(201)
+    expect(mockRpc).toHaveBeenCalledWith('submit_review', {
+      p_token: 'abc123',
+      p_rating: 4,
+      p_text: 'Muy bien',
+      p_reviewer_name: 'Prueba C.',
+      p_tags: ['puntual', 'volveria'],
+    })
+  })
+
+  it('sends no name and no tags when they are left out', async () => {
+    mockRpc.mockResolvedValue({ data: { review_id: 'r1', professional_id: 'p1' }, error: null })
+    await POST(makePost({ token: 'abc123', rating: 5 }))
+    expect(mockRpc).toHaveBeenCalledWith('submit_review', {
+      p_token: 'abc123', p_rating: 5, p_text: null, p_reviewer_name: null, p_tags: [],
+    })
+  })
+
+  it('returns 400 for an unknown tag without calling the RPC', async () => {
+    const res = await POST(makePost({ ...VALID, tags: ['puntual', 'inventado'] }))
+    expect(res.status).toBe(400)
+    expect(mockRpc).not.toHaveBeenCalled()
   })
 })

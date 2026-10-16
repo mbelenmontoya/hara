@@ -10,7 +10,7 @@ Build WCAG 2.1 Level AA compliant React components with Tailwind CSS.
 ## Existing Accessibility in Hara
 
 The codebase already has:
-- `role="dialog"` + `aria-modal="true"` + `aria-labelledby` on BottomSheet
+- `role="dialog"` + `aria-modal="true"` + `aria-labelledby` on `Modal` (`app/components/ui/Modal.tsx`)
 - `role="region"` + `aria-label` on card deck
 - `aria-label` on navigation buttons
 - Semantic HTML throughout
@@ -77,7 +77,7 @@ The codebase already has:
 
 ## Quick Reference: Modals & Bottom Sheets
 
-Hara's BottomSheet already implements most of this. Follow the same pattern for new modals:
+Hara's `Modal` (`app/components/ui/Modal.tsx`) already implements this, including the focus trap. Follow the same pattern for new modals:
 
 ```tsx
 {/* ✅ Accessible modal/sheet */}
@@ -92,11 +92,11 @@ Hara's BottomSheet already implements most of this. Follow the same pattern for 
 </div>
 ```
 
-### Focus Trap (pending implementation)
+### Focus Trap (already in `Modal`; pattern for new dialogs)
 
 ```tsx
-// TODO: Implement focus trap for BottomSheet
-// This is on the TODO list — when implementing:
+// Same approach as app/components/ui/Modal.tsx
+// For any new dialog that does not use Modal:
 import { useRef, useEffect } from 'react';
 
 function useFocusTrap(ref: React.RefObject<HTMLElement>, isActive: boolean) {

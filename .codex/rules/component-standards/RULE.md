@@ -21,7 +21,7 @@ globs: app/**/*.tsx
 When a file needs splitting, follow the patterns established in `app/r/[tracking_code]/`:
 
 - **`hooks/`** — `use<Name>.ts` for extracted logic (data fetching, gestures, animations)
-- **`components/`** — Sub-components by purpose (BottomSheet, CardSkeleton, BackgroundPicker)
+- **`components/`** — Sub-components by purpose (CartaPick, CardSkeleton)
 - **Named constants** — Extract all magic numbers to constants at top of file with comments
 
 ```typescript
@@ -39,8 +39,8 @@ const EASING = 'cubic-bezier(0.32, 0.72, 0, 1)';
 1. **USE** — Check these locations for existing solutions:
    - `app/components/ui/` — Alert, Badge, Button, Card, EmptyState, Input, Modal, Table
    - `app/components/` — ContactButton, PlacesAutocomplete, PublicLayout, AdminLayout
-   - `app/r/[tracking_code]/components/` — BottomSheet, CardSkeleton, BackgroundPicker
-   - `app/r/[tracking_code]/hooks/` — useRecommendations, useSwipeGesture, useRevealTransition, useMediaQuery
+   - `app/r/[tracking_code]/components/` — CartaPick, CardSkeleton
+   - `app/r/[tracking_code]/hooks/` — useRecommendations
 2. **IMPROVE** — If existing component is 80%+ there, extend it with optional props
 3. **ADD** — Only create new if nothing exists
 

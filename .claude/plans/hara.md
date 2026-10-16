@@ -23,7 +23,7 @@ Rules from the user for this work:
 - [x] Diario (blog) matches the design (done 2026-10-05, plan `docs/plans/2026-10-05-almanac-diario-page.md`, approved, not committed)
 - [ ] Concierge screens (`/solicitar`, `/r/{tracking_code}`, design 9a to 9d) match the design
 - [x] Concierge form and confirmation (9a, 9b) done and verified 2026-10-16 (migration 023 run, test lead sent; plan `docs/plans/2026-10-05-almanac-concierge-screens.md`)
-- [ ] Carta (9c, `/r/[tracking_code]`) and review link (9d) planned and built
+- [x] Carta (9c, `/r/[tracking_code]`) and review link (9d) built and checked in Chrome 2026-10-16 (plan `docs/plans/2026-10-16-almanac-carta-resena.md`, migration 024 run)
 - [ ] Bottom nav bar and masthead search circle (design) added
 - [x] `ig-network` audit of all professionals' Instagram handles done (38 handles: 22 valid, 5 possible new accounts, 11 invalid)
 - [ ] Invalid handles resolved with the professionals and the 5 candidate accounts confirmed

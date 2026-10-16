@@ -4,7 +4,7 @@ description: Generate Vitest/Playwright tests for a component, hook, utility, or
 author: hara
 arguments:
   - name: target
-    description: Path to the file needing tests (e.g., app/r/[tracking_code]/hooks/useSwipeGesture.ts)
+    description: Path to the file needing tests (e.g., app/r/[tracking_code]/hooks/useRecommendations.ts)
 ---
 
 # Test Create Command

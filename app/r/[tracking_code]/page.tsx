@@ -1,188 +1,97 @@
 'use client'
 
-// Hara Vital - Recommendations
-// Mobile: swipe-deck via DeckView. Desktop (≥1024px): 3-card grid via GridView (Task 9).
+// Concierge Carta (design 9c): the link the team sends by WhatsApp. A greeting with the person's
+// first name and the date, then the three recommended professionals in rank order.
 
-import { useState } from 'react'
-import { useParams } from 'next/navigation'
+import Image from 'next/image'
 import Link from 'next/link'
-import { useRecommendations } from './hooks/useRecommendations'
-import { useSwipeGesture } from './hooks/useSwipeGesture'
-import { useRevealTransition } from './hooks/useRevealTransition'
-import { useIsDesktop } from './hooks/useMediaQuery'
-import { DeckView } from './components/DeckView'
-import { GridView } from './components/GridView'
-import { BottomSheet } from './components/BottomSheet'
+import { useParams } from 'next/navigation'
+import { formatAlmanacDate } from '@/lib/moon-phase'
+import { useRecommendations, type CartaError } from './hooks/useRecommendations'
+import { CartaPick } from './components/CartaPick'
 import { LoadingSkeleton } from './components/CardSkeleton'
-import { PageBackground } from '@/app/components/ui/PageBackground'
-import {
-  REVEAL_EXIT_DURATION_MS, DECK_ENTER_DURATION_MS, TRANSITION_EASING,
-} from '@/lib/design-constants'
 
 export default function RecommendationsPage() {
   const params = useParams()
   const trackingCode = typeof params?.tracking_code === 'string' ? params.tracking_code : ''
-
-  const { recommendations, loading, error } = useRecommendations(trackingCode)
-  const { revealing, isTransitioning, startTransition } = useRevealTransition(trackingCode)
-  const isDesktop = useIsDesktop()
-
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [sheetOpen, setSheetOpen] = useState(false)
-  const [selectedIndex, setSelectedIndex] = useState(0)
-  const [cardsHidden, setCardsHidden] = useState(false)
-
-  const shouldShowReveal = !isDesktop && revealing
-
-  const { dragOffset, handleTouchStart, handleTouchMove, handleTouchEnd } = useSwipeGesture({
-    currentIndex,
-    maxIndex: recommendations.length - 1,
-    onNavigate: setCurrentIndex,
-  })
-
-  const current = recommendations[selectedIndex] ?? recommendations[currentIndex]
-
-  const handleOpenDetails = (index: number) => {
-    setSelectedIndex(index)
-    setCardsHidden(true)
-    setSheetOpen(true)
-  }
+  const { carta, recommendations, loading, error } = useRecommendations(trackingCode)
 
   if (loading) return <LoadingSkeleton />
+  if (error || !carta || recommendations.length === 0) return <CartaUnavailable error={error ?? 'not-found'} />
 
-  if (error || !recommendations.length) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="bg-surface backdrop-blur-xl rounded-3xl shadow-elevated p-8 max-w-sm text-center">
-          <h2 className="text-2xl font-semibold text-foreground mb-3">
-            {error === 'expired' ? 'Este link venció' : 'No pudimos cargar'}
+  const name = carta.first_name
+
+  return (
+    <main className="font-almanac min-h-screen bg-background text-foreground" data-testid="recommendations-page">
+      <div className="mx-auto w-full max-w-md pb-16 pt-6 md:max-w-xl">
+        <header className="px-[22px]">
+          <div className="flex justify-center">
+            <Image src="/assets/logo/logoreduccion.png" alt="Hara" width={66} height={53} className="h-10 w-auto object-contain" />
+          </div>
+          <div className="mt-[18px] flex items-center gap-2.5 border-y border-foreground/12 py-2.5">
+            {name && <span className="almanac-label text-muted">Para {name}</span>}
+            <span className="flex-1" />
+            <img src="/assets/almanac/tres_puntos-primary.svg" alt="" aria-hidden="true" className="h-[17px] w-[18px] object-contain" />
+            <span className="flex-1" />
+            <span className="almanac-label text-muted">{formatAlmanacDate(new Date(carta.sent_at))}</span>
+          </div>
+          <h1 className="font-almanac-serif mb-0 mt-6 text-[44px]" style={{ lineHeight: 1, letterSpacing: '-0.6px' }}>
+            {name ? `${name}, estas son ` : 'Estas son '}
+            <em className="text-brand">tus tres</em>.
+          </h1>
+        </header>
+
+        <ol className="mb-0 mt-[26px] flex list-none flex-col gap-4 px-4">
+          {recommendations.map((pick) => (
+            <CartaPick key={pick.id} pick={pick} trackingCode={trackingCode} />
+          ))}
+        </ol>
+
+        <footer className="px-6 pb-4 pt-[30px] text-center">
+          <h2 className="font-almanac-serif mb-0 text-2xl" style={{ lineHeight: 1.1, letterSpacing: 0 }}>
+            ¿Ninguna te <em>convence</em>?
           </h2>
-          <p className="text-muted leading-relaxed mb-6">
-            {error === 'expired' ? (
-              <>¿Perdiste tu link? <Link href="/que-es-hara" className="text-brand hover:underline">¿Cómo funciona Hara?</Link></>
-            ) : (
-              <>Probá de nuevo. <Link href="/que-es-hara" className="text-brand hover:underline">¿Necesitás ayuda?</Link></>
-            )}
-          </p>
+          <span className="mt-1.5 block text-sm leading-[1.5] text-gray-700">
+            Respondé el mensaje donde te llegó este link y te proponemos otras tres, sin costo.
+          </span>
+        </footer>
+      </div>
+    </main>
+  )
+}
+
+const UNAVAILABLE_COPY: Record<CartaError, { title: string; body: string }> = {
+  'not-found': {
+    title: 'No encontramos esta carta',
+    body: 'Revisá que el link esté completo. Si no, contanos de nuevo qué estás buscando.',
+  },
+  fetch: { title: 'No pudimos cargar tu carta', body: 'Probá de nuevo en un momento.' },
+  network: { title: 'No pudimos cargar tu carta', body: 'Revisá tu conexión y probá de nuevo.' },
+}
+
+function CartaUnavailable({ error }: { error: CartaError }) {
+  const copy = UNAVAILABLE_COPY[error]
+  return (
+    <main className="font-almanac flex min-h-screen items-center justify-center bg-background px-4 text-foreground">
+      <div className="w-full max-w-sm rounded-[26px] bg-gray-50 p-8 text-center shadow-soft">
+        <h1 className="font-almanac-serif mb-0 text-[30px]" style={{ lineHeight: 1.05, letterSpacing: 0 }}>
+          {copy.title}
+        </h1>
+        <span className="mt-3 block text-sm leading-[1.5] text-gray-700">{copy.body}</span>
+        {error === 'not-found' ? (
+          <Link href="/solicitar" className="btn-press-glow mt-6 block rounded-[15px] bg-brand-dark p-[13px] text-[14.5px] font-medium text-gray-50">
+            Pedir una recomendación
+          </Link>
+        ) : (
           <button
+            type="button"
             onClick={() => window.location.reload()}
-            className="w-full bg-brand text-white px-6 py-4 rounded-full shadow-elevated active:scale-[0.98] transition-all font-semibold"
+            className="btn-press-glow mt-6 w-full rounded-[15px] bg-brand-dark p-[13px] text-[14.5px] font-medium text-gray-50"
           >
             Reintentar
           </button>
-        </div>
+        )}
       </div>
-    )
-  }
-
-  return (
-    <div
-      className="min-h-screen bg-background relative overflow-hidden"
-      data-testid="recommendations-page"
-    >
-      <PageBackground />
-
-      {/* Reveal screen — mobile only */}
-      {(shouldShowReveal || isTransitioning) && (
-        <div
-          className="absolute inset-0 flex items-start justify-center pt-8 pb-8 px-4 z-20"
-          style={{
-            opacity: isTransitioning ? 0 : 1,
-            transform: isTransitioning ? 'translateY(-8px) scale(0.995)' : 'translateY(0) scale(1)',
-            transition: `all ${REVEAL_EXIT_DURATION_MS}ms ${TRANSITION_EASING}`,
-            pointerEvents: isTransitioning ? 'none' : 'auto',
-          }}
-        >
-          <div className="liquid-glass rounded-3xl max-w-md w-full text-center relative z-10 animate-in zoom-in-95 fade-in duration-500">
-            <div className="liquid-glass-content p-8">
-              <h1 className="text-3xl font-semibold text-foreground mb-3">
-                Tus 3 opciones están listas
-              </h1>
-              <p className="text-base text-muted leading-relaxed mb-6">
-                Elegimos profesionales que encajan con lo que nos contaste.
-              </p>
-              <button
-                onClick={startTransition}
-                disabled={isTransitioning}
-                className="w-full bg-brand text-white px-6 py-4 rounded-full shadow-elevated hover:shadow-strong btn-press-glow transition-all font-semibold mb-4 disabled:opacity-50"
-              >
-                Ver mis 3 opciones
-              </button>
-              <p className="text-xs text-muted leading-relaxed">
-                Tu info se comparte recién cuando vos escribís.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Desktop: 3-card grid (no animation wrapper needed) */}
-      {isDesktop && (
-        <div className="relative z-10 overflow-y-auto min-h-screen">
-          <GridView
-            recommendations={recommendations}
-            trackingCode={trackingCode}
-            onOpenDetails={handleOpenDetails}
-          />
-        </div>
-      )}
-
-      {/* Mobile: swipe-deck with reveal transition */}
-      {!isDesktop && (isDesktop || !revealing || isTransitioning) && (
-        <div
-          className="absolute inset-0 z-10"
-          style={{
-            opacity: !revealing || isTransitioning ? 1 : 0,
-            transform: !revealing
-              ? 'translateY(0) scale(1)'
-              : isTransitioning
-              ? 'translateY(8px) scale(1.005)'
-              : 'translateY(12px) scale(1.008)',
-            transition: `all ${DECK_ENTER_DURATION_MS}ms ${TRANSITION_EASING}`,
-            pointerEvents: revealing && !isTransitioning ? 'none' : 'auto',
-          }}
-        >
-          {/* Progress dots */}
-          <div className="relative z-10 pt-safe pt-4 px-4 pb-4">
-            <div className="flex justify-center gap-2">
-              {recommendations.map((_, i) => (
-                <div
-                  key={i}
-                  className={`h-1 w-10 rounded-full transition-all ${
-                    i === currentIndex ? 'bg-brand' : 'bg-muted/50'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="relative z-10">
-            <DeckView
-              recommendations={recommendations}
-              currentIndex={currentIndex}
-              setCurrentIndex={setCurrentIndex}
-              dragOffset={dragOffset}
-              cardsHidden={cardsHidden}
-              trackingCode={trackingCode}
-              onOpenDetails={() => handleOpenDetails(currentIndex)}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Bottom Sheet / Modal */}
-      {sheetOpen && current && (
-        <BottomSheet
-          recommendation={current}
-          trackingCode={trackingCode}
-          onClose={() => setSheetOpen(false)}
-          onCloseStart={() => setCardsHidden(false)}
-        />
-      )}
-
-    </div>
+    </main>
   )
 }

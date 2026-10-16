@@ -24,8 +24,8 @@ Search existing assets before building new ones:
 |----------|----------|
 | `app/components/ui/` | Alert, Badge, Button, Card, EmptyState, Input, Modal, Table |
 | `app/components/` | Layouts, shared components |
-| `app/r/[tracking_code]/hooks/` | useRecommendations, useSwipeGesture, etc. |
-| `app/r/[tracking_code]/components/` | BottomSheet, CardSkeleton, BackgroundPicker |
+| `app/r/[tracking_code]/hooks/` | useRecommendations |
+| `app/r/[tracking_code]/components/` | CartaPick, CardSkeleton |
 | `lib/` | Supabase clients, monitoring, validation, env helpers |
 | `app/globals.css` | Liquid-glass utilities |
 

@@ -1,7 +1,9 @@
 'use client'
 
 // Global site header — desktop nav (≥1024px) + hamburger dropdown (<1024px).
-// Excluded from admin, concierge, and review routes (they have their own navigation).
+// Excluded from admin, concierge, and review routes (they have their own navigation),
+// and from the pages built in the almanac design (/, /que-es-hara, /blog and its articles), which have no top bar.
+// /blog/escribir (the writing form) keeps the header.
 
 import { useState } from 'react'
 import Image from 'next/image'
@@ -9,15 +11,16 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const NAV_LINKS = [
-  { href: '/profesionales', label: 'Profesionales' },
+  { href: '/', label: 'Profesionales' },
   { href: '/solicitar', label: 'Pedí recomendación' },
-  { href: '/profesionales/registro', label: 'Soy profesional' },
-  { href: '/blog', label: 'Notas' },
+  { href: '/registro', label: 'Soy profesional' },
+  { href: '/blog', label: 'Diario' },
   { href: '/que-es-hara', label: 'Qué es Hara' },
 ]
 
 const EXCLUDED_PREFIXES = ['/admin', '/r/', '/r/review']
-const EXCLUDED_EXACT = ['/']
+const EXCLUDED_EXACT = ['/', '/que-es-hara', '/solicitar', '/blog']
+const DIARIO_WRITE_PATH = '/blog/escribir'
 
 export function SiteHeader() {
   const pathname = usePathname()
@@ -25,6 +28,7 @@ export function SiteHeader() {
 
   if (EXCLUDED_EXACT.includes(pathname)) return null
   if (EXCLUDED_PREFIXES.some((prefix) => pathname.startsWith(prefix))) return null
+  if (pathname.startsWith('/blog/') && pathname !== DIARIO_WRITE_PATH) return null
 
   return (
     <header className="relative z-10 bg-transparent">
@@ -52,7 +56,7 @@ export function SiteHeader() {
           {NAV_LINKS.map(({ href, label }) => {
             const isActive = pathname === href || (
               pathname.startsWith(href + '/') &&
-              !NAV_LINKS.some(other => other.href !== href && pathname.startsWith(other.href))
+              !NAV_LINKS.some(other => other.href !== href && other.href !== '/' && pathname.startsWith(other.href))
             )
             return (
               <Link
@@ -100,7 +104,7 @@ export function SiteHeader() {
             {NAV_LINKS.map(({ href, label }) => {
               const isActive = pathname === href || (
                 pathname.startsWith(href + '/') &&
-                !NAV_LINKS.some(other => other.href !== href && pathname.startsWith(other.href))
+                !NAV_LINKS.some(other => other.href !== href && other.href !== '/' && pathname.startsWith(other.href))
               )
               return (
                 <Link

@@ -29,13 +29,13 @@ export default function HomePreviewPage() {
             Solicitar recomendaciones
           </Link>
           <Link
-            href="/profesionales"
+            href="/"
             className="block w-full px-6 py-3.5 bg-surface border border-outline text-foreground font-semibold rounded-full shadow-soft hover:shadow-elevated hover:border-muted transition-all text-center"
           >
             Ver profesionales
           </Link>
           <Link
-            href="/profesionales/registro"
+            href="/registro"
             className="block w-full px-6 py-3.5 bg-surface border border-outline text-foreground font-semibold rounded-full shadow-soft hover:shadow-elevated hover:border-muted transition-all text-center"
           >
             Sumarte como profesional

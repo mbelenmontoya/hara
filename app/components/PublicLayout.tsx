@@ -12,7 +12,7 @@ interface PublicLayoutProps {
 }
 
 const NAV_LINKS = [
-  { href: '/profesionales', label: 'Profesionales' },
+  { href: '/', label: 'Profesionales' },
   { href: '/solicitar', label: 'Pedí recomendación' },
   { href: '/que-es-hara', label: 'Qué es Hara' },
 ]

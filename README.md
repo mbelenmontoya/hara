@@ -14,7 +14,7 @@ Hara Vital is a curated marketplace for **terapias alternativas y bienestar hol�
 
 Two ways in:
 
-- **Browse (Directory)** — `/profesionales`. Reputation-ranked discovery of verified professionals. Most users land here.
+- **Browse (Directory)** — `/` (the home page). Reputation-ranked discovery of verified professionals. Most users land here.
 - **Concierge (Solicitar)** — `/solicitar`. User describes what they need, admin hand-picks 3 recommendations delivered via tracking link `/r/[code]`. The "we pick for you" differentiator.
 
 Both paths end in a WhatsApp conversation between user and professional, on the user's terms.
@@ -243,7 +243,7 @@ See examples in:
 **Browse (Directory) — primary path:**
 
 ```
-User → /profesionales
+User → /
   → server-rendered list, sorted by ranking_score DESC
   → User opens /p/[slug]
   → User clicks WhatsApp button
@@ -283,7 +283,8 @@ User → /solicitar
 ### Security Model
 
 **Public Routes:**
-- `/profesionales` — directory
+- `/` — home page and directory
+- `/registro` — professional registration
 - `/p/[slug]` — professional profile
 - `/solicitar` — concierge intake form
 - `/r/[tracking_code]` — concierge recommendations

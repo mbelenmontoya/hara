@@ -21,6 +21,7 @@ const sampleLead = {
   status: 'new',
   urgency: 'high',
   created_at: '2026-04-22T15:30:00.000Z',
+  additional_context: 'Nombre: Sol\nHorario: Noche\n\nDuermo mal hace meses',
   match_count: 1,
   latest_match: {
     id: 'match-1',
@@ -60,6 +61,23 @@ describe('AdminLeadDetailPage', () => {
     expect(screen.getByText('María Pérez')).toBeInTheDocument()
     expect(screen.getByText('Juan López')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Crear match' })).toHaveAttribute('href', '/admin/leads/test-lead-id/match')
+    expect(screen.getByText('Lo que contó')).toBeInTheDocument()
+    expect(screen.getByText(/Duermo mal hace meses/)).toHaveTextContent('Nombre: Sol Horario: Noche Duermo mal hace meses')
+  })
+
+  it('says there are no comments when the lead left no note', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ lead: { ...sampleLead, additional_context: null } }),
+      })
+    )
+
+    render(<AdminLeadDetailPage params={{ id: 'test-lead-id' }} />)
+
+    await screen.findByText('Lo que contó')
+    expect(screen.getByText('No dejó comentarios.')).toBeInTheDocument()
   })
 
   it('renders the empty/error state when the lead cannot be loaded', async () => {

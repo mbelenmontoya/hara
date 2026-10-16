@@ -5,6 +5,8 @@ vi.mock('./globals.css', () => ({}))
 vi.mock('next/font/google', () => ({
   Poppins: () => ({ variable: '--font-display', className: '' }),
   Montserrat: () => ({ variable: '--font-body', className: '' }),
+  Instrument_Serif: () => ({ variable: '--font-instrument', className: '' }),
+  Jost: () => ({ variable: '--font-jost', className: '' }),
 }))
 vi.mock('next/script', () => ({ default: () => null }))
 vi.mock('@vercel/analytics/react', () => ({ Analytics: () => null }))

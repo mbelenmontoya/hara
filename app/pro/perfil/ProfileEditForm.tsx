@@ -5,7 +5,7 @@ import type { Practice } from '@/lib/practices'
 import { calculateProfileScore, type ScorableProfile } from '@/lib/profile-score'
 import { ScoreRing, ScoreBreakdown } from '@/app/admin/professionals/[id]/review/components/ScoreDisplay'
 import { PracticePicker } from '@/app/components/PracticePicker'
-import { SpecialtySelector } from '@/app/profesionales/registro/components/SpecialtySelector'
+import { SpecialtySelector } from '@/app/registro/components/SpecialtySelector'
 import { PlacesAutocomplete } from '@/app/components/PlacesAutocomplete'
 import { GlassCard } from '@/app/components/ui/GlassCard'
 

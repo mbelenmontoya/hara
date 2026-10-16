@@ -11,7 +11,7 @@ interface ProfileReviewFormProps {
   professionalSlug: string
 }
 
-const inputClass = 'w-full border border-outline rounded-2xl px-4 py-3 text-sm text-foreground bg-surface/80 focus:outline-none focus:border-brand transition-colors'
+const inputClass = 'w-full border border-outline rounded-2xl px-4 py-3 text-sm text-foreground bg-surface focus:outline-none focus:border-brand transition-colors'
 
 export function ProfileReviewForm({ professionalSlug }: ProfileReviewFormProps) {
   const [rating, setRating]       = useState(0)
@@ -55,7 +55,7 @@ export function ProfileReviewForm({ professionalSlug }: ProfileReviewFormProps) 
 
   if (submitted) {
     return (
-      <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6 text-center">
+      <div className="rounded-3xl bg-gray-50 p-6 text-center font-almanac">
         <p className="text-base font-semibold text-foreground">¡Gracias por tu comentario!</p>
         <p className="text-sm text-muted mt-1">Va a aparecer en el perfil en breve.</p>
       </div>
@@ -66,7 +66,7 @@ export function ProfileReviewForm({ professionalSlug }: ProfileReviewFormProps) 
   const canSubmit = rating > 0 && name.trim().length > 0 && email.trim().length > 0
 
   return (
-    <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6">
+    <div className="rounded-3xl bg-gray-50 p-6 font-almanac">
       <p className="text-sm text-foreground text-center mb-5">
         ¿Ya tuviste una sesión? Tu comentario le puede ayudar a otras personas.
       </p>
@@ -82,7 +82,7 @@ export function ProfileReviewForm({ professionalSlug }: ProfileReviewFormProps) 
               onClick={() => setRating((prev) => (prev === n ? 0 : n))}
               onMouseEnter={() => setHovered(n)}
               onMouseLeave={() => setHovered(0)}
-              className={`text-3xl leading-none focus:outline-none transition-transform hover:scale-110 ${n <= active ? 'text-amber-300' : 'text-muted/40'}`}
+              className={`text-3xl leading-none focus:outline-none transition-transform hover:scale-110 ${n <= active ? 'text-warning' : 'text-muted/40'}`}
             >
               ★
             </button>
@@ -129,7 +129,7 @@ export function ProfileReviewForm({ professionalSlug }: ProfileReviewFormProps) 
           <button
             type="submit"
             disabled={!canSubmit || loading}
-            className="w-[30%] min-w-[160px] py-3 px-6 rounded-full bg-brand text-white text-sm font-medium shadow-soft hover:shadow-elevated transition-shadow disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-[30%] min-w-[160px] py-3 px-6 rounded-2xl bg-brand-dark text-gray-50 text-sm font-medium shadow-soft hover:shadow-elevated transition-shadow disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {loading ? 'Enviando...' : 'Dejar comentario'}
           </button>

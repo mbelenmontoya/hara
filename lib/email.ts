@@ -300,7 +300,7 @@ export async function notifyProfessionalApproved({
           ¿Cómo te encuentran?
         </h3>
         <p style="font-size: 14px; color: #1F1A24; line-height: 1.6; margin-bottom: 16px;">
-          Tu perfil aparece en <strong>/profesionales</strong>. También podemos recomendarte cuando alguien que busca ayuda holística complete el formulario de solicitud y vos seas un buen match.
+          Tu perfil aparece en la <strong>página principal</strong> de Hara Vital. También podemos recomendarte cuando alguien que busca ayuda holística complete el formulario de solicitud y vos seas un buen match.
         </p>
 
         <h3 style="font-size: 16px; font-weight: 600; margin-top: 24px; margin-bottom: 8px; color: #1F1A24;">

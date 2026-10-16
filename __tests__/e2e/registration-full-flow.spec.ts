@@ -203,7 +203,7 @@ test.describe('Professional Registration — Full Flow', () => {
     })
 
     // ── Step 1: Navigate to registration ────────────────────────────────────
-    await page.goto('/profesionales/registro')
+    await page.goto('/registro')
     // 'load' waits for the full page including React hydration, which is needed
     // before the form heading becomes visible. 'networkidle' is avoided (flaky with HMR).
     await page.waitForLoadState('load')
@@ -388,7 +388,7 @@ test.describe('Professional Registration — Full Flow', () => {
     }
 
     // ── Confirmation page ────────────────────────────────────────────────────
-    await page.waitForURL('**/profesionales/registro/confirmacion')
+    await page.waitForURL('**/registro/confirmacion')
     await expect(page.getByRole('heading', { name: '¡Solicitud enviada!' })).toBeVisible()
     await expect(page.getByText('Recibimos tu información')).toBeVisible()
 

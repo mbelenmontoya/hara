@@ -7,27 +7,45 @@ const baseProps = {
   shortDescription: null,
   profileImageUrl: null,
   location: 'Mendoza, AR',
-  acceptingNewClients: false,
+  primaryPractice: null,
   isDestacado: false,
-  ratingAverage: 0,
-  ratingCount: 0,
 }
 
 describe('ProfileHero', () => {
-  it('shows rating aggregate when ratingCount > 0', () => {
-    render(<ProfileHero {...baseProps} ratingAverage={4.8} ratingCount={12} />)
-    expect(screen.getByText(/4\.8/)).toBeInTheDocument()
-    expect(screen.getByText(/12 reseñas/)).toBeInTheDocument()
+  it('shows the name as the page heading', () => {
+    render(<ProfileHero {...baseProps} />)
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Silvia Ferrer')
   })
 
-  it('hides rating row when ratingCount === 0', () => {
-    render(<ProfileHero {...baseProps} ratingAverage={0} ratingCount={0} />)
-    expect(screen.queryByText(/reseña/)).not.toBeInTheDocument()
+  it('shows the short description as a quote only when present', () => {
+    const { rerender } = render(<ProfileHero {...baseProps} shortDescription="Acompaño procesos." />)
+    expect(screen.getByText(/Acompaño procesos\./)).toBeInTheDocument()
+
+    rerender(<ProfileHero {...baseProps} shortDescription={null} />)
+    expect(screen.queryByText(/Acompaño/)).not.toBeInTheDocument()
   })
 
-  it('uses singular reseña when ratingCount === 1', () => {
-    render(<ProfileHero {...baseProps} ratingAverage={5} ratingCount={1} />)
-    expect(screen.getByText(/1 reseña/)).toBeInTheDocument()
-    expect(screen.queryByText(/1 reseñas/)).not.toBeInTheDocument()
+  it('shows practice and location on one line, without the practice when missing', () => {
+    const { rerender } = render(<ProfileHero {...baseProps} primaryPractice="Reiki usui" />)
+    expect(screen.getByTestId('hero-meta')).toHaveTextContent('Reiki usui · Mendoza, AR')
+
+    rerender(<ProfileHero {...baseProps} primaryPractice={null} />)
+    expect(screen.getByTestId('hero-meta')).toHaveTextContent(/^Mendoza, AR$/)
+  })
+
+  it('shows the destacada pill only for featured professionals', () => {
+    const { rerender } = render(<ProfileHero {...baseProps} isDestacado />)
+    expect(screen.getByTestId('destacado-chip')).toBeInTheDocument()
+
+    rerender(<ProfileHero {...baseProps} isDestacado={false} />)
+    expect(screen.queryByTestId('destacado-chip')).not.toBeInTheDocument()
+  })
+
+  it('falls back to the initial when there is no photo, and uses the photo when it is an http url', () => {
+    const { rerender } = render(<ProfileHero {...baseProps} />)
+    expect(screen.getByText('S')).toBeInTheDocument()
+
+    rerender(<ProfileHero {...baseProps} profileImageUrl="https://example.com/a.jpg" />)
+    expect(screen.getByAltText('Silvia Ferrer')).toHaveAttribute('src', 'https://example.com/a.jpg')
   })
 })

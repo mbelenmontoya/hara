@@ -1,5 +1,5 @@
 // Glass card container with frosted effect
-// Matches the exact pattern from /profesionales/registro and /solicitar
+// Matches the exact pattern from /registro and /solicitar
 
 import { ReactNode } from 'react'
 

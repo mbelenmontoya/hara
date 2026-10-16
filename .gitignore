@@ -74,3 +74,6 @@ scripts/instagram-engage.log.json
 scripts/instagram-dm.config.json
 scripts/instagram-dm.log.json
 scripts/hara-brand-voice.json
+scripts/instagram-network.professionals.json
+scripts/instagram-network.log.json
+scripts/logs/network-audit-*.md

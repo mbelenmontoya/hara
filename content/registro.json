@@ -1,6 +1,6 @@
 {
-  "route": "/profesionales/registro",
-  "file": "app/profesionales/registro/RegistroForm.tsx",
+  "route": "/registro",
+  "file": "app/registro/RegistroForm.tsx",
   "description": "4-step registration form for professionals applying to join Hara.",
   "strings": {
     "steps": {

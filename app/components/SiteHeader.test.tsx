@@ -14,12 +14,12 @@ vi.mock('next/link', () => ({
 
 describe('SiteHeader', () => {
   it('renders home link and nav on public pages with correct z-index', () => {
-    mockUsePathname.mockReturnValue('/profesionales')
+    mockUsePathname.mockReturnValue('/registro')
     const { container } = render(<SiteHeader />)
     expect(screen.getByRole('link', { name: 'Hara — inicio' })).toHaveAttribute('href', '/')
-    expect(screen.getByRole('link', { name: 'Profesionales' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Profesionales' })).toHaveAttribute('href', '/')
     expect(screen.getByRole('link', { name: 'Pedí recomendación' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Soy profesional' })).toHaveAttribute('href', '/profesionales/registro')
+    expect(screen.getByRole('link', { name: 'Soy profesional' })).toHaveAttribute('href', '/registro')
     expect(screen.getByRole('link', { name: 'Qué es Hara' })).toHaveAttribute('href', '/que-es-hara')
     // Must sit above the fixed PageBackground (z-0) with transparent background
     const header = container.querySelector('header')
@@ -28,7 +28,7 @@ describe('SiteHeader', () => {
   })
 
   it('shows hamburger button and toggles mobile nav on click', async () => {
-    mockUsePathname.mockReturnValue('/profesionales')
+    mockUsePathname.mockReturnValue('/registro')
     render(<SiteHeader />)
 
     // Hamburger button must exist
@@ -41,9 +41,9 @@ describe('SiteHeader', () => {
     // Click opens mobile nav with all three links
     await userEvent.click(hamburger)
     const mobileNav = screen.getByTestId('mobile-nav')
-    expect(within(mobileNav).getByRole('link', { name: 'Profesionales' })).toHaveAttribute('href', '/profesionales')
+    expect(within(mobileNav).getByRole('link', { name: 'Profesionales' })).toHaveAttribute('href', '/')
     expect(within(mobileNav).getByRole('link', { name: 'Pedí recomendación' })).toHaveAttribute('href', '/solicitar')
-    expect(within(mobileNav).getByRole('link', { name: 'Soy profesional' })).toHaveAttribute('href', '/profesionales/registro')
+    expect(within(mobileNav).getByRole('link', { name: 'Soy profesional' })).toHaveAttribute('href', '/registro')
     expect(within(mobileNav).getByRole('link', { name: 'Qué es Hara' })).toHaveAttribute('href', '/que-es-hara')
 
     // Click again closes it
@@ -51,17 +51,23 @@ describe('SiteHeader', () => {
     expect(screen.queryByTestId('mobile-nav')).toBeNull()
   })
 
-  it('marks only the most specific nav link active on /profesionales/registro', () => {
-    mockUsePathname.mockReturnValue('/profesionales/registro')
+  it('marks the link of the current page as active and no other', () => {
+    mockUsePathname.mockReturnValue('/registro')
     render(<SiteHeader />)
-    const profesionalesLink = screen.getByRole('link', { name: 'Profesionales' })
-    const soyProfesionalLink = screen.getByRole('link', { name: 'Soy profesional' })
-    expect(profesionalesLink).not.toHaveClass('underline')
-    expect(soyProfesionalLink).toHaveClass('underline')
+    expect(screen.getByRole('link', { name: 'Soy profesional' })).toHaveClass('underline')
+    expect(screen.getByRole('link', { name: 'Profesionales' })).not.toHaveClass('underline')
+    expect(screen.getByRole('link', { name: 'Diario' })).not.toHaveClass('underline')
+  })
+
+  it('keeps a section link active on its sub-pages, even though the first link points to /', () => {
+    mockUsePathname.mockReturnValue('/blog/escribir')
+    render(<SiteHeader />)
+    expect(screen.getByRole('link', { name: 'Diario' })).toHaveClass('underline')
+    expect(screen.getByRole('link', { name: 'Profesionales' })).not.toHaveClass('underline')
   })
 
   it('returns null on excluded routes', () => {
-    for (const path of ['/', '/admin/leads', '/r/abc123']) {
+    for (const path of ['/', '/que-es-hara', '/solicitar', '/blog', '/blog/mi-nota', '/admin/leads', '/r/abc123']) {
       mockUsePathname.mockReturnValue(path)
       const { container } = render(<SiteHeader />)
       expect(container.firstChild).toBeNull()

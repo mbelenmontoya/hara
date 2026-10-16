@@ -1,5 +1,5 @@
 // POST /api/contact
-// Contact form from the /profesionales page footer.
+// Contact form endpoint. The footer form that used it was removed with the old directory page; a new design will bring a form back.
 // Validates name + email + message, rate-limits per IP, sends email notification.
 
 import { NextRequest, NextResponse } from 'next/server'

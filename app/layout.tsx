@@ -1,5 +1,5 @@
 import './globals.css'
-import { Poppins, Montserrat } from 'next/font/google'
+import { Poppins, Montserrat, Instrument_Serif, Jost } from 'next/font/google'
 import Script from 'next/script'
 import { SiteHeader } from '@/app/components/SiteHeader'
 import { Analytics } from '@vercel/analytics/react'
@@ -18,6 +18,23 @@ const montserrat = Montserrat({
   weight: ['400', '500', '600'],
   subsets: ['latin'],
   variable: '--font-body',
+  display: 'swap',
+})
+
+// Almanac look (round 7 of the design). Used only on pages that opt in through the
+// font-almanac / font-almanac-serif utilities. Poppins/Montserrat above stay the site default.
+const instrumentSerif = Instrument_Serif({
+  weight: '400',
+  style: ['normal', 'italic'],
+  subsets: ['latin'],
+  variable: '--font-instrument',
+  display: 'swap',
+})
+
+const jost = Jost({
+  weight: ['400', '500', '600'],
+  subsets: ['latin'],
+  variable: '--font-jost',
   display: 'swap',
 })
 
@@ -58,7 +75,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es" className={`${poppins.variable} ${montserrat.variable}`}>
+    <html lang="es" className={`${poppins.variable} ${montserrat.variable} ${instrumentSerif.variable} ${jost.variable}`}>
       <body>
         <SiteHeader />
         {children}

@@ -174,6 +174,15 @@ export default function AdminLeadDetailPage({ params }: { params: { id: string }
         </GlassCard>
 
         <GlassCard>
+          <SectionHeader className="mb-4">Lo que contó</SectionHeader>
+          {lead.additional_context ? (
+            <p className="text-sm text-foreground whitespace-pre-line">{lead.additional_context}</p>
+          ) : (
+            <p className="text-sm text-muted">No dejó comentarios.</p>
+          )}
+        </GlassCard>
+
+        <GlassCard>
           <SectionHeader className="mb-4">Match actual</SectionHeader>
           {lead.latest_match ? (
             <div className="space-y-4">

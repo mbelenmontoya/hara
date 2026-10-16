@@ -1,381 +1,146 @@
 'use client'
 
+// Concierge request form (/solicitar, almanac design 9a): four steps with a progress bar
+// and an Atrás / Continuar bar. Holds the answers and the navigation; the step bodies live in ConciergeSteps.
+
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { getCountryCallingCode, type CountryCode } from 'libphonenumber-js'
 import { createLead } from '@/app/actions/create-lead'
-import { PlacesAutocomplete } from '@/app/components/PlacesAutocomplete'
-import { Alert } from '@/app/components/ui/Alert'
-import { PageBackground } from '@/app/components/ui/PageBackground'
-import { PracticePicker } from '@/app/components/PracticePicker'
-import { isValidPhoneNumber, getCountryCallingCode, type CountryCode } from 'libphonenumber-js'
-import type { Practice } from '@/lib/practices'
+import type { PlaceData } from '@/app/components/PlacesAutocomplete'
+import {
+  EMPTY_CONCIERGE_STATE,
+  isStepComplete,
+  toLeadInput,
+  type ConciergeLatestPost,
+  type ConciergeState,
+  type ConciergeStep,
+} from '@/lib/concierge-request'
+import type { ArrivalCard as ArrivalCardData } from '@/lib/home-arrival'
+import { ConciergeConfirmation } from './ConciergeConfirmation'
+import { StepFour, StepOne, StepThree, StepTwo, type Situation } from './ConciergeSteps'
 
-const INTENT_OPTIONS = [
-  { value: 'anxiety', label: 'Ansiedad' },
-  { value: 'depression', label: 'Depresión' },
-  { value: 'stress', label: 'Estrés' },
-  { value: 'trauma', label: 'Trauma' },
-  { value: 'relationships', label: 'Relaciones' },
-  { value: 'self-esteem', label: 'Autoestima' },
-  { value: 'grief', label: 'Duelo' },
-  { value: 'addiction', label: 'Adicciones' },
-  { value: 'eating-disorders', label: 'Trastornos alimentarios' },
-  { value: 'couples', label: 'Terapia de pareja' },
-  { value: 'family', label: 'Terapia familiar' },
-  { value: 'children', label: 'Niños y adolescentes' },
-]
+const STEP_COUNT = 4
+const STEPS: ConciergeStep[] = [1, 2, 3, 4]
 
-const MODALITY_OPTIONS = [
-  { value: 'online', label: 'Online' },
-  { value: 'presencial', label: 'Presencial' },
-  { value: 'ambos', label: 'Ambos' },
-]
-
-const URGENCY_OPTIONS = [
-  { value: 'low', label: 'No es urgente, estoy explorando' },
-  { value: 'medium', label: 'Me gustaría empezar pronto' },
-  { value: 'high', label: 'Necesito ayuda lo antes posible' },
-]
-
-const CURRENCIES = [
-  { value: 'ARS', label: 'ARS' },
-  { value: 'USD', label: 'USD' },
-  { value: 'EUR', label: 'EUR' },
-  { value: 'MXN', label: 'MXN' },
-]
-
-const INPUT_CLASS = 'w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all'
-const LABEL_CLASS = 'block text-sm font-medium text-foreground mb-2'
-const HELPER_CLASS = 'text-xs text-muted mt-1.5'
-const ERROR_CLASS = 'text-xs text-danger mt-1.5'
-
-interface Props {
-  practices: Practice[]
+export interface SolicitarFormProps {
+  cards: ArrivalCardData[]
+  situations: Situation[]
+  latestPost: ConciergeLatestPost | null
 }
 
-export function SolicitarForm({ practices }: Props) {
-  const router = useRouter()
-  const [submitting, setSubmitting] = useState(false)
-  const [submitError, setSubmitError] = useState<string | null>(null)
+/** Calling code prefix ("+54") for a place's country, or null when the code is unknown. */
+function callingCodePrefix(countryCode: string): string | null {
+  try {
+    return `+${getCountryCallingCode(countryCode as CountryCode)}`
+  } catch {
+    return null
+  }
+}
 
-  const [intentTags, setIntentTags] = useState<string[]>([])
-  const [country, setCountry] = useState('')
-  const [countryCode, setCountryCode] = useState('')
-  const [city, setCity] = useState('')
-  const [locationDisplay, setLocationDisplay] = useState('')
-  const [modality, setModality] = useState('')
-  const [urgency, setUrgency] = useState('')
-  const [whatsapp, setWhatsapp] = useState('')
-  const [phoneError, setPhoneError] = useState<string | null>(null)
-  const [email, setEmail] = useState('')
-  const [emailError, setEmailError] = useState<string | null>(null)
+export function SolicitarForm({ cards, situations, latestPost }: SolicitarFormProps) {
+  const [state, setState] = useState<ConciergeState>(EMPTY_CONCIERGE_STATE)
+  const [step, setStep] = useState<ConciergeStep>(1)
+  const [zonaText, setZonaText] = useState('')
+  const [sending, setSending] = useState(false)
+  const [sendError, setSendError] = useState<string | null>(null)
+  const [leadId, setLeadId] = useState<string | null>(null)
 
-  // Advanced fields
-  const [practicePreference, setPracticePreference] = useState<string[]>([])
-  const [budgetMin, setBudgetMin] = useState('')
-  const [budgetMax, setBudgetMax] = useState('')
-  const [currency, setCurrency] = useState('USD')
+  const update = (patch: Partial<ConciergeState>) => setState((prev) => ({ ...prev, ...patch }))
 
-  function toggleIntent(value: string) {
-    setIntentTags(prev =>
-      prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
-    )
+  function goTo(next: ConciergeStep) {
+    setStep(next)
+    window.scrollTo({ top: 0 })
   }
 
-  function handleLocationChange(value: string, placeData?: { city: string; country: string; countryCode: string; formattedAddress: string }) {
-    if (placeData) {
-      setCity(placeData.city)
-      setCountry(placeData.country)
-      setCountryCode(placeData.countryCode)
-      setLocationDisplay(placeData.formattedAddress)
-      try {
-        const callingCode = getCountryCallingCode(placeData.countryCode as CountryCode)
-        if (!whatsapp || whatsapp === '+') {
-          setWhatsapp(`+${callingCode}`)
-          setPhoneError(null)
-        }
-      } catch {
-        // Unknown country code — don't prefill
-      }
-    } else {
-      setLocationDisplay(value)
+  function handleZonaChange(value: string, place?: PlaceData) {
+    setZonaText(place ? place.formattedAddress : value)
+    if (!place) {
+      update({ place: null })
+      return
     }
+    const prefix = callingCodePrefix(place.countryCode)
+    setState((prev) => ({
+      ...prev,
+      place: { city: place.city, country: place.country, countryCode: place.countryCode, display: place.formattedAddress },
+      whatsapp: prefix && (!prev.whatsapp || prev.whatsapp === '+') ? prefix : prev.whatsapp,
+    }))
   }
 
-  function handleWhatsappChange(value: string) {
-    setWhatsapp(value)
-    if (!value) { setPhoneError(null); return }
-    if (!value.startsWith('+')) { setPhoneError('Debe empezar con + y el código de país'); return }
-    if (value.length < 8) { setPhoneError(null); return }
-    const isValid = countryCode
-      ? isValidPhoneNumber(value, countryCode as CountryCode)
-      : isValidPhoneNumber(value)
-    if (!isValid) {
-      const countryHint = countryCode ? ` para ${country}` : ''
-      setPhoneError(`El número no parece válido${countryHint}`)
-    } else {
-      setPhoneError(null)
-    }
-  }
-
-  function handleEmailChange(value: string) {
-    setEmail(value)
-    if (!value) { setEmailError(null); return }
-    const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-    setEmailError(isValid ? null : 'El email no parece válido')
-  }
-
-  const isFormValid =
-    intentTags.length > 0 &&
-    (!!countryCode || !!country) &&
-    !!whatsapp &&
-    !phoneError &&
-    !!email.trim() &&
-    !emailError
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setSubmitError(null)
-
-    if (intentTags.length === 0) { setSubmitError('Seleccioná al menos un tema'); return }
-    if (!countryCode && !country) { setSubmitError('Buscá y seleccioná tu ubicación'); return }
-    if (!whatsapp) { setSubmitError('Ingresá tu WhatsApp'); return }
-    if (phoneError) { setSubmitError('Corregí el número de WhatsApp'); return }
-    if (!email.trim()) { setSubmitError('Ingresá tu email'); return }
-    if (emailError) { setSubmitError('Corregí el email'); return }
-
-    setSubmitting(true)
+  async function send() {
+    setSendError(null)
+    setSending(true)
     try {
-      await createLead({
-        intent_tags: intentTags,
-        country: countryCode || country,
-        city: city || undefined,
-        online_ok: modality !== 'presencial',
-        modality_preference: modality ? [modality] : undefined,
-        urgency: urgency || undefined,
-        whatsapp,
-        practice_preference: practicePreference.length > 0 ? practicePreference : undefined,
-        budget_min: budgetMin ? parseInt(budgetMin) : undefined,
-        budget_max: budgetMax ? parseInt(budgetMax) : undefined,
-        currency: currency || undefined,
-        email: email || undefined,
-      })
-      router.push('/gracias')
+      const { lead_id } = await createLead(toLeadInput(state))
+      setLeadId(lead_id)
+      window.scrollTo({ top: 0 })
     } catch {
-      setSubmitError('Hubo un error. Intentá de nuevo.')
-      setSubmitting(false)
+      setSendError('Hubo un error. Intentá de nuevo.')
+    } finally {
+      setSending(false)
     }
   }
+
+  if (leadId) {
+    return <ConciergeConfirmation leadId={leadId} name={state.name} whatsapp={state.whatsapp} latestPost={latestPost} />
+  }
+
+  const labelByKey = new Map([...cards, ...situations].map((c) => [c.key, c.label]))
+  const intentLabels = state.intents.map((key) => labelByKey.get(key) ?? key)
+  const isLastStep = step === STEP_COUNT
+  const canContinue = isStepComplete(state, step) && !sending
 
   return (
-    <div className="min-h-screen bg-background">
-      <PageBackground />
+    <main className="font-almanac min-h-screen bg-background text-foreground">
+      <div className="mx-auto w-full max-w-md px-5 pt-6 md:max-w-xl">
+        <div className="flex items-center justify-between">
+          <Link href="/" aria-label="Cerrar" className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-2 text-[22px] font-light">
+            ×
+          </Link>
+          <span className="almanac-label">Concierge · Gratis</span>
+          <span className="w-10" aria-hidden="true" />
+        </div>
+        <div className="mt-5 flex gap-[5px]" aria-hidden="true">
+          {STEPS.map((n) => (
+            <span key={n} className={`h-[3px] flex-1 rounded-sm transition-colors duration-500 ${n <= step ? 'bg-foreground' : 'bg-foreground/12'}`} />
+          ))}
+        </div>
+        <p className="almanac-label mb-0 mt-3">Paso {step} de {STEP_COUNT}</p>
 
-      <div className="relative z-10 container-public pt-8 pb-12">
-        <h1 className="text-2xl font-semibold text-foreground mb-2 text-center">
-          Encontrá tu profesional ideal
-        </h1>
-        <p className="text-sm text-muted text-center mb-8">
-          Contanos qué buscás y te conectamos con 3 profesionales que se ajustan a vos.
-        </p>
-
-        <form onSubmit={handleSubmit}>
-
-          {/* Desktop: intent + urgency side by side | Mobile: stacked */}
-          <div className="space-y-4 md:grid md:grid-cols-2 md:gap-4 md:space-y-0 mb-4">
-            {/* Card: What are you looking for */}
-            <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6">
-              <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">
-                ¿En qué necesitás ayuda? *
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {INTENT_OPTIONS.map(opt => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => toggleIntent(opt.value)}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${
-                      intentTags.includes(opt.value)
-                        ? 'bg-brand text-white border-brand'
-                        : 'bg-surface-2 text-foreground border-outline hover:border-brand/50'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Card: Urgency */}
-            <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6">
-              <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">
-                ¿Qué tan urgente es?
-              </h2>
-              <div className="space-y-2">
-                {URGENCY_OPTIONS.map(opt => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setUrgency(opt.value)}
-                    className={`w-full px-4 py-3 text-sm text-left rounded-xl border transition-all ${
-                      urgency === opt.value
-                        ? 'bg-brand text-white border-brand'
-                        : 'bg-surface border-outline text-foreground hover:border-brand/50'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Card: Location + modality — full width */}
-          <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6 mb-4">
-            <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">
-              ¿Dónde estás? *
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className={LABEL_CLASS}>Ubicación</label>
-                <PlacesAutocomplete
-                  value={locationDisplay}
-                  onChange={handleLocationChange}
-                  placeholder="Empezá a escribir tu ciudad..."
-                  className={INPUT_CLASS}
-                />
-                <p className={HELPER_CLASS}>Seleccioná tu ciudad de la lista. Esto también detecta tu país.</p>
-              </div>
-              <div>
-                <label className={LABEL_CLASS}>¿Cómo preferís que sea?</label>
-                <div className="flex gap-2">
-                  {MODALITY_OPTIONS.map(opt => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setModality(opt.value)}
-                      className={`flex-1 px-3 py-2.5 text-sm font-medium rounded-xl border transition-all ${
-                        modality === opt.value
-                          ? 'bg-brand text-white border-brand'
-                          : 'bg-surface border-outline text-foreground hover:border-brand/50'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Card: WhatsApp + Email */}
-          <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6 mb-4">
-            <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">
-              ¿Cómo te contactamos? *
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className={LABEL_CLASS}>WhatsApp</label>
-                <input
-                  type="tel"
-                  value={whatsapp}
-                  onChange={(e) => handleWhatsappChange(e.target.value)}
-                  placeholder={countryCode ? `Ej: +${getCountryCallingCode(countryCode as CountryCode)}...` : 'Ej: +5491123456789'}
-                  className={`${INPUT_CLASS} ${phoneError ? 'border-danger focus:ring-danger/50 focus:border-danger' : ''}`}
-                />
-                {phoneError
-                  ? <p className={ERROR_CLASS}>{phoneError}</p>
-                  : <p className={HELPER_CLASS}>Solo te escribimos para enviarte las recomendaciones.</p>
-                }
-              </div>
-              <div>
-                <label className={LABEL_CLASS}>Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => handleEmailChange(e.target.value)}
-                  placeholder="tu@email.com"
-                  className={`${INPUT_CLASS} ${emailError ? 'border-danger focus:ring-danger/50 focus:border-danger' : ''}`}
-                />
-                {emailError
-                  ? <p className={ERROR_CLASS}>{emailError}</p>
-                  : <p className={HELPER_CLASS}>También te enviamos las recomendaciones por email.</p>
-                }
-              </div>
-            </div>
-          </div>
-
-          {/* Advanced fields — always visible */}
-          <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6 mb-4">
-            <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">
-              Opciones adicionales
-            </h2>
-            <div className="space-y-5">
-              <PracticePicker
-                practices={practices}
-                selected={practicePreference}
-                onChange={setPracticePreference}
-                label="Tipo de práctica que preferís"
-                helperText="Si no sabés, no te preocupes — nosotros lo consideramos."
-                includeNoPreference
-              />
-
-              <div>
-                <label className={LABEL_CLASS}>Presupuesto por sesión</label>
-                <div className="flex gap-2 items-center">
-                  <select
-                    value={currency}
-                    onChange={(e) => setCurrency(e.target.value)}
-                    className="px-3 py-3 bg-surface border border-outline rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50 transition-all w-24"
-                  >
-                    {CURRENCIES.map(c => (
-                      <option key={c.value} value={c.value}>{c.label}</option>
-                    ))}
-                  </select>
-                  <input
-                    type="number"
-                    value={budgetMin}
-                    onChange={(e) => setBudgetMin(e.target.value)}
-                    placeholder="Mín"
-                    className={`flex-1 ${INPUT_CLASS}`}
-                  />
-                  <span className="text-muted">–</span>
-                  <input
-                    type="number"
-                    value={budgetMax}
-                    onChange={(e) => setBudgetMax(e.target.value)}
-                    placeholder="Máx"
-                    className={`flex-1 ${INPUT_CLASS}`}
-                  />
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          {submitError && <Alert variant="error">{submitError}</Alert>}
-
-          <button
-            type="submit"
-            disabled={submitting || !isFormValid}
-            className="w-full px-6 py-4 bg-brand text-white font-semibold rounded-full shadow-elevated hover:shadow-strong btn-press-glow transition-all disabled:opacity-50"
-          >
-            {submitting ? 'Enviando...' : 'Enviar respuestas'}
-          </button>
-
-          <p className="text-xs text-muted text-center mt-4">
-            Tu privacidad primero: nadie recibe tus datos hasta que vos escribas.
-          </p>
-          <p className="text-xs text-muted text-center mt-2">
-            Al enviarnos tu solicitud, aceptás nuestros{' '}
-            <Link href="/terminosyprivacidad" className="text-brand hover:underline">
-              términos y privacidad
-            </Link>
-            .
-          </p>
-        </form>
+        <div className="pb-36 pt-5">
+          {step === 1 && <StepOne state={state} cards={cards} situations={situations} onChange={update} />}
+          {step === 2 && <StepTwo state={state} zonaText={zonaText} onZonaChange={handleZonaChange} onChange={update} />}
+          {step === 3 && <StepThree state={state} onChange={update} />}
+          {step === 4 && <StepFour state={state} intentLabels={intentLabels} onChange={update} onEdit={() => goTo(1)} />}
+          {sendError && (
+            <p role="alert" className="mb-0 mt-4 text-[13.5px] text-danger">
+              {sendError}
+            </p>
+          )}
+        </div>
       </div>
-    </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-foreground/10 bg-background/94 backdrop-blur-[16px]">
+        <div className="mx-auto flex w-full max-w-md gap-2 px-5 pb-8 pt-3 md:max-w-xl">
+          {step > 1 && (
+            <button
+              type="button"
+              onClick={() => goTo((step - 1) as ConciergeStep)}
+              className="rounded-2xl bg-surface-2 px-[18px] py-[15px] text-[15px] font-medium"
+            >
+              Atrás
+            </button>
+          )}
+          <button
+            type="button"
+            disabled={!canContinue}
+            onClick={() => (isLastStep ? send() : goTo((step + 1) as ConciergeStep))}
+            className="flex-1 rounded-2xl bg-foreground py-[15px] text-center text-[15px] font-medium text-gray-50 transition-colors duration-300 disabled:bg-foreground/25"
+          >
+            {isLastStep ? (sending ? 'Enviando...' : 'Enviar solicitud') : 'Continuar'}
+          </button>
+        </div>
+      </div>
+    </main>
   )
 }

@@ -89,6 +89,10 @@
   --color-sp-sky: #3B82C4;         /* Niños/adolescentes */
   --color-sp-sky-weak: #E8F2FC;
 
+  /* Almanac fonts — opt-in per page (font-almanac / font-almanac-serif utilities) */
+  --font-almanac: var(--font-jost), system-ui, sans-serif;
+  --font-almanac-serif: var(--font-instrument), Georgia, serif;
+
   /* Spacing scale - 4px base unit for consistent rhythm */
   --spacing-1: 4px;
   --spacing-2: 8px;
@@ -128,6 +132,28 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: -0.01em;
+}
+
+/* Almanac fonts: must be unlayered so they beat the global h1-h6 rule above (Tailwind utilities are layered).
+   Instrument Serif only ships weight 400, so reset the heading weight too. */
+.font-almanac {
+  font-family: var(--font-almanac);
+}
+
+.font-almanac-serif {
+  font-family: var(--font-almanac-serif);
+  font-weight: 400;
+}
+
+/* Small tracked section label (h2 on the page). Defined here, unlayered, for the same reason. */
+.almanac-label {
+  font-family: var(--font-almanac);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.21em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--color-muted);
 }
 
 /* Layout Primitives - Consistent spacing system */
@@ -187,6 +213,69 @@ h1, h2, h3, h4, h5, h6 {
 
 p + p {
   margin-top: var(--spacing-4);
+}
+
+/* Diario article body (almanac design 9e). Unlayered and after the global heading and p + p rules so it wins. */
+.diario-body {
+  font-family: var(--font-almanac);
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--color-gray-800);
+}
+
+.diario-body > * + * {
+  margin-top: 18px;
+}
+
+.diario-body h2,
+.diario-body h3 {
+  font-family: var(--font-almanac-serif);
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1.15;
+  letter-spacing: normal;
+  color: var(--color-foreground);
+  margin-top: 28px;
+  margin-bottom: 0;
+}
+
+.diario-body ul,
+.diario-body ol {
+  padding-left: 1.25em;
+}
+
+.diario-body ul {
+  list-style: disc;
+}
+
+.diario-body ol {
+  list-style: decimal;
+}
+
+.diario-body li + li {
+  margin-top: 6px;
+}
+
+.diario-body strong {
+  font-weight: 500;
+  color: var(--color-foreground);
+}
+
+.diario-body a {
+  color: var(--color-brand-dark);
+  text-decoration: underline;
+}
+
+.diario-body blockquote {
+  margin: 28px 0;
+  padding: 22px 0;
+  border-top: 1px solid var(--color-brand);
+  border-bottom: 1px solid var(--color-brand);
+  font-family: var(--font-almanac-serif);
+  font-style: italic;
+  font-size: 26px;
+  line-height: 1.25;
+  color: var(--color-brand-dark);
 }
 
 /* ========================================

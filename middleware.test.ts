@@ -1,7 +1,7 @@
 // Tests for route-protection middleware
 // Covers: /admin gating (existing), /pro gating (new), public routes pass-through.
 // NOTE: The prefix-collision regression test verifies that /profesionales and
-// /profesionales/registro are NOT gated — a bug-trap: startsWith('/pro') would
+// /registro are NOT gated — a bug-trap: startsWith('/pro') would
 // match /profesionales.
 
 import { describe, it, expect, vi } from 'vitest'
@@ -110,8 +110,8 @@ describe('prefix-collision regression: /profesionales is public', () => {
     expect(res.status).not.toBe(307)
   })
 
-  it('/profesionales/registro is NOT redirected without a session', async () => {
-    const res = await runMiddleware('/profesionales/registro', false)
+  it('/registro is NOT redirected without a session', async () => {
+    const res = await runMiddleware('/registro', false)
     expect(res.status).not.toBe(307)
   })
 })

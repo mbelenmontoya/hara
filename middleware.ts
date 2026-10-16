@@ -14,7 +14,7 @@ export async function middleware(request: NextRequest) {
 
   // Check if this is a protected route.
   // ⛔ Use '/pro/' (with trailing slash) not '/pro' — the latter also matches
-  //    /profesionales and /profesionales/registro (public routes).
+  //    /profesionales (public redirect to the home) and any other /pro... public route.
   const isProtectedRoute =
     pathname.startsWith('/admin') ||
     pathname.startsWith('/api/admin') ||

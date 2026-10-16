@@ -1,6 +1,6 @@
 {
-  "route": "/profesionales/registro/confirmacion",
-  "file": "app/profesionales/registro/confirmacion/page.tsx",
+  "route": "/registro/confirmacion",
+  "file": "app/registro/confirmacion/page.tsx",
   "description": "Confirmation page shown after a professional submits their registration form.",
   "strings": {
     "h1": "¡Solicitud enviada!",

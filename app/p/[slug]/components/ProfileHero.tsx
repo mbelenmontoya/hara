@@ -1,83 +1,91 @@
-// Card 1: Identity — "Who is this person?"
-
-import { Chip } from '@/app/components/ui/Chip'
+// Hero: arch portrait circled by the brand orbit, name, practice and place, short description as a quote.
 
 interface ProfileHeroProps {
   name: string
   shortDescription: string | null
   profileImageUrl: string | null
   location: string
-  acceptingNewClients: boolean
+  primaryPractice: string | null
   isDestacado: boolean
-  ratingAverage: number
-  ratingCount: number
 }
+
+// Arch shape from the design: round top, slightly rounded bottom.
+const ARCH_RADIUS = '118px 118px 26px 26px'
+const PORTRAIT_WIDTH_PX = 236
+const PORTRAIT_HEIGHT_PX = 282
 
 export function ProfileHero({
   name,
   shortDescription,
   profileImageUrl,
   location,
-  acceptingNewClients,
+  primaryPractice,
   isDestacado,
-  ratingAverage,
-  ratingCount,
 }: ProfileHeroProps) {
+  const meta = [primaryPractice, location].filter(Boolean).join(' · ')
+
   return (
-    <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6">
-      <div className="flex justify-center mb-4">
+    <section className="text-center">
+      <div
+        className="relative mx-auto mt-5"
+        style={{ width: PORTRAIT_WIDTH_PX, height: PORTRAIT_HEIGHT_PX }}
+      >
         {profileImageUrl?.startsWith('http') ? (
           <img
             src={profileImageUrl}
             alt={name}
-            className="w-20 h-20 rounded-full object-cover shadow-soft border-2 border-white/60"
+            className="w-full h-full object-cover"
+            style={{ borderRadius: ARCH_RADIUS }}
           />
         ) : (
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-brand-weak to-info-weak flex items-center justify-center shadow-soft border-2 border-white/60">
-            <span className="text-2xl font-semibold text-brand">
-              {name.charAt(0)}
-            </span>
+          <div
+            className="w-full h-full bg-brand-weak flex items-center justify-center"
+            style={{ borderRadius: ARCH_RADIUS }}
+          >
+            <span className="font-almanac-serif text-7xl text-brand-dark">{name.charAt(0)}</span>
+          </div>
+        )}
+
+        <img
+          src="/assets/almanac/orbita_punteada-primary.svg"
+          alt=""
+          aria-hidden="true"
+          className="absolute pointer-events-none object-contain"
+          style={{ right: -50, top: -22, width: 150, height: 205 }}
+        />
+
+        {isDestacado && (
+          <div
+            data-testid="destacado-chip"
+            className="absolute left-1/2 -bottom-3.5 -translate-x-1/2 flex items-center gap-1.5 bg-gray-50 rounded-full shadow-elevated whitespace-nowrap"
+            style={{ padding: '7px 13px 7px 10px' }}
+          >
+            <svg viewBox="0 0 24 24" className="w-[11px] h-[13px] text-brand" fill="currentColor" aria-hidden="true">
+              <path d="M12 0c.7 6.3 5.7 11.3 12 12-6.3.7-11.3 5.7-12 12-.7-6.3-5.7-11.3-12-12C6.3 11.3 11.3 6.3 12 0z" />
+            </svg>
+            <span className="font-almanac text-[10.5px] font-medium tracking-[1.6px] text-brand-dark">DESTACADA</span>
           </div>
         )}
       </div>
 
-      <h1 className="text-2xl font-bold text-foreground text-center mb-1">
+      <h1 className="font-almanac-serif font-normal text-[44px] leading-none tracking-tight text-foreground mt-8">
         {name}
       </h1>
 
-      {ratingCount > 0 && (
-        <p className="text-sm text-muted text-center mb-2">
-          {'★'.repeat(Math.round(ratingAverage))} {ratingAverage.toFixed(1)} · {ratingCount} {ratingCount === 1 ? 'reseña' : 'reseñas'}
+      {meta && (
+        <p className="font-almanac text-[12.5px] font-medium text-gray-700 mt-2 flex items-center justify-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-brand" aria-hidden="true" />
+          <span data-testid="hero-meta">{meta}</span>
         </p>
-      )}
-
-      {isDestacado && (
-        <div className="flex justify-center mb-2">
-          <span data-testid="destacado-chip">
-            <Chip variant="brand" label="Destacado" />
-          </span>
-        </div>
       )}
 
       {shortDescription && (
-        <p className="text-sm text-muted text-center italic mb-3">
+        <p className="font-almanac-serif italic text-[21px] leading-snug text-gray-700 mt-4 text-balance">
+          <span className="text-brand">“</span>
           {shortDescription}
+          <span className="text-brand">”</span>
         </p>
       )}
-
-      <p className="text-sm text-muted text-center mb-4">
-        <svg className="inline-block w-3.5 h-3.5 mr-1 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-        {location}
-      </p>
-
-      {acceptingNewClients && (
-        <div className="flex justify-center">
-          <Chip label="Aceptando nuevas consultas" variant="success" />
-        </div>
-      )}
-    </div>
+    </section>
   )
 }

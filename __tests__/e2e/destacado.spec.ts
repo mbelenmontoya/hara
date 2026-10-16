@@ -1,7 +1,6 @@
 // E2E tests for Destacado tier MVP (TS-001 through TS-005)
 //
 // TS-001: Admin records a payment → Destacado tier activates (admin auth required)
-// TS-002: Destacado chip visible on /profesionales card
 // TS-003: Destacado chip visible on /p/[slug] profile
 // TS-004: Cron endpoint cleans up expired Destacado rows
 // TS-005: Silent extension preserves paid time (admin auth required)
@@ -112,44 +111,6 @@ test.afterAll(async () => {
   }
   // Belt-and-suspenders cleanup
   await supabase.from('professionals').delete().like('slug', `destacado-e2e-%`)
-})
-
-// ── TS-002: Destacado chip on /profesionales ──────────────────────────────────
-
-test.describe('TS-002 — Destacado chip on /profesionales', () => {
-  test('directory card shows Destacado chip for active destacado professional', async ({ page }) => {
-    test.skip(!migrationApplied, 'Migration 005 not applied or Supabase unreachable')
-    test.skip(!activeId, 'Active destacado fixture not seeded')
-
-    await page.goto('/profesionales')
-    await page.waitForLoadState('networkidle')
-
-    // The card for "Destacado E2E Active" must show the destacado-chip data-testid
-    // Find the card containing this professional's name
-    const card = page.locator('[data-testid="professional-card"]', {
-      has: page.getByText('Destacado E2E Active'),
-    })
-    await expect(card).toBeVisible()
-    await expect(card.locator('[data-testid="destacado-chip"]')).toBeVisible()
-  })
-
-  test('expired destacado professional does NOT show chip on directory', async ({ page }) => {
-    test.skip(!migrationApplied, 'Migration 005 not applied or Supabase unreachable')
-    test.skip(!expiredId, 'Expired destacado fixture not seeded')
-
-    await page.goto('/profesionales')
-    await page.waitForLoadState('networkidle')
-
-    // The card for "Destacado E2E Expired" must NOT show a destacado-chip
-    // (trigger sees expired tier and effective contribution = 0; chip is gated by isEffectivelyDestacado)
-    const card = page.locator('[data-testid="professional-card"]', {
-      has: page.getByText('Destacado E2E Expired'),
-    })
-    if (await card.count() > 0) {
-      await expect(card.locator('[data-testid="destacado-chip"]')).toHaveCount(0)
-    }
-    // If card not present, the row was filtered out — also acceptable; the assertion is "no chip visible".
-  })
 })
 
 // ── TS-003: Destacado chip on /p/[slug] ───────────────────────────────────────

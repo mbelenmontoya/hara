@@ -21,6 +21,8 @@ export interface Lead {
   status: string
   urgency: string | null
   created_at: string
+  /** What the person told us in the concierge form; only loaded on the lead detail page. */
+  additional_context?: string | null
   latest_match: LeadMatch | null
   match_count: number
 }

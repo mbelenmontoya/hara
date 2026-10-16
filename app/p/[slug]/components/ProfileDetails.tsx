@@ -1,67 +1,69 @@
-// Card: Combined expertise card — Especialidades, Tipo de servicio, Modalidad
-// Each section only renders when data is present (no empty labels).
-// Returns null when all arrays are empty.
+// Specialty tiles ("Para cuando llegas con") and the facts rows (service, modality, place).
+// Each piece only renders when it has data; both return null when empty.
 
-import { Chip } from '@/app/components/ui/Chip'
+import { SPECIALTY_MAP, SPECIALTY_COLORS } from '@/lib/design-constants'
 
-interface ProfileDetailsProps {
-  specialties: string[]
-  practiceLabels: string[]
-  serviceTypeLabels: string[]
-  modalityLabels: string[]
+function TriangleGlyph({ className }: { className: string }) {
+  return (
+    <svg viewBox="0 0 20 18" className={`w-[19px] h-[18px] flex-none ${className}`} fill="none" stroke="currentColor" strokeWidth={1.4} aria-hidden="true">
+      <path strokeLinejoin="round" d="M10 2 18 16H2z" />
+    </svg>
+  )
 }
 
-export function ProfileDetails({
-  specialties,
-  practiceLabels,
-  serviceTypeLabels,
-  modalityLabels,
-}: ProfileDetailsProps) {
-  const hasSpecialties = specialties.length > 0 || practiceLabels.length > 0
-  const hasServiceType = serviceTypeLabels.length > 0
-  const hasModality = modalityLabels.length > 0
+function Tile({ label, bg, text }: { label: string; bg: string; text: string }) {
+  return (
+    <li className={`flex items-center gap-2.5 rounded-2xl py-2.5 pl-3 pr-3.5 ${bg}`}>
+      <TriangleGlyph className={text} />
+      <span className="font-almanac text-sm font-medium text-foreground">{label}</span>
+    </li>
+  )
+}
 
-  if (!hasSpecialties && !hasServiceType && !hasModality) return null
+interface ProfileDetailsProps {
+  /** Curated specialty keys (see SPECIALTY_MAP), already resolved from the professional's practices. */
+  specialties: string[]
+}
+
+export function ProfileDetails({ specialties }: ProfileDetailsProps) {
+  if (specialties.length === 0) return null
 
   return (
-    <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6 space-y-4">
-      {hasSpecialties && (
-        <div>
-          <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-3">
-            Especialidades
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {specialties.map((s) => (
-              <Chip key={s} specialty={s} className="text-[11px] px-2 py-1" />
-            ))}
-            {practiceLabels.map((label) => (
-              <Chip key={label} label={label} variant="neutral" className="text-[11px] px-2 py-1" />
-            ))}
-          </div>
-        </div>
-      )}
+    <section>
+      <h2 className="almanac-label">PARA CUANDO LLEGAS CON</h2>
+      <ul className="mt-3 flex flex-wrap gap-2">
+        {specialties.map((key) => {
+          const colors = SPECIALTY_COLORS[key]
+          return <Tile key={key} label={SPECIALTY_MAP[key] ?? key} bg={colors?.bg ?? 'bg-surface-2'} text={colors?.text ?? 'text-brand-dark'} />
+        })}
+      </ul>
+    </section>
+  )
+}
 
-      {hasServiceType && (
-        <div>
-          <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">
-            Tipo de servicio
-          </h2>
-          <p className="text-sm text-foreground">{serviceTypeLabels.join(' & ')}</p>
-        </div>
-      )}
+interface ProfileDetailRowsProps {
+  serviceTypeLabels: string[]
+  modalityLabels: string[]
+  location: string
+}
 
-      {hasModality && (
-        <div>
-          <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-3">
-            Modalidad
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {modalityLabels.map((label) => (
-              <Chip key={label} label={label} variant="neutral" className="text-[11px] px-2 py-1" />
-            ))}
-          </div>
+export function ProfileDetailRows({ serviceTypeLabels, modalityLabels, location }: ProfileDetailRowsProps) {
+  const rows = [
+    { label: 'Servicio', value: serviceTypeLabels.join(' y ') },
+    { label: 'Modalidad', value: modalityLabels.join(', ') },
+    { label: 'Dónde', value: location },
+  ].filter((row) => row.value)
+
+  if (rows.length === 0) return null
+
+  return (
+    <dl className="border-t border-outline font-almanac text-[14.5px]">
+      {rows.map((row) => (
+        <div key={row.label} className="flex justify-between gap-3 border-b border-outline py-3.5">
+          <dt className="text-muted">{row.label}</dt>
+          <dd className="text-right text-foreground">{row.value}</dd>
         </div>
-      )}
-    </div>
+      ))}
+    </dl>
   )
 }

@@ -26,6 +26,7 @@ interface LeadRow {
   status: string
   urgency: string | null
   created_at: string
+  additional_context: string | null
   matches: MatchRow[]
 }
 
@@ -43,7 +44,7 @@ export async function GET(
     const { data, error } = await supabaseAdmin
       .from('leads')
       .select(`
-        id, email, whatsapp, country, city, intent_tags, status, urgency, created_at,
+        id, email, whatsapp, country, city, intent_tags, status, urgency, created_at, additional_context,
         matches (
           id,
           tracking_code,
@@ -88,6 +89,7 @@ export async function GET(
         status: lead.status,
         urgency: lead.urgency,
         created_at: lead.created_at,
+        additional_context: lead.additional_context,
         latest_match: matches[0] ?? null,
         match_count: matches.length,
       },

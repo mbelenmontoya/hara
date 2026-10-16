@@ -2,7 +2,7 @@
 
 ## What Is This
 
-Curated marketplace for **terapias alternativas y bienestar holístico** in Spanish-speaking markets (LATAM + Spain, Argentina home base). Practitioners are reikistas, masajistas, facilitadores de constelaciones familiares, expertos en diseño humano, lectores de registros akáshicos, terapeutas florales/energéticos, instructores de meditación, y otras prácticas afines. The match is symptom → holistic modality: a user atravesando ansiedad/insomnio/duelo gets paired with whichever holistic practice resonates. Three user-facing surfaces: **Browse** (`/profesionales` — directory with filters + map, primary path), **Concierge** (`/solicitar` — admin hand-picks 3 recommendations delivered via `/r/{tracking_code}`), and **Blog** (`/blog` — editorial content for SEO + trust). Professionals register at `/profesionales/registro` and self-manage their profile at `/pro/perfil`. Revenue is supply-funded via subscription tiers (Básico free, Destacado paid). Concierge leads (PQL infra) are preserved as an optional premium layer after the Apr 2026 pivot away from PQL-only billing.
+Curated marketplace for **terapias alternativas y bienestar holístico** in Spanish-speaking markets (LATAM + Spain, Argentina home base). Practitioners are reikistas, masajistas, facilitadores de constelaciones familiares, expertos en diseño humano, lectores de registros akáshicos, terapeutas florales/energéticos, instructores de meditación, y otras prácticas afines. The match is symptom → holistic modality: a user atravesando ansiedad/insomnio/duelo gets paired with whichever holistic practice resonates. Three user-facing surfaces: **Browse** (`/` — the home page is the directory, almanac design, primary path), **Concierge** (`/solicitar` — admin hand-picks 3 recommendations delivered via `/r/{tracking_code}`), and **Blog** (`/blog` — editorial content for SEO + trust). Professionals register at `/profesionales/registro` and self-manage their profile at `/pro/perfil`. Revenue is supply-funded via subscription tiers (Básico free, Destacado paid). Concierge leads (PQL infra) are preserved as an optional premium layer after the Apr 2026 pivot away from PQL-only billing.
 
 **📖 Read [`PRODUCT.md`](./PRODUCT.md) for the full product context — what we're building, who it's for, why it exists, and how we measure success.** This file (CLAUDE.md) is engineering context only; PRODUCT.md is the canonical answer to "what is this product?"
 
@@ -26,11 +26,11 @@ app/
 │   ├── hooks/                # useRecommendations, useSwipeGesture, useRevealTransition, useMediaQuery
 │   └── components/           # BottomSheet, BackgroundPicker, CardSkeleton
 ├── p/[slug]/                 # Professional public profile
-├── profesionales/            # Directory page + 4-step registration form
+├── registro/                 # Professional registration form (4 steps) + confirmacion page
+├── profesionales/            # Old directory components, kept for the new home design (no page, no route)
 │   ├── components/           # ProfessionalsDirectory, ProfessionalCard, DirectoryFilters,
 │   │                         #   LocationFilter, DirectoryMap, WelcomeHint
-│   ├── hooks/                # useCityGeocode
-│   └── registro/             # Registration form + confirmacion page
+│   └── hooks/                # useCityGeocode
 ├── pro/                      # Professional self-service portal
 │   ├── login/                # Auth entry point
 │   ├── set-password/         # First-login password setup (from approval email link)
@@ -154,6 +154,7 @@ npm run qa:week4:dev     # Full QA suite (dev mode)
 | `PRODUCTION_READINESS.md` | Deployment checklist |
 | `SELF_QA_RULES.md` | 7 QA validation rules |
 | `KNOWN_ISSUES.md` | Chrome backdrop-filter bug |
+| `ISSUES.md` | Running list of issues and improvements found along the way |
 | `PLAN-main.md` | Plan, roadmap, and all pending tasks |
 | `docs/DONE.md` | All completed work |
 

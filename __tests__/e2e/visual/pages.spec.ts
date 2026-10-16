@@ -30,7 +30,7 @@ test.describe('Visual regression — key pages', () => {
   })
 
   test('registration form — step 0', async ({ page }) => {
-    await page.goto('/profesionales/registro')
+    await page.goto('/registro')
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(500)
 
@@ -50,24 +50,11 @@ test.describe('Visual regression — key pages', () => {
   })
 
   test('registration confirmation page', async ({ page }) => {
-    await page.goto('/profesionales/registro/confirmacion')
+    await page.goto('/registro/confirmacion')
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(300)
 
     await expect(page).toHaveScreenshot('registro-confirmacion.png', {
-      maxDiffPixelRatio: 0.02,
-    })
-  })
-
-  test('/profesionales directory — empty state or with professionals', async ({ page }) => {
-    await page.goto('/profesionales')
-    await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(500)
-
-    // Baseline captures the current state (empty state if DB unreachable, list if live).
-    // Update baseline after applying migration 004 + seeding:
-    //   npm run test:visual:update
-    await expect(page).toHaveScreenshot('profesionales-directory.png', {
       maxDiffPixelRatio: 0.02,
     })
   })

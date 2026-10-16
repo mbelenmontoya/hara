@@ -20,7 +20,7 @@ test.describe('UI Smoke Test - Critical Paths', () => {
   })
 
   test('registration page is publicly accessible', async ({ page }) => {
-    const response = await page.goto('/profesionales/registro')
+    const response = await page.goto('/registro')
     expect(response?.status()).toBe(200)
     await expect(page.getByRole('heading').first()).toBeVisible()
   })

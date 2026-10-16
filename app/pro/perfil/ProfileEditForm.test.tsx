@@ -16,7 +16,7 @@ vi.mock('@/app/components/PracticePicker', () => ({
   ),
 }))
 
-vi.mock('@/app/profesionales/registro/components/SpecialtySelector', () => ({
+vi.mock('@/app/registro/components/SpecialtySelector', () => ({
   SpecialtySelector: ({ selected }: { selected: string[] }) => (
     <div data-testid="specialty-selector">{selected.join(',')}</div>
   ),

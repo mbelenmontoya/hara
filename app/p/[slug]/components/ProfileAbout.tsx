@@ -1,5 +1,5 @@
-// Card 3: About — "What's their approach?"
-// Only rendered when bio or experience_description exists
+// About: "Sobre mí" with an italic word, plus the experience paragraph when present.
+// Only rendered when bio or experience_description exists.
 
 interface ProfileAboutProps {
   bio: string | null
@@ -10,20 +10,24 @@ export function ProfileAbout({ bio, experienceDescription }: ProfileAboutProps) 
   if (!bio && !experienceDescription) return null
 
   return (
-    <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6">
+    <section className="space-y-7">
       {bio && (
-        <div className={experienceDescription ? 'mb-6' : ''}>
-          <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Sobre mí</h2>
-          <p className="text-sm text-foreground leading-relaxed">{bio}</p>
+        <div>
+          <h2 className="font-almanac-serif text-[30px] leading-[1.05] text-foreground">
+            Sobre <em>mí</em>
+          </h2>
+          <p className="font-almanac text-base leading-[1.7] text-gray-800 mt-3">{bio}</p>
         </div>
       )}
 
       {experienceDescription && (
         <div>
-          <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-2">Sobre la experiencia</h2>
-          <p className="text-sm text-foreground leading-relaxed">{experienceDescription}</p>
+          <h2 className="font-almanac-serif text-[30px] leading-[1.05] text-foreground">
+            Sobre la <em>experiencia</em>
+          </h2>
+          <p className="font-almanac text-base leading-[1.7] text-gray-800 mt-3">{experienceDescription}</p>
         </div>
       )}
-    </div>
+    </section>
   )
 }

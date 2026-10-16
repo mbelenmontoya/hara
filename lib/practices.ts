@@ -53,7 +53,7 @@ export function bustPracticesCache(): void {}
 export async function getAllPractices(): Promise<Practice[]> {
   const { data, error } = await supabaseAdmin
     .from('practices')
-    .select('key, label, slug, sort_order, active, specialties')
+    .select('key, label, slug, sort_order, active, aliases, specialties')
     .order('sort_order', { ascending: true })
     .order('key', { ascending: true })
   if (error) throw new Error(`Failed to load practices catalog: ${error.message}`)

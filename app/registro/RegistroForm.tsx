@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { AsYouType, isValidPhoneNumber, parsePhoneNumberFromString, getCountryCallingCode, type CountryCode } from 'libphonenumber-js'
 import { PlacesAutocomplete } from '@/app/components/PlacesAutocomplete'
-import { SpecialtySelector } from '@/app/profesionales/registro/components/SpecialtySelector'
+import { SpecialtySelector } from '@/app/registro/components/SpecialtySelector'
 import { PageBackground } from '@/app/components/ui/PageBackground'
 import { PracticePicker } from '@/app/components/PracticePicker'
 import type { Practice } from '@/lib/practices'
@@ -227,7 +227,7 @@ export function RegistroForm({ practices }: Props) {
         const data = await response.json()
         throw new Error(data.error || 'Error al enviar el formulario')
       }
-      router.push('/profesionales/registro/confirmacion')
+      router.push('/registro/confirmacion')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {

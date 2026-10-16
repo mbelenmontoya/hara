@@ -1,63 +1,76 @@
 {
   "route": "/solicitar",
-  "file": "app/solicitar/SolicitarForm.tsx",
-  "description": "Concierge intake form. User describes what they need, Hara hand-picks 3 professionals.",
+  "file": "app/solicitar/ConciergeSteps.tsx, app/solicitar/ConciergeConfirmation.tsx",
+  "description": "Concierge request form in 4 steps (almanac design 9a). After sending, the same page shows the confirmation (design 9b). Hara hand-picks 3 professionals.",
   "strings": {
-    "h1": "Encontrá tu profesional ideal",
-    "subtitle": "Contanos qué buscás y te conectamos con 3 profesionales que se ajustan a vos.",
-    "section_intent": "¿En qué necesitás ayuda? *",
-    "intent_options": {
-      "anxiety": "Ansiedad",
-      "depression": "Depresión",
-      "stress": "Estrés",
-      "trauma": "Trauma",
-      "relationships": "Relaciones",
-      "self_esteem": "Autoestima",
-      "grief": "Duelo",
-      "addiction": "Adicciones",
-      "eating_disorders": "Trastornos alimentarios",
-      "couples": "Terapia de pareja",
-      "family": "Terapia familiar",
-      "children": "Niños y adolescentes"
-    },
-    "section_location": "¿Dónde estás? *",
-    "location_label": "Ubicación",
-    "location_placeholder": "Empezá a escribir tu ciudad...",
-    "location_helper": "Seleccioná tu ciudad de la lista. Esto también detecta tu país.",
-    "modality_label": "¿Cómo preferís que sea?",
-    "modality_options": {
-      "online": "Online",
-      "presencial": "Presencial",
-      "ambos": "Ambos"
-    },
-    "section_urgency": "¿Qué tan urgente es?",
-    "urgency_options": {
-      "low": "No es urgente, estoy explorando",
-      "medium": "Me gustaría empezar pronto",
-      "high": "Necesito ayuda lo antes posible"
-    },
-    "section_whatsapp": "¿Cómo te contactamos? *",
-    "whatsapp_label": "WhatsApp",
-    "whatsapp_helper": "Solo te escribimos para enviarte las recomendaciones.",
-    "phone_error_format": "Debe empezar con + y el código de país",
-    "phone_error_invalid": "El número no parece válido",
-    "advanced_toggle_show": "Más opciones",
-    "advanced_toggle_hide": "Ocultar opciones adicionales",
-    "advanced_section_title": "Opciones adicionales",
-    "practice_label": "Tipo de práctica que preferís",
-    "practice_helper": "Si no sabés, no te preocupes — nosotros lo consideramos.",
-    "budget_label": "Presupuesto por sesión",
-    "email_label": "Email",
-    "email_helper": "Opcional. Te lo enviamos también por email.",
-    "submit_button": "Encontrar mis 3 opciones",
+    "close_aria": "Cerrar",
+    "eyebrow": "Concierge · Gratis",
+    "step_label": "Paso {n} de 4",
+    "back_button": "Atrás",
+    "next_button": "Continuar",
+    "submit_button": "Enviar solicitud",
     "submit_loading": "Enviando...",
-    "privacy_note": "Tu privacidad primero: nadie recibe tus datos hasta que vos escribas.",
-    "terms_link_text": "términos y privacidad",
-    "terms_note": "Al enviarnos tu solicitud, aceptás nuestros",
-    "error_no_intent": "Seleccioná al menos un tema",
-    "error_no_location": "Buscá y seleccioná tu ubicación",
-    "error_no_whatsapp": "Ingresá tu WhatsApp",
-    "error_fix_whatsapp": "Corregí el número de WhatsApp",
-    "error_generic": "Hubo un error. Intentá de nuevo."
+    "error_generic": "Hubo un error. Intentá de nuevo.",
+    "step1": {
+      "title": "¿Cómo llegás?",
+      "subtitle": "Elegí lo que más se parezca. No tiene que ser exacto.",
+      "card_count": "{n} profesionales",
+      "chips_label": "¿Qué está pasando? · Opcional"
+    },
+    "step2": {
+      "title": "¿Qué te acomoda?",
+      "subtitle": "Solo te proponemos gente que cumpla con esto.",
+      "format_label": "Formato",
+      "format_options": { "online": "Online", "presencial": "Presencial", "ambos": "Ambos" },
+      "zone_label": "Zona",
+      "zone_placeholder": "Tu ciudad o barrio",
+      "schedule_label": "Horario · Elegí los que quieras",
+      "schedule_options": ["Mañana", "Tarde", "Noche", "Fines de semana"],
+      "budget_label": "Presupuesto por sesión · Opcional",
+      "budget_min_placeholder": "Mín",
+      "budget_max_placeholder": "Máx"
+    },
+    "step3": {
+      "title": "Contanos.",
+      "subtitle": "Con tus palabras. Lo lee una persona del equipo, y nadie más.",
+      "seen_before_label": "¿Fuiste con alguien antes?",
+      "seen_before_options": { "si": "Sí", "no": "No" },
+      "urgency_label": "¿Qué tan pronto?",
+      "urgency_options": {
+        "low": "No es urgente, estoy explorando",
+        "medium": "Me gustaría empezar pronto",
+        "high": "Necesito ayuda lo antes posible"
+      }
+    },
+    "step4": {
+      "title": "¿Dónde te escribimos?",
+      "subtitle": "Por WhatsApp, solo para mandarte tus tres opciones.",
+      "name_label": "Tu nombre",
+      "name_placeholder": "Como quieras que te llamemos",
+      "whatsapp_label": "WhatsApp",
+      "email_label": "Email",
+      "phone_error_format": "Debe empezar con + y el código de país",
+      "phone_error_invalid": "El número no parece válido",
+      "email_error_invalid": "El email no parece válido",
+      "summary_title": "Tu solicitud",
+      "summary_edit": "Editar",
+      "summary_rows": ["Cómo llegás", "Formato", "Zona", "Horario", "Presupuesto", "Qué tan pronto"],
+      "consent": "Acepto que Hara use estos datos solo para recomendarme profesionales.",
+      "consent_link": "Ver privacidad"
+    },
+    "confirmation": {
+      "request_label": "Solicitud {id}",
+      "title": "Listo, {name}.",
+      "promise": "Te escribimos al {whatsapp} en menos de 48 horas.",
+      "next_heading": "Lo que sigue",
+      "next_steps": [
+        { "title": "Recibimos tu solicitud", "when": "Ahora" },
+        { "title": "La lee una persona del equipo", "text": "No es un algoritmo: es alguien que conoce a los profesionales y elige las tres opciones que mejor encajan con vos." },
+        { "title": "Te mandamos tus tres", "when": "En menos de 48 h", "text": "Un link por WhatsApp con sus perfiles, su experiencia y sus reseñas. Tomate el tiempo que necesites para comparar." },
+        { "title": "Vos elegís y les escribís", "when": "Cuando quieras", "text": "Tu información no se comparte hasta que vos abrís la conversación." }
+      ],
+      "meanwhile_label": "Mientras tanto",
+      "meanwhile_meta": "En el Diario · {n} min"
+    }
   }
 }

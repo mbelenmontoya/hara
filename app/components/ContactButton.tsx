@@ -12,6 +12,9 @@
 
 import { useState } from 'react'
 
+const DEFAULT_LOOK =
+  'px-6 py-3.5 bg-brand text-white font-semibold rounded-full shadow-elevated hover:bg-brand-hover hover:shadow-strong btn-press-glow transition-all duration-150'
+
 interface ContactButtonProps {
   professionalSlug: string
   professionalName: string
@@ -20,6 +23,7 @@ interface ContactButtonProps {
   rank: number
   attributionToken?: string // Optional: JWT token for concierge (attributed) visits
   className?: string
+  unstyled?: boolean // Optional: drop the default button look; the caller supplies all visual classes
   onBeforeNavigate?: () => void // Optional: Called before opening WhatsApp
 }
 
@@ -31,6 +35,7 @@ export function ContactButton({
   rank,
   attributionToken,
   className = '',
+  unstyled = false,
   onBeforeNavigate,
 }: ContactButtonProps) {
   const [isTracking, setIsTracking] = useState(false)
@@ -92,7 +97,7 @@ export function ContactButton({
       rel="noopener noreferrer"
       onClick={handleClick}
       data-testid={`contact-button-${professionalSlug}`}
-      className={`inline-flex items-center justify-center px-6 py-3.5 bg-brand text-white font-semibold rounded-full shadow-elevated hover:bg-brand-hover hover:shadow-strong btn-press-glow transition-all duration-150 ${className} ${isTracking ? 'opacity-90' : ''}`}
+      className={`inline-flex items-center justify-center ${unstyled ? '' : DEFAULT_LOOK} ${className} ${isTracking ? 'opacity-90' : ''}`}
     >
       {isTracking ? `Contactando a ${professionalName}...` : 'Contactar por WhatsApp'}
     </a>

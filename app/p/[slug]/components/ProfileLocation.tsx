@@ -19,11 +19,9 @@ export function ProfileLocation({
   const linkUrl = `https://maps.google.com/?q=${mapsQuery}`
 
   return (
-    <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6">
-      <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-3">
-        Ubicación presencial
-      </h2>
-      <p className="text-sm text-foreground mb-4">{location}</p>
+    <section>
+      <h2 className="almanac-label mb-3">UBICACIÓN PRESENCIAL</h2>
+      <p className="font-almanac text-[14.5px] text-foreground mb-3">{location}</p>
       <div className="rounded-2xl overflow-hidden mb-2">
         <iframe
           src={embedUrl}
@@ -40,10 +38,10 @@ export function ProfileLocation({
         href={linkUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-xs text-brand hover:underline"
+        className="font-almanac text-xs text-brand-dark hover:underline"
       >
         Ver en Google Maps →
       </a>
-    </div>
+    </section>
   )
 }

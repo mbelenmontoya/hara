@@ -9,18 +9,18 @@ import { notFound } from 'next/navigation'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { MODALITY_MAP, SERVICE_TYPE_MAP } from '@/lib/design-constants'
 import { getAllPractices } from '@/lib/practices'
-import { PageBackground } from '@/app/components/ui/PageBackground'
+import { resolveProfileSpecialties } from '@/lib/profile-specialties'
 import { isEffectivelyDestacado } from '@/lib/ranking'
 import { ProfileViewTracker } from './components/ProfileViewTracker'
 import { ProfileHero } from './components/ProfileHero'
+import { ProfileFacts } from './components/ProfileFacts'
 import { ProfileAbout } from './components/ProfileAbout'
 import { ProfileContact } from './components/ProfileContact'
 import { ProfileLocation } from './components/ProfileLocation'
-import { ProfileDetails } from './components/ProfileDetails'
+import { ProfileDetails, ProfileDetailRows } from './components/ProfileDetails'
 import { ProfileReviews } from './components/ProfileReviews'
 import { ProfileReviewForm } from './components/ProfileReviewForm'
 import { ProfilePosts } from './components/ProfilePosts'
-import { RevealOnScroll } from '@/app/components/ui/RevealOnScroll'
 import type { Professional, Review } from './types'
 
 async function getProfessional(slug: string): Promise<Professional | null> {
@@ -106,7 +106,11 @@ export default async function ProfessionalProfilePage({
 
   const practiceLabelMap = Object.fromEntries(catalogPractices.map((p) => [p.key, p.label]))
   const modalityLabels = professional.modality.map((m) => MODALITY_MAP[m] || m)
-  const practiceLabels = professional.practices.map((k) => practiceLabelMap[k] ?? k)
+  const resolved = resolveProfileSpecialties(
+    { practiceKeys: professional.practices, specialties: professional.specialties },
+    catalogPractices
+  )
+  const primaryPractice = resolved.practiceKeys[0] ? practiceLabelMap[resolved.practiceKeys[0]] ?? null : null
   const serviceTypeLabels = professional.service_type.map((s) => SERVICE_TYPE_MAP[s] || s)
   const location = formatLocation(professional.country, professional.city, professional.online_only)
   const isDestacado = isEffectivelyDestacado(professional.subscription_tier, professional.tier_expires_at)
@@ -118,113 +122,92 @@ export default async function ProfessionalProfilePage({
   const hasPresencialLocation = !professional.online_only && !!professional.city
 
   return (
-    <div className="min-h-screen bg-background" data-testid="professional-profile">
-      <PageBackground />
+    <div className="min-h-screen bg-background font-almanac text-foreground" data-testid="professional-profile">
       <ProfileViewTracker slug={professional.slug} />
 
-      <div className="relative z-10 container-public pt-8 pb-12 space-y-4">
-
-        {/* Back button */}
+      <div className="mx-auto w-full max-w-md px-5 pb-32 pt-4 md:max-w-xl">
         <a
           href={backHref}
-          className="inline-flex items-center gap-2 px-4 py-2 liquid-glass rounded-full shadow-soft border border-outline/30 text-sm text-foreground hover:shadow-elevated transition-shadow"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-2 text-foreground transition-opacity hover:opacity-80"
           aria-label={backLabel}
+          title={backLabel}
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
-          {backLabel}
         </a>
 
-        {/* 1. Full-width hero */}
         <ProfileHero
           name={professional.name}
           shortDescription={professional.short_description}
           profileImageUrl={professional.profile_image_url}
           location={location}
-          acceptingNewClients={professional.accepting_new_clients}
+          primaryPractice={primaryPractice}
           isDestacado={isDestacado}
-          ratingAverage={professional.rating_average}
-          ratingCount={professional.rating_count}
         />
 
-        {/* 2. Two-column: Sobre mí (left) | Contacto sticky (right) */}
-        <div className="lg:grid lg:grid-cols-[1fr_360px] lg:gap-8 space-y-4 lg:space-y-0">
-          <RevealOnScroll delay={0}>
-            <ProfileAbout
-              bio={professional.bio}
-              experienceDescription={professional.experience_description}
-            />
-          </RevealOnScroll>
-          <div className="lg:sticky lg:top-8">
-            <RevealOnScroll delay={0}>
-              <ProfileContact
-                slug={professional.slug}
-                name={professional.name}
-                whatsapp={professional.whatsapp}
-                instagram={professional.instagram}
-                email={professional.email}
-              />
-            </RevealOnScroll>
-          </div>
+        <div className="mt-5">
+          <ProfileFacts
+            ratingAverage={professional.rating_average}
+            ratingCount={professional.rating_count}
+            priceMin={professional.price_range_min}
+            priceMax={professional.price_range_max}
+            currency={professional.currency}
+            acceptingNewClients={professional.accepting_new_clients}
+          />
         </div>
 
-        {/* 3. Ubicación (left) | Detalles (right) — or Detalles full-width when online-only */}
-        {hasPresencialLocation ? (
-          <div className="lg:grid lg:grid-cols-[1fr_360px] lg:gap-8 space-y-4 lg:space-y-0">
-            <RevealOnScroll delay={0}>
-              <ProfileLocation
-                city={professional.city}
-                location={location}
-                onlineOnly={professional.online_only}
-              />
-            </RevealOnScroll>
-            <RevealOnScroll delay={0}>
-              <ProfileDetails
-                specialties={professional.specialties}
-                practiceLabels={practiceLabels}
-                serviceTypeLabels={serviceTypeLabels}
-                modalityLabels={modalityLabels}
-              />
-            </RevealOnScroll>
-          </div>
-        ) : (
-          <RevealOnScroll delay={0}>
-            <ProfileDetails
-              specialties={professional.specialties}
-              practiceLabels={practiceLabels}
-              serviceTypeLabels={serviceTypeLabels}
-              modalityLabels={modalityLabels}
-            />
-          </RevealOnScroll>
-        )}
+        <div className="mt-4">
+          <ProfileContact
+            slug={professional.slug}
+            name={professional.name}
+            whatsapp={professional.whatsapp}
+            instagram={professional.instagram}
+            email={professional.email}
+          />
+        </div>
 
-        {/* 4. Full-width: existing reviews (hidden when none) */}
-        <RevealOnScroll delay={0}>
+        <div className="mt-10 space-y-9">
+          <ProfileDetails specialties={resolved.specialtyKeys} />
+
+          <ProfileAbout
+            bio={professional.bio}
+            experienceDescription={professional.experience_description}
+          />
+
+          <ProfileDetailRows
+            serviceTypeLabels={serviceTypeLabels}
+            modalityLabels={modalityLabels}
+            location={location}
+          />
+
+          {hasPresencialLocation && (
+            <ProfileLocation
+              city={professional.city}
+              location={location}
+              onlineOnly={professional.online_only}
+            />
+          )}
+
           <ProfileReviews
             ratingAverage={professional.rating_average}
             ratingCount={professional.rating_count}
             reviews={reviews}
           />
-        </RevealOnScroll>
 
-        {/* 5. Full-width: professional's published blog posts (empty → renders nothing) */}
-        {blogPosts.length > 0 && (
-          <RevealOnScroll delay={0}>
+          {blogPosts.length > 0 && (
             <ProfilePosts
               posts={blogPosts}
               firstName={professional.name.split(' ')[0]}
             />
-          </RevealOnScroll>
-        )}
+          )}
 
-        {/* 6. Full-width: open review form */}
-        <ProfileReviewForm professionalSlug={professional.slug} />
+          <ProfileReviewForm professionalSlug={professional.slug} />
 
-        <p className="text-xs text-muted text-center pt-2">
-          Tu privacidad primero: nadie recibe tus datos hasta que vos escribas.
-        </p>
-
+          <p className="text-center text-xs text-muted">
+            Tu privacidad primero: nadie recibe tus datos hasta que vos escribas.
+          </p>
+        </div>
       </div>
     </div>
   )

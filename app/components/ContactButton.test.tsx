@@ -89,4 +89,14 @@ describe('ContactButton — event tracking', () => {
     // The click should not propagate any exception to the test
     expect(() => fireEvent.click(screen.getByRole('link'))).not.toThrow()
   })
+
+  it('drops the default button look when unstyled, so the caller styles it', () => {
+    const { rerender } = render(<ContactButton {...BASE_PROPS} />)
+    expect(screen.getByRole('link').className).toContain('bg-brand')
+
+    rerender(<ContactButton {...BASE_PROPS} unstyled className="bg-brand-dark" />)
+    const link = screen.getByRole('link')
+    expect(link.className).not.toMatch(/(^|\s)bg-brand(\s|$)/)
+    expect(link.className).toContain('bg-brand-dark')
+  })
 })

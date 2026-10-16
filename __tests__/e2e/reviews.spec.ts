@@ -1,7 +1,6 @@
 // E2E tests for Reviews Collection System (TS-001 through TS-005)
 //
 // TS-001: Submit review via valid token → thank-you page; revisit → "ya enviada"
-// TS-002: Reviews card on /profesionales (covered by directory.spec.ts if Destacado + reviews)
 // TS-003: Admin toggle is_hidden → aggregate recomputes (admin auth required)
 // TS-004: Cron /api/cron/send-review-requests auth (401 path, no DB needed)
 // TS-005: ContactButton fires event for direct profile click (TS-005 already in destacado.spec.ts)

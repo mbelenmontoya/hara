@@ -1,51 +1,46 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { ProfileDetails } from './ProfileDetails'
+import { ProfileDetails, ProfileDetailRows } from './ProfileDetails'
 
-describe('ProfileDetails', () => {
-  const emptyProps = {
-    specialties: [],
-    practiceLabels: [],
-    serviceTypeLabels: [],
-    modalityLabels: [],
-  }
-
-  it('returns null when all arrays are empty', () => {
-    const { container } = render(<ProfileDetails {...emptyProps} />)
-    expect(container.firstChild).toBeNull()
+describe('ProfileDetails (specialty tiles)', () => {
+  it('renders nothing when there are no specialties', () => {
+    const { container } = render(<ProfileDetails specialties={[]} />)
+    expect(container).toBeEmptyDOMElement()
   })
 
-  it('shows Especialidades section only when specialties present', () => {
-    render(<ProfileDetails {...emptyProps} specialties={['ansiedad', 'duelo']} />)
-    expect(screen.getByText(/especialidades/i)).toBeInTheDocument()
-    expect(screen.queryByText(/tipo de servicio/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/modalidad/i)).not.toBeInTheDocument()
+  it('shows each curated specialty with its Spanish label', () => {
+    render(<ProfileDetails specialties={['estres-ansiedad', 'duelo-perdidas']} />)
+    expect(screen.getByText('PARA CUANDO LLEGAS CON')).toBeInTheDocument()
+    expect(screen.getByText('Estrés y ansiedad')).toBeInTheDocument()
+    expect(screen.getByText('Duelo y pérdidas')).toBeInTheDocument()
+  })
+})
+
+describe('ProfileDetailRows', () => {
+  const empty = { serviceTypeLabels: [], modalityLabels: [], location: '' }
+
+  it('renders nothing when every row is empty', () => {
+    const { container } = render(<ProfileDetailRows {...empty} />)
+    expect(container).toBeEmptyDOMElement()
   })
 
-  it('shows Tipo de servicio only when serviceTypeLabels present', () => {
-    render(<ProfileDetails {...emptyProps} serviceTypeLabels={['Sesiones individuales']} />)
-    expect(screen.getByText(/tipo de servicio/i)).toBeInTheDocument()
-    expect(screen.getByText('Sesiones individuales')).toBeInTheDocument()
-    expect(screen.queryByText(/especialidades/i)).not.toBeInTheDocument()
+  it('shows only the rows that have data, each with its value', () => {
+    render(<ProfileDetailRows {...empty} modalityLabels={['Online', 'Presencial']} />)
+    expect(screen.getByText('Modalidad')).toBeInTheDocument()
+    expect(screen.getByText('Online, Presencial')).toBeInTheDocument()
+    expect(screen.queryByText('Servicio')).not.toBeInTheDocument()
+    expect(screen.queryByText('Dónde')).not.toBeInTheDocument()
   })
 
-  it('shows Modalidad only when modalityLabels present', () => {
-    render(<ProfileDetails {...emptyProps} modalityLabels={['Online', 'Presencial']} />)
-    expect(screen.getByText(/modalidad/i)).toBeInTheDocument()
-    expect(screen.queryByText(/especialidades/i)).not.toBeInTheDocument()
-  })
-
-  it('shows all sections when all arrays have data', () => {
+  it('shows service type and location rows', () => {
     render(
-      <ProfileDetails
-        specialties={['ansiedad']}
-        practiceLabels={['Reiki']}
-        serviceTypeLabels={['Sesiones individuales']}
-        modalityLabels={['Online']}
+      <ProfileDetailRows
+        serviceTypeLabels={['Sesiones individuales', 'Sesiones grupales']}
+        modalityLabels={[]}
+        location="Mendoza, Argentina"
       />
     )
-    expect(screen.getByText(/especialidades/i)).toBeInTheDocument()
-    expect(screen.getByText(/tipo de servicio/i)).toBeInTheDocument()
-    expect(screen.getByText(/modalidad/i)).toBeInTheDocument()
+    expect(screen.getByText('Sesiones individuales y Sesiones grupales')).toBeInTheDocument()
+    expect(screen.getByText('Mendoza, Argentina')).toBeInTheDocument()
   })
 })

@@ -6,9 +6,9 @@
 
 import { test, expect } from '@playwright/test'
 
-test.describe('Registration form — /profesionales/registro', () => {
+test.describe('Registration form — /registro', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/profesionales/registro')
+    await page.goto('/registro')
     await page.waitForLoadState('networkidle')
   })
 

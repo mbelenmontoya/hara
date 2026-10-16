@@ -1,5 +1,5 @@
 // Singleton Maps JS API script loader shared across all Google Maps consumers
-// (PlacesAutocomplete, Geocoder, DirectoryMap) so the script loads exactly once.
+// (PlacesAutocomplete, Geocoder) so the script loads exactly once.
 
 declare global {
   interface Window {

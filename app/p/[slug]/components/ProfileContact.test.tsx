@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ProfileContact } from './ProfileContact'
 
@@ -48,6 +48,13 @@ describe('ProfileContact', () => {
     expect(link).toHaveAttribute('href', 'https://www.instagram.com/samastha_yoga')
   })
 
+  it('shows Instagram as a full-width button when there is no WhatsApp number', () => {
+    render(<ProfileContact {...baseProps} whatsapp="" instagram="samastha_yoga" />)
+    const link = screen.getByRole('link', { name: /@samastha_yoga/i })
+    expect(link).toHaveTextContent('Ver en Instagram')
+    expect(link.className).toContain('flex-1')
+  })
+
   it('hides Instagram section when instagram is null', () => {
     render(<ProfileContact {...baseProps} instagram={null} />)
     expect(screen.queryByRole('link', { name: /^@/ })).not.toBeInTheDocument()
@@ -88,5 +95,48 @@ describe('ProfileContact', () => {
   it('hides email section when email is empty string', () => {
     render(<ProfileContact {...baseProps} email="" />)
     expect(screen.queryByRole('link', { name: /@/i })).not.toBeInTheDocument()
+  })
+
+  describe('floating WhatsApp bar', () => {
+    type ObserverCallback = (entries: { isIntersecting: boolean }[]) => void
+    let trigger: ObserverCallback
+
+    beforeEach(() => {
+      vi.stubGlobal(
+        'IntersectionObserver',
+        class {
+          constructor(cb: ObserverCallback) { trigger = cb }
+          observe() {}
+          disconnect() {}
+        }
+      )
+    })
+
+    afterEach(() => { vi.unstubAllGlobals() })
+
+    it('stays hidden while the main button is on screen and shows once it scrolls away', () => {
+      render(<ProfileContact {...baseProps} />)
+      expect(screen.getByTestId('sticky-cta')).toHaveAttribute('aria-hidden', 'true')
+
+      act(() => trigger([{ isIntersecting: false }]))
+      expect(screen.getByTestId('sticky-cta')).toHaveAttribute('aria-hidden', 'false')
+
+      act(() => trigger([{ isIntersecting: true }]))
+      expect(screen.getByTestId('sticky-cta')).toHaveAttribute('aria-hidden', 'true')
+    })
+
+    it('fires whatsapp_click when the floating bar button is clicked', async () => {
+      const user = userEvent.setup()
+      render(<ProfileContact {...baseProps} />)
+      act(() => trigger([{ isIntersecting: false }]))
+      const buttons = screen.getAllByRole('button', { name: /contactar por whatsapp/i })
+      await user.click(buttons[buttons.length - 1])
+      expect(mockFireProfileEvent).toHaveBeenCalledWith('whatsapp_click', 'silvia-ferrer')
+    })
+
+    it('renders no floating bar without a WhatsApp number', () => {
+      render(<ProfileContact {...baseProps} whatsapp="" />)
+      expect(screen.queryByTestId('sticky-cta')).not.toBeInTheDocument()
+    })
   })
 })

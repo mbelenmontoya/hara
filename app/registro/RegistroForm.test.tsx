@@ -14,7 +14,7 @@ vi.mock('@/app/components/PlacesAutocomplete', () => ({
 vi.mock('@/app/components/ui/PageBackground', () => ({
   PageBackground: ({ image }: { image?: string | null }) => <div data-testid="page-bg" data-image={image ?? 'none'} />,
 }))
-vi.mock('@/app/profesionales/registro/components/SpecialtySelector', () => ({
+vi.mock('@/app/registro/components/SpecialtySelector', () => ({
   SpecialtySelector: () => <div />,
 }))
 vi.mock('@/app/components/PracticePicker', () => ({

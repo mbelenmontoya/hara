@@ -37,7 +37,7 @@ Use the area of the codebase affected:
 |-------|-------|
 | `ui` | `app/components/`, `app/globals.css` |
 | `recommendations` | `app/r/[tracking_code]/` |
-| `registration` | `app/profesionales/` |
+| `registration` | `app/registro/` |
 | `profile` | `app/p/[slug]/` |
 | `admin` | `app/admin/` |
 | `api` | `app/api/` |

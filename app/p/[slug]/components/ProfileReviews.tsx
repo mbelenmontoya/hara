@@ -1,4 +1,4 @@
-// Card 3b: Reviews — hidden when no reviews yet
+// Reviews: "Quienes ya fueron" as quote cards — hidden when no reviews yet
 
 interface Review {
   id: string
@@ -18,36 +18,31 @@ export function ProfileReviews({ ratingAverage, ratingCount, reviews }: ProfileR
   if (ratingCount === 0) return null
 
   return (
-    <article
-      data-testid="reviews-card"
-      className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6"
-    >
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xs font-semibold text-muted uppercase tracking-wide">Reseñas</h2>
-        <span className="text-sm font-semibold text-foreground">
+    <section data-testid="reviews-card">
+      <div className="flex items-baseline justify-between">
+        <h2 className="font-almanac-serif text-[30px] leading-[1.05] text-foreground">
+          Quienes <em>ya fueron</em>
+        </h2>
+        <span className="font-almanac text-[13px] font-medium text-brand-dark">
           {ratingAverage.toFixed(1)} ★ · {ratingCount} {ratingCount === 1 ? 'reseña' : 'reseñas'}
         </span>
       </div>
-      <div className="space-y-4">
+      <div className="mt-3.5 space-y-2.5">
         {reviews.map((review) => (
-          <div key={review.id} className="border-t border-outline/40 pt-3 first:border-t-0 first:pt-0">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium text-foreground">
-                {review.reviewer_name ?? 'Anónimo'}
-              </span>
-              <span className="text-xs text-muted">
+          <article key={review.id} className="rounded-3xl bg-gray-50 p-[18px]">
+            {review.text && (
+              <p className="font-almanac-serif italic text-[19px] leading-[1.4] text-gray-800">“{review.text}”</p>
+            )}
+            <p className="font-almanac text-[12.5px] text-muted mt-2.5">
+              {review.reviewer_name ?? 'Anónimo'} ·{' '}
+              {new Date(review.submitted_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })} ·{' '}
+              <span className="text-warning-dark">
                 {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
               </span>
-            </div>
-            {review.text && (
-              <p className="text-sm text-muted italic">"{review.text}"</p>
-            )}
-            <p className="text-xs text-muted/60 mt-1">
-              {new Date(review.submitted_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
             </p>
-          </div>
+          </article>
         ))}
       </div>
-    </article>
+    </section>
   )
 }

@@ -14,8 +14,8 @@ The product is the *trust*.
 
 ### Users seeking help
 
-1. **Browse (Directory)** — `/profesionales`
-   The discovery-first path. Users land, browse cards ranked by reputation, filter by practice (reiki, masajes, etc.), modality (online/presencial), specialty, or location. They can switch to a map view. Most users will end up here.
+1. **Browse (Directory)** — `/` (the home page)
+   The discovery-first path. Users land, browse cards ranked by reputation, filter by practice (reiki, masajes, etc.), modality (online/presencial), specialty, or location. They can switch to a map view. Most users will end up here. (Search, filters and the map are being redesigned for the almanac home page.)
 
 2. **Concierge (Solicitar)** — `/solicitar`
    The high-trust differentiator. User describes what they need (situation, modality, location, budget, urgency) → admin reads it → admin hand-picks 3 recommendations → user gets a tracking link → contacts via WhatsApp. This is the "we pick for you" moat.

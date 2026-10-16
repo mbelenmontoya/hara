@@ -1,124 +1,51 @@
-// Hara Vital — Blog Index
-// Public listing of published blog posts, newest first.
+// Hara Vital: Diario (blog) index
+// Public listing of published blog posts, newest first, in the almanac design.
 // Only published posts are shown; admin-approved only.
 
 export const dynamic = 'force-dynamic'
 
-import Link from 'next/link'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { PageBackground } from '@/app/components/ui/PageBackground'
-import { GlassCard } from '@/app/components/ui/GlassCard'
-import { EmptyState } from '@/app/components/ui/EmptyState'
+import { logError } from '@/lib/monitoring'
+import { readingMinutes } from '@/lib/diario'
+import { DiarioList, type DiarioListPost } from './DiarioList'
 
 export const metadata = {
-  title: 'Notas de la comunidad | Hara Vital',
+  title: 'Diario | Hara Vital',
   description: 'Perspectivas sobre bienestar holístico de la comunidad de Hara.',
 }
 
-interface BlogPost {
-  id: string
+interface BlogPostRow {
   slug: string
   title: string
   excerpt: string | null
   author_name: string
   cover_image_url: string | null
-  published_at: string
+  body_html: string | null
   is_hara_editorial: boolean
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })
+function toListPost(row: BlogPostRow): DiarioListPost {
+  return {
+    slug: row.slug,
+    title: row.title,
+    excerpt: row.excerpt,
+    authorLabel: row.is_hara_editorial ? 'Hara Vital' : row.author_name,
+    isEditorial: row.is_hara_editorial,
+    coverUrl: row.cover_image_url,
+    minutes: readingMinutes(row.body_html ?? ''),
+  }
 }
 
 export default async function BlogIndexPage() {
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('blog_posts')
-    .select('id, slug, title, excerpt, author_name, cover_image_url, published_at, is_hara_editorial')
+    .select('slug, title, excerpt, author_name, cover_image_url, body_html, is_hara_editorial')
     .eq('status', 'published')
     .order('published_at', { ascending: false })
 
-  const posts: BlogPost[] = (data ?? []) as BlogPost[]
+  if (error) logError(new Error(error.message), { source: 'BlogIndexPage' })
 
-  return (
-    <div className="min-h-screen bg-background">
-      <PageBackground />
+  const posts = ((data ?? []) as BlogPostRow[]).map(toListPost)
 
-      <div className="relative z-10 container-public pt-8 pb-12">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted mb-3">Blog</p>
-        <h1 className="text-3xl font-semibold text-foreground leading-tight mb-3">
-          Notas de la comunidad
-        </h1>
-        <p className="text-base text-muted leading-relaxed mb-8">
-          Perspectivas sobre bienestar holístico escritas por profesionales y personas de la comunidad de Hara.
-        </p>
-
-        {posts.length === 0 ? (
-          <EmptyState
-            title="Todavía no hay notas publicadas"
-            description="Volvé pronto — la comunidad está escribiendo."
-            action={
-              <Link
-                href="/blog/escribir"
-                className="inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium bg-brand text-white rounded-full"
-              >
-                Escribir una nota
-              </Link>
-            }
-          />
-        ) : (
-          <>
-            <div className="flex flex-col gap-4">
-              {posts.map(post => (
-                <Link key={post.id} href={`/blog/${post.slug}`} className="group block">
-                  <GlassCard>
-                    <div className="flex gap-4 items-start">
-                      {post.cover_image_url && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={post.cover_image_url}
-                          alt=""
-                          className="w-20 h-20 object-cover rounded-xl shrink-0"
-                        />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <h2 className="text-base font-semibold text-foreground group-hover:text-brand transition-colors leading-snug mb-1">
-                          {post.title}
-                        </h2>
-                        {post.excerpt && (
-                          <p className="text-sm text-muted leading-relaxed line-clamp-2 mb-2">
-                            {post.excerpt}
-                          </p>
-                        )}
-                        <p className="text-xs text-muted">
-                          {post.is_hara_editorial ? (
-                            <span className="inline-flex items-center gap-1.5">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src="/assets/logo/isotipo.png" alt="Hara" className="w-4 h-4 object-contain" />
-                              Hara Vital
-                            </span>
-                          ) : (
-                            <>por {post.author_name}</>
-                          )}
-                          {' · '}{post.published_at ? formatDate(post.published_at) : ''}
-                        </p>
-                      </div>
-                    </div>
-                  </GlassCard>
-                </Link>
-              ))}
-            </div>
-
-            <div className="mt-8 text-center">
-              <Link
-                href="/blog/escribir"
-                className="inline-flex items-center gap-2 text-sm font-medium text-brand hover:underline"
-              >
-                ¿Tenés algo para compartir? Escribí una nota →
-              </Link>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  )
+  return <DiarioList posts={posts} />
 }

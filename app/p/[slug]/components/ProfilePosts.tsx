@@ -3,7 +3,6 @@
 // Only shows posts with professional_link_confirmed=true (query is done in page.tsx).
 
 import Link from 'next/link'
-import { GlassCard } from '@/app/components/ui/GlassCard'
 
 interface Post {
   id: string
@@ -25,11 +24,11 @@ export function ProfilePosts({ posts, firstName }: Props) {
   if (posts.length === 0) return null
 
   return (
-    <GlassCard>
-      <h2 className="text-lg font-semibold text-foreground mb-4">
-        Notas de {firstName}
+    <section>
+      <h2 className="font-almanac-serif text-[30px] leading-[1.05] text-foreground mb-3">
+        Notas de <em>{firstName}</em>
       </h2>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col font-almanac">
         {posts.map(post => (
           <Link
             key={post.id}
@@ -45,6 +44,6 @@ export function ProfilePosts({ posts, firstName }: Props) {
           </Link>
         ))}
       </div>
-    </GlassCard>
+    </section>
   )
 }

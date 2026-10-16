@@ -1,12 +1,14 @@
 'use client'
 
-// Card 5: Contact — "How do I reach them?"
-// Shows Instagram link + WhatsApp button only. No raw phone number displayed.
+// Contact: main WhatsApp button, Instagram shortcut, email link, and the floating bar that
+// takes over once the main button scrolls out of view.
 // Fires analytics events: instagram_click on IG link, whatsapp_click on WhatsApp button.
 // The ContactButton also fires contact_click (for the reviews cron) independently.
 
+import { useEffect, useRef, useState } from 'react'
 import { ContactButton } from '@/app/components/ContactButton'
 import { fireProfileEvent } from '@/lib/profile-events'
+import { ProfileStickyCta } from './ProfileStickyCta'
 
 function normalizeInstagram(raw: string): { href: string; label: string } {
   const handle = raw
@@ -32,46 +34,66 @@ export function ProfileContact({
   email,
 }: ProfileContactProps) {
   const ig = instagram ? normalizeInstagram(instagram) : null
+  const mainCtaRef = useRef<HTMLDivElement>(null)
+  const [mainCtaVisible, setMainCtaVisible] = useState(true)
+
+  useEffect(() => {
+    const el = mainCtaRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const observer = new IntersectionObserver(([entry]) => setMainCtaVisible(entry.isIntersecting))
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [whatsapp])
+
+  const trackWhatsapp = () => fireProfileEvent('whatsapp_click', slug)
 
   return (
-    <div className="liquid-glass rounded-3xl shadow-elevated border border-outline/30 p-6">
-      <h2 className="text-xs font-semibold text-muted uppercase tracking-wide mb-4">Contacto</h2>
+    <div>
+      <div ref={mainCtaRef} className="flex gap-2">
+        {whatsapp && (
+          <ContactButton
+            professionalSlug={slug}
+            professionalName={name}
+            whatsappNumber={whatsapp}
+            trackingCode="direct-profile-visit"
+            rank={0}
+            unstyled
+            className="flex-1 rounded-2xl bg-brand-dark px-4 py-4 font-almanac text-[15px] font-medium text-gray-50 hover:opacity-90 transition-opacity"
+            onBeforeNavigate={trackWhatsapp}
+          />
+        )}
 
-      {ig && (
-        <div className="mb-4">
-          <h3 className="text-xs text-muted mb-1">Instagram</h3>
+        {ig && (
           <a
             href={ig.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-brand hover:underline"
+            aria-label={ig.label}
+            className={`flex items-center justify-center rounded-2xl bg-surface-2 font-almanac font-medium text-brand-dark hover:opacity-90 transition-opacity ${
+              whatsapp ? 'w-[52px] text-[11.5px]' : 'flex-1 py-4 text-[15px]'
+            }`}
             onClick={() => fireProfileEvent('instagram_click', slug)}
           >
-            {ig.label}
+            {whatsapp ? 'IG' : 'Ver en Instagram'}
           </a>
-        </div>
-      )}
+        )}
+      </div>
 
       {email && (
-        <div className="mb-4">
-          <h3 className="text-xs text-muted mb-1">Email</h3>
-          <a
-            href={`mailto:${email}`}
-            className="text-sm text-brand hover:underline"
-          >
+        <p className="mt-3 text-center font-almanac text-[13px] text-muted">
+          <a href={`mailto:${email}`} className="underline underline-offset-2 hover:text-brand-dark">
             {email}
           </a>
-        </div>
+        </p>
       )}
 
       {whatsapp && (
-        <ContactButton
-          professionalSlug={slug}
-          professionalName={name}
-          whatsappNumber={whatsapp}
-          trackingCode="direct-profile-visit"
-          rank={0}
-          onBeforeNavigate={() => fireProfileEvent('whatsapp_click', slug)}
+        <ProfileStickyCta
+          show={!mainCtaVisible}
+          slug={slug}
+          name={name}
+          whatsapp={whatsapp}
+          onBeforeNavigate={trackWhatsapp}
         />
       )}
     </div>

@@ -516,13 +516,13 @@ Store `dm_bio`.
 
 **Tono de referencia real** — este es el estilo exacto de los DMs que ya funcionaron:
 
-> "Hola Silvia! Soy Belén. Un gusto! Que bueno que se quieran sumar. Te paso el link directo del formulario para completar. Mientras más campos y más completo mejor, aparecen mas arriba en el buscador https://haravital.app/profesionales/registro
+> "Hola Silvia! Soy Belén. Un gusto! Que bueno que se quieran sumar. Te paso el link directo del formulario para completar. Mientras más campos y más completo mejor, aparecen mas arriba en el buscador https://haravital.app/registro
 > Cualquier duda me avisan 🤍 Gracias por sumarse."
 
 **Estructura del DM:**
 1. Saludo con el nombre del profesional + "Soy Belén de Hara Vital"
 2. Una oración genuina y específica sobre su trabajo (demuestra que miraste el perfil)
-3. Invitación directa con el link: `https://haravital.app/profesionales/registro`
+3. Invitación directa con el link: `https://haravital.app/registro`
 4. Tip de completitud: "Mientras más completo el perfil, más arriba aparecen en el buscador"
 5. Cierre cálido: "Cualquier duda me avisan 🤍"
 
@@ -539,10 +539,10 @@ Generar internamente. Prompt:
 > Escribí un DM en español argentino informal de Belén (de Hara Vital) a este profesional.
 > Seguí esta estructura exacta:
 >
-> "Hola [nombre]! Soy Belén de Hara Vital. [Una oración específica sobre su trabajo basada en la bio — que demuestre que lo/la miraste]. Te paso el link para sumarte al directorio: https://haravital.app/profesionales/registro — mientras más completo el perfil, más arriba aparecés en el buscador. Cualquier duda acá estamos 🤍"
+> "Hola [nombre]! Soy Belén de Hara Vital. [Una oración específica sobre su trabajo basada en la bio — que demuestre que lo/la miraste]. Te paso el link para sumarte al directorio: https://haravital.app/registro — mientras más completo el perfil, más arriba aparecés en el buscador. Cualquier duda acá estamos 🤍"
 >
 > Reglas:
-> - Siempre incluir el link haravital.app/profesionales/registro
+> - Siempre incluir el link haravital.app/registro
 > - La oración sobre su trabajo debe ser MUY específica (su modalidad, su ciudad si está en la bio, algo concreto)
 > - Máximo 4-5 oraciones en total
 > - Tono: cálido, directo, personal — no corporativo

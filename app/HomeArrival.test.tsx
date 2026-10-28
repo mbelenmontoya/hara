@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { HomeArrival } from './HomeArrival'
+import { HomeSearchProvider } from './HomeSearch'
 import type { ArrivalCard, HomeRow } from '@/lib/home-arrival'
 import type { DirectoryProfessional } from '@/app/profesionales/components/ProfessionalsDirectory'
 
@@ -54,11 +55,13 @@ const ROWS: HomeRow[] = [
   row({ slug: 'beto', name: 'Beto Luna', specialtyKeys: ['estres-ansiedad', 'duelo-perdidas'], practice: 'Reiki', price: null, rating: null, ratingCount: 0 }),
 ]
 
-function renderHome(rows: HomeRow[], cards: ArrivalCard[] = CARDS, children?: React.ReactNode) {
+function renderHome(rows: HomeRow[], cards: ArrivalCard[] = CARDS, children?: React.ReactNode, featuredPicks: string[] = []) {
   return render(
-    <HomeArrival cards={cards} rows={rows} professionals={rows.map(proOf)} practices={[]}>
-      {children}
-    </HomeArrival>
+    <HomeSearchProvider>
+      <HomeArrival cards={cards} rows={rows} professionals={rows.map(proOf)} practices={[]} featuredPicks={featuredPicks}>
+        {children}
+      </HomeArrival>
+    </HomeSearchProvider>
   )
 }
 
@@ -82,29 +85,47 @@ describe('HomeArrival', () => {
     expect(screen.getByText('bloque concierge')).toBeInTheDocument()
   })
 
-  it('a card puts its professionals first without removing anyone, and tapping it again restores the order', async () => {
+  it('a card shows only its professionals and the matching count, and tapping it again shows everyone', async () => {
+    const user = userEvent.setup()
+    const rows = [
+      row({ slug: 'a', name: 'Ana', specialtyKeys: ['estres-ansiedad'] }),
+      row({ slug: 'b', name: 'Beto', specialtyKeys: ['duelo-perdidas'] }),
+      row({ slug: 'c', name: 'Cora', specialtyKeys: ['estres-ansiedad', 'duelo-perdidas'] }),
+    ]
+    renderHome(rows)
+    expect(namesInOrder()).toEqual(['Ana', 'Beto', 'Cora'])
+    expect(screen.getByText('3 de 3 resultados')).toBeInTheDocument()
+
+    const card = screen.getByRole('button', { name: /duelo y pérdidas/i })
+    await user.click(card)
+    expect(card).toHaveAttribute('aria-pressed', 'true')
+    expect(namesInOrder()).toEqual(['Beto', 'Cora'])
+    expect(screen.getByText('2 de 3 resultados')).toBeInTheDocument()
+
+    await user.click(card)
+    expect(card).toHaveAttribute('aria-pressed', 'false')
+    expect(namesInOrder()).toEqual(['Ana', 'Beto', 'Cora'])
+    expect(screen.getByText('3 de 3 resultados')).toBeInTheDocument()
+  })
+
+  it('features the first pick still shown, and no one when every pick is filtered out', async () => {
     const user = userEvent.setup()
     const rows = [
       row({ slug: 'a', name: 'Ana', specialtyKeys: ['estres-ansiedad'] }),
       row({ slug: 'b', name: 'Beto', specialtyKeys: ['duelo-perdidas'] }),
       row({ slug: 'c', name: 'Cora', specialtyKeys: ['estres-ansiedad'] }),
     ]
-    renderHome(rows)
-    expect(namesInOrder()).toEqual(['Ana', 'Beto', 'Cora'])
+    renderHome(rows, CARDS, undefined, ['c', 'a'])
+    expect(within(screen.getByTestId('home-featured')).getByText('Cora')).toBeInTheDocument()
+    expect(namesInOrder()).toEqual(['Cora', 'Ana', 'Beto'])
 
-    const card = screen.getByRole('button', { name: /duelo y pérdidas/i })
-    await user.click(card)
-    expect(card).toHaveAttribute('aria-pressed', 'true')
-    expect(namesInOrder()).toEqual(['Beto', 'Ana', 'Cora'])
-    expect(screen.getByRole('heading', { name: /todos los profesionales/i })).toBeInTheDocument()
-
-    await user.click(card)
-    expect(card).toHaveAttribute('aria-pressed', 'false')
-    expect(namesInOrder()).toEqual(['Ana', 'Beto', 'Cora'])
+    await user.click(screen.getByRole('button', { name: /duelo y pérdidas/i }))
+    expect(screen.queryByTestId('home-featured')).not.toBeInTheDocument()
+    expect(namesInOrder()).toEqual(['Beto'])
   })
 
   it('features a destacado professional with their quote and a link to their profile', () => {
-    renderHome(ROWS)
+    renderHome(ROWS, CARDS, undefined, ['ana'])
     const featured = screen.getByTestId('home-featured')
     expect(within(featured).getByText('Ana Paz')).toBeInTheDocument()
     expect(within(featured).getByText(/Acompaño sin prometer/)).toBeInTheDocument()
@@ -157,7 +178,7 @@ describe('HomeArrival', () => {
   it('lists everyone, 12 at a time, with a button that says how many remain', async () => {
     const user = userEvent.setup()
     const many = Array.from({ length: 30 }, (_, i) => row({ slug: `p${i}`, name: `Persona ${i}` }))
-    renderHome(many)
+    renderHome(many, CARDS, undefined, ['p0'])
     const links = () => within(screen.getByRole('list')).getAllByRole('link')
     expect(links()).toHaveLength(12)
     expect(screen.getByText('MOSTRANDO 13 DE 30')).toBeInTheDocument()

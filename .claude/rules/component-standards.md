@@ -38,7 +38,7 @@ const EASING = 'cubic-bezier(0.32, 0.72, 0, 1)';
 
 1. **USE** — Check these locations for existing solutions:
    - `app/components/ui/` — Alert, Badge, Button, Card, EmptyState, Input, Modal, Table
-   - `app/components/` — ContactButton, PlacesAutocomplete, PublicLayout, AdminLayout
+   - `app/components/` — ContactButton, PlacesAutocomplete, PublicLayout, AdminLayout, AlmanacBottomNav
    - `app/r/[tracking_code]/components/` — CartaPick, CardSkeleton
    - `app/r/[tracking_code]/hooks/` — useRecommendations
 2. **IMPROVE** — If existing component is 80%+ there, extend it with optional props

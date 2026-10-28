@@ -114,15 +114,15 @@ All 45 active professionals are on the basic tier, so the Destacado mark cannot 
 
 **Idea:** mark one test professional as Destacado in a development database and check the mark on the directory, the home page and the profile.
 
-### 11. The old directory code is kept but no page uses it
+### 11. Leftovers from the old directory page
 
-**Found:** 2026-10-02.
+**Found:** 2026-10-02. **Updated:** 2026-10-25.
 
-The old directory page was removed (the home page replaces it, and `/profesionales` redirects to `/`). The code behind its features is kept in `app/profesionales/components` and `app/profesionales/hooks`, plus `app/components/ContactFooterForm.tsx` and `app/api/contact`, because the new home design will need it: search, practice filter, Online/Presencial filter, city filter, map, result counts, "Cargar más", Índice Hara, Destacado mark, welcome box, contact form. No page imports it today.
+The old directory page was removed (the home page replaces it, and `/profesionales` redirects to `/`). On 2026-10-25 its unused code was deleted: `ProfessionalCard`, `WelcomeHint`, `LocationFilter`, the `ProfessionalsDirectory` and `DirectoryFilters` components, `app/components/ContactFooterForm.tsx`, `app/api/contact` and `notifyContactForm` in `lib/email.ts`. They are in git history if a new design needs them. What stays in `app/profesionales` is what the home uses: the `DirectoryProfessional` type, the search and filter helpers, `FilterState`, `DirectoryMap` and `useCityGeocode`.
 
-Also unused: `app/components/ui/RevealOnScroll.tsx` (since the profile redesign) and `app/components/WelcomeModal.tsx` (already unused before). The visual test baseline `home-visual-darwin.png` shows the old home and needs regenerating. The end-to-end tests for the old directory page were deleted (they are in the last commit); they will need rewriting for the new design.
+Still unused: `app/components/ui/RevealOnScroll.tsx` (since the profile redesign) and `app/components/WelcomeModal.tsx` (already unused before). The visual test baseline `home-visual-darwin.png` shows the old home and needs regenerating. The end-to-end tests for the old directory page were deleted (they are in the last commit); they will need rewriting for the new design.
 
-**Idea:** reuse the restored components when the new design arrives, then delete whatever stays unused.
+**Idea:** delete `RevealOnScroll` and `WelcomeModal`, and regenerate the visual baseline.
 
 ### 12. Ayuda needs a team WhatsApp, office hours and an emergency line
 
@@ -132,15 +132,13 @@ The design shows a button to write to the team on WhatsApp with office hours, an
 
 **Idea:** decide the team WhatsApp number and hours, and confirm an Argentine emergency line (name and number), then add them to the Ayuda page.
 
-### 13. The home filter bar has no "Usar mi ubicación", and some cities look odd
+### 13. Some cities in the home filter bar look odd
 
-**Found:** 2026-10-05, while building the home search and filters.
+**Found:** 2026-10-05, while building the home search and filters. "Usar mi ubicación" was added later (`lib/near-me.ts`).
 
-The design's Ciudad panel starts with "Usar mi ubicación". It is not there, because the geolocation code lives inside `app/profesionales/components/LocationFilter.tsx` and reusing it means refactoring that component. The Ciudad panel lists the cities in our data instead.
+The Ciudad panel lists the cities in our data. Some of those cities are written as "Banfield, Buenos Aires" or "Colón, Buenos Aires", so the same place can show up twice under different spellings.
 
-Some of those cities are written as "Banfield, Buenos Aires" or "Colón, Buenos Aires", so the same place can show up twice under different spellings.
-
-**Idea:** move the geolocation code into a small helper and add the button. Clean up the city values when professionals register (for example by saving the city and province separately).
+**Idea:** clean up the city values when professionals register (for example by saving the city and province separately).
 
 ### 14. The new concierge form no longer asks for a practice, and test leads need deleting
 
@@ -173,6 +171,16 @@ Measured locally: the recommendations API takes about 5 seconds, of which the ra
 Fixed in part on 2026-10-16: `lib/rate-limit.ts` now waits at most 800 ms for Redis (the library default was 5 seconds), so a dead database costs 0.8 seconds instead of 4.4.
 
 **Still to do:** create a new Upstash Redis database, put its URL and token in `.env.local` and in Vercel, and check that `ratelimit.limit` answers in milliseconds.
+
+**Parked on 2026-10-19:** the user wants to check this together once the redesign is done. First look in the Upstash console for an archived `sacred-calf-69756`, then compare with the Upstash variables in Vercel, and only then create a new database.
+
+### 17. No public link to professional sign-up or login
+
+**Found:** 2026-10-19, while adding the bottom bar.
+
+No public page links to sign-up (`/registro`) or the professional login (`/pro/login`). Professionals can only reach them with a direct URL. The bottom bar (Inicio, Buscar, Diario, Ayuda) does not include them, and neither does the design.
+
+**Still to do:** ask Claude Design where these two links go, then add them.
 
 ## Done
 

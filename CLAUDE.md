@@ -27,9 +27,8 @@ app/
 │   └── components/           # CartaPick, CardSkeleton
 ├── p/[slug]/                 # Professional public profile
 ├── registro/                 # Professional registration form (4 steps) + confirmacion page
-├── profesionales/            # Old directory components, kept for the new home design (no page, no route)
-│   ├── components/           # ProfessionalsDirectory, ProfessionalCard, DirectoryFilters,
-│   │                         #   LocationFilter, DirectoryMap, WelcomeHint
+├── profesionales/            # Directory pieces the home uses (no page, no route)
+│   ├── components/           # ProfessionalsDirectory (type + filter helpers), DirectoryFilters (FilterState), DirectoryMap
 │   └── hooks/                # useCityGeocode
 ├── pro/                      # Professional self-service portal
 │   ├── login/                # Auth entry point
@@ -48,7 +47,7 @@ app/
 │   ├── practices/            # Holistic practice catalog management
 │   └── pqls/                 # PQL tracking
 ├── api/                      # API routes (see "Don't Touch" below)
-├── components/               # ContactButton, PlacesAutocomplete, PublicLayout, AdminLayout
+├── components/               # ContactButton, PlacesAutocomplete, PublicLayout, AdminLayout, AlmanacBottomNav
 │   └── ui/                   # Alert, Badge, Button, Card, EmptyState, Input, Modal, Table
 └── globals.css               # Design tokens (@theme block)
 

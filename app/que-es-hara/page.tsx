@@ -2,6 +2,7 @@
 // El contenido vive acá; las preguntas se muestran con AyudaFaq (chips por categoría + acordeón).
 
 import Link from 'next/link'
+import { AlmanacBottomNav } from '@/app/components/AlmanacBottomNav'
 import { AyudaFaq } from './AyudaFaq'
 
 export const metadata = {
@@ -175,62 +176,65 @@ const FAQ_GROUPS = [
 
 export default function QueEsHaraPage() {
   return (
-    <main className="min-h-screen bg-background font-almanac text-foreground">
-      <div className="mx-auto w-full max-w-md px-5 pb-16 pt-8 md:max-w-2xl">
-        <h1 className="font-almanac-serif text-[40px] leading-[1.02] tracking-tight">Preguntas</h1>
+    <>
+      <main className="min-h-screen bg-background font-almanac text-foreground">
+        <div className="mx-auto w-full max-w-md px-5 pb-[110px] pt-8 md:max-w-xl">
+          <h1 className="font-almanac-serif text-[40px] leading-[1.02] tracking-tight">Preguntas</h1>
 
-        <div className="mt-5">
-          <AyudaFaq groups={FAQ_GROUPS} />
-        </div>
-
-        {/* ── Contacto ────────────────────────────────────────── */}
-        <section id="contacto" className="relative mt-10 overflow-hidden rounded-[26px] bg-foreground p-[22px] text-background">
-          <img
-            src="/assets/almanac/orbita_punteada-cream.svg"
-            alt=""
-            aria-hidden="true"
-            className="pointer-events-none absolute -right-[26px] -top-[18px] h-[160px] w-[118px] object-contain opacity-45"
-          />
-          <span className="font-almanac block text-[10.5px] font-medium uppercase tracking-[0.21em] text-brand-weak">
-            ¿No está aquí?
-          </span>
-          <h2 className="font-almanac-serif mt-2.5 max-w-[240px] text-[26px] leading-[1.1]">
-            Preguntale a una <em>persona</em>.
-          </h2>
-          <span className="font-almanac mt-2 block max-w-[260px] text-sm leading-normal text-background/80">
-            Por email o por Instagram. Te respondemos lo antes que podamos.
-          </span>
-          <div className="mt-4 flex flex-col gap-2.5">
-            <a
-              href="mailto:centrovitalhara@gmail.com"
-              className="font-almanac inline-flex w-fit rounded-[13px] bg-brand-weak px-[18px] py-[11px] text-sm font-medium text-brand-dark transition-opacity hover:opacity-90"
-            >
-              centrovitalhara@gmail.com
-            </a>
-            <a
-              href="https://instagram.com/haravital"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-almanac inline-flex w-fit rounded-[13px] border-[1.5px] border-background/30 px-[18px] py-[10px] text-sm font-medium text-background transition-opacity hover:opacity-90"
-            >
-              @haravital en Instagram
-            </a>
+          <div className="mt-5">
+            <AyudaFaq groups={FAQ_GROUPS} />
           </div>
-        </section>
 
-        {/* ── CTA final ───────────────────────────────────────── */}
-        <div className="mt-8 flex flex-col gap-3.5">
-          <Link
-            href="/"
-            className="font-almanac rounded-2xl bg-brand-dark px-5 py-3.5 text-center text-[15px] font-medium text-gray-50 transition-opacity hover:opacity-90"
-          >
-            Explorar profesionales
-          </Link>
-          <Link href="/solicitar" className="font-almanac text-center text-sm font-medium text-brand-dark">
-            O pedí una recomendación personalizada →
-          </Link>
+          {/* ── Contacto ────────────────────────────────────────── */}
+          <section id="contacto" className="relative mt-10 overflow-hidden rounded-[26px] bg-foreground p-[22px] text-background">
+            <img
+              src="/assets/almanac/orbita_punteada-cream.svg"
+              alt=""
+              aria-hidden="true"
+              className="pointer-events-none absolute -right-[26px] -top-[18px] h-[160px] w-[118px] object-contain opacity-45"
+            />
+            <span className="font-almanac block text-[10.5px] font-medium uppercase tracking-[0.21em] text-brand-weak">
+              ¿No está aquí?
+            </span>
+            <h2 className="font-almanac-serif mt-2.5 max-w-[240px] text-[26px] leading-[1.1]">
+              Preguntale a una <em>persona</em>.
+            </h2>
+            <span className="font-almanac mt-2 block max-w-[260px] text-sm leading-normal text-background/80">
+              Por email o por Instagram. Te respondemos lo antes que podamos.
+            </span>
+            <div className="mt-4 flex flex-col gap-2.5">
+              <a
+                href="mailto:centrovitalhara@gmail.com"
+                className="font-almanac inline-flex w-fit rounded-[13px] bg-brand-weak px-[18px] py-[11px] text-sm font-medium text-brand-dark transition-opacity hover:opacity-90"
+              >
+                centrovitalhara@gmail.com
+              </a>
+              <a
+                href="https://instagram.com/haravital"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-almanac inline-flex w-fit rounded-[13px] border-[1.5px] border-background/30 px-[18px] py-[10px] text-sm font-medium text-background transition-opacity hover:opacity-90"
+              >
+                @haravital en Instagram
+              </a>
+            </div>
+          </section>
+
+          {/* ── CTA final ───────────────────────────────────────── */}
+          <div className="mt-8 flex flex-col gap-3.5">
+            <Link
+              href="/"
+              className="font-almanac rounded-2xl bg-brand-dark px-5 py-3.5 text-center text-[15px] font-medium text-gray-50 transition-opacity hover:opacity-90"
+            >
+              Explorar profesionales
+            </Link>
+            <Link href="/solicitar" className="font-almanac text-center text-sm font-medium text-brand-dark">
+              O pedí una recomendación personalizada →
+            </Link>
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+      <AlmanacBottomNav active="ayuda" />
+    </>
   )
 }

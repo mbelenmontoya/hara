@@ -23,7 +23,7 @@ Feature: $ARGUMENTS
 | Location | Check for |
 |----------|-----------|
 | `app/components/ui/` | Alert, Badge, Button, Card, EmptyState, Input, Modal, Table |
-| `app/components/` | ContactButton, PlacesAutocomplete, PublicLayout, AdminLayout |
+| `app/components/` | ContactButton, PlacesAutocomplete, PublicLayout, AdminLayout, AlmanacBottomNav |
 | `app/r/[tracking_code]/hooks/` | useRecommendations |
 | `app/r/[tracking_code]/components/` | CartaPick, CardSkeleton |
 | `lib/` | supabase-admin, attribution-tokens, monitoring, validation, env, translations |

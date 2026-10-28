@@ -14,7 +14,7 @@ description: Enforce checking existing code before creating new implementations 
 | Directory | Contains |
 |-----------|---------|
 | `app/components/ui/` | Design system: Alert, Badge, Button, Card, EmptyState, Input, Modal, Table |
-| `app/components/` | Shared: ContactButton, PlacesAutocomplete, PublicLayout, AdminLayout |
+| `app/components/` | Shared: ContactButton, PlacesAutocomplete, PublicLayout, AdminLayout, AlmanacBottomNav |
 | `app/r/[tracking_code]/components/` | Route-specific: CartaPick, CardSkeleton |
 | `app/r/[tracking_code]/hooks/` | Custom hooks: useRecommendations |
 | `lib/` | Utilities: supabase-admin, attribution-tokens, rate-limit, env, monitoring, validation, crypto-utils, tracking-code, billing-month |

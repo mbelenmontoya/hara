@@ -1,4 +1,4 @@
-// Logic behind the home search bar: apply search and filters, order by element card,
+// Logic behind the home search bar: apply search and filters,
 // and count the options the Prácticas, Modalidad and Ciudad panels show.
 // All matching goes through the directory's own predicates so counts agree with the list.
 
@@ -49,13 +49,6 @@ export function filterProfessionals(
 export function filterRows(rows: HomeRow[], matched: DirectoryProfessional[]): HomeRow[] {
   const slugs = new Set(matched.map((p) => p.slug))
   return rows.filter((r) => slugs.has(r.slug))
-}
-
-/** Rows with this specialty first; nobody is dropped and order inside each group is kept. */
-export function orderByElement(rows: HomeRow[], key: string | null): HomeRow[] {
-  if (!key) return rows
-  const has = (r: HomeRow) => r.specialtyKeys.includes(key)
-  return [...rows.filter(has), ...rows.filter((r) => !has(r))]
 }
 
 /** Active practices with how many professionals offer each. */

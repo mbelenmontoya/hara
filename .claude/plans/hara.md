@@ -19,12 +19,16 @@ Rules from the user for this work:
 - [x] Home `/` has the sticky filter bar (search, Prácticas, Modalidad, Ciudad, count, Limpiar filtros, Lista/Mapa) working with real data
 - [x] Home cards (featured and list) follow the design, with real data only
 - [x] Unit suite and `tsc` pass at the last run (92 files, 652 tests)
-- [ ] `/profesionales` leftovers removed without breaking the home
+- [x] `/profesionales` leftovers removed without breaking the home (2026-10-25)
 - [x] Diario (blog) matches the design (done 2026-10-05, plan `docs/plans/2026-10-05-almanac-diario-page.md`, approved, not committed)
-- [ ] Concierge screens (`/solicitar`, `/r/{tracking_code}`, design 9a to 9d) match the design
+- [x] Concierge screens (`/solicitar`, `/r/{tracking_code}`, design 9a to 9d) match the design (all four done 2026-10-16; the visual check against the design is done too)
+- [x] Home cards filter the list, the count and the map (the user chose this over the design's reorder, 2026-10-19); the featured card is a random pick per visit among Índice Hara 50 or more, and there is no featured card when none of them is shown
+- [ ] Upstash rate limiter checked together with the user once the redesign is done (ISSUES.md entry 16)
 - [x] Concierge form and confirmation (9a, 9b) done and verified 2026-10-16 (migration 023 run, test lead sent; plan `docs/plans/2026-10-05-almanac-concierge-screens.md`)
 - [x] Carta (9c, `/r/[tracking_code]`) and review link (9d) built and checked in Chrome 2026-10-16 (plan `docs/plans/2026-10-16-almanac-carta-resena.md`, migration 024 run)
-- [ ] Bottom nav bar and masthead search circle (design) added
+- [x] Bottom nav bar (Inicio, Buscar, Diario, Ayuda) on the home, Diario and Ayuda, done 2026-10-19 (plan `docs/plans/2026-10-19-almanac-bottom-nav.md`). The masthead search circle was removed at the user's request.
+- [ ] Ponytail review findings decided (1 should-fix, 4 nice-to-haves, 2026-10-20)
+- [ ] Links to professional sign-up and login placed somewhere public (ISSUES.md entry 17, needs a design)
 - [x] `ig-network` audit of all professionals' Instagram handles done (38 handles: 22 valid, 5 possible new accounts, 11 invalid)
 - [ ] Invalid handles resolved with the professionals and the 5 candidate accounts confirmed
 - [ ] Follow phase built and run (daily cap, starting with professionals who already follow Hara)
@@ -43,52 +47,69 @@ Rules from the user for this work:
 - Supabase migrations are run by the user in the SQL editor, not from a session.
 
 ## Next Steps
-1. **Run migration 023 and finish the concierge form check (TS-002)**
-   - What: the user runs `migrations/023_leads_additional_context.sql` in the Supabase SQL editor, then I send one test lead from `/solicitar` and check the confirmation and the admin lead page ("Lo que contó").
-   - Why: until the column exists, every send from the new form fails (`column leads.additional_context does not exist`, checked read-only on 2026-10-06).
-   - Considerations: afterwards the user deletes the test lead. Then tick Task 6 in the spec plan and run `spec-verify`.
+1. **Decide which ponytail review findings to fix**
+   - What: the review of the bottom bar and home card work (2026-10-20) found no must-fix items. Should fix: (1) a test that the map only shows the professionals of the selected card. Nice to have: (2) drop `pendingScroll` and the `animate` flag in `app/HomeSearch.tsx`, (3) move `Magnifier` back into `app/HomeFilterBar.tsx`, (4) make "Limpiar filtros" also clear the selected card (product choice), (5) drop the unused `export` on `AlmanacTab`.
+   - Considerations: no code changed yet; wait for the user to pick by number. Not checked: the bar's fixed 30px bottom padding on a real iPhone with a home indicator.
 
-2. **Plan and build the carta and the review link (9c, 9d)**
-   - What: `/r/[tracking_code]` and the review link from design round 9, each with its own spec plan.
-   - Considerations: the design files are `concierge-9c.html` and `concierge-9d.html` in the scratchpad folder listed in Notes, which is under `/private/tmp` and can disappear on reboot.
+2. **Check the Upstash rate limiter together with the user (parked until the redesign is done)**
+   - What: see ISSUES.md entry 16. Check the Upstash console first, then Vercel's variables, and only then create a new database.
 
-3. **Commit the almanac work**
-   - What: with the user's permission, commit the untracked and modified files (122 changed, 52 untracked on 2026-10-06), leaving out the `ig-network` files the user wants kept local.
-   - Why: project rule says no untracked files; a committed file that imports an untracked one breaks the Vercel build.
+3. **Place the professional sign-up and login links**
+   - What: nothing public links to `/registro` or `/pro/login` (ISSUES.md entry 17). The bottom bar is done (2026-10-19) and does not include them.
+   - Considerations: ask Claude Design where they go before building anything.
 
-4. **Fix or restart the dev server on port 3000**
-   - What: it returns 500 on every page, including the home. The user restarts it (PID in `/tmp/hara-dev.pid`), or I stop it by that PID with the user's approval.
-   - Considerations: my server on port 3001 (PID in Notes) is still running for the TS-002 check. Two `next dev` servers share `.next`, so stop one once TS-002 is done.
+4. **Commit and push the redesign when the user says so**
+   - What: all work since c411066 (home cards, featured pick, bottom bar, docs) is uncommitted, including 5 untracked files (`app/HomeSearch.tsx`, `app/components/AlmanacBottomNav.tsx` and its test, `lib/home-search.ts`, `docs/plans/2026-10-19-almanac-bottom-nav.md`).
+   - Considerations: git writes need the user's permission; the user pushes once the whole redesign is done.
 
-5. **Remove the unused `/profesionales` leftovers**
-   - What: list which files in `app/profesionales` (likely `ProfessionalCard`, `WelcomeHint`, `LocationFilter`), `app/components/ContactFooterForm.tsx` and `app/api/contact` nothing imports any more, show the list, and delete only what the user approves.
-   - Why: the user asked to remove `/profesionales` "and all that comes with that".
-   - Considerations: check the `/profesionales` redirects in `next.config.mjs`, tests, e2e specs and docs that mention the route. `LocationFilter` duplicates the geolocation code now in `lib/near-me.ts`.
-
-6. **Update ISSUES.md entry 13**
-   - What: "Usar mi ubicación" was left out in the first version of the home filter bar but is now built (`lib/near-me.ts`). Keep the city spelling note ("Banfield, Buenos Aires") and drop the part that says the button is missing.
-
-7. **Add the bottom nav bar and masthead search circle**
-   - What: the design has a bottom nav (Inicio, Buscar, Diario, Ayuda) and a search circle in the masthead that opens the home search field. Both were left out of the home.
-   - Considerations: do it once more pages share the new look.
-
-8. **Work through the open items in ISSUES.md**
+5. **Work through the open items in ISSUES.md**
    - What: slow database calls with no caching, 42 of 45 professionals still need practice review, home cards barely differ because most practices map to `estres-ansiedad`, mixed tú and vos wording, the broken destello SVG, build, install and lint problems, odd `.env.local` lines, no Destacado professional in the data, unused leftovers (`RevealOnScroll`, `WelcomeModal`, stale visual baseline), and the Ayuda page's missing WhatsApp number, hours and Argentine emergency line (needs input from the user).
 
-9. **Resolve the invalid Instagram handles**
+6. **Resolve the invalid Instagram handles**
    - What: decide with the user what to do with the 11 invalid handles and confirm or reject the 5 candidate accounts (Guadalupe Rodriguez, Leonela Velona, Lucina Micheloud, Sofía Belluscio, Victoria Garino).
    - Why: the user said "luego vemos qué hacer con los inválidos".
    - Considerations: the full list with evidence is in `scripts/logs/network-audit-2026-10-02.md`. Fixes go into Supabase by the user (or through the admin), never from the skill.
 
-10. **Build the ig-network follow phase**
+7. **Build the ig-network follow phase**
    - What: follow valid professionals Hara does not follow yet, with a daily cap (was 5, its config file was removed, define it again), logging `last_followed_at`, never unfollowing.
    - Considerations: start with the 9 that already follow Hara ("Follow Back"). The current log has no `follows_hara` values yet; they get filled by the next `plan --all` run.
 
-11. **Build the ig-network content discovery phase**
+8. **Build the ig-network content discovery phase**
    - What: read recent posts of valid professionals, classify them (educativo, práctica, sesión, evento, reflexión), and propose `share_to_story`, `comment` or `skip` with the exact post and why it is useful. Every share needs the user's approval.
    - Considerations: test in Chrome what "Add to story" really allows for the Hara account before writing that step.
 
 ## Session Log
+
+### Session — 2026-10-25
+**Completed:**
+- Confirmed every design screen is built and every redesign plan is done (Buscar 9f was cancelled on purpose).
+- Deleted the unused old directory code: `ProfessionalCard`, `WelcomeHint`, `LocationFilter` (and their tests), the `ProfessionalsDirectory` and `DirectoryFilters` components, `ContactFooterForm`, `app/api/contact` and `notifyContactForm`. Kept the types, helpers, `DirectoryMap` and `useCityGeocode` the home uses. `tsc` and the unit suite (98 files, 687 tests) pass.
+- Updated ISSUES.md entries 11 and 13 and the project structure in CLAUDE.md.
+- Open: 14 integration tests fail (mostly the missing Upstash host, ISSUES.md entry 16).
+
+
+### Session — 2026-10-20 (started 2026-10-19)
+**Completed:**
+- Found the hara preview session id (`9d3d9da2-baff-4569-ad2b-d6706267e489`); the other id belonged to automations-admin.
+- Parked the Upstash check (ISSUES.md entry 16) until the redesign is done.
+- Home cards now filter the list, the count and the map (`app/HomeArrival.tsx`); `orderByElement` removed from `lib/home-filters.ts`.
+- Destacado is a random pick per visit among Índice Hara 50 or more (`featuredPicks` and `FEATURED_MIN_SCORE` in `lib/home-arrival.ts`, shuffled on the server and passed as a prop); no featured card when none qualifies.
+- Bottom bar through /spec (`docs/plans/2026-10-19-almanac-bottom-nav.md`, VERIFIED): new `app/components/AlmanacBottomNav.tsx`, `app/HomeSearch.tsx` (shared search state, `/#buscar` arrival), `lib/home-search.ts`; bar added to `/`, `/blog` and `/que-es-hara`.
+- After the user's review: removed the masthead search circle (logo centered) and narrowed Ayuda to `md:max-w-xl` to match the other pages.
+- Added ISSUES.md entry 17 (no public link to `/registro` or `/pro/login`). Docs listing shared components updated (`CLAUDE.md`, component-standards rules, code-reuse-enforcer skills, `feature-start.md`).
+- Checks: 718 unit tests passing, `tsc` clean, build passing, browser scenarios TS-001 to TS-004 passing.
+- Ran the ponytail review on the uncommitted changes. Verdict: ship; 1 should-fix (map test) and 4 nice-to-haves. Nothing changed yet.
+
+**Modified:**
+- Home cards filter instead of reordering (overrides the design and the 2026-10-05 decision), at the user's request.
+- The masthead search circle was in the first version of the plan; the user said it "was not part of the plan" and it was removed.
+
+**Deviations:**
+- Stopped my own dev server by task id to run the build, then restarted it on port 3000 with a clean `.next`. It is still running (task b6eoy2cyc).
+
+**Blockers:**
+- Resolved: `scrollIntoView` missing in jsdom (stub in the test setup); hash state leaking between tests; an import cycle between `HomeSearch` and `AlmanacBottomNav`; arriving from `/#buscar` landed 60px too low because input focus scrolled after mine.
+- Open: `npm run lint` still has no ESLint config.
 
 ### Session — 2026-10-06
 **Completed:**
@@ -165,6 +186,7 @@ Rules from the user for this work:
 - [ ] Should the concierge budget default to ARS instead of USD? It kept the old form's USD default.
 
 ## Notes
+- Done 2026-10-20 (removed from Next Steps, verbatim): 4. **Fix or restart the dev server on port 3000** / What: it returns 500 on every page, including the home. The user restarts it (PID in `/tmp/hara-dev.pid`), or I stop it by that PID with the user's approval. / Considerations: my server on port 3001 (PID in Notes) is still running for the TS-002 check. Two `next dev` servers share `.next`, so stop one once TS-002 is done. Port 3000 now serves my dev server (started 2026-10-19 with `rm -rf .next && npm run dev`, background task b6eoy2cyc), and it answers normally.
 - Uncommitted: all of this session's work and earlier almanac work are untracked or modified in the working tree and not committed. Run `git status` once access is back. Files that must not stay untracked (project git hygiene rule): `app/Home*.tsx`, `lib/home-*.ts`, `lib/near-me*.ts`, `lib/moon-phase*.ts`, `lib/profile-specialties*.ts`, `app/registro/`, `app/que-es-hara/AyudaFaq*`, `public/assets/almanac/`, `ISSUES.md`, `docs/plans/*`.
 - Design source: Claude Design project `d0e3236f-a77b-4d60-b083-b3dd4cdd9da2`, file `Hara Vital App.dc.html`, read with `DesignSync get_file`. `get_file` returns only the first 256 KB (`truncated: true`), and it has no offset. Newest rounds come first: on 2026-10-05 a fresh fetch returned rounds 11 and 10 only, and round 9 was past the cut. Rounds 10 and 11 do not change the Diario.
 - Design file (copy, cut at 256 KB): `/private/tmp/claude-501/-Users-belenmontoya-Desktop-repos-hara/7176b110-1cbb-4c91-9f1a-086c78d014f5/scratchpad/app3.dc.html`. Round 11 (home as directory) is the current one; screens 11a to 11d.

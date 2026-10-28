@@ -3,6 +3,7 @@
 // Sticky bar above the home list, as in the design: a dark search button and the three pills
 // (each opens its own panel), the result count, "Limpiar filtros" and the Lista / Mapa toggle.
 // The search button turns into a field (the pills stay below it); Cancelar clears it.
+// Whether the field is open lives in HomeSearchProvider, so Buscar in the bottom bar can open it too.
 // It is controlled: the parent owns the search and filters and applies them right away.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -11,18 +12,11 @@ import type { DirectoryProfessional } from '@/app/profesionales/components/Profe
 import { cityOptions, modalityCounts, practiceOptions, type HomeQuery } from '@/lib/home-filters'
 import type { Practice } from '@/lib/practices'
 import { CityPanel, ModalityPanel, PracticesPanel } from './HomeFilterPanels'
+import { HOME_SEARCH_ANCHOR } from '@/lib/home-search'
+import { Magnifier, useHomeSearch } from './HomeSearch'
 
 export type HomeView = 'list' | 'map'
 type PanelId = 'practices' | 'modality' | 'city'
-
-function Magnifier({ className }: { className: string }) {
-  return (
-    <svg viewBox="0 0 15 15" className={`h-[15px] w-[15px] flex-none ${className}`} fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" aria-hidden="true">
-      <circle cx="5.5" cy="5.5" r="4.7" />
-      <path d="M9.3 9.5 14 14" />
-    </svg>
-  )
-}
 
 interface Pill {
   id: PanelId
@@ -42,7 +36,7 @@ interface HomeFilterBarProps {
 
 export function HomeFilterBar({ query, onChange, professionals, practices, resultCount, view, onViewChange }: HomeFilterBarProps) {
   const [open, setOpen] = useState<PanelId | null>(null)
-  const [searching, setSearching] = useState(false)
+  const { searching, openSearch, closeSearch } = useHomeSearch()
   const pillRefs = useRef<Partial<Record<PanelId, HTMLButtonElement | null>>>({})
   const { search, filters } = query
 
@@ -105,12 +99,13 @@ export function HomeFilterBar({ query, onChange, professionals, practices, resul
 
   const clearAll = () => {
     onChange({ search: '', filters: DEFAULT_FILTERS })
-    setSearching(false)
+    closeSearch()
   }
 
   // The panels sit outside the sticky element: its backdrop blur would otherwise become their containing block.
   return (
     <>
+      <div id={HOME_SEARCH_ANCHOR} aria-hidden="true" />
       <div className="font-almanac sticky top-0 z-20 -mx-[22px] mt-3.5 border-b border-foreground/10 bg-background/95 px-4 pb-2.5 pt-2.5 backdrop-blur-[16px]">
         {searching ? (
           <>
@@ -141,7 +136,7 @@ export function HomeFilterBar({ query, onChange, professionals, practices, resul
                 type="button"
                 onClick={() => {
                   onChange({ search: '', filters })
-                  setSearching(false)
+                  closeSearch()
                 }}
                 className="flex-none text-[13.5px] font-medium text-brand-dark"
               >
@@ -155,7 +150,7 @@ export function HomeFilterBar({ query, onChange, professionals, practices, resul
             <button
               type="button"
               aria-label="Buscar"
-              onClick={() => setSearching(true)}
+              onClick={openSearch}
               className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-foreground text-background"
             >
               <Magnifier className="" />

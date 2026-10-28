@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildHomeData, rowsFor, splitFeatured, formatHomePrice, type HomeProfessional } from './home-arrival'
+import { buildHomeData, rowsFor, splitFeatured, featuredPicks, FEATURED_MIN_SCORE, formatHomePrice, type HomeProfessional } from './home-arrival'
 import type { Practice } from './practices'
 
 const practice = (p: Partial<Practice> & Pick<Practice, 'key' | 'label'>): Practice => ({
@@ -105,20 +105,32 @@ describe('rowsFor and splitFeatured', () => {
     expect(rowsFor(rows, 'miedos-creencias').map((r) => r.slug)).toEqual(['b'])
   })
 
-  it('features the first destacado professional with a photo, and leaves them out of the rest', () => {
-    const { featured, rest } = splitFeatured(rowsFor(rows, 'estres-ansiedad'))
+  it('features the first pick still on screen, and leaves them out of the rest', () => {
+    const { featured, rest } = splitFeatured(rowsFor(rows, 'duelo-perdidas'), ['b', 'c', 'a'])
     expect(featured?.slug).toBe('c')
-    expect(rest.map((r) => r.slug)).toEqual(['a', 'b'])
+    expect(rest.map((r) => r.slug)).toEqual(['a'])
   })
 
-  it('falls back to the first professional when nobody is a destacado with a photo', () => {
-    const { featured, rest } = splitFeatured(rowsFor(rows, 'miedos-creencias'))
-    expect(featured?.slug).toBe('b')
-    expect(rest).toEqual([])
+  it('features nobody when no pick is on screen', () => {
+    const shown = rowsFor(rows, 'miedos-creencias')
+    expect(splitFeatured(shown, ['a', 'c'])).toEqual({ featured: null, rest: shown })
+    expect(splitFeatured(shown, [])).toEqual({ featured: null, rest: shown })
+  })
+})
+
+describe('featuredPicks', () => {
+  const scored = (score: number | null) => pro({ slug: `s${score}`, ranking_score: score })
+  const { rows } = buildHomeData([scored(57), scored(49.4), scored(50), scored(null), scored(31)], CATALOG)
+
+  it('only offers professionals with an Índice Hara of 50 or more', () => {
+    expect(FEATURED_MIN_SCORE).toBe(50)
+    expect(featuredPicks(rows, () => 0).sort()).toEqual(['s50', 's57'])
   })
 
-  it('returns no featured professional for an empty list', () => {
-    expect(splitFeatured([])).toEqual({ featured: null, rest: [] })
+  it('puts them in a random order', () => {
+    const many = buildHomeData([60, 61, 62, 63].map(scored), CATALOG).rows
+    expect(featuredPicks(many, () => 0)).toEqual(['s61', 's62', 's63', 's60'])
+    expect(featuredPicks(many, () => 0.999)).toEqual(['s60', 's61', 's62', 's63'])
   })
 })
 

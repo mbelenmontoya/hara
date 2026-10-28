@@ -44,3 +44,6 @@ vi.mock('next/link', () => ({
     React.createElement('a', { href: href as string, ...props }, children),
 }))
 
+
+// jsdom has no scrollIntoView; real browsers do. Tests that care replace it with a spy.
+Element.prototype.scrollIntoView = () => {}

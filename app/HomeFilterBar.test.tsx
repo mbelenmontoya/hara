@@ -1,7 +1,8 @@
-import { describe, it, expect, vi } from 'vitest'
+import { afterEach, describe, it, expect, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { HomeArrival } from './HomeArrival'
+import { HomeBottomNav, HomeSearchProvider } from './HomeSearch'
 import type { HomeRow } from '@/lib/home-arrival'
 import type { DirectoryProfessional } from '@/app/profesionales/components/ProfessionalsDirectory'
 import type { Practice } from '@/lib/practices'
@@ -64,7 +65,11 @@ const PRACTICES: Practice[] = [
 ]
 
 function renderHome() {
-  return render(<HomeArrival cards={[]} rows={ROWS} professionals={PROS} practices={PRACTICES} />)
+  return render(
+    <HomeSearchProvider>
+      <HomeArrival cards={[]} rows={ROWS} professionals={PROS} practices={PRACTICES} featuredPicks={[]} />
+    </HomeSearchProvider>
+  )
 }
 
 /** Professionals the visitor sees in the list (featured card and rows). */
@@ -76,6 +81,11 @@ function listed(): string[] {
 const dialog = () => screen.getByRole('dialog')
 
 describe('home filter bar', () => {
+  afterEach(() => {
+    window.history.replaceState(null, '', '/')
+    vi.restoreAllMocks()
+  })
+
   it('filters by practice, showing each practice with its count and the live result count', async () => {
     const user = userEvent.setup()
     renderHome()
@@ -166,6 +176,35 @@ describe('home filter bar', () => {
     expect(screen.getByRole('button', { name: 'Buscar' })).toBeInTheDocument()
   })
 
+  it('opens the same search field from Buscar in the bottom bar and brings the bar into view', async () => {
+    const user = userEvent.setup()
+    const scrolled = vi.spyOn(Element.prototype, 'scrollIntoView')
+    render(
+      <HomeSearchProvider>
+        <HomeArrival cards={[]} rows={ROWS} professionals={PROS} practices={PRACTICES} featuredPicks={[]} />
+        <HomeBottomNav />
+      </HomeSearchProvider>
+    )
+    expect(screen.queryByRole('textbox', { name: /buscar/i })).not.toBeInTheDocument()
+
+    await user.click(within(screen.getByRole('navigation', { name: 'Principal' })).getByRole('button', { name: 'Buscar' }))
+    expect(screen.getByRole('textbox', { name: /buscar/i })).toHaveFocus()
+    expect(screen.getByRole('button', { name: /^prácticas/i })).toBeInTheDocument()
+    expect(scrolled).toHaveBeenCalledTimes(1)
+    expect(scrolled.mock.instances[0]).toBe(document.getElementById('buscar'))
+
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }))
+    expect(screen.queryByRole('textbox', { name: /buscar/i })).not.toBeInTheDocument()
+  })
+
+  it('arrives with the search open from a #buscar link, and drops the #buscar from the address', () => {
+    window.history.replaceState(null, '', '/#buscar')
+    renderHome()
+    expect(screen.getByRole('textbox', { name: /buscar/i })).toBeInTheDocument()
+    expect(window.location.hash).toBe('')
+    expect(window.location.pathname).toBe('/')
+  })
+
   it('shows Limpiar filtros only while something is applied, and clears everything', async () => {
     const user = userEvent.setup()
     renderHome()
@@ -194,7 +233,11 @@ describe('home filter bar', () => {
     const user = userEvent.setup()
     const many = Array.from({ length: 30 }, (_, i) => pro({ slug: `p${i}`, full_name: `Persona ${i}` }))
     const manyRows: HomeRow[] = many.map((p) => ({ ...ROWS[0], slug: p.slug, name: p.full_name }))
-    render(<HomeArrival cards={[]} rows={manyRows} professionals={many} practices={PRACTICES} />)
+    render(
+      <HomeSearchProvider>
+        <HomeArrival cards={[]} rows={manyRows} professionals={many} practices={PRACTICES} featuredPicks={['p0']} />
+      </HomeSearchProvider>
+    )
     const links = () => within(screen.getByRole('list')).getAllByRole('link')
 
     await user.click(screen.getByRole('button', { name: /cargar 12 más/i }))

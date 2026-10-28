@@ -3,6 +3,7 @@
 
 import Link from 'next/link'
 import { EmptyState } from '@/app/components/ui/EmptyState'
+import { AlmanacBottomNav } from '@/app/components/AlmanacBottomNav'
 
 const ISOTIPO_SRC = '/assets/logo/isotipo.png'
 
@@ -83,50 +84,53 @@ export function DiarioList({ posts }: { posts: DiarioListPost[] }) {
   const [featured, ...rest] = posts
 
   return (
-    <main className="min-h-screen bg-background font-almanac text-foreground">
-      <div className="mx-auto w-full max-w-md px-5 pb-16 pt-8 md:max-w-xl">
-        <h1
-          className="font-almanac-serif mb-0 text-[44px] text-foreground"
-          style={{ lineHeight: 1, letterSpacing: '-0.6px' }}
-        >
-          Diario
-        </h1>
-        <span className="mt-2 block text-[14.5px] leading-[1.5] text-gray-700">
-          Perspectivas sobre bienestar holístico escritas por profesionales y personas de la comunidad de Hara.
-        </span>
+    <>
+      <main className="min-h-screen bg-background font-almanac text-foreground">
+        <div className="mx-auto w-full max-w-md px-5 pb-[110px] pt-8 md:max-w-xl">
+          <h1
+            className="font-almanac-serif mb-0 text-[44px] text-foreground"
+            style={{ lineHeight: 1, letterSpacing: '-0.6px' }}
+          >
+            Diario
+          </h1>
+          <span className="mt-2 block text-[14.5px] leading-[1.5] text-gray-700">
+            Perspectivas sobre bienestar holístico escritas por profesionales y personas de la comunidad de Hara.
+          </span>
 
-        {featured ? (
-          <>
-            <FeaturedPost post={featured} />
-            {rest.length > 0 && (
-              <ul className="mt-[22px] border-t border-foreground/12">
-                {rest.map((post) => (
-                  <PostRow key={post.slug} post={post} />
-                ))}
-              </ul>
-            )}
-            <Link
-              href="/blog/escribir"
-              className="mt-8 block text-center text-sm font-medium text-brand hover:underline"
-            >
-              ¿Tenés algo para compartir? Escribí una nota →
-            </Link>
-          </>
-        ) : (
-          <EmptyState
-            title="Todavía no hay notas publicadas"
-            description="Volvé pronto, la comunidad está escribiendo."
-            action={
+          {featured ? (
+            <>
+              <FeaturedPost post={featured} />
+              {rest.length > 0 && (
+                <ul className="mt-[22px] border-t border-foreground/12">
+                  {rest.map((post) => (
+                    <PostRow key={post.slug} post={post} />
+                  ))}
+                </ul>
+              )}
               <Link
                 href="/blog/escribir"
-                className="inline-flex items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-medium text-white"
+                className="mt-8 block text-center text-sm font-medium text-brand hover:underline"
               >
-                Escribir una nota
+                ¿Tenés algo para compartir? Escribí una nota →
               </Link>
-            }
-          />
-        )}
-      </div>
-    </main>
+            </>
+          ) : (
+            <EmptyState
+              title="Todavía no hay notas publicadas"
+              description="Volvé pronto, la comunidad está escribiendo."
+              action={
+                <Link
+                  href="/blog/escribir"
+                  className="inline-flex items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-medium text-white"
+                >
+                  Escribir una nota
+                </Link>
+              }
+            />
+          )}
+        </div>
+      </main>
+      <AlmanacBottomNav active="diario" />
+    </>
   )
 }

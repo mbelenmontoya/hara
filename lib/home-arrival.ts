@@ -129,8 +129,22 @@ export function rowsFor(rows: HomeRow[], key: string): HomeRow[] {
   return rows.filter((r) => r.specialtyKeys.includes(key))
 }
 
-/** The featured professional (first destacado with a photo, else the first) and everyone else. */
-export function splitFeatured(rows: HomeRow[]): { featured: HomeRow | null; rest: HomeRow[] } {
-  const featured = rows.find((r) => r.destacado && r.photoUrl) ?? rows[0] ?? null
+/** Lowest Índice Hara that can be featured on the home. */
+export const FEATURED_MIN_SCORE = 50
+
+/** Slugs of everyone who can be featured, shuffled (Fisher-Yates) so each visit features someone else. */
+export function featuredPicks(rows: HomeRow[], random: () => number = Math.random): string[] {
+  const picks = rows.filter((r) => r.score != null && r.score >= FEATURED_MIN_SCORE).map((r) => r.slug)
+  for (let i = picks.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1))
+    ;[picks[i], picks[j]] = [picks[j], picks[i]]
+  }
+  return picks
+}
+
+/** The first pick still among the rows (or nobody) and everyone else. */
+export function splitFeatured(rows: HomeRow[], picks: string[]): { featured: HomeRow | null; rest: HomeRow[] } {
+  const slug = picks.find((s) => rows.some((r) => r.slug === s))
+  const featured = rows.find((r) => r.slug === slug) ?? null
   return { featured, rest: rows.filter((r) => r !== featured) }
 }

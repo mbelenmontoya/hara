@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest'
 import {
   filterProfessionals,
   filterRows,
-  orderByElement,
   practiceOptions,
   modalityCounts,
   cityOptions,
@@ -98,18 +97,6 @@ describe('filterRows', () => {
   it('keeps only the rows of the matched professionals, in the rows order', () => {
     const rows = [row('dani'), row('ana'), row('beto')]
     expect(filterRows(rows, [PROS[1], PROS[0]]).map((r) => r.slug)).toEqual(['ana', 'beto'])
-  })
-})
-
-describe('orderByElement', () => {
-  const rows = [row('a', ['x']), row('b', ['y']), row('c', ['x', 'y']), row('d', [])]
-
-  it('moves the specialty to the front without dropping anyone or reordering within groups', () => {
-    expect(orderByElement(rows, 'y').map((r) => r.slug)).toEqual(['b', 'c', 'a', 'd'])
-  })
-
-  it('leaves the order untouched with no element', () => {
-    expect(orderByElement(rows, null).map((r) => r.slug)).toEqual(['a', 'b', 'c', 'd'])
   })
 })
 

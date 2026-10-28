@@ -1,15 +1,16 @@
 'use client'
 
 // "¿Cómo llegás hoy?" cards and the list of everyone. Nothing is selected at first;
-// tapping a card puts the people with that specialty first, tapping it again restores the order.
+// tapping a card shows only the people with that specialty, tapping it again shows everyone.
+// The featured card goes to the first of `featuredPicks` still shown (shuffled per visit by the page).
 // The concierge block is passed as children and sits below the list.
 
 import { useMemo, useState, type ReactNode } from 'react'
 import Link from 'next/link'
-import { splitFeatured, type ArrivalCard as ArrivalCardData, type HomeRow } from '@/lib/home-arrival'
+import { rowsFor, splitFeatured, type ArrivalCard as ArrivalCardData, type HomeRow } from '@/lib/home-arrival'
 import { DEFAULT_FILTERS } from '@/app/profesionales/components/DirectoryFilters'
 import { DirectoryMap } from '@/app/profesionales/components/DirectoryMap'
-import { filterProfessionals, filterRows, orderByElement, type HomeQuery } from '@/lib/home-filters'
+import { filterProfessionals, filterRows, type HomeQuery } from '@/lib/home-filters'
 import type { Practice } from '@/lib/practices'
 import type { DirectoryProfessional } from '@/app/profesionales/components/ProfessionalsDirectory'
 import { ArrivalCard } from './ArrivalCard'
@@ -24,17 +25,25 @@ interface HomeArrivalProps {
   rows: HomeRow[]
   professionals: DirectoryProfessional[]
   practices: Practice[]
+  featuredPicks: string[]
   children?: ReactNode
 }
 
-export function HomeArrival({ cards, rows, professionals, practices, children }: HomeArrivalProps) {
+export function HomeArrival({ cards, rows, professionals, practices, featuredPicks, children }: HomeArrivalProps) {
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [query, setQuery] = useState<HomeQuery>({ search: '', filters: DEFAULT_FILTERS })
   const [view, setView] = useState<HomeView>('list')
   const matched = useMemo(() => filterProfessionals(professionals, practices, query), [professionals, practices, query])
-  const shown = orderByElement(filterRows(rows, matched), selectedKey)
-  const { featured, rest } = splitFeatured(shown)
+  const shown = useMemo(() => {
+    const filtered = filterRows(rows, matched)
+    return selectedKey ? rowsFor(filtered, selectedKey) : filtered
+  }, [rows, matched, selectedKey])
+  const onMap = useMemo(() => {
+    const slugs = new Set(shown.map((r) => r.slug))
+    return matched.filter((p) => slugs.has(p.slug))
+  }, [matched, shown])
+  const { featured, rest } = splitFeatured(shown, featuredPicks)
   const remaining = rest.length - visibleCount
   const shownCount = (featured ? 1 : 0) + Math.min(visibleCount, rest.length)
 
@@ -49,7 +58,10 @@ export function HomeArrival({ cards, rows, professionals, practices, children }:
                 key={card.key}
                 card={card}
                 isSelected={isSelected}
-                onToggle={() => setSelectedKey(isSelected ? null : card.key)}
+                onToggle={() => {
+                  setSelectedKey(isSelected ? null : card.key)
+                  setVisibleCount(PAGE_SIZE)
+                }}
               />
             )
           })}
@@ -70,14 +82,14 @@ export function HomeArrival({ cards, rows, professionals, practices, children }:
           }}
           professionals={professionals}
           practices={practices}
-          resultCount={matched.length}
+          resultCount={onMap.length}
           view={view}
           onViewChange={setView}
         />
 
         {view === 'map' ? (
           <div className="mt-3">
-            <DirectoryMap professionals={matched} />
+            <DirectoryMap professionals={onMap} />
           </div>
         ) : shown.length === 0 ? (
           <div className="mt-5">

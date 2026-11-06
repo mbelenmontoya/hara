@@ -1,10 +1,10 @@
-// Hara Vital — Admin Practices Catalog (list)
+// Hara Vital, Admin Practices Catalog (list, design 13)
 // Server component. Fetches all practices (active + inactive) with usage
 // counts via loadAdminPracticesView, renders the client list + toggle UI.
 
 import Link from 'next/link'
 import { AdminLayout } from '@/app/components/AdminLayout'
-import { Button } from '@/app/components/ui/Button'
+import { ADMIN_BTN_PRIMARY, AdminTitle } from '@/app/admin/components/AdminUI'
 import { loadAdminPracticesView, loadPracticeSuggestions } from '@/lib/admin-practices'
 import { PracticesList } from './PracticesList'
 import { SuggestedPractices } from './SuggestedPractices'
@@ -17,21 +17,18 @@ export default async function AdminPracticesPage() {
     loadPracticeSuggestions(),
   ])
 
+  const activeCount = practices.filter((p) => p.active).length
+
   return (
     <AdminLayout>
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground">Prácticas</h1>
-            <p className="text-sm text-muted">Catálogo holístico</p>
-          </div>
-          <Link href="/admin/practices/new">
-            <Button>Nueva práctica</Button>
-          </Link>
-        </div>
-        <SuggestedPractices suggestions={suggestions} practices={practices} />
-        <PracticesList practices={practices} />
+      <div className="mb-[18px] flex flex-wrap items-end justify-between gap-3.5">
+        <AdminTitle sub={`Catálogo holístico · ${practices.length} prácticas · ${activeCount} activas`}>Prácticas</AdminTitle>
+        <Link href="/admin/practices/new" className={`${ADMIN_BTN_PRIMARY} mb-[18px]`}>
+          Nueva práctica
+        </Link>
       </div>
+      <SuggestedPractices suggestions={suggestions} practices={practices} />
+      <PracticesList practices={practices} />
     </AdminLayout>
   )
 }

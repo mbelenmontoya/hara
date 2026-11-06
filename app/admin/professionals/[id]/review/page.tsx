@@ -1,117 +1,71 @@
-// Admin — Professional Review Page
-// Shows submitted profile with score preview, completeness breakdown,
-// and approve/reject actions. Uses standard liquid-glass design system.
+// Admin, Professional Review Page (design 13)
+// Header with photo, score ring and the action bar per status; Sobre, Perfil profesional,
+// editable score criteria and contact data. Opening it marks the professional read.
 
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
+import { useParams } from 'next/navigation'
 import { AdminLayout } from '@/app/components/AdminLayout'
-import { GlassCard } from '@/app/components/ui/GlassCard'
-import { SectionHeader } from '@/app/components/ui/SectionHeader'
-import { Chip } from '@/app/components/ui/Chip'
-import { Button } from '@/app/components/ui/Button'
 import { Modal } from '@/app/components/ui/Modal'
-import { Alert } from '@/app/components/ui/Alert'
-import {
-  calculateProfileScore,
-  type ProfileScore,
-  type ScorableProfile,
-} from '@/lib/profile-score'
-import { MODALITY_MAP, STATUS_CONFIG, SERVICE_TYPE_MAP } from '@/lib/design-constants'
+import { useAdminToast } from '@/app/admin/components/AdminToast'
+import { ADMIN_BACK_LINK, ADMIN_BTN_SECONDARY, AdminEmpty, AdminError, AdminSkeleton } from '@/app/admin/components/AdminUI'
+import { calculateProfileScore, type ScorableProfile } from '@/lib/profile-score'
 import { logError } from '@/lib/monitoring'
-import { ScoreRing, ScoreBreakdown } from './components/ScoreDisplay'
-import { PracticeMapper } from './components/PracticeMapper'
 import type { Practice } from '@/lib/practices'
+import { ReviewHeader, type ReviewHeaderProfessional } from './components/ReviewHeader'
+import { AboutCard, ContactCard, CriteriaCard, ProfileCard, type ReviewProfessional } from './components/ReviewSections'
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
-interface Professional {
+interface Professional extends ReviewHeaderProfessional, ReviewProfessional {
   id: string
-  slug: string
-  status: string
-  full_name: string
-  email: string
-  whatsapp: string
-  country: string
-  city: string | null
-  online_only: boolean
-  modality: string[]
-  specialties: string[]
-  practices: string[]
   needs_practice_review: boolean
-  bio: string | null
-  short_description: string | null
-  experience_description: string | null
-  instagram: string | null
-  service_type: string[]
-  price_range_min: number | null
-  price_range_max: number | null
-  currency: string
-  accepting_new_clients: boolean
-  offers_courses_online: boolean
-  courses_presencial_location: string | null
-  profile_image_url: string | null
-  subscription_tier: string
-  tier_expires_at: string | null
-  ranking_score: number
-  rating_average: number
-  rating_count: number
-  created_at: string
-  rejection_reason: string | null
   score_overrides: Record<string, number>
 }
 
-// ============================================================================
-// MAIN PAGE
-// ============================================================================
+function toScorable(p: Professional): ScorableProfile {
+  return {
+    profile_image_url: p.profile_image_url,
+    short_description: p.short_description,
+    bio: p.bio,
+    experience_description: p.experience_description,
+    practices: p.practices,
+    service_type: p.service_type,
+    city: p.city,
+    online_only: p.online_only,
+    instagram: p.instagram,
+    whatsapp: p.whatsapp,
+    modality: p.modality,
+  }
+}
+
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : 'Error desconocido'
+}
 
 export default function ProfessionalReviewPage() {
-  const params = useParams()
-  const router = useRouter()
-  const id = params.id as string
+  const id = useParams().id as string
+  // The toast lives inside AdminLayout, so the page body is a child of it
+  return (
+    <AdminLayout markRead={{ kind: 'professionals', id }}>
+      <Link href="/admin/professionals" className={ADMIN_BACK_LINK}>
+        ← Profesionales
+      </Link>
+      <ReviewBody id={id} />
+    </AdminLayout>
+  )
+}
 
+function ReviewBody({ id }: { id: string }) {
+  const toast = useAdminToast()
   const [professional, setProfessional] = useState<Professional | null>(null)
   const [catalogPractices, setCatalogPractices] = useState<Practice[]>([])
-  const [score, setScore] = useState<ProfileScore | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const [actionLoading, setActionLoading] = useState(false)
-  const [actionResult, setActionResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
-
-  const [rejectModalOpen, setRejectModalOpen] = useState(false)
-  const [rejectionReason, setRejectionReason] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [rejectOpen, setRejectOpen] = useState(false)
   const [editedPractices, setEditedPractices] = useState<string[] | null>(null)
   const [scoreOverrides, setScoreOverrides] = useState<Record<string, number>>({})
   const [imageUploading, setImageUploading] = useState(false)
-  const [imageError, setImageError] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const [inviteLoading, setInviteLoading] = useState(false)
-  const [inviteResult, setInviteResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
-
-  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setImageUploading(true)
-    setImageError(null)
-    try {
-      const fd = new FormData()
-      fd.append('profile_image', file)
-      const res = await fetch(`/api/admin/professionals/${id}/image`, { method: 'POST', body: fd })
-      const body = await res.json()
-      if (!res.ok) { setImageError(body.error ?? 'Error al subir la imagen'); return }
-      setProfessional((prev) => prev ? { ...prev, profile_image_url: body.url } : prev)
-    } catch {
-      setImageError('Error de red al subir la imagen')
-    } finally {
-      setImageUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ''
-    }
-  }
 
   const fetchProfessional = useCallback(async () => {
     try {
@@ -122,27 +76,10 @@ export default function ProfessionalReviewPage() {
       }
       const { professional: data, practices: catalogData } = await res.json()
       setProfessional(data)
+      setScoreOverrides(data.score_overrides ?? {})
       if (Array.isArray(catalogData)) setCatalogPractices(catalogData)
-
-      const scorable: ScorableProfile = {
-        profile_image_url: data.profile_image_url,
-        short_description: data.short_description,
-        bio: data.bio,
-        experience_description: data.experience_description,
-        practices: data.practices,
-        service_type: data.service_type,
-        city: data.city,
-        online_only: data.online_only,
-        instagram: data.instagram,
-        whatsapp: data.whatsapp,
-        modality: data.modality,
-      }
-      const overrides = data.score_overrides ?? {}
-      setScoreOverrides(overrides)
-      setScore(calculateProfileScore(scorable, overrides))
     } catch (err) {
       logError(err instanceof Error ? err : new Error(String(err)), { source: 'ProfessionalReviewPage.fetchProfessional' })
-      setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
       setLoading(false)
     }
@@ -152,47 +89,47 @@ export default function ProfessionalReviewPage() {
     fetchProfessional()
   }, [fetchProfessional])
 
-  function handleOverride(key: string, value: number) {
-    if (!professional) return
-    const next = { ...scoreOverrides, [key]: value }
-    setScoreOverrides(next)
-    const scorable = {
-      profile_image_url: professional.profile_image_url,
-      short_description: professional.short_description,
-      bio: professional.bio,
-      experience_description: professional.experience_description,
-      practices: professional.practices,
-      service_type: professional.service_type,
-      city: professional.city,
-      online_only: professional.online_only,
-      instagram: professional.instagram,
-      whatsapp: professional.whatsapp,
-      modality: professional.modality,
+  async function handleImageUpload(file: File) {
+    setImageUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('profile_image', file)
+      const res = await fetch(`/api/admin/professionals/${id}/image`, { method: 'POST', body: fd })
+      const body = await res.json()
+      if (!res.ok) return toast.show(body.error ?? 'No pudimos subir la foto.', 'err')
+      setProfessional((prev) => (prev ? { ...prev, profile_image_url: body.url } : prev))
+      toast.show('Foto actualizada.')
+    } catch {
+      toast.show('Error de red al subir la foto.', 'err')
+    } finally {
+      setImageUploading(false)
     }
-    setScore(calculateProfileScore(scorable, next))
+  }
+
+  function handleReset(key: string) {
+    const next = { ...scoreOverrides }
+    delete next[key]
+    setScoreOverrides(next)
   }
 
   async function handleResendInvite() {
-    setInviteLoading(true)
-    setInviteResult(null)
+    setBusy(true)
     try {
       const res = await fetch(`/api/admin/professionals/${id}/invite`, { method: 'POST' })
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
-        setInviteResult({ type: 'error', message: body.error ?? 'No se pudo reenviar el acceso' })
-      } else {
-        setInviteResult({ type: 'success', message: 'Enlace de acceso enviado exitosamente' })
+        return toast.show(body.error ?? 'No se pudo reenviar el acceso.', 'err')
       }
+      toast.show(`Le reenviamos el acceso a ${professional?.email}.`)
     } catch {
-      setInviteResult({ type: 'error', message: 'Error de red al reenviar el acceso' })
+      toast.show('Error de red al reenviar el acceso.', 'err')
     } finally {
-      setInviteLoading(false)
+      setBusy(false)
     }
   }
 
   async function handleApprove() {
-    setActionLoading(true)
-    setActionResult(null)
+    setBusy(true)
     try {
       const res = await fetch(`/api/admin/professionals/${id}`, {
         method: 'PATCH',
@@ -205,437 +142,138 @@ export default function ProfessionalReviewPage() {
       })
       const body = await res.json()
       if (!res.ok) throw new Error(body.error || 'Error al aprobar')
-      setActionResult({ type: 'success', message: `Perfil aprobado. Ya es visible en /p/${professional?.slug}` })
-      setProfessional((prev) => prev ? { ...prev, status: 'active' } : prev)
+      setProfessional((prev) => (prev ? { ...prev, status: 'active' } : prev))
+      toast.show('Perfil aprobado. Ya es público y le mandamos el email para crear su contraseña.')
     } catch (err) {
       logError(err instanceof Error ? err : new Error(String(err)), { source: 'ProfessionalReviewPage.handleApprove' })
-      setActionResult({ type: 'error', message: err instanceof Error ? err.message : 'Error desconocido' })
+      toast.show(errorMessage(err), 'err')
     } finally {
-      setActionLoading(false)
+      setBusy(false)
     }
   }
 
-  async function handleReject() {
-    if (!rejectionReason.trim()) return
-    setActionLoading(true)
-    setActionResult(null)
+  function handleRejected(reason: string) {
+    setRejectOpen(false)
+    setProfessional((prev) => (prev ? { ...prev, status: 'rejected', rejection_reason: reason } : prev))
+    toast.show(`Rechazaste el perfil de ${professional?.full_name}.`)
+  }
+
+  if (loading) return <AdminSkeleton />
+  if (!professional) {
+    return (
+      <AdminEmpty title="Profesional no encontrado" text="No pudimos cargar este perfil. Volvé a la lista y probá de nuevo.">
+        <Link href="/admin/professionals" className={ADMIN_BTN_SECONDARY}>
+          Volver a profesionales
+        </Link>
+      </AdminEmpty>
+    )
+  }
+
+  const score = calculateProfileScore(toScorable(professional), scoreOverrides)
+
+  return (
+    <>
+      <ReviewHeader
+        pro={professional}
+        total={score.total}
+        imageUploading={imageUploading}
+        busy={busy}
+        onPhoto={handleImageUpload}
+        onApprove={handleApprove}
+        onReject={() => setRejectOpen(true)}
+        onResend={handleResendInvite}
+      />
+
+      <div className="mt-3 grid grid-cols-1 items-start gap-3 md:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+        <div className="flex min-w-0 flex-col gap-3">
+          <AboutCard pro={professional} />
+          <ProfileCard pro={professional} catalog={catalogPractices} onPractices={setEditedPractices} />
+        </div>
+        <div className="flex min-w-0 flex-col gap-3">
+          <CriteriaCard
+            score={score}
+            overrides={scoreOverrides}
+            onSet={(key, value) => setScoreOverrides((prev) => ({ ...prev, [key]: value }))}
+            onReset={handleReset}
+          />
+          <ContactCard pro={professional} />
+        </div>
+      </div>
+
+      {rejectOpen && (
+        <RejectDialog id={id} name={professional.full_name} email={professional.email} onCancel={() => setRejectOpen(false)} onRejected={handleRejected} />
+      )}
+    </>
+  )
+}
+
+interface RejectDialogProps {
+  id: string
+  name: string
+  email: string
+  onCancel: () => void
+  onRejected: (reason: string) => void
+}
+
+function RejectDialog({ id, name, email, onCancel, onRejected }: RejectDialogProps) {
+  const [reason, setReason] = useState('')
+  const [error, setError] = useState('')
+  const [sending, setSending] = useState(false)
+
+  async function reject() {
+    const text = reason.trim()
+    if (!text) return setError('Escribí el motivo antes de rechazar.')
+    setSending(true)
     try {
       const res = await fetch(`/api/admin/professionals/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'reject', rejection_reason: rejectionReason }),
+        body: JSON.stringify({ action: 'reject', rejection_reason: text }),
       })
       const body = await res.json()
       if (!res.ok) throw new Error(body.error || 'Error al rechazar')
-      setRejectModalOpen(false)
-      setRejectionReason('')
-      setActionResult({ type: 'success', message: 'Perfil rechazado.' })
-      setProfessional((prev) => prev ? { ...prev, status: 'rejected', rejection_reason: rejectionReason } : prev)
+      onRejected(text)
     } catch (err) {
       logError(err instanceof Error ? err : new Error(String(err)), { source: 'ProfessionalReviewPage.handleReject' })
-      setActionResult({ type: 'error', message: err instanceof Error ? err.message : 'Error desconocido' })
+      setError(errorMessage(err))
     } finally {
-      setActionLoading(false)
+      setSending(false)
     }
   }
 
-  if (loading) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center py-20 text-muted">Cargando perfil...</div>
-      </AdminLayout>
-    )
-  }
-
-  if (error || !professional) {
-    return (
-      <AdminLayout>
-        <div className="space-y-4">
-          <Alert variant="error">{error || 'Profesional no encontrado'}</Alert>
-          <Button variant="secondary" onClick={() => router.push('/admin/professionals')}>
-            Volver a la lista
-          </Button>
-        </div>
-      </AdminLayout>
-    )
-  }
-
-  const statusConfig = STATUS_CONFIG[professional.status] || STATUS_CONFIG.draft
-  const isReviewable = professional.status === 'submitted'
-
-  const modalityLabels    = professional.modality.map((m) => MODALITY_MAP[m] || m)
-  const serviceTypeLabels = (professional.service_type ?? []).map((s) => SERVICE_TYPE_MAP[s] || s)
-  const practiceLabelMap = Object.fromEntries(catalogPractices.map(p => [p.key, p.label]))
-  const practiceLabels = professional.practices.map(k => practiceLabelMap[k] ?? k)
-  const location = professional.online_only
-    ? 'Solo online'
-    : [professional.city, professional.country].filter(Boolean).join(', ')
-  const registeredDate = new Date(professional.created_at).toLocaleDateString('es-AR', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
-
   return (
-    <AdminLayout>
-      <div className="space-y-4">
-
-        {/* Back link — outside the card */}
-        <button
-          onClick={() => router.push('/admin/professionals')}
-          className="text-sm text-muted hover:text-foreground inline-flex items-center gap-1.5 transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-          Volver a profesionales
-        </button>
-
-        {/* Header card */}
-        <GlassCard>
-          <div className="flex items-center gap-6">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3">
-              {/* Clickable avatar — opens file picker */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={handleImageUpload}
-              />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={imageUploading}
-                className="relative group flex-shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-brand"
-                title="Subir foto"
-              >
-                {professional.profile_image_url?.startsWith('http') ? (
-                  <img
-                    src={professional.profile_image_url}
-                    alt={professional.full_name}
-                    className="w-14 h-14 rounded-full object-cover shadow-soft border-2 border-white/60"
-                  />
-                ) : (
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-brand-weak to-info-weak flex items-center justify-center shadow-soft border-2 border-white/60">
-                    {imageUploading ? (
-                      <svg className="w-5 h-5 text-brand animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                      </svg>
-                    ) : (
-                      <span className="text-lg font-semibold text-brand">
-                        {professional.full_name.charAt(0)}
-                      </span>
-                    )}
-                  </div>
-                )}
-                {/* Camera overlay on hover */}
-                {!imageUploading && (
-                  <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                )}
-              </button>
-              {imageError && (
-                <p className="text-xs text-danger mt-1 absolute">{imageError}</p>
-              )}
-              <div>
-                {/* Name + status dot */}
-                <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-semibold text-foreground">{professional.full_name}</h2>
-                  <span
-                    className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-                      professional.status === 'active' ? 'bg-success'
-                      : professional.status === 'submitted' ? 'bg-warning'
-                      : professional.status === 'rejected' ? 'bg-danger'
-                      : 'bg-muted/40'
-                    }`}
-                    title={statusConfig.label}
-                  />
-                </div>
-                <p className="text-xs text-muted mt-1">
-                  Registrado el {registeredDate} · <span className="font-mono">{professional.slug}</span>
-                </p>
-                <p className="text-xs text-muted mt-0.5">
-                  Tier: <span className="font-medium text-foreground capitalize">{professional.subscription_tier}</span>
-                  {' · '}Ranking: <span className="font-medium text-foreground">{professional.ranking_score}</span>
-                  {professional.rating_count > 0 && (
-                    <> · ⭐ {professional.rating_average.toFixed(1)} ({professional.rating_count})</>
-                  )}
-                </p>
-              </div>
-            </div>
-            </div>{/* end flex-1 left group */}
-
-            {/* Score ring — adjacent to content, not pushed to far right */}
-            {score && <ScoreRing score={score.total} />}
-          </div>
-        </GlassCard>
-
-        {/* Alerts */}
-        {actionResult && (
-          <Alert variant={actionResult.type === 'success' ? 'success' : 'error'}>
-            {actionResult.message}
-          </Alert>
-        )}
-        {professional.status === 'rejected' && professional.rejection_reason && (
-          <Alert variant="warning" title="Motivo de rechazo">
-            {professional.rejection_reason}
-          </Alert>
-        )}
-
-        {/* Two-column: Score (left) | Bio + Contact (right) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-
-          {/* Left — score */}
-          {score && (
-            <GlassCard overflowHidden={false}>
-              <SectionHeader className="mb-5">Puntaje del perfil (preliminar)</SectionHeader>
-              <ScoreBreakdown breakdown={score.breakdown} onOverride={handleOverride} />
-              <p className="text-xs text-muted mt-5 pt-4 border-t border-outline">
-                Refleja la completitud de los datos enviados en el registro.
-                No es un criterio automático de aprobación o rechazo.
-              </p>
-            </GlassCard>
-          )}
-
-          {/* Right — texts (top) + contact (bottom) */}
-          <div className="flex flex-col gap-4">
-            <GlassCard>
-              <SectionHeader className="mb-4">Sobre el/la profesional</SectionHeader>
-              <div className="space-y-4">
-                {professional.short_description && (
-                  <div>
-                    <p className="text-xs text-muted mb-1">Descripción corta</p>
-                    <p className="text-sm text-foreground">{professional.short_description}</p>
-                  </div>
-                )}
-                {professional.bio && (
-                  <div>
-                    <p className="text-xs text-muted mb-1">Biografía</p>
-                    <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">{professional.bio}</p>
-                  </div>
-                )}
-                {professional.experience_description && (
-                  <div>
-                    <p className="text-xs text-muted mb-1">Descripción de experiencia</p>
-                    <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">{professional.experience_description}</p>
-                  </div>
-                )}
-                {serviceTypeLabels.length > 0 && (
-                  <div>
-                    <p className="text-xs text-muted mb-2">Tipo de servicio</p>
-                    <div className="flex flex-wrap gap-2">
-                      {serviceTypeLabels.map((label) => (
-                        <Chip key={label} label={label} variant="neutral" />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </GlassCard>
-
-            <GlassCard>
-              <SectionHeader className="mb-4">Datos de contacto</SectionHeader>
-              <dl className="grid grid-cols-1 gap-y-3">
-                <div>
-                  <dt className="text-xs text-muted mb-0.5">Email</dt>
-                  <dd className="text-sm text-foreground">{professional.email}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted mb-0.5">WhatsApp</dt>
-                  <dd className="text-sm text-foreground">{professional.whatsapp || '—'}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted mb-0.5">Ubicación</dt>
-                  <dd className="text-sm text-foreground">{location || '—'}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted mb-0.5">País</dt>
-                  <dd className="text-sm text-foreground">{professional.country}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted mb-0.5">Solo online</dt>
-                  <dd className="text-sm text-foreground">{professional.online_only ? 'Sí' : 'No'}</dd>
-                </div>
-                {professional.instagram && (
-                  <div>
-                    <dt className="text-xs text-muted mb-0.5">Instagram</dt>
-                    <dd className="text-sm text-brand">{professional.instagram}</dd>
-                  </div>
-                )}
-              </dl>
-            </GlassCard>
-          </div>
+    <Modal
+      open
+      onClose={() => !sending && onCancel()}
+      title={`Rechazar a ${name}`}
+      footer={
+        <div className="flex justify-end gap-2">
+          <button type="button" onClick={onCancel} disabled={sending} className={ADMIN_BTN_SECONDARY}>
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={reject}
+            disabled={sending}
+            className="inline-flex flex-none rounded-[14px] bg-danger-dark px-[17px] py-[11px] text-[14px] font-medium text-gray-50 disabled:opacity-60"
+          >
+            {sending ? 'Rechazando…' : 'Rechazar'}
+          </button>
         </div>
-
-        {/* Perfil profesional — full width */}
-        <GlassCard>
-          <SectionHeader className="mb-4">Perfil profesional</SectionHeader>
-          <div className="space-y-5">
-            <div>
-              <p className="text-xs text-muted mb-2">Prácticas (mapear)</p>
-              <PracticeMapper
-                freeTextEntries={professional.specialties}
-                catalogPractices={catalogPractices}
-                initialPractices={professional.practices}
-                onChange={setEditedPractices}
-              />
-            </div>
-
-            {practiceLabels.length > 0 && (
-              <div>
-                <p className="text-xs text-muted mb-1">Prácticas guardadas</p>
-                <p className="text-sm text-foreground">{practiceLabels.join(', ')}</p>
-              </div>
-            )}
-
-            <div className="flex flex-wrap gap-x-8 gap-y-3 items-start">
-              <div>
-                <p className="text-xs text-muted mb-1.5">Modalidad</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {modalityLabels.map((label) => (
-                    <Chip key={label} label={label} variant="neutral" />
-                  ))}
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-muted mb-0.5">Acepta nuevos clientes</p>
-                <p className="text-sm text-foreground">{professional.accepting_new_clients ? 'Sí' : 'No'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted mb-0.5">Cursos online</p>
-                <p className="text-sm text-foreground">{professional.offers_courses_online ? 'Sí' : 'No'}</p>
-              </div>
-            </div>
-
-            {(professional.price_range_min || professional.price_range_max) && (
-              <div>
-                <p className="text-xs text-muted mb-1">Rango de precios</p>
-                <p className="text-sm text-foreground">
-                  {professional.currency}{' '}
-                  {professional.price_range_min && professional.price_range_max
-                    ? `${professional.price_range_min} – ${professional.price_range_max}`
-                    : professional.price_range_min
-                      ? `Desde ${professional.price_range_min}`
-                      : `Hasta ${professional.price_range_max}`}
-                </p>
-              </div>
-            )}
-
-
-            {professional.courses_presencial_location && (
-              <div>
-                <p className="text-xs text-muted mb-0.5">Ubicación cursos presenciales</p>
-                <p className="text-sm text-foreground">{professional.courses_presencial_location}</p>
-              </div>
-            )}
-          </div>
-        </GlassCard>
-
-        {/* Actions — no card, right-aligned */}
-        {isReviewable && (
-          <div className="flex flex-col items-end gap-2">
-            <div className="flex gap-3">
-              <Button
-                variant="secondary"
-                size="sm"
-                className="border-danger/30 text-danger hover:bg-danger-weak"
-                loading={actionLoading}
-                onClick={() => setRejectModalOpen(true)}
-              >
-                Rechazar
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                loading={actionLoading}
-                onClick={handleApprove}
-              >
-                Aprobar perfil
-              </Button>
-            </div>
-            <p className="text-xs text-muted">
-              Aprobar hace el perfil visible en el directorio. Rechazar requiere un motivo.
-            </p>
-          </div>
-        )}
-
-        {/* Reenviar acceso — shown for active professionals */}
-        {professional.status === 'active' && (
-          <div className="flex flex-col items-end gap-2">
-            {inviteResult && (
-              <Alert variant={inviteResult.type === 'success' ? 'success' : 'error'}>
-                {inviteResult.message}
-              </Alert>
-            )}
-            <Button
-              variant="secondary"
-              size="sm"
-              loading={inviteLoading}
-              onClick={handleResendInvite}
-            >
-              Reenviar acceso
-            </Button>
-            <p className="text-xs text-muted">
-              Envía un nuevo enlace para que el profesional configure su contraseña.
-            </p>
-          </div>
-        )}
-
-        {/* Reject modal */}
-        <Modal
-          open={rejectModalOpen}
-          onClose={() => setRejectModalOpen(false)}
-          title="Rechazar perfil"
-          footer={
-            <div className="flex gap-3 justify-end">
-              <Button variant="ghost" onClick={() => setRejectModalOpen(false)}>
-                Cancelar
-              </Button>
-              <Button
-                variant="primary"
-                className="bg-danger hover:bg-danger/90"
-                loading={actionLoading}
-                disabled={!rejectionReason.trim()}
-                onClick={handleReject}
-              >
-                Confirmar rechazo
-              </Button>
-            </div>
-          }
-        >
-          <div className="space-y-4">
-            <p className="text-sm text-foreground">
-              <span className="font-semibold">Razón de rechazo</span>{' '}
-              (este texto se le enviará al profesional con tus palabras exactas).
-            </p>
-            <textarea
-              value={rejectionReason}
-              onChange={(e) => setRejectionReason(e.target.value)}
-              placeholder="Ej: El perfil no incluye suficiente información sobre experiencia profesional..."
-              rows={4}
-              className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all text-sm resize-none"
-            />
-            <p className="text-xs text-muted">
-              El profesional recibirá esto en un email automático junto con la fecha en la que puede volver
-              a aplicar (60 días).
-            </p>
-            {score && score.total < 50 && (
-              <p className="text-xs text-muted">
-                El puntaje del perfil es {score.total}/100. Podés usar el desglose de arriba como referencia
-                para explicar qué falta.
-              </p>
-            )}
-          </div>
-        </Modal>
-
-      </div>
-    </AdminLayout>
+      }
+    >
+      <p className="text-[14px] leading-normal text-gray-700">Escribí el motivo. Se lo mandamos por email a {email}.</p>
+      <textarea
+        value={reason}
+        onChange={(e) => {
+          setReason(e.target.value)
+          setError('')
+        }}
+        aria-label="Motivo del rechazo"
+        placeholder="Por ejemplo: falta contar cómo trabajás y qué puede esperar quien te consulte."
+        className="mt-3.5 block min-h-[110px] w-full resize-none rounded-[13px] bg-background px-[13px] py-3 text-[15px] leading-[1.55] outline-none placeholder:text-gray-500"
+      />
+      {error && <AdminError text={error} />}
+    </Modal>
   )
 }

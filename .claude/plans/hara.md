@@ -33,6 +33,10 @@ Rules from the user for this work:
 - [ ] Invalid handles resolved with the professionals and the 5 candidate accounts confirmed
 - [ ] Follow phase built and run (daily cap, starting with professionals who already follow Hara)
 - [ ] Content discovery for stories built (approval required for every share)
+- [x] Redesign committed and pushed to `main` (cc2e2d7, 2026-10-28, with the 5 earlier redesign commits)
+- [x] Admin redesign (design 13) done page by page and verified (plan `docs/plans/2026-10-29-admin-almanac-redesign.md`, all 11 tasks done and VERIFIED 2026-11-06; not committed)
+- [ ] Only the admin can open `/admin` and `/api/admin` (ISSUES.md entry 18 done; `ADMIN_EMAILS` is set locally, still needs Vercel before pushing)
+- [ ] "Soy profesional" form (`/registro`) matches design 12
 
 ## Constraints
 - The home imports filter logic, `DirectoryFilters`, `DirectoryMap`, `useCityGeocode` and the `DirectoryProfessional` type from `app/profesionales`. Those cannot be deleted.
@@ -45,40 +49,83 @@ Rules from the user for this work:
 - The user does not want the `ig-network` work committed or pushed.
 - Leads are written only through `createLead` (`app/actions/create-lead.ts`). Test leads sent during browser checks are deleted by the user or through the admin, never by a script.
 - Supabase migrations are run by the user in the SQL editor, not from a session.
+- Pushing to `main` deploys. `ADMIN_EMAILS` must be set in Vercel before the admin access check (Task 1 of the admin plan) is pushed, or nobody can enter the admin.
+- PQLs stay in the admin. The "remove pqls" request on 2026-10-28 only meant leaving them out of the Claude Design brief.
 
 ## Next Steps
-1. **Decide which ponytail review findings to fix**
+1. **Finish the admin setup the user owns, then review Task 3 of the admin plan**
+   - What: the user adds `ADMIN_EMAILS` to `.env.local`, runs `migrations/025_admin_read_at.sql` in the SQL editor, signs in at `/admin/login`, and reviews the new shell (sidebar, pills at phone width, email, Salir). I restart my dev server after the env change.
+   - Why: without `ADMIN_EMAILS` the new check keeps everyone out of the local admin; without migration 025 the menu shows no unread numbers.
+   - Considerations: Task 3 stays unticked in the plan until this browser check passes (TS-001 and TS-006).
+
+2. **Continue the admin redesign plan, one page at a time**
+   - What: Tasks 4 to 11 of `docs/plans/2026-10-29-admin-almanac-redesign.md` (Leads, Profesionales, review page, Prácticas, Analíticas, Blog, Reseñas plus PQLs, docs), stopping after each page for the user's review, then `spec-verify`.
+   - Considerations: design copy and logic are in the session scratchpad (`.../7ec11e52-ddee-4379-9900-4f342bbc26ba/scratchpad/design/app.html` and `logic.js`), which can disappear; re-download through the `claude_design` MCP if so.
+
+3. **Set `ADMIN_EMAILS` in Vercel before pushing the admin work**
+   - What: the user adds the variable in Vercel; then commit and push when the user says so.
+   - Why: the middleware fails closed, so a deploy without it locks the admin out.
+
+4. **Plan and build the "Soy profesional" form (design 12)**
+   - What: a separate /spec for `/registro` from design 12 in the same Claude Design file (`t12`).
+   - Considerations: design 12 says the public header shows only "Soy profesional" and there is no public "Entrar"; the professional gets access by email after approval. That answers most of ISSUES.md entry 17.
+
+5. **Decide what to do about `getAdminUserId` returning 503 in production**
+   - What: `lib/admin-auth.ts` `getAdminUserId` (used by `app/api/admin/practices/route.ts`) is a Clerk-era placeholder that returns 503 when `NODE_ENV` is production, so creating a practice probably fails on the live site. Not checked in production.
+   - Considerations: could now use the Supabase user plus `isAdminEmail`. Ask the user before changing it; add to ISSUES.md if they want it tracked.
+
+6. **Decide which ponytail review findings to fix**
    - What: the review of the bottom bar and home card work (2026-10-20) found no must-fix items. Should fix: (1) a test that the map only shows the professionals of the selected card. Nice to have: (2) drop `pendingScroll` and the `animate` flag in `app/HomeSearch.tsx`, (3) move `Magnifier` back into `app/HomeFilterBar.tsx`, (4) make "Limpiar filtros" also clear the selected card (product choice), (5) drop the unused `export` on `AlmanacTab`.
    - Considerations: no code changed yet; wait for the user to pick by number. Not checked: the bar's fixed 30px bottom padding on a real iPhone with a home indicator.
 
-2. **Check the Upstash rate limiter together with the user (parked until the redesign is done)**
+7. **Check the Upstash rate limiter together with the user (parked until the redesign is done)**
    - What: see ISSUES.md entry 16. Check the Upstash console first, then Vercel's variables, and only then create a new database.
 
-3. **Place the professional sign-up and login links**
+8. **Place the professional sign-up and login links**
    - What: nothing public links to `/registro` or `/pro/login` (ISSUES.md entry 17). The bottom bar is done (2026-10-19) and does not include them.
-   - Considerations: ask Claude Design where they go before building anything.
+   - Considerations: ask Claude Design where they go before building anything. Update 2026-10-29: design 12 answers this (header "Soy profesional" only, no public login); build it with step 4.
 
-4. **Commit and push the redesign when the user says so**
-   - What: all work since c411066 (home cards, featured pick, bottom bar, docs) is uncommitted, including 5 untracked files (`app/HomeSearch.tsx`, `app/components/AlmanacBottomNav.tsx` and its test, `lib/home-search.ts`, `docs/plans/2026-10-19-almanac-bottom-nav.md`).
-   - Considerations: git writes need the user's permission; the user pushes once the whole redesign is done.
-
-5. **Work through the open items in ISSUES.md**
+9. **Work through the open items in ISSUES.md**
    - What: slow database calls with no caching, 42 of 45 professionals still need practice review, home cards barely differ because most practices map to `estres-ansiedad`, mixed tú and vos wording, the broken destello SVG, build, install and lint problems, odd `.env.local` lines, no Destacado professional in the data, unused leftovers (`RevealOnScroll`, `WelcomeModal`, stale visual baseline), and the Ayuda page's missing WhatsApp number, hours and Argentine emergency line (needs input from the user).
 
-6. **Resolve the invalid Instagram handles**
+10. **Resolve the invalid Instagram handles**
    - What: decide with the user what to do with the 11 invalid handles and confirm or reject the 5 candidate accounts (Guadalupe Rodriguez, Leonela Velona, Lucina Micheloud, Sofía Belluscio, Victoria Garino).
    - Why: the user said "luego vemos qué hacer con los inválidos".
    - Considerations: the full list with evidence is in `scripts/logs/network-audit-2026-10-02.md`. Fixes go into Supabase by the user (or through the admin), never from the skill.
 
-7. **Build the ig-network follow phase**
+11. **Build the ig-network follow phase**
    - What: follow valid professionals Hara does not follow yet, with a daily cap (was 5, its config file was removed, define it again), logging `last_followed_at`, never unfollowing.
    - Considerations: start with the 9 that already follow Hara ("Follow Back"). The current log has no `follows_hara` values yet; they get filled by the next `plan --all` run.
 
-8. **Build the ig-network content discovery phase**
+12. **Build the ig-network content discovery phase**
    - What: read recent posts of valid professionals, classify them (educativo, práctica, sesión, evento, reflexión), and propose `share_to_story`, `comment` or `skip` with the exact post and why it is useful. Every share needs the user's approval.
    - Considerations: test in Chrome what "Add to story" really allows for the Hara account before writing that step.
 
 ## Session Log
+
+### Session — 2026-11-06 (started 2026-10-28)
+**Completed:**
+- Wrote the admin and "Soy profesional" descriptions for Claude Design (PQLs and the laptop line left out of the brief, at the user's request).
+- Committed and pushed to `main`: `cc2e2d7` (almanac bottom nav, home search, removal of the unused directory code) together with the 5 earlier redesign commits. Checks before: `tsc`, 687 unit tests, production build, pre-push hook.
+- Read design 13 (admin) and 12 (Soy profesional) through the `claude_design` MCP after `/design-login`; copy and logic saved in the session scratchpad.
+- Planned the admin redesign with /spec: `docs/plans/2026-10-29-admin-almanac-redesign.md` (11 tasks, approved). User decisions: page by page; unread numbers (not totals) for Leads, Profesionales, Blog and Reseñas, read when opened, stored in the database, existing rows start as read; practice form stays on its own pages; PQLs stay and get restyled; fix admin access first.
+- Found and logged ISSUES.md entry 18: any signed-in professional could open `/admin` and `/api/admin`.
+- Task 1 done: `isAdminEmail` in `lib/admin-auth.ts`, admin check in `middleware.ts` (403 on the API, redirect to `/admin/login?error=no-access` on pages, no redirect loop on the login), no-access message on the login, `ADMIN_EMAILS` in `.env.example`. Tests in `middleware.test.ts` and `lib/admin-auth.test.ts`, mutation-checked.
+- Task 2 done: `migrations/025_admin_read_at.sql` (not run yet), `lib/admin-unread.ts`, `app/api/admin/unread/route.ts` with tests, mutation-checked.
+- Task 3 built, not yet reviewed: new `app/components/AdminLayout.tsx` (sidebar, phone pills, unread badges, email, Salir, `markRead` prop), `app/admin/components/AdminToast.tsx`, almanac login. Login checked in Chrome. Full unit suite: 714 tests passing, `tsc` clean.
+
+**Modified:**
+- PQLs were first planned as hidden from the menu; the user said they never meant to remove them, so they stay and get restyled.
+- The menu numbers were first planned as pending totals; the user clarified they mean unread items.
+
+**Deviations:**
+- Fixing admin access (ISSUES.md entry 18) was added as Task 1 at the user's request.
+- `app/admin/leads/[id]/page.test.tsx` got mocks for `useRouter` and the Supabase client, because the layout now uses them.
+
+**Blockers:**
+- Resolved: I overwrote the existing `lib/admin-auth.ts` (it held `getAdminUserId`) without reading it first; restored it from git right away, so the file only gains `isAdminEmail`.
+- Open: `ADMIN_EMAILS` is not set in `.env.local`, so nobody can enter the local admin until the user adds it. Migration 025 not run yet.
+- Open: `spec-review` agent is not available in this setup, so the admin plan was only self-reviewed.
 
 ### Session — 2026-10-25
 **Completed:**
@@ -152,38 +199,20 @@ Rules from the user for this work:
 **Blockers:**
 - At session end the repo folder became unreadable ("Operation not permitted"), so this entry is here instead of the repo plan.
 
-### Session — 2026-10-05
-**Completed:**
-- Planned and built the home search and filters from design round 11. Plan file: `docs/plans/2026-10-05-home-search-filters.md` (COMPLETE).
-- New files: `lib/home-filters.ts`, `app/HomeFilterBar.tsx`, `app/HomeFilterPanels.tsx`, `lib/near-me.ts`, `app/HomeCardParts.tsx`, `app/HomeRowCard.tsx`, with tests for each logic piece.
-- Changed `app/HomeArrival.tsx`, `app/HomeFeatured.tsx`, `app/page.tsx`, `lib/home-arrival.ts`.
-- Element cards now only reorder the list (they no longer filter); the list shows everyone, 12 at a time with "Cargar 12 más (N restantes)".
-- Rebuilt the bar and panels after the user said the first version did not match the design: dark search circle with pills that have chevrons, bottom-sheet panels with handle, "Limpiar" and "Ver N resultados", search field with the pills below it, "Usar mi ubicación" in the Ciudad panel.
-- Rebuilt the featured card and list cards from the design: Índice Hara ring, specialty chips with "+N", modality tag, price, "Ver perfil →", Índice legend line.
-- Checked everything in Chrome with real data; mutation-checked the new tests; full unit suite passed (92 files, 652 tests) and `tsc` was clean at the last run.
-- Added ISSUES.md entry 13 (city values like "Banfield, Buenos Aires").
-
-**Modified:**
-- The first filter bar was a loose interpretation of the design and the user rejected it ("design in Claude Design is not a suggestion it needs to be copy exactly"). It was rebuilt from the design's markup.
-- Cards: the old "Abierta" dot was dropped because it is not in the design.
-
-**Deviations:**
-- The Índice Hara legend text on the home is my own wording ("qué tan completo está el perfil y cómo lo valoran en las reseñas"), because the design's wording describes things the app does not compute.
-- The design puts the concierge block above the list; it stays below because the user asked for that earlier.
-- The design's script (panel subtitles, some labels) could not be read, so small copy lines were written by me in vos.
-
-**Blockers:**
-- Late in the session all access to the repo folder under `~/Desktop` was lost ("Operation not permitted"). The user did not change anything. A single attempt to run a read-only command outside the sandbox was denied by the permission classifier, and I stopped. The `/profesionales` removal and Diario were not started. Still open.
+### Archived Sessions
+- **2026-10-05**: Built the home search and filters from design round 11 (`docs/plans/2026-10-05-home-search-filters.md`); rebuilt bar, panels and cards after the user asked for an exact copy of the design; repo folder access lost late in the session.
 
 ## Open Questions
 - [ ] Is the wording of the Índice Hara legend on the home okay?
-- [ ] Which files of the old directory should be deleted? (list to be shown before deleting)
+- [x] Which files of the old directory should be deleted? (list to be shown before deleting) Answered 2026-10-25: the user asked to remove all the unused ones; done that day.
 - [ ] Team WhatsApp number, office hours and a confirmed Argentine emergency line for the Ayuda page.
 - [ ] What to do with the 11 invalid Instagram handles (ask the professionals, clear the field, or leave them)?
 - [ ] Are the 5 candidate accounts the right people? Lucina Micheloud's candidate (@bagueslucina) sells Bagués products, and Sofía Belluscio has two candidates.
 - [ ] What daily follow cap to use (was 5)?
 - [ ] Is the confirmation's "Lo que sigue" copy okay? It is adapted from the old `/gracias` page, in vos and without dashes.
 - [ ] Should the concierge budget default to ARS instead of USD? It kept the old form's USD default.
+- [ ] Which email(s) go in `ADMIN_EMAILS`? (the user sets it; I never read `.env.local`)
+- [ ] Fix `getAdminUserId` returning 503 in production, and track it in ISSUES.md?
 
 ## Notes
 - Done 2026-10-20 (removed from Next Steps, verbatim): 4. **Fix or restart the dev server on port 3000** / What: it returns 500 on every page, including the home. The user restarts it (PID in `/tmp/hara-dev.pid`), or I stop it by that PID with the user's approval. / Considerations: my server on port 3001 (PID in Notes) is still running for the TS-002 check. Two `next dev` servers share `.next`, so stop one once TS-002 is done. Port 3000 now serves my dev server (started 2026-10-19 with `rm -rf .next && npm run dev`, background task b6eoy2cyc), and it answers normally.
@@ -201,6 +230,14 @@ Rules from the user for this work:
 - 2026-10-06: dev server started by me on port 3001 (`npx next dev -p 3001`). PID 65765, saved in `/private/tmp/claude-501/-Users-belenmontoya-Desktop-repos-hara/49fccfd3-5aab-49b4-a9ca-fda6037190a8/scratchpad/dev3001.pid`. Stop it only by that PID.
 - 2026-10-06: concierge design files 9a to 9d are in `/private/tmp/claude-501/-Users-belenmontoya-Desktop-repos-hara/875ffcad-5322-4d16-838a-e262c9b802f7/scratchpad/` (`concierge-9a.html` to `concierge-9d.html`).
 - 2026-10-06: almanac input style reused for the form fields: `rounded-2xl bg-gray-50 shadow-[inset_0_0_0_1.5px] shadow-foreground/10` (from `app/HomeFilterBar.tsx`), exported as `ALMANAC_INPUT_CLASS` in `app/solicitar/ConciergeSteps.tsx`.
+- Done 2026-10-28 (removed from Next Steps, verbatim): 4. **Commit and push the redesign when the user says so** / What: all work since c411066 (home cards, featured pick, bottom bar, docs) is uncommitted, including 5 untracked files (`app/HomeSearch.tsx`, `app/components/AlmanacBottomNav.tsx` and its test, `lib/home-search.ts`, `docs/plans/2026-10-19-almanac-bottom-nav.md`). / Considerations: git writes need the user's permission; the user pushes once the whole redesign is done. Pushed as cc2e2d7 at the user's request.
+- Archived session 2026-10-05 (home search), full text kept verbatim:
+  - Completed: Planned and built the home search and filters from design round 11. Plan file: `docs/plans/2026-10-05-home-search-filters.md` (COMPLETE). New files: `lib/home-filters.ts`, `app/HomeFilterBar.tsx`, `app/HomeFilterPanels.tsx`, `lib/near-me.ts`, `app/HomeCardParts.tsx`, `app/HomeRowCard.tsx`, with tests for each logic piece. Changed `app/HomeArrival.tsx`, `app/HomeFeatured.tsx`, `app/page.tsx`, `lib/home-arrival.ts`. Element cards now only reorder the list (they no longer filter); the list shows everyone, 12 at a time with "Cargar 12 más (N restantes)". Rebuilt the bar and panels after the user said the first version did not match the design: dark search circle with pills that have chevrons, bottom-sheet panels with handle, "Limpiar" and "Ver N resultados", search field with the pills below it, "Usar mi ubicación" in the Ciudad panel. Rebuilt the featured card and list cards from the design: Índice Hara ring, specialty chips with "+N", modality tag, price, "Ver perfil →", Índice legend line. Checked everything in Chrome with real data; mutation-checked the new tests; full unit suite passed (92 files, 652 tests) and `tsc` was clean at the last run. Added ISSUES.md entry 13 (city values like "Banfield, Buenos Aires").
+  - Modified: The first filter bar was a loose interpretation of the design and the user rejected it ("design in Claude Design is not a suggestion it needs to be copy exactly"). It was rebuilt from the design's markup. Cards: the old "Abierta" dot was dropped because it is not in the design.
+  - Deviations: The Índice Hara legend text on the home is my own wording ("qué tan completo está el perfil y cómo lo valoran en las reseñas"), because the design's wording describes things the app does not compute. The design puts the concierge block above the list; it stays below because the user asked for that earlier. The design's script (panel subtitles, some labels) could not be read, so small copy lines were written by me in vos.
+  - Blockers: Late in the session all access to the repo folder under `~/Desktop` was lost ("Operation not permitted"). The user did not change anything. A single attempt to run a read-only command outside the sandbox was denied by the permission classifier, and I stopped. The `/profesionales` removal and Diario were not started. Still open.
+- 2026-11-06: design 13 (admin) markup is lines 34 to 445 of the downloaded design file; its logic is the `rvA` function in `logic.js`. Design 12 (`/registro`) is section `t12` (lines 446 to 876). Read through the `claude_design` MCP (`render_preview` then download `serve_url`; never show that URL). Design colors map to tokens: page `bg-background`, cream cards `bg-gray-50`, action `bg-brand-dark`, selected `bg-foreground`.
+- 2026-11-06: my dev server on port 3000 is running (PID in `/tmp/hara-dev.pid`); a Chrome tab (63229776) is open on `/admin/login`.
 - Completed Next Steps moved here on 2026-10-06 (verbatim):
   1. **Restore access to the repo folder** (done 2026-10-05)
      - Restarting Terminal fixed it; reads and writes under `~/Desktop` work again. On 2026-10-05 the user chose to do the Diario (step 4) next, before the `/profesionales` cleanup.

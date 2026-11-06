@@ -13,12 +13,15 @@ describe('Modal', () => {
     expect(screen.getByText('¿Seguro?')).toBeInTheDocument()
   })
 
-  it('closes via ESC key and X button', async () => {
+  // Design 13 has no X button: the sheet closes with ESC or a click on the backdrop
+  it('closes via ESC key and a click outside the sheet, not a click inside', async () => {
     const onClose = vi.fn()
     render(<Modal open={true} onClose={onClose} title="Test">Content</Modal>)
     await userEvent.keyboard('{Escape}')
     expect(onClose).toHaveBeenCalledTimes(1)
-    await userEvent.click(screen.getByLabelText('Cerrar'))
+    await userEvent.click(screen.getByText('Content'))
+    expect(onClose).toHaveBeenCalledTimes(1)
+    await userEvent.click(screen.getByTestId('modal-backdrop'))
     expect(onClose).toHaveBeenCalledTimes(2)
   })
 

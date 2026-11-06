@@ -1,10 +1,10 @@
-// Hara Vital — Admin Practices: Create
+// Hara Vital, Admin Practices: Create
 // Server shell. Renders the shared <PracticeForm> in create mode.
 
 import { Suspense } from 'react'
 import Link from 'next/link'
 import { AdminLayout } from '@/app/components/AdminLayout'
-import { GlassCard } from '@/app/components/ui/GlassCard'
+import { ADMIN_BACK_LINK, AdminTitle } from '@/app/admin/components/AdminUI'
 import { PracticeForm } from '../components/PracticeForm'
 
 export const dynamic = 'force-dynamic'
@@ -12,20 +12,14 @@ export const dynamic = 'force-dynamic'
 export default function NewPracticePage() {
   return (
     <AdminLayout>
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl font-semibold text-foreground">Nueva práctica</h1>
-          <Link href="/admin/practices" className="text-sm text-muted hover:text-foreground">
-            ← Volver al catálogo
-          </Link>
-        </div>
-        <GlassCard>
-          <div className="p-6">
-            <Suspense fallback={<div className="text-sm text-muted">Cargando...</div>}>
-              <PracticeForm mode="create" />
-            </Suspense>
-          </div>
-        </GlassCard>
+      <Link href="/admin/practices" className={ADMIN_BACK_LINK}>
+        ← Prácticas
+      </Link>
+      <AdminTitle>Nueva <span className="italic text-brand">práctica</span></AdminTitle>
+      <div className="max-w-[640px] rounded-[22px] bg-gray-50 px-[30px] pb-[26px] pt-7">
+        <Suspense fallback={<p className="text-[12.5px] text-gray-500">Cargando…</p>}>
+          <PracticeForm mode="create" />
+        </Suspense>
       </div>
     </AdminLayout>
   )

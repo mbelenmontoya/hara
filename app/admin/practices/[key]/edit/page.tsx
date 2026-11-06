@@ -1,11 +1,11 @@
-// Hara Vital — Admin Practices: Edit
+// Hara Vital, Admin Practices: Edit
 // Server shell. Fetches the practice by key and renders <PracticeForm>
 // in edit mode with prefilled values. notFound() if the key doesn't exist.
 
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { AdminLayout } from '@/app/components/AdminLayout'
-import { GlassCard } from '@/app/components/ui/GlassCard'
+import { ADMIN_BACK_LINK, AdminTitle } from '@/app/admin/components/AdminUI'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { logError } from '@/lib/monitoring'
 import { PracticeForm } from '../../components/PracticeForm'
@@ -38,20 +38,12 @@ export default async function EditPracticePage({ params }: { params: { key: stri
 
   return (
     <AdminLayout>
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl font-semibold text-foreground">
-            Editar: {data.label}
-          </h1>
-          <Link href="/admin/practices" className="text-sm text-muted hover:text-foreground">
-            ← Volver al catálogo
-          </Link>
-        </div>
-        <GlassCard>
-          <div className="p-6">
-            <PracticeForm mode="edit" initial={data} />
-          </div>
-        </GlassCard>
+      <Link href="/admin/practices" className={ADMIN_BACK_LINK}>
+        ← Prácticas
+      </Link>
+      <AdminTitle>Editar <span className="italic text-brand">{data.label}</span></AdminTitle>
+      <div className="max-w-[640px] rounded-[22px] bg-gray-50 px-[30px] pb-[26px] pt-7">
+        <PracticeForm mode="edit" initial={data} />
       </div>
     </AdminLayout>
   )

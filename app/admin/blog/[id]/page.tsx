@@ -1,4 +1,4 @@
-// Admin — Blog Post Review
+// Admin, Blog Post Review (design 13). Opening it marks the note read.
 // Server component: loads post + active professionals for the link dropdown.
 // Body rendered via sanitizeBlogHtml (defense-in-depth on render).
 
@@ -7,8 +7,8 @@ export const runtime = 'nodejs'
 
 import { notFound } from 'next/navigation'
 import { AdminLayout } from '@/app/components/AdminLayout'
-import { GlassCard } from '@/app/components/ui/GlassCard'
-import { Alert } from '@/app/components/ui/Alert'
+import Link from 'next/link'
+import { ADMIN_BACK_LINK, AdminCard, AdminCardTitle, AdminError, EmptyText, StatusBadge, formatAdminDate } from '@/app/admin/components/AdminUI'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sanitizeBlogHtml } from '@/lib/sanitize'
 import { logError } from '@/lib/monitoring'
@@ -35,7 +35,7 @@ export default async function AdminBlogReviewPage({ params }: { params: { id: st
     logError(new Error(postError.message), { source: 'AdminBlogReviewPage', id })
     return (
       <AdminLayout>
-        <Alert variant="error">Error al cargar la nota</Alert>
+        <AdminError text="Error al cargar la nota" />
       </AdminLayout>
     )
   }
@@ -50,56 +50,63 @@ export default async function AdminBlogReviewPage({ params }: { params: { id: st
   const safePros: Professional[] = (professionals ?? []) as Professional[]
   const safeBody = sanitizeBlogHtml(post.body_html)
 
-  return (
-    <AdminLayout>
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl font-semibold text-foreground truncate">{post.title}</h1>
-          <a href="/admin/blog" className="text-sm text-muted hover:text-foreground shrink-0">
-            ← Volver al listado
-          </a>
-        </div>
+  const STATUS_BADGE: Record<string, string> = { submitted: 'Pendiente', published: 'Publicada', rejected: 'Rechazada' }
 
+  return (
+    <AdminLayout markRead={{ kind: 'blog', id }}>
+      <Link href="/admin/blog" className={ADMIN_BACK_LINK}>
+        ← Blog
+      </Link>
+      <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         {/* Sanitized preview */}
-        <GlassCard>
-          <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-3">Vista previa</p>
+        <article className="min-w-0 rounded-[22px] bg-gray-50 px-[34px] py-[30px]">
+          <p className="almanac-label">Vista previa</p>
+          <h1 className="font-almanac-serif mb-0 mt-2.5 text-[38px] leading-[1.04]">{post.title}</h1>
           {post.cover_image_url && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={post.cover_image_url} alt="Portada" className="w-full max-h-64 object-cover rounded-xl mb-4" />
+            <img src={post.cover_image_url} alt="Portada" className="mt-5 max-h-64 w-full rounded-xl object-cover" />
           )}
-          <div
-            className="prose prose-sm max-w-none text-foreground"
-            dangerouslySetInnerHTML={{ __html: safeBody }}
-          />
+          <div className="prose prose-sm mt-5 max-w-none text-[16px] leading-[1.7] text-foreground" dangerouslySetInnerHTML={{ __html: safeBody }} />
           {post.secondary_image_url && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={post.secondary_image_url} alt="Imagen secundaria" className="w-full max-h-64 object-cover rounded-xl mt-4" />
+            <img src={post.secondary_image_url} alt="Imagen secundaria" className="mt-4 max-h-64 w-full rounded-xl object-cover" />
           )}
-        </GlassCard>
+        </article>
 
-        {/* Author info */}
-        <GlassCard>
-          <p className="text-xs font-semibold text-muted uppercase tracking-wide mb-3">Autor</p>
-          <div className="space-y-1 text-sm">
-            <p><span className="text-muted">Nombre: </span><span className="text-foreground font-medium">{post.author_name}</span></p>
-            <p><span className="text-muted">Email: </span><span className="text-foreground">{post.author_email}</span></p>
-            <p><span className="text-muted">Enviado: </span><span className="text-foreground">{new Date(post.created_at).toLocaleString('es-AR')}</span></p>
-          </div>
-        </GlassCard>
+        <div className="flex min-w-0 flex-col gap-3">
+          <AdminCard>
+            <div className="flex items-center gap-2.5">
+              <AdminCardTitle>Autor</AdminCardTitle>
+              <StatusBadge label={STATUS_BADGE[post.status] ?? post.status} />
+            </div>
+            <AuthorRow k="Autor" v={post.author_name} empty="Sin nombre" />
+            <AuthorRow k="Email" v={post.author_email} empty="Sin email" />
+            <AuthorRow k="Enviada" v={formatAdminDate(post.created_at)} empty="" />
+          </AdminCard>
 
-        {/* Review controls — client component */}
-        <BlogReviewClient
-          post={{
-            id: post.id,
-            status: post.status as 'submitted' | 'published' | 'rejected',
-            professional_id: post.professional_id as string | null,
-            professional_link_confirmed: post.professional_link_confirmed,
-            rejection_reason: post.rejection_reason as string | null,
-            author_name: post.author_name,
-          }}
-          professionals={safePros}
-        />
+          {/* Link, approve and reject: client component */}
+          <BlogReviewClient
+            post={{
+              id: post.id,
+              status: post.status as 'submitted' | 'published' | 'rejected',
+              professional_id: post.professional_id as string | null,
+              professional_link_confirmed: post.professional_link_confirmed,
+              rejection_reason: post.rejection_reason as string | null,
+              author_name: post.author_name,
+            }}
+            professionals={safePros}
+          />
+        </div>
       </div>
     </AdminLayout>
+  )
+}
+
+function AuthorRow({ k, v, empty }: { k: string; v: string | null; empty: string }) {
+  return (
+    <div className="flex justify-between gap-4 border-b border-foreground/8 py-[11px] text-[14.5px] leading-[1.45]">
+      <span className="flex-none text-muted">{k}</span>
+      <span className="min-w-0 break-words text-right">{v ? v : <EmptyText>{empty}</EmptyText>}</span>
+    </div>
   )
 }

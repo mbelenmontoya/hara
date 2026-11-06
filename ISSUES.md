@@ -184,4 +184,5 @@ No public page links to sign-up (`/registro`) or the professional login (`/pro/l
 
 ## Done
 
+- 2026-11-06: fixed entry 18 (any signed-in professional could open the admin). `middleware.ts` now lets into `/admin` and `/api/admin` only the emails listed in `ADMIN_EMAILS` (`isAdminEmail` in `lib/admin-auth.ts`). Others get 403 on the API and go back to `/admin/login?error=no-access`. `ADMIN_EMAILS` must be set in Vercel before this is pushed.
 - 2026-10-02: removed the old directory page `/profesionales` but kept its components for the new design (it redirects to `/`), moved sign-up from `/profesionales/registro` to `/registro` (old addresses redirect), and pointed the nav, other pages, emails, docs and tests to the new places.

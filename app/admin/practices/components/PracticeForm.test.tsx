@@ -36,17 +36,17 @@ describe('normalizeSlug', () => {
   })
 })
 
-describe('PracticeForm — create mode', () => {
+describe('PracticeForm: create mode', () => {
   it('renders empty fields by default', () => {
     render(<PracticeForm mode="create" />)
-    expect(screen.getByLabelText(/clave/i)).toHaveValue('')
-    expect(screen.getByLabelText(/etiqueta/i)).toHaveValue('')
+    expect(screen.getByLabelText(/^key$/i)).toHaveValue('')
+    expect(screen.getByLabelText(/^nombre$/i)).toHaveValue('')
     expect(screen.getByLabelText(/slug/i)).toHaveValue('')
   })
 
   it('auto-derives slug from key while slug is untouched', () => {
     render(<PracticeForm mode="create" />)
-    const keyInput = screen.getByLabelText(/clave/i) as HTMLInputElement
+    const keyInput = screen.getByLabelText(/^key$/i) as HTMLInputElement
     const slugInput = screen.getByLabelText(/slug/i) as HTMLInputElement
 
     fireEvent.change(keyInput, { target: { value: 'reiki' } })
@@ -55,7 +55,7 @@ describe('PracticeForm — create mode', () => {
 
   it('normalizes uppercase + special chars in auto-derived slug', () => {
     render(<PracticeForm mode="create" />)
-    const keyInput = screen.getByLabelText(/clave/i) as HTMLInputElement
+    const keyInput = screen.getByLabelText(/^key$/i) as HTMLInputElement
     const slugInput = screen.getByLabelText(/slug/i) as HTMLInputElement
 
     fireEvent.change(keyInput, { target: { value: 'Reiki!' } })
@@ -64,7 +64,7 @@ describe('PracticeForm — create mode', () => {
 
   it('stops auto-deriving once user edits the slug manually', () => {
     render(<PracticeForm mode="create" />)
-    const keyInput = screen.getByLabelText(/clave/i) as HTMLInputElement
+    const keyInput = screen.getByLabelText(/^key$/i) as HTMLInputElement
     const slugInput = screen.getByLabelText(/slug/i) as HTMLInputElement
 
     fireEvent.change(keyInput, { target: { value: 'reiki' } })
@@ -92,8 +92,8 @@ describe('PracticeForm — create mode', () => {
     })
 
     render(<PracticeForm mode="create" />)
-    fireEvent.change(screen.getByLabelText(/clave/i), { target: { value: 'reiki' } })
-    fireEvent.change(screen.getByLabelText(/etiqueta/i), { target: { value: 'Reiki' } })
+    fireEvent.change(screen.getByLabelText(/^key$/i), { target: { value: 'reiki' } })
+    fireEvent.change(screen.getByLabelText(/^nombre$/i), { target: { value: 'Reiki' } })
     fireEvent.change(screen.getByLabelText(/orden/i), { target: { value: '10' } })
 
     const submit = screen.getByRole('button', { name: /crear/i })
@@ -109,7 +109,7 @@ describe('PracticeForm — create mode', () => {
   })
 })
 
-describe('PracticeForm — edit mode', () => {
+describe('PracticeForm: edit mode', () => {
   const INITIAL = {
     key: 'reiki',
     label: 'Reiki',
@@ -121,10 +121,10 @@ describe('PracticeForm — edit mode', () => {
 
   it('renders prefilled fields with key disabled', () => {
     render(<PracticeForm mode="edit" initial={INITIAL} />)
-    const keyInput = screen.getByLabelText(/clave/i) as HTMLInputElement
+    const keyInput = screen.getByLabelText(/^key$/i) as HTMLInputElement
     expect(keyInput.value).toBe('reiki')
     expect(keyInput).toBeDisabled()
-    expect(screen.getByLabelText(/etiqueta/i)).toHaveValue('Reiki')
+    expect(screen.getByLabelText(/^nombre$/i)).toHaveValue('Reiki')
     expect(screen.getByLabelText(/slug/i)).toHaveValue('reiki-original')
   })
 
@@ -136,7 +136,7 @@ describe('PracticeForm — edit mode', () => {
     })
 
     render(<PracticeForm mode="edit" initial={INITIAL} />)
-    fireEvent.change(screen.getByLabelText(/etiqueta/i), { target: { value: 'Reiki Updated' } })
+    fireEvent.change(screen.getByLabelText(/^nombre$/i), { target: { value: 'Reiki Updated' } })
 
     const submit = screen.getByRole('button', { name: /guardar/i })
     await waitFor(() => expect(submit).not.toBeDisabled())
@@ -158,7 +158,7 @@ describe('PracticeForm — edit mode', () => {
     })
 
     render(<PracticeForm mode="edit" initial={INITIAL} />)
-    fireEvent.change(screen.getByLabelText(/etiqueta/i), { target: { value: 'New Label' } })
+    fireEvent.change(screen.getByLabelText(/^nombre$/i), { target: { value: 'New Label' } })
     const submit = screen.getByRole('button', { name: /guardar/i })
     await waitFor(() => expect(submit).not.toBeDisabled())
     fireEvent.click(submit)

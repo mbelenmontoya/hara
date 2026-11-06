@@ -1,5 +1,5 @@
-// Hara UI - Modal Component
-// Purpose: Dialog overlay for admin actions
+// Hara UI - Modal Component (admin, design 13)
+// Purpose: Dialog overlay for admin actions; a centered sheet on desktop, a bottom sheet on phones
 // Accessibility: focus trap, ESC to close, click outside to close, role=dialog + aria-modal
 
 'use client'
@@ -9,7 +9,7 @@ import { ReactNode, useEffect, useRef } from 'react'
 interface ModalProps {
   open: boolean
   onClose: () => void
-  title: string
+  title: ReactNode
   children: ReactNode
   footer?: ReactNode
   className?: string
@@ -79,48 +79,22 @@ export function Modal({ open, onClose, title, children, footer, className = '' }
   if (!open) return null
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200"
-      onClick={onClose}
-    >
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-foreground/40 backdrop-blur-sm" />
+    <div className="fixed inset-0 z-50 flex items-end justify-center font-almanac sm:items-center sm:p-4">
+      <div data-testid="modal-backdrop" className="absolute inset-0 bg-foreground/40" onClick={onClose} />
 
-      {/* Modal */}
       <div
         ref={modalRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
         tabIndex={-1}
-        className={`relative bg-surface border border-outline rounded-t-2xl sm:rounded shadow-strong w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 ${className}`}
-        onClick={(e) => e.stopPropagation()}
+        className={`relative max-h-[88vh] w-full overflow-y-auto rounded-t-[26px] bg-gray-50 px-[30px] pb-[26px] pt-7 text-foreground shadow-strong outline-none sm:max-w-[560px] sm:rounded-[26px] ${className}`}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-outline">
-          <h2 id="modal-title" className="text-lg font-semibold text-foreground">{title}</h2>
-          <button
-            onClick={onClose}
-            className="text-muted hover:text-foreground p-1 rounded-lg hover:bg-subtle transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-            aria-label="Cerrar"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-5">
-          {children}
-        </div>
-
-        {/* Footer */}
-        {footer && (
-          <div className="p-5 border-t border-outline bg-subtle">
-            {footer}
-          </div>
-        )}
+        <h2 id="modal-title" className="font-almanac-serif mb-0 text-[30px] leading-[1.05] tracking-[-0.3px]">
+          {title}
+        </h2>
+        <div className="mt-2">{children}</div>
+        {footer && <div className="mt-[18px]">{footer}</div>}
       </div>
     </div>
   )

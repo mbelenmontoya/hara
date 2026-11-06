@@ -1,47 +1,31 @@
 'use client'
 
-// Admin Analytics — professional interaction metrics dashboard
-// Shows profile views, WhatsApp clicks, and Instagram clicks per professional.
+// Admin Analytics (design 13): profile views, WhatsApp and Instagram clicks per professional,
+// with a per-professional daily chart that can be downloaded as an image.
 // Data sourced from the events table via /api/admin/analytics (migration 019 RPC functions).
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, type RefObject } from 'react'
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts'
 import { AdminLayout } from '@/app/components/AdminLayout'
-import { GlassCard } from '@/app/components/ui/GlassCard'
-import { EmptyState } from '@/app/components/ui/EmptyState'
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from '@/app/components/ui/Table'
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-} from 'recharts'
+import { useAdminToast } from '@/app/admin/components/AdminToast'
+import { ADMIN_BTN_SECONDARY, AdminPill, AdminSkeleton, AdminTitle, formatAdminDate } from '@/app/admin/components/AdminUI'
 import { logError } from '@/lib/monitoring'
 
-// Chart colors mirror CSS tokens from globals.css @theme.
-// Recharts stroke props require actual color values, not Tailwind classes.
-// Read at runtime from CSS variables; fall back to hex when document is unavailable (SSR).
-function getCssVar(variable: string, fallback: string): string {
-  if (typeof window === 'undefined') return fallback
-  return getComputedStyle(document.documentElement).getPropertyValue(variable).trim() || fallback
+// Recharts stroke props need real color values, so the tokens are read at runtime.
+// The chart only renders in the browser (after a professional is picked), so document is always there.
+function cssVar(variable: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(variable).trim()
 }
 
-const CHART_COLORS = {
-  views:     () => getCssVar('--color-brand',   '#B87060'),
-  whatsapp:  () => getCssVar('--color-success', '#1A7060'),
-  instagram: () => getCssVar('--color-warning', '#F0A030'),
-}
+const SERIES = [
+  { key: 'profile_view', label: 'Vistas', token: '--color-foreground', dot: 'bg-foreground' },
+  { key: 'whatsapp_click', label: 'WhatsApp', token: '--color-success', dot: 'bg-success' },
+  { key: 'instagram_click', label: 'Instagram', token: '--color-brand', dot: 'bg-brand' },
+] as const
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+const DAY_OPTIONS = [7, 30, 90] as const
+const MS_PER_DAY = 86_400_000
+const COLS = 'grid grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(0,0.8fr))] items-center gap-2.5'
 
 interface ProfessionalSummary {
   id: string
@@ -59,16 +43,22 @@ interface TimeSeriesRow {
   instagram_click: number
 }
 
-type Days = 7 | 30 | 90
-
-// ─── Main page ─────────────────────────────────────────────────────────────────
+type Days = (typeof DAY_OPTIONS)[number]
 
 export default function AdminAnalyticsPage() {
+  // The toast lives inside AdminLayout, so the page body is a child of it
+  return (
+    <AdminLayout>
+      <AnalyticsBody />
+    </AdminLayout>
+  )
+}
+
+function AnalyticsBody() {
+  const toast = useAdminToast()
   const [days, setDays] = useState<Days>(30)
   const [summary, setSummary] = useState<ProfessionalSummary[]>([])
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [selectedName, setSelectedName] = useState<string>('')
-  const [selectedSlug, setSelectedSlug] = useState<string>('')
+  const [selected, setSelected] = useState<ProfessionalSummary | null>(null)
   const [timeSeries, setTimeSeries] = useState<TimeSeriesRow[]>([])
   const [loadingSummary, setLoadingSummary] = useState(true)
   const [loadingDetail, setLoadingDetail] = useState(false)
@@ -88,18 +78,11 @@ export default function AdminAnalyticsPage() {
     }
   }, [])
 
-  useEffect(() => {
-    fetchSummary(days)
-  }, [days, fetchSummary])
-
-  async function handleRowClick(pro: ProfessionalSummary) {
-    setSelectedId(pro.id)
-    setSelectedName(pro.name)
-    setSelectedSlug(pro.slug)
+  const fetchDetail = useCallback(async (pro: ProfessionalSummary, d: Days) => {
     setLoadingDetail(true)
     setTimeSeries([])
     try {
-      const res = await fetch(`/api/admin/analytics?professional_id=${pro.id}&days=${days}`)
+      const res = await fetch(`/api/admin/analytics?professional_id=${pro.id}&days=${d}`)
       if (!res.ok) throw new Error('Error al cargar detalle')
       const data = await res.json()
       setTimeSeries(data.timeSeries ?? [])
@@ -108,159 +91,174 @@ export default function AdminAnalyticsPage() {
     } finally {
       setLoadingDetail(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchSummary(days)
+  }, [days, fetchSummary])
+
+  // A new period also reloads the chart of whoever is selected
+  useEffect(() => {
+    if (selected) fetchDetail(selected, days)
+  }, [selected, days, fetchDetail])
 
   async function handleDownload() {
-    if (!chartRef.current) return
+    if (!chartRef.current || !selected) return
     const { default: html2canvas } = await import('html2canvas')
     const canvas = await html2canvas(chartRef.current, { useCORS: true, scale: 2 })
     const a = document.createElement('a')
     a.href = canvas.toDataURL('image/png')
-    a.download = `analytics-${selectedSlug}-${days}d.png`
+    a.download = `analytics-${selected.slug}-${days}d.png`
     a.click()
+    toast.show(`Descargamos la imagen de ${selected.name}.`)
   }
 
   return (
-    <AdminLayout>
-      <div className="max-w-[960px] mx-auto px-4 py-8 space-y-6">
+    <>
+      <div className="mb-[18px] flex flex-wrap items-end justify-between gap-3.5">
+        <AdminTitle sub="Vistas y clics por profesional activo">Analíticas</AdminTitle>
+        <div className="mb-[18px] flex gap-1.5">
+          {DAY_OPTIONS.map((d) => (
+            <AdminPill key={d} label={`${d} días`} active={days === d} onClick={() => setDays(d)} />
+          ))}
+        </div>
+      </div>
 
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-foreground">Analíticas</h1>
-
-          {/* Date range selector */}
-          <div className="flex gap-2">
-            {([7, 30, 90] as Days[]).map((d) => (
-              <button
-                key={d}
-                onClick={() => setDays(d)}
-                className={`px-4 py-2 text-sm rounded-full transition-all ${
-                  days === d
-                    ? 'bg-brand text-white font-medium shadow-soft'
-                    : 'text-muted hover:text-foreground hover:bg-surface-2'
-                }`}
-              >
-                {d} días
-              </button>
-            ))}
+      {loadingSummary ? (
+        <AdminSkeleton />
+      ) : (
+        <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+          <SummaryTable rows={summary} selectedId={selected?.id ?? null} onPick={setSelected} />
+          <div className="min-w-0 rounded-[22px] bg-gray-50 p-[22px]">
+            {!selected ? (
+              <div className="px-1.5 py-[30px] text-center">
+                <p className="font-almanac-serif text-[24px] leading-[1.15]">Elegí a alguien de la lista</p>
+                <p className="mt-2 text-[14px] leading-normal text-gray-700">
+                  Vas a ver sus vistas y clics día por día, y podés descargar la imagen para mandársela.
+                </p>
+              </div>
+            ) : (
+              <DetailPanel
+                name={selected.name}
+                days={days}
+                rows={timeSeries}
+                loading={loadingDetail}
+                chartRef={chartRef}
+                onDownload={handleDownload}
+              />
+            )}
           </div>
         </div>
+      )}
+    </>
+  )
+}
 
-        {/* Summary table */}
-        <GlassCard>
-          {loadingSummary ? (
-            <div className="space-y-3 p-4">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="animate-pulse h-8 bg-surface-2 rounded-xl" />
-              ))}
-            </div>
-          ) : summary.length === 0 ? (
-            <EmptyState
-              title="Sin datos todavía"
-              description="Cuando los profesionales reciban visitas, las métricas aparecerán acá."
-            />
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Profesional</TableHead>
-                  <TableHead className="text-right">Vistas de perfil</TableHead>
-                  <TableHead className="text-right">Clics WhatsApp</TableHead>
-                  <TableHead className="text-right">Clics Instagram</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {summary.map((pro) => (
-                  <TableRow
-                    key={pro.id}
-                    onClick={() => handleRowClick(pro)}
-                    className={`cursor-pointer transition-colors hover:bg-brand-weak ${
-                      selectedId === pro.id ? 'bg-brand-weak' : ''
-                    }`}
-                  >
-                    <TableCell>
-                      <a
-                        href={`/p/${pro.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="text-brand hover:underline font-medium"
-                      >
-                        {pro.name}
-                      </a>
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">{pro.profile_views}</TableCell>
-                    <TableCell className="text-right tabular-nums">{pro.whatsapp_clicks}</TableCell>
-                    <TableCell className="text-right tabular-nums">{pro.instagram_clicks}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </GlassCard>
+interface SummaryTableProps {
+  rows: ProfessionalSummary[]
+  selectedId: string | null
+  onPick: (pro: ProfessionalSummary) => void
+}
 
-        {/* Per-professional detail */}
-        {selectedId && (
-          <GlassCard>
-            <div className="p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-foreground">{selectedName}</h2>
-                <button
-                  onClick={handleDownload}
-                  className="px-4 py-2 text-sm rounded-full bg-surface border border-outline text-foreground hover:bg-surface-2 transition-all"
-                >
-                  Descargar imagen
-                </button>
-              </div>
-
-              {loadingDetail ? (
-                <div className="animate-pulse h-64 bg-surface-2 rounded-xl" />
-              ) : timeSeries.length === 0 ? (
-                <EmptyState
-                  title="Sin datos en este período"
-                  description="Este profesional no tiene eventos registrados en los últimos días seleccionados."
-                />
-              ) : (
-                <div ref={chartRef} className="bg-surface rounded-xl p-4">
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={timeSeries} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
-                      <XAxis dataKey="date" tick={{ fontSize: 12 }} tickLine={false} />
-                      <YAxis tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
-                      <Tooltip />
-                      <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey="profile_view"
-                        name="Vistas"
-                        stroke={CHART_COLORS.views()}
-                        strokeWidth={2}
-                        dot={false}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="whatsapp_click"
-                        name="WhatsApp"
-                        stroke={CHART_COLORS.whatsapp()}
-                        strokeWidth={2}
-                        dot={false}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="instagram_click"
-                        name="Instagram"
-                        stroke={CHART_COLORS.instagram()}
-                        strokeWidth={2}
-                        dot={false}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </div>
-          </GlassCard>
-        )}
-
+function SummaryTable({ rows, selectedId, onPick }: SummaryTableProps) {
+  return (
+    <div className="min-w-0 rounded-[22px] bg-gray-50 px-3.5 py-4">
+      <div className={`${COLS} border-b border-foreground/10 px-2.5 pb-2.5 pt-1 text-[10.5px] font-medium tracking-[1.4px] text-muted`}>
+        <span>PROFESIONAL</span>
+        <span className="text-right">VISTAS</span>
+        <span className="text-right">WHATSAPP</span>
+        <span className="text-right">INSTAGRAM</span>
       </div>
-    </AdminLayout>
+      {rows.length === 0 ? (
+        <p className="font-almanac-serif py-[26px] text-center text-[22px]">Sin datos todavía</p>
+      ) : (
+        <div className="mt-1.5 flex flex-col gap-0.5">
+          {rows.map((pro) => {
+            const active = pro.id === selectedId
+            return (
+              <button
+                key={pro.id}
+                type="button"
+                aria-pressed={active}
+                onClick={() => onPick(pro)}
+                className={`${COLS} rounded-xl px-2.5 py-3 text-left transition-colors ${
+                  active ? 'bg-background shadow-[inset_3px_0_0] shadow-brand' : 'hover:bg-foreground/5'
+                }`}
+              >
+                <span className="font-almanac-serif min-w-0 text-[19px]">{pro.name}</span>
+                <span className="text-right text-[14px] font-medium tabular-nums">{pro.profile_views}</span>
+                <span className="text-right text-[14px] font-medium tabular-nums">{pro.whatsapp_clicks}</span>
+                <span className="text-right text-[14px] font-medium tabular-nums">{pro.instagram_clicks}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+interface DetailPanelProps {
+  name: string
+  days: Days
+  rows: TimeSeriesRow[]
+  loading: boolean
+  chartRef: RefObject<HTMLDivElement>
+  onDownload: () => void
+}
+
+function DetailPanel({ name, days, rows, loading, chartRef, onDownload }: DetailPanelProps) {
+  const to = formatAdminDate(new Date().toISOString())
+  const from = formatAdminDate(new Date(Date.now() - (days - 1) * MS_PER_DAY).toISOString())
+  const hasData = !loading && rows.length > 0
+  const totals = SERIES.map((s) => ({ ...s, n: rows.reduce((sum, r) => sum + r[s.key], 0) }))
+
+  return (
+    <div ref={chartRef} className="bg-gray-50">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="font-almanac-serif mb-0 text-[28px] leading-[1.05]">{name}</h2>
+          <p className="mt-1 text-[12.5px] text-muted">
+            Últimos {days} días · {from} al {to}
+          </p>
+        </div>
+        {hasData && (
+          <button type="button" onClick={onDownload} className={ADMIN_BTN_SECONDARY} data-html2canvas-ignore>
+            Descargar imagen
+          </button>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="mt-4 h-64 animate-pulse rounded-xl bg-surface-2" />
+      ) : !hasData ? (
+        <div className="pb-5 pt-10 text-center">
+          <p className="font-almanac-serif text-[24px]">Sin datos en este período</p>
+          <p className="mt-1.5 text-[14px] text-gray-700">Probá con un período más largo.</p>
+        </div>
+      ) : (
+        <>
+          <div className="mb-2 mt-4 flex flex-wrap gap-x-[18px] gap-y-2">
+            {totals.map((t) => (
+              <span key={t.key} className="flex items-center gap-2">
+                <span className={`h-[3px] w-2.5 rounded-sm ${t.dot}`} aria-hidden="true" />
+                <span className="text-[13px] text-gray-700">{t.label}</span>
+                <span className="font-almanac-serif text-[20px]">{t.n}</span>
+              </span>
+            ))}
+          </div>
+          <ResponsiveContainer width="100%" height={260}>
+            <LineChart data={rows} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+              <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+              <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} allowDecimals={false} />
+              <Tooltip />
+              {SERIES.map((s) => (
+                <Line key={s.key} type="monotone" dataKey={s.key} name={s.label} stroke={cssVar(s.token)} strokeWidth={2} dot={false} />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </>
+      )}
+    </div>
   )
 }

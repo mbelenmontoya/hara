@@ -1,7 +1,7 @@
 // Unit tests for PracticesList client component.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { PracticesList } from './PracticesList'
 import type { PracticeWithCount } from '@/lib/admin-practices'
 
@@ -26,10 +26,11 @@ describe('PracticesList', () => {
   it('renders all practices with label, key, slug, and usage count', () => {
     render(<PracticesList practices={PRACTICES} />)
     expect(screen.getByText('Reiki')).toBeInTheDocument()
-    expect(screen.getByText('reiki')).toBeInTheDocument()
+    expect(screen.getAllByText('reiki')).toHaveLength(2) // key and slug columns
     expect(screen.getByText('Old Practice')).toBeInTheDocument()
-    // usage count visible somewhere
-    expect(screen.getByText(/5/)).toBeInTheDocument()
+    expect(screen.getByText('5 profesionales')).toBeInTheDocument()
+    expect(screen.getByText('Activa')).toBeInTheDocument()
+    expect(screen.getByText('Inactiva')).toBeInTheDocument()
   })
 
   it('renders empty state when no practices', () => {
@@ -43,7 +44,7 @@ describe('PracticesList', () => {
     fireEvent.click(toggle)
 
     await waitFor(() => {
-      expect(screen.getByText(/usan esta práctica/i)).toBeInTheDocument()
+      expect(screen.getByRole('dialog')).toHaveTextContent('5 profesionales la usan')
     })
   })
 
@@ -51,13 +52,13 @@ describe('PracticesList', () => {
     render(<PracticesList practices={PRACTICES} />)
     const toggle = screen.getByRole('button', { name: /^desactivar$/i })
     fireEvent.click(toggle)
-    await waitFor(() => screen.getByText(/usan esta práctica/i))
+    await waitFor(() => screen.getByRole('dialog'))
 
     const cancel = screen.getByRole('button', { name: /cancelar/i })
     fireEvent.click(cancel)
 
     await waitFor(() => {
-      expect(screen.queryByText(/usan esta práctica/i)).not.toBeInTheDocument()
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     })
     expect(mockFetch).not.toHaveBeenCalled()
   })
@@ -68,10 +69,8 @@ describe('PracticesList', () => {
     render(<PracticesList practices={PRACTICES} />)
     const toggle = screen.getByRole('button', { name: /^desactivar$/i })
     fireEvent.click(toggle)
-    await waitFor(() => screen.getByRole('button', { name: /confirmar desactivación/i }))
-
-    const confirm = screen.getByRole('button', { name: /confirmar desactivación/i })
-    fireEvent.click(confirm)
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.click(within(dialog).getByRole('button', { name: /^desactivar$/i }))
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
@@ -100,7 +99,7 @@ describe('PracticesList', () => {
         })
       )
     })
-    // No modal shown — the modal-specific text "usan esta práctica" is absent
-    expect(screen.queryByText(/usan esta práctica/i)).not.toBeInTheDocument()
+    // No confirmation dialog when re-activating
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })

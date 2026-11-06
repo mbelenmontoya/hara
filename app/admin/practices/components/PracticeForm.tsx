@@ -1,13 +1,13 @@
-// PracticeForm — shared client form for create + edit on /admin/practices.
+// PracticeForm (design 13 look): shared client form for create + edit on /admin/practices.
 // Mode-aware: in create mode `key` is editable and `slug` auto-derives from
 // it (until user edits slug manually); in edit mode `key` is read-only.
 
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Alert } from '@/app/components/ui/Alert'
-import { Button } from '@/app/components/ui/Button'
+import { ADMIN_BTN_PRIMARY, ADMIN_BTN_SECONDARY, AdminError } from '@/app/admin/components/AdminUI'
 import { SPECIALTY_MAP } from '@/lib/design-constants'
 
 const KEBAB_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/
@@ -121,114 +121,81 @@ export function PracticeForm({ mode, initial }: PracticeFormProps) {
     }
   }
 
+  const field = 'w-full rounded-[13px] bg-background px-[13px] py-3 text-[15px] text-foreground outline-none placeholder:text-gray-500 disabled:opacity-60'
+  const mono = `${field} font-mono text-[13.5px]`
+  const labelCls = 'text-[13.5px] font-medium'
+  const hint = 'text-[12px] leading-[1.4] text-muted'
+
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {error && (
-        <Alert variant="error">
-          {error}
-        </Alert>
-      )}
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="practice-key" className="text-sm font-medium text-foreground">
-          Clave (key)
-        </label>
-        <input
-          id="practice-key"
-          type="text"
-          value={key}
-          onChange={(e) => handleKeyChange(e.target.value)}
-          disabled={mode === 'edit'}
-          placeholder="ej: reiki"
-          className="rounded-xl border border-outline bg-surface px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-60"
-        />
-        <span className="text-xs text-muted">
-          {mode === 'edit'
-            ? 'No se puede modificar después de creada. Para renombrar: desactivá esta y creá una nueva.'
-            : 'Identificador inmutable. Solo minúsculas, dígitos y guiones.'}
-        </span>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3.5 font-almanac">
+      <div className="flex flex-col gap-[7px]">
+        <label htmlFor="practice-label" className={labelCls}>Nombre</label>
+        <input id="practice-label" type="text" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Ej: Reiki" className={field} />
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="practice-label" className="text-sm font-medium text-foreground">
-          Etiqueta
-        </label>
-        <input
-          id="practice-label"
-          type="text"
-          value={label}
-          onChange={(e) => setLabel(e.target.value)}
-          placeholder="ej: Reiki"
-          className="rounded-xl border border-outline bg-surface px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
-        />
+      <div className="grid grid-cols-1 gap-2.5 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_90px]">
+        <div className="flex flex-col gap-[7px]">
+          <label htmlFor="practice-key" className={labelCls}>Key</label>
+          <input
+            id="practice-key"
+            type="text"
+            value={key}
+            onChange={(e) => handleKeyChange(e.target.value)}
+            disabled={mode === 'edit'}
+            placeholder="reiki"
+            className={mono}
+          />
+        </div>
+        <div className="flex flex-col gap-[7px]">
+          <label htmlFor="practice-slug" className={labelCls}>Slug</label>
+          <input id="practice-slug" type="text" value={slug} onChange={(e) => handleSlugChange(e.target.value)} placeholder="reiki" className={mono} />
+        </div>
+        <div className="flex flex-col gap-[7px]">
+          <label htmlFor="practice-sort" className={labelCls}>Orden</label>
+          <input
+            id="practice-sort"
+            type="number"
+            min={0}
+            value={sortOrder}
+            onChange={(e) => setSortOrder(parseInt(e.target.value, 10) || 0)}
+            className={field}
+          />
+        </div>
       </div>
+      <p className={`${hint} -mt-1.5`}>
+        {mode === 'edit'
+          ? 'La key no se puede cambiar después de creada. Para renombrar, desactivá esta y creá una nueva.'
+          : 'La key no cambia después. Solo minúsculas, números y guiones.'}
+      </p>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="practice-slug" className="text-sm font-medium text-foreground">
-          Slug
-        </label>
-        <input
-          id="practice-slug"
-          type="text"
-          value={slug}
-          onChange={(e) => handleSlugChange(e.target.value)}
-          placeholder="ej: reiki"
-          className="rounded-xl border border-outline bg-surface px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
-        />
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="practice-sort" className="text-sm font-medium text-foreground">
-          Orden (sort_order)
-        </label>
-        <input
-          id="practice-sort"
-          type="number"
-          min={0}
-          value={sortOrder}
-          onChange={(e) => setSortOrder(parseInt(e.target.value, 10) || 0)}
-          className="rounded-xl border border-outline bg-surface px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
-        />
-      </div>
-
-      <label className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          checked={active}
-          onChange={(e) => setActive(e.target.checked)}
-        />
-        <span className="text-sm text-foreground">Activa (visible en el picker público)</span>
+      <label className="flex cursor-pointer items-center gap-[11px] text-[14.5px]">
+        <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} className="h-5 w-5 flex-none accent-brand-dark" />
+        Activa (visible en el picker público)
       </label>
 
-      {mode === 'edit' && initial?.aliases && initial.aliases.length > 0 && (
-        <div className="flex flex-col gap-1">
-          <p className="text-sm font-medium text-foreground">Aliases mapeados</p>
-          <p className="text-xs text-muted mb-1">
-            Términos alternativos que los profesionales usaron para esta práctica.
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {initial.aliases.map(alias => (
-              <span
-                key={alias}
-                className="text-xs bg-surface-2 border border-outline rounded-full px-2.5 py-1 text-foreground"
-              >
-                {alias}
-              </span>
-            ))}
-          </div>
+      {mode === 'edit' && (
+        <div className="flex flex-col gap-[7px]">
+          <p className={labelCls}>Alias mapeados</p>
+          {initial?.aliases && initial.aliases.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {initial.aliases.map(alias => (
+                <span key={alias} className="rounded-full bg-surface-2 px-[11px] py-[5px] text-[12.5px] font-medium">
+                  {alias}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[13px] italic text-gray-500">Sin alias</p>
+          )}
+          <p className={hint}>Lo que escriben los profesionales y debería contar como esta práctica.</p>
         </div>
       )}
 
-      <fieldset className="flex flex-col gap-2">
-        <legend className="text-sm font-medium text-foreground mb-1">
-          Especialidades que cubre
-        </legend>
-        <p className="text-xs text-muted -mt-1 mb-1">
-          Síntomas o situaciones que esta práctica aborda. Se usa internamente para el matching.
-        </p>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+      <fieldset className="flex flex-col gap-[7px]">
+        <legend className={`${labelCls} mb-[7px]`}>Especialidades que cubre</legend>
+        <div className="grid grid-cols-1 gap-x-3.5 gap-y-1 md:grid-cols-2">
           {Object.entries(SPECIALTY_MAP).map(([sKey, sLabel]) => (
-            <label key={sKey} className="flex items-center gap-2 cursor-pointer">
+            <label key={sKey} className="flex cursor-pointer items-center gap-2.5 py-1.5 text-[14px]">
               <input
                 type="checkbox"
                 checked={specialties.includes(sKey)}
@@ -237,18 +204,24 @@ export function PracticeForm({ mode, initial }: PracticeFormProps) {
                     e.target.checked ? [...prev, sKey] : prev.filter(s => s !== sKey)
                   )
                 }}
-                className="accent-brand"
+                className="h-5 w-5 flex-none accent-brand-dark"
               />
-              <span className="text-sm text-foreground">{sLabel}</span>
+              {sLabel}
             </label>
           ))}
         </div>
+        <p className={hint}>Definen en qué tarjetas del inicio aparece.</p>
       </fieldset>
 
-      <div className="flex gap-2 pt-2">
-        <Button type="submit" disabled={!valid || submitting}>
-          {mode === 'create' ? 'Crear' : 'Guardar cambios'}
-        </Button>
+      {error && <AdminError text={error} />}
+
+      <div className="mt-1 flex justify-end gap-2">
+        <Link href="/admin/practices" className={ADMIN_BTN_SECONDARY}>
+          Cancelar
+        </Link>
+        <button type="submit" disabled={!valid || submitting} className={ADMIN_BTN_PRIMARY}>
+          {mode === 'create' ? 'Crear práctica' : 'Guardar cambios'}
+        </button>
       </div>
     </form>
   )

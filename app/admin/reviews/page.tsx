@@ -1,15 +1,24 @@
-// Admin — Reviews Moderation
-// Lists all reviews (visible + hidden) with an is_hidden toggle.
-// Hiding a review fires the DB trigger → aggregates recompute → ranking updates.
+// Admin, Reviews Moderation (design 13)
+// Lists all reviews (visible + hidden). Hiding asks first; it fires the DB trigger, so the
+// professional's rating and ranking recompute. Opening the page marks every review read.
 
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
 import { AdminLayout } from '@/app/components/AdminLayout'
-import { GlassCard } from '@/app/components/ui/GlassCard'
-import { Chip } from '@/app/components/ui/Chip'
-import { EmptyState } from '@/app/components/ui/EmptyState'
+import { Modal } from '@/app/components/ui/Modal'
 import { AdminFilterBar } from '@/app/admin/components/AdminFilterBar'
+import { useAdminToast } from '@/app/admin/components/AdminToast'
+import {
+  ADMIN_BTN_SECONDARY,
+  AdminEmpty,
+  AdminNoResults,
+  AdminSkeleton,
+  AdminTitle,
+  EmptyText,
+  StatusBadge,
+  formatAdminDate,
+} from '@/app/admin/components/AdminUI'
 import { logError } from '@/lib/monitoring'
 
 interface Review {
@@ -23,17 +32,25 @@ interface Review {
   is_hidden: boolean
 }
 
-const VISIBILITY_OPTIONS = [
-  { value: 'visible', label: 'Visibles' },
-  { value: 'hidden',  label: 'Ocultas' },
-]
+const MAX_STARS = 5
 
 export default function AdminReviewsPage() {
-  const [reviews,     setReviews]     = useState<Review[]>([])
-  const [loading,     setLoading]     = useState(true)
+  // The toast lives inside AdminLayout, so the page body is a child of it
+  return (
+    <AdminLayout markRead={{ kind: 'reviews' }}>
+      <ReviewsBody />
+    </AdminLayout>
+  )
+}
+
+function ReviewsBody() {
+  const toast = useAdminToast()
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchValue, setSearchValue] = useState('')
-  const [statusValue, setStatusValue] = useState('')
-  const [toggling,    setToggling]    = useState<string | null>(null)
+  const [statusValue, setStatusValue] = useState('visible')
+  const [toggling, setToggling] = useState<string | null>(null)
+  const [hiding, setHiding] = useState<Review | null>(null)
 
   useEffect(() => {
     async function fetchReviews() {
@@ -59,96 +76,120 @@ export default function AdminReviewsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_hidden: !review.is_hidden }),
       })
-      if (res.ok) {
-        setReviews(prev => prev.map(r => r.id === review.id ? { ...r, is_hidden: !r.is_hidden } : r))
-      }
+      if (!res.ok) return toast.show('No pudimos cambiar la reseña. Intentá de nuevo.', 'err')
+      setReviews((prev) => prev.map((r) => (r.id === review.id ? { ...r, is_hidden: !r.is_hidden } : r)))
+      toast.show(review.is_hidden ? 'Reseña visible otra vez.' : 'Reseña oculta.')
     } catch (err) {
       logError(err instanceof Error ? err : new Error(String(err)), { source: 'AdminReviewsPage.toggleHidden' })
+      toast.show('Error de red al cambiar la reseña.', 'err')
     } finally {
       setToggling(null)
+      setHiding(null)
     }
   }
 
-  const filteredReviews = useMemo(() => {
+  const inStatus = useMemo(() => reviews.filter((r) => (statusValue === 'hidden' ? r.is_hidden : !r.is_hidden)), [reviews, statusValue])
+  const filtered = useMemo(() => {
     const q = searchValue.toLowerCase()
-    return reviews.filter(r => {
-      const matchesSearch = !q || r.professional_name.toLowerCase().includes(q) || (r.text ?? '').toLowerCase().includes(q)
-      const matchesStatus = !statusValue
-        || (statusValue === 'visible' && !r.is_hidden)
-        || (statusValue === 'hidden' && r.is_hidden)
-      return matchesSearch && matchesStatus
-    })
-  }, [reviews, searchValue, statusValue])
+    return inStatus.filter(
+      (r) =>
+        !q ||
+        r.professional_name.toLowerCase().includes(q) ||
+        (r.reviewer_name ?? '').toLowerCase().includes(q) ||
+        (r.text ?? '').toLowerCase().includes(q)
+    )
+  }, [inStatus, searchValue])
 
-  if (loading) {
-    return <AdminLayout><div className="flex items-center justify-center py-20 text-muted">Cargando...</div></AdminLayout>
-  }
+  const visibleCount = reviews.filter((r) => !r.is_hidden).length
+  const options = [
+    { value: 'visible', label: `Visibles (${visibleCount})` },
+    { value: 'hidden', label: `Ocultas (${reviews.length - visibleCount})` },
+  ]
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-semibold text-foreground">Reseñas</h2>
-          <p className="text-sm text-muted mt-1">{reviews.length} en total</p>
+    <>
+      <AdminTitle sub="Ocultar una reseña recalcula el rating y el ranking del profesional.">Reseñas</AdminTitle>
+
+      <AdminFilterBar
+        searchPlaceholder="Buscar por nombre, profesional o texto..."
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+        statusOptions={options}
+        statusValue={statusValue}
+        onStatusChange={setStatusValue}
+        resultCount={filtered.length}
+        allLabel={null}
+      />
+
+      {loading ? (
+        <AdminSkeleton />
+      ) : inStatus.length === 0 ? (
+        <AdminEmpty title={statusValue === 'hidden' ? 'Sin reseñas ocultas' : 'Sin reseñas visibles'} text="No hay reseñas en este estado." />
+      ) : filtered.length === 0 ? (
+        <AdminNoResults text="Ninguna reseña coincide con esa búsqueda." onClear={() => setSearchValue('')} />
+      ) : (
+        <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
+          {filtered.map((review) => (
+            <div key={review.id} className="flex min-w-0 flex-col gap-2 rounded-[20px] bg-gray-50 px-5 py-[18px]">
+              <div className="flex items-center gap-2">
+                <span className="text-[14.5px] font-medium">{review.reviewer_name || <EmptyText>Sin nombre</EmptyText>}</span>
+                <span className="min-w-0 truncate text-[13px] text-muted">→ {review.professional_name}</span>
+                <span className="flex-1" />
+                <StatusBadge label={review.is_hidden ? 'Oculta' : 'Visible'} />
+              </div>
+              <div className="flex items-center gap-2.5">
+                <span className="text-[15px] tracking-[1.5px]" aria-label={`${review.rating} de ${MAX_STARS} estrellas`}>
+                  <span className="text-warning-dark">{'★'.repeat(review.rating)}</span>
+                  <span className="text-foreground/15">{'★'.repeat(MAX_STARS - review.rating)}</span>
+                </span>
+                <span className="text-[12.5px] text-muted">{formatAdminDate(review.submitted_at)}</span>
+              </div>
+              {review.text ? (
+                <p className="font-almanac-serif text-[18px] italic leading-[1.4] text-gray-800">“{review.text}”</p>
+              ) : (
+                <EmptyText className="text-[14px]">Sin comentario</EmptyText>
+              )}
+              <div className="mt-0.5 flex justify-end">
+                <button
+                  type="button"
+                  disabled={toggling === review.id}
+                  onClick={() => (review.is_hidden ? toggleHidden(review) : setHiding(review))}
+                  className={ADMIN_BTN_SECONDARY}
+                >
+                  {review.is_hidden ? 'Mostrar' : 'Ocultar'}
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
+      )}
 
-        <AdminFilterBar
-          searchPlaceholder="Buscar por profesional o texto..."
-          searchValue={searchValue}
-          onSearchChange={setSearchValue}
-          statusOptions={VISIBILITY_OPTIONS}
-          statusValue={statusValue}
-          onStatusChange={setStatusValue}
-          resultCount={filteredReviews.length}
-        />
-
-        {filteredReviews.length === 0 ? (
-          <GlassCard>
-            <EmptyState
-              title={reviews.length === 0 ? 'Sin reseñas' : 'Sin resultados'}
-              description={reviews.length === 0 ? 'Todavía no hay reseñas.' : 'Probá con otra búsqueda.'}
-            />
-          </GlassCard>
-        ) : (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
-            {filteredReviews.map(review => (
-              <GlassCard key={review.id}>
-                <div className="flex items-start gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <p className="text-sm font-medium text-foreground">{review.professional_name}</p>
-                      <span className="text-xs text-muted">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span>
-                      {review.reviewer_name && (
-                        <span className="text-xs text-muted">— {review.reviewer_name}</span>
-                      )}
-                    </div>
-                    {review.text && (
-                      <p className="text-sm text-foreground italic mb-1">"{review.text}"</p>
-                    )}
-                    <p className="text-xs text-muted">
-                      {new Date(review.submitted_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    <Chip
-                      variant={review.is_hidden ? 'warning' : 'success'}
-                      label={review.is_hidden ? 'Oculta' : 'Visible'}
-                      className="text-[11px] px-2 py-0.5"
-                    />
-                    <button
-                      onClick={() => toggleHidden(review)}
-                      disabled={toggling === review.id}
-                      className="text-xs text-brand hover:text-brand/80 font-medium disabled:opacity-50"
-                    >
-                      {toggling === review.id ? '...' : review.is_hidden ? 'Mostrar' : 'Ocultar'}
-                    </button>
-                  </div>
-                </div>
-              </GlassCard>
-            ))}
-          </div>
-        )}
-      </div>
-    </AdminLayout>
+      {hiding && (
+        <Modal
+          open
+          onClose={() => !toggling && setHiding(null)}
+          title="¿Ocultar esta reseña?"
+          footer={
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setHiding(null)} disabled={!!toggling} className={ADMIN_BTN_SECONDARY}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleHidden(hiding)}
+                disabled={!!toggling}
+                className="inline-flex flex-none rounded-[14px] bg-danger-dark px-[17px] py-[11px] text-[14px] font-medium text-gray-50 disabled:opacity-60"
+              >
+                Ocultar
+              </button>
+            </div>
+          }
+        >
+          <p className="text-[14px] leading-normal text-gray-700">
+            Deja de verse en el perfil de {hiding.professional_name}, y su rating y su ranking se recalculan. Podés volver a mostrarla cuando quieras.
+          </p>
+        </Modal>
+      )}
+    </>
   )
 }

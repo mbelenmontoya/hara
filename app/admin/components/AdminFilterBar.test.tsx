@@ -1,5 +1,5 @@
 // AdminFilterBar component tests
-// Tests search input, status dropdown, clear button, and result count
+// Tests search input, status pills, clear button, and result count
 
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
@@ -11,7 +11,7 @@ const STATUS_OPTIONS = [
 ]
 
 describe('AdminFilterBar', () => {
-  it('renders search input and status dropdown', () => {
+  it('renders search input and status pills', () => {
     render(
       <AdminFilterBar
         searchPlaceholder="Buscar por email..."
@@ -24,10 +24,10 @@ describe('AdminFilterBar', () => {
       />
     )
     expect(screen.getByPlaceholderText('Buscar por email...')).toBeInTheDocument()
-    expect(screen.getByRole('combobox')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Nuevo' })).toBeInTheDocument()
   })
 
-  it('shows "Todos" as first dropdown option', () => {
+  it('shows "Todos" as the first pill, selected when no status is picked', () => {
     render(
       <AdminFilterBar
         searchPlaceholder="Buscar..."
@@ -39,9 +39,11 @@ describe('AdminFilterBar', () => {
         resultCount={3}
       />
     )
-    const options = screen.getAllByRole('option')
-    expect(options[0]).toHaveTextContent('Todos')
-    expect(options[1]).toHaveTextContent('Nuevo')
+    const pills = screen.getAllByRole('button')
+    expect(pills[0]).toHaveTextContent('Todos')
+    expect(pills[1]).toHaveTextContent('Nuevo')
+    expect(pills[0]).toHaveAttribute('aria-pressed', 'true')
+    expect(pills[1]).toHaveAttribute('aria-pressed', 'false')
   })
 
   it('calls onSearchChange when typing in search', () => {
@@ -138,7 +140,42 @@ describe('AdminFilterBar', () => {
         resultCount={3}
       />
     )
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'new' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Nuevo' }))
     expect(onStatusChange).toHaveBeenCalledWith('new')
+  })
+
+  it('calls onStatusChange with an empty value when "Todos" is picked', () => {
+    const onStatusChange = vi.fn()
+    render(
+      <AdminFilterBar
+        searchPlaceholder="Buscar..."
+        searchValue=""
+        onSearchChange={vi.fn()}
+        statusOptions={STATUS_OPTIONS}
+        statusValue="new"
+        onStatusChange={onStatusChange}
+        resultCount={3}
+      />
+    )
+    expect(screen.getByRole('button', { name: 'Nuevo' })).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(screen.getByRole('button', { name: 'Todos' }))
+    expect(onStatusChange).toHaveBeenCalledWith('')
+  })
+
+  it('hides the "Todos" pill when allLabel is null', () => {
+    render(
+      <AdminFilterBar
+        searchPlaceholder="Buscar..."
+        searchValue=""
+        onSearchChange={vi.fn()}
+        statusOptions={STATUS_OPTIONS}
+        statusValue="new"
+        onStatusChange={vi.fn()}
+        resultCount={3}
+        allLabel={null}
+      />
+    )
+    expect(screen.queryByRole('button', { name: 'Todos' })).not.toBeInTheDocument()
+    expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual(['Nuevo', 'Matcheado'])
   })
 })

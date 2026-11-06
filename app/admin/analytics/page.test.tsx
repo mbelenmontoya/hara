@@ -1,6 +1,6 @@
 // Unit tests for /admin/analytics page
 // Chart rendering (Recharts) and PNG export (html2canvas) are library behaviors
-// tested by E2E scenarios TS-004 and TS-005 — unit tests cover data flow only.
+// tested by E2E scenarios TS-004 and TS-005: unit tests cover data flow only.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
@@ -58,7 +58,21 @@ describe('AdminAnalyticsPage', () => {
       expect(screen.getByText('Ana García')).toBeInTheDocument()
       expect(screen.getByText('Carlos López')).toBeInTheDocument()
     })
-    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/api/admin/analytics'))
+    expect(fetch).toHaveBeenCalledWith('/api/admin/analytics?days=30')
+    expect(screen.getByText('Elegí a alguien de la lista')).toBeInTheDocument()
+  })
+
+  it('refetches the summary and the open chart with the picked period', async () => {
+    const user = userEvent.setup()
+    const { default: AnalyticsPage } = await import('./page')
+    render(<AnalyticsPage />)
+
+    await user.click(await screen.findByText('Ana García'))
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/admin/analytics?professional_id=pro-1&days=30'))
+
+    await user.click(screen.getByRole('button', { name: '7 días' }))
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/admin/analytics?days=7'))
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/admin/analytics?professional_id=pro-1&days=7'))
   })
 
   it('shows detail charts when a professional row is clicked', async () => {
@@ -67,12 +81,14 @@ describe('AdminAnalyticsPage', () => {
     render(<AnalyticsPage />)
 
     await waitFor(() => screen.getByText('Ana García'))
-    // Click the profile_views count cell (not the name link which has stopPropagation)
+    // The whole row picks the professional
     await user.click(screen.getByText('50'))
 
     await waitFor(() => {
       expect(screen.getByTestId('line-chart')).toBeInTheDocument()
     })
-    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('professional_id=pro-1'))
+    expect(fetch).toHaveBeenCalledWith('/api/admin/analytics?professional_id=pro-1&days=30')
+    // Totals per series above the chart
+    expect(screen.getByText('Vistas').nextSibling).toHaveTextContent('10')
   })
 })

@@ -8,8 +8,14 @@ vi.mock('next/navigation', async () => {
   return {
     ...actual,
     usePathname: () => '/admin/leads/test-lead-id',
+    useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
   }
 })
+
+// AdminLayout reads the signed-in email
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: () => ({ auth: { getUser: () => Promise.resolve({ data: { user: null } }), signOut: vi.fn() } }),
+}))
 
 const sampleLead = {
   id: 'test-lead-id',
@@ -51,33 +57,62 @@ describe('AdminLeadDetailPage', () => {
 
     render(<AdminLeadDetailPage params={{ id: 'test-lead-id' }} />)
 
-    expect(screen.getByText('Cargando...')).toBeInTheDocument()
+    expect(screen.getByText('Cargando…')).toBeInTheDocument()
 
-    await screen.findByText('Detalle de solicitud')
+    await screen.findByRole('heading', { name: 'lead@test.com' })
 
     expect(screen.getAllByText('lead@test.com')).toHaveLength(2)
+    expect(screen.getAllByText('Nuevo')).toHaveLength(2) // badge + Estado row
     expect(screen.getByText('Urgente')).toBeInTheDocument()
     expect(screen.getByText('M-1234567890123-ABC123')).toBeInTheDocument()
     expect(screen.getByText('María Pérez')).toBeInTheDocument()
     expect(screen.getByText('Juan López')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Crear match' })).toHaveAttribute('href', '/admin/leads/test-lead-id/match')
-    expect(screen.getByText('Lo que contó')).toBeInTheDocument()
+    // With a match the design offers "Rehacer match" instead of "Crear match"
+    expect(screen.getByRole('link', { name: 'Rehacer match' })).toHaveAttribute('href', '/admin/leads/test-lead-id/match')
+    expect(screen.queryByRole('link', { name: 'Crear match' })).not.toBeInTheDocument()
     expect(screen.getByText(/Duermo mal hace meses/)).toHaveTextContent('Nombre: Sol Horario: Noche Duermo mal hace meses')
   })
 
-  it('says there are no comments when the lead left no note', async () => {
+  it('shows muted italic texts for every field the lead left empty', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ({ lead: { ...sampleLead, additional_context: null } }),
+        json: async () => ({
+          lead: {
+            ...sampleLead,
+            email: null,
+            whatsapp: null,
+            city: null,
+            intent_tags: [],
+            additional_context: null,
+            latest_match: null,
+            match_count: 0,
+          },
+        }),
       })
     )
 
     render(<AdminLeadDetailPage params={{ id: 'test-lead-id' }} />)
 
-    await screen.findByText('Lo que contó')
-    expect(screen.getByText('No dejó comentarios.')).toBeInTheDocument()
+    await screen.findByRole('heading', { name: 'Solicitud test-lea' })
+    for (const text of ['No dejó email', 'No dejó WhatsApp', 'No indicó ubicación', 'No marcó necesidades.', 'No contó nada más.']) {
+      expect(screen.getByText(text)).toHaveClass('italic')
+    }
+    expect(screen.getByRole('link', { name: 'Crear match' })).toHaveAttribute('href', '/admin/leads/test-lead-id/match')
+  })
+
+  it('marks the lead read when the detail opens', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ lead: sampleLead }) })
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(<AdminLeadDetailPage params={{ id: 'test-lead-id' }} />)
+
+    await waitFor(() => {
+      const post = fetchMock.mock.calls.find(([url, init]) => url === '/api/admin/unread' && init?.method === 'POST')
+      expect(post).toBeDefined()
+      expect(JSON.parse(post?.[1].body)).toEqual({ kind: 'leads', id: 'test-lead-id' })
+    })
   })
 
   it('renders the empty/error state when the lead cannot be loaded', async () => {

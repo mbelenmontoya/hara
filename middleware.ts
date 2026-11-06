@@ -5,6 +5,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
+import { isAdminEmail } from '@/lib/admin-auth'
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -13,7 +14,7 @@ export async function middleware(request: NextRequest) {
   const { response, user } = await updateSession(request)
 
   // Check if this is a protected route.
-  // ⛔ Use '/pro/' (with trailing slash) not '/pro' — the latter also matches
+  // ⛔ Use '/pro/' (with trailing slash) not '/pro': the latter also matches
   //    /profesionales (public redirect to the home) and any other /pro... public route.
   const isProtectedRoute =
     pathname.startsWith('/admin') ||
@@ -22,15 +23,16 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/pro/') ||
     pathname.startsWith('/api/pro/')
 
-  // /admin/login — redirect authenticated admins to the dashboard
+  // /admin/login: redirect authenticated admins to the dashboard.
+  // A signed-in non-admin (a professional) sees the login, otherwise /admin would bounce them back here forever.
   if (pathname === '/admin/login') {
-    if (user) {
+    if (user && isAdminEmail(user.email)) {
       return NextResponse.redirect(new URL('/admin/leads', request.url))
     }
     return response
   }
 
-  // /pro/login — redirect authenticated pros to their profile
+  // /pro/login: redirect authenticated pros to their profile
   if (pathname === '/pro/login') {
     if (user) {
       return NextResponse.redirect(new URL('/pro/perfil', request.url))
@@ -59,6 +61,17 @@ export async function middleware(request: NextRequest) {
   if (!user) {
     const loginUrl = new URL('/admin/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  // Signed in but not the admin (e.g. a professional from /pro/login): keep them out of the admin
+  const isAdminRoute = !pathname.startsWith('/pro/') && !pathname.startsWith('/api/pro/')
+  if (isAdminRoute && !isAdminEmail(user.email)) {
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+    const loginUrl = new URL('/admin/login', request.url)
+    loginUrl.searchParams.set('error', 'no-access')
     return NextResponse.redirect(loginUrl)
   }
 

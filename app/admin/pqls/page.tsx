@@ -1,4 +1,4 @@
-// Hara Vital — Admin PQL Ledger
+// Hara Vital, Admin PQL Ledger (design 13 admin look; the design has no PQL screen)
 // Purpose: View PQL ledger entries with search, month filter, and adjustment modal
 // Security: Admin-only via middleware
 
@@ -6,12 +6,19 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { AdminLayout } from '@/app/components/AdminLayout'
-import { GlassCard } from '@/app/components/ui/GlassCard'
-import { Button } from '@/app/components/ui/Button'
-import { Alert } from '@/app/components/ui/Alert'
 import { Modal } from '@/app/components/ui/Modal'
-import { EmptyState } from '@/app/components/ui/EmptyState'
 import { AdminFilterBar } from '@/app/admin/components/AdminFilterBar'
+import { useAdminToast } from '@/app/admin/components/AdminToast'
+import {
+  ADMIN_BTN_PRIMARY,
+  ADMIN_BTN_SECONDARY,
+  AdminEmpty,
+  AdminError,
+  AdminNoResults,
+  AdminSkeleton,
+  AdminTitle,
+  formatAdminDate,
+} from '@/app/admin/components/AdminUI'
 import { logError } from '@/lib/monitoring'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -36,17 +43,19 @@ function formatMonth(dateStr: string): string {
   return date.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })
 }
 
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('es-AR', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
-}
-
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function PQLsPage() {
+  // The toast lives inside AdminLayout, so the page body is a child of it
+  return (
+    <AdminLayout>
+      <PQLsBody />
+    </AdminLayout>
+  )
+}
+
+function PQLsBody() {
+  const toast = useAdminToast()
   const [entries, setEntries] = useState<PQLEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [searchValue, setSearchValue] = useState('')
@@ -55,7 +64,6 @@ export default function PQLsPage() {
   const [adjustAmount, setAdjustAmount] = useState(0)
   const [adjustReason, setAdjustReason] = useState('')
   const [reasonError, setReasonError] = useState<string | null>(null)
-  const [actionResult, setActionResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
   const fetchEntries = useCallback(async function fetchEntries() {
     try {
@@ -94,7 +102,6 @@ export default function PQLsPage() {
     setAdjustAmount(0)
     setAdjustReason('')
     setReasonError(null)
-    setActionResult(null)
   }
 
   function closeModal() {
@@ -106,7 +113,7 @@ export default function PQLsPage() {
 
   async function handleAdjust() {
     if (!adjustReason.trim()) {
-      setReasonError('Ingresá un motivo para el ajuste')
+      setReasonError('Ingresá un motivo para el ajuste.')
       return
     }
     if (!adjusting) return
@@ -124,133 +131,127 @@ export default function PQLsPage() {
       }
 
       closeModal()
-      setActionResult({ type: 'success', message: 'Ajuste registrado correctamente.' })
+      toast.show('Ajuste registrado.')
       fetchEntries()
     } catch (err: unknown) {
       logError(err instanceof Error ? err : new Error(String(err)), { source: 'PQLsPage.handleAdjust' })
-      setActionResult({
-        type: 'error',
-        message: err instanceof Error ? err.message : 'Error al ajustar el saldo',
-      })
+      setReasonError(err instanceof Error ? err.message : 'Error al ajustar el saldo')
     }
   }
 
-  if (loading) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center py-20 text-muted">Cargando...</div>
-      </AdminLayout>
-    )
-  }
+  const field = 'w-full rounded-[13px] bg-background px-[13px] py-3 text-[15px] text-foreground outline-none placeholder:text-gray-500'
+  const th = 'pb-3 text-left text-[10.5px] font-medium uppercase tracking-[1.8px] text-muted'
 
   return (
-    <AdminLayout>
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-2xl font-semibold text-foreground">Registro PQL</h2>
-          <p className="text-sm text-muted mt-1">{entries.length} entradas en el registro</p>
-        </div>
+    <>
+      <AdminTitle sub={loading ? undefined : `${entries.length} entradas en el registro`}>Registro PQL</AdminTitle>
 
-        <AdminFilterBar
-          searchPlaceholder="Buscar por profesional..."
-          searchValue={searchValue}
-          onSearchChange={setSearchValue}
-          statusOptions={monthOptions}
-          statusValue={monthValue}
-          onStatusChange={setMonthValue}
-          resultCount={filteredEntries.length}
+      <AdminFilterBar
+        searchPlaceholder="Buscar por profesional..."
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+        statusOptions={monthOptions}
+        statusValue={monthValue}
+        onStatusChange={setMonthValue}
+        resultCount={filteredEntries.length}
+      />
+
+      {loading ? (
+        <AdminSkeleton />
+      ) : entries.length === 0 ? (
+        <AdminEmpty title="Sin entradas PQL" text="Las entradas aparecen acá cuando se generan eventos de contacto." />
+      ) : filteredEntries.length === 0 ? (
+        <AdminNoResults
+          text="Probá con otra búsqueda o con otro mes."
+          onClear={() => {
+            setSearchValue('')
+            setMonthValue('')
+          }}
         />
-
-        {actionResult && (
-          <Alert variant={actionResult.type === 'success' ? 'success' : 'error'}>
-            {actionResult.message}
-          </Alert>
-        )}
-
-        {filteredEntries.length === 0 ? (
-          <GlassCard>
-            <EmptyState
-              title={entries.length === 0 ? 'Sin entradas PQL' : 'Sin resultados'}
-              description={
-                entries.length === 0
-                  ? 'Las entradas del registro aparecerán aquí cuando se generen eventos de contacto.'
-                  : 'Probá con otra búsqueda o cambiá el filtro de mes.'
-              }
-            />
-          </GlassCard>
-        ) : (
-          <GlassCard>
-            <table className="min-w-full" data-testid="pqls-page">
-              <thead>
-                <tr className="border-b border-outline">
-                  <th className="pb-3 text-left text-xs font-semibold text-muted uppercase tracking-wide">Profesional</th>
-                  <th className="pb-3 text-left text-xs font-semibold text-muted uppercase tracking-wide hidden sm:table-cell">Tracking</th>
-                  <th className="pb-3 text-left text-xs font-semibold text-muted uppercase tracking-wide">Mes</th>
-                  <th className="pb-3 text-left text-xs font-semibold text-muted uppercase tracking-wide hidden md:table-cell">Fecha</th>
-                  <th className="pb-3 text-left text-xs font-semibold text-muted uppercase tracking-wide">Acciones</th>
+      ) : (
+        <div className="overflow-x-auto rounded-[22px] bg-gray-50 px-[22px] pb-1.5 pt-4">
+          <table className="min-w-full" data-testid="pqls-page">
+            <thead>
+              <tr className="border-b border-foreground/10">
+                <th className={th}>Profesional</th>
+                <th className={`${th} hidden sm:table-cell`}>Tracking</th>
+                <th className={th}>Mes</th>
+                <th className={`${th} hidden md:table-cell`}>Fecha</th>
+                <th className={th} />
+              </tr>
+            </thead>
+            <tbody>
+              {filteredEntries.map((entry) => (
+                <tr key={entry.id} data-testid={`pql-entry-${entry.id}`} className="border-b border-foreground/7">
+                  <td className="font-almanac-serif py-3 pr-4 text-[19px]">{entry.professional.name}</td>
+                  <td className="hidden py-3 pr-4 font-mono text-[13px] text-gray-700 sm:table-cell">{entry.tracking_code}</td>
+                  <td className="py-3 pr-4 text-[14px] capitalize text-gray-700">{formatMonth(entry.month)}</td>
+                  <td className="hidden py-3 pr-4 text-[13px] text-muted md:table-cell">{formatAdminDate(entry.created_at)}</td>
+                  <td className="py-3 text-right">
+                    <button
+                      type="button"
+                      onClick={() => openModal(entry.id)}
+                      data-testid={`adjust-button-${entry.id}`}
+                      className="text-[13px] font-medium text-brand-dark hover:underline"
+                    >
+                      Ajustar
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-outline">
-                {filteredEntries.map((entry) => (
-                  <tr key={entry.id} data-testid={`pql-entry-${entry.id}`}>
-                    <td className="py-3.5 pr-4 text-sm text-foreground">{entry.professional.name}</td>
-                    <td className="py-3.5 pr-4 text-xs text-muted font-mono hidden sm:table-cell">{entry.tracking_code}</td>
-                    <td className="py-3.5 pr-4 text-sm text-muted">{formatMonth(entry.month)}</td>
-                    <td className="py-3.5 pr-4 text-xs text-muted hidden md:table-cell">{formatDate(entry.created_at)}</td>
-                    <td className="py-3.5">
-                      <button
-                        onClick={() => openModal(entry.id)}
-                        data-testid={`adjust-button-${entry.id}`}
-                        className="text-sm text-brand hover:text-brand/80 font-medium transition-colors"
-                      >
-                        Ajustar
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </GlassCard>
-        )}
-      </div>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <Modal
         open={!!adjusting}
         onClose={closeModal}
-        title="Ajustar saldo PQL"
+        title={
+          <>
+            Ajustar saldo <span className="italic text-brand">PQL</span>
+          </>
+        }
         footer={
-          <div className="flex gap-3 justify-end">
-            <Button variant="ghost" onClick={closeModal}>Cancelar</Button>
-            <Button variant="primary" onClick={handleAdjust} data-testid="submit-adjustment-button">
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={closeModal} className={ADMIN_BTN_SECONDARY}>
+              Cancelar
+            </button>
+            <button type="button" onClick={handleAdjust} data-testid="submit-adjustment-button" className={ADMIN_BTN_PRIMARY}>
               Confirmar
-            </Button>
+            </button>
           </div>
         }
       >
-        <div className="space-y-4" data-testid="adjustment-modal">
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Monto</label>
+        <div className="mt-2.5 flex flex-col gap-3.5" data-testid="adjustment-modal">
+          <div className="flex flex-col gap-[7px]">
+            <label htmlFor="adjust-amount" className="text-[13.5px] font-medium">Monto</label>
             <input
+              id="adjust-amount"
               type="number"
               value={adjustAmount}
               onChange={(e) => setAdjustAmount(Number(e.target.value))}
               data-testid="adjust-amount-input"
-              className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all"
+              className={field}
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Motivo</label>
+          <div className="flex flex-col gap-[7px]">
+            <label htmlFor="adjust-reason" className="text-[13.5px] font-medium">Motivo</label>
             <textarea
+              id="adjust-reason"
               value={adjustReason}
-              onChange={(e) => { setAdjustReason(e.target.value); setReasonError(null) }}
+              onChange={(e) => {
+                setAdjustReason(e.target.value)
+                setReasonError(null)
+              }}
               data-testid="adjust-reason-input"
               rows={3}
-              className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all resize-none"
+              className={`${field} resize-none`}
             />
-            {reasonError && <p className="text-xs text-danger mt-1.5">{reasonError}</p>}
           </div>
         </div>
+        {reasonError && <AdminError text={reasonError} />}
       </Modal>
-    </AdminLayout>
+    </>
   )
 }

@@ -1,5 +1,7 @@
-// Shared admin filter bar — search input + status/month dropdown
-// Used by Leads, Professionals, and PQLs list pages
+// Shared admin filter bar: search input plus status (or month) pills
+// Used by Leads, Professionals, Blog, Reseñas and PQLs list pages
+
+import { AdminPill } from '@/app/admin/components/AdminUI'
 
 interface StatusOption {
   value: string
@@ -14,6 +16,8 @@ interface AdminFilterBarProps {
   statusValue: string
   onStatusChange: (value: string) => void
   resultCount: number
+  /** Label of the pill that clears the status filter; null hides it (Blog has no "Todos"). */
+  allLabel?: string | null
 }
 
 export function AdminFilterBar({
@@ -24,22 +28,18 @@ export function AdminFilterBar({
   statusValue,
   onStatusChange,
   resultCount,
+  allLabel = 'Todos',
 }: AdminFilterBarProps) {
   const countLabel = resultCount === 1 ? '1 resultado' : `${resultCount} resultados`
 
+  const pills = allLabel === null ? statusOptions : [{ value: '', label: allLabel }, ...statusOptions]
+
   return (
-    <div className="space-y-3">
-      <div className="flex flex-col sm:flex-row gap-3">
+    <div className="mb-3">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center">
         {/* Search input */}
-        <div className="relative flex-1">
-          <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-            aria-hidden="true"
-          >
+        <div className="flex min-w-0 items-center gap-2.5 rounded-[14px] bg-gray-50 px-3.5 shadow-[inset_0_0_0_1.5px] shadow-foreground/10 md:w-[340px] md:flex-none">
+          <svg className="h-4 w-4 flex-none text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
           </svg>
           <input
@@ -47,38 +47,31 @@ export function AdminFilterBar({
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder={searchPlaceholder}
-            className="w-full pl-9 pr-9 py-2.5 bg-surface border border-outline rounded-xl text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all"
+            className="min-w-0 flex-1 bg-transparent py-3 text-[15px] text-foreground outline-none placeholder:text-gray-500"
           />
           {searchValue && (
             <button
               type="button"
               onClick={() => onSearchChange('')}
-              aria-label="Limpiar búsqueda"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground transition-colors"
+              aria-label="Limpiar texto"
+              className="flex-none text-gray-500 transition-colors hover:text-foreground"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           )}
         </div>
 
-        {/* Status / month dropdown */}
-        <select
-          value={statusValue}
-          onChange={(e) => onStatusChange(e.target.value)}
-          className="sm:w-48 px-3 py-2.5 bg-surface border border-outline rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all"
-        >
-          <option value="">Todos</option>
-          {statusOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
+        {/* Status / month pills */}
+        <div className="flex min-w-0 gap-1.5 overflow-x-auto [scrollbar-width:none]">
+          {pills.map((opt) => (
+            <AdminPill key={opt.value || 'all'} label={opt.label} active={statusValue === opt.value} onClick={() => onStatusChange(opt.value)} />
           ))}
-        </select>
+        </div>
       </div>
 
-      <p className="text-xs text-muted">{countLabel}</p>
+      <p className="mt-2 text-[13px] text-muted">{countLabel}</p>
     </div>
   )
 }

@@ -1,15 +1,14 @@
-// Admin — Blog Queue
-// Server component. Fetches all blog_posts ordered by created_at DESC.
-// Client-side filter bar lets admin switch between submitted / published / rejected.
+// Admin, Blog Queue (design 13)
+// Client page. Fetches every blog_posts row; pills switch between pending, published and rejected
+// (each with its count) and the search matches title or author.
 
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { AdminLayout } from '@/app/components/AdminLayout'
-import { GlassCard } from '@/app/components/ui/GlassCard'
-import { EmptyState } from '@/app/components/ui/EmptyState'
 import { AdminFilterBar } from '@/app/admin/components/AdminFilterBar'
+import { AdminEmpty, AdminNoResults, AdminSkeleton, AdminTitle, StatusBadge, formatAdminDate } from '@/app/admin/components/AdminUI'
 import { logError } from '@/lib/monitoring'
 
 interface BlogPost {
@@ -25,34 +24,24 @@ interface BlogPost {
   is_hara_editorial: boolean
 }
 
-const STATUS_OPTIONS = [
-  { value: 'submitted',  label: 'Pendientes' },
-  { value: 'published',  label: 'Publicadas' },
-  { value: 'rejected',   label: 'Rechazadas' },
-]
-
-const STATUS_LABELS: Record<string, { label: string; className: string }> = {
-  submitted: { label: 'Pendiente', className: 'bg-warning-weak text-warning' },
-  published: { label: 'Publicada', className: 'bg-success-weak text-success' },
-  rejected:  { label: 'Rechazada', className: 'bg-danger-weak text-danger' },
-}
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })
-}
+const STATUSES = [
+  { value: 'submitted', label: 'Pendientes', badge: 'Pendiente' },
+  { value: 'published', label: 'Publicadas', badge: 'Publicada' },
+  { value: 'rejected', label: 'Rechazadas', badge: 'Rechazada' },
+] as const
 
 export default function AdminBlogPage() {
-  const [posts,       setPosts]       = useState<BlogPost[]>([])
-  const [loading,     setLoading]     = useState(true)
+  const [posts, setPosts] = useState<BlogPost[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchValue, setSearchValue] = useState('')
-  const [statusValue, setStatusValue] = useState('submitted')
+  const [statusValue, setStatusValue] = useState<string>('submitted')
 
   useEffect(() => {
     async function fetchPosts() {
       try {
         const res = await fetch('/api/admin/blog')
         if (!res.ok) throw new Error('Error al cargar notas')
-        const data = await res.json() as { posts: BlogPost[] }
+        const data = (await res.json()) as { posts: BlogPost[] }
         setPosts(data.posts ?? [])
       } catch (err) {
         logError(err instanceof Error ? err : new Error(String(err)), { source: 'AdminBlogPage' })
@@ -63,86 +52,62 @@ export default function AdminBlogPage() {
     fetchPosts()
   }, [])
 
+  const inStatus = useMemo(() => posts.filter((p) => p.status === statusValue), [posts, statusValue])
   const filtered = useMemo(() => {
-    return posts.filter(p => {
-      if (statusValue && p.status !== statusValue) return false
-      if (searchValue) {
-        const q = searchValue.toLowerCase()
-        return p.title.toLowerCase().includes(q) || p.author_name.toLowerCase().includes(q)
-      }
-      return true
-    })
-  }, [posts, statusValue, searchValue])
+    const q = searchValue.toLowerCase()
+    return inStatus.filter((p) => !q || p.title.toLowerCase().includes(q) || p.author_name.toLowerCase().includes(q))
+  }, [inStatus, searchValue])
+
+  const options = STATUSES.map((s) => ({ value: s.value, label: `${s.label} (${posts.filter((p) => p.status === s.value).length})` }))
+  const current = STATUSES.find((s) => s.value === statusValue) ?? STATUSES[0]
 
   return (
     <AdminLayout>
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground">Blog</h1>
-            <p className="text-sm text-muted">Cola de moderación</p>
-          </div>
+      <AdminTitle sub="Notas que llegan desde /blog/escribir">Blog</AdminTitle>
+
+      <AdminFilterBar
+        searchPlaceholder="Buscar por título o autor..."
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+        statusOptions={options}
+        statusValue={statusValue}
+        onStatusChange={setStatusValue}
+        resultCount={filtered.length}
+        allLabel={null}
+      />
+
+      {loading ? (
+        <AdminSkeleton />
+      ) : inStatus.length === 0 ? (
+        <AdminEmpty title={`Sin notas ${current.label.toLowerCase()}`} text="Cuando haya notas en este estado, aparecen acá." />
+      ) : filtered.length === 0 ? (
+        <AdminNoResults text="Ninguna nota coincide con esa búsqueda." onClear={() => setSearchValue('')} />
+      ) : (
+        <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
+          {filtered.map((post) => (
+            <Link
+              key={post.id}
+              href={`/admin/blog/${post.id}`}
+              prefetch={false}
+              className="flex min-w-0 flex-col gap-2 rounded-[20px] bg-gray-50 px-5 py-[18px] transition-shadow hover:shadow-soft"
+            >
+              <span className="flex flex-wrap items-center gap-2">
+                <StatusBadge label={STATUSES.find((s) => s.value === post.status)?.badge ?? post.status} />
+                {post.is_hara_editorial && <StatusBadge label="Hara Vital" />}
+                {post.professional_id && !post.professional_link_confirmed && (
+                  <span className="rounded-full bg-warning-weak px-2.5 py-1 text-[11.5px] font-medium text-warning-dark">Vínculo sin confirmar</span>
+                )}
+                <span className="flex-1" />
+                <span className="text-[12.5px] text-muted">{formatAdminDate(post.created_at)}</span>
+              </span>
+              <span className="font-almanac-serif text-[23px] leading-[1.12]">{post.title}</span>
+              <span className="text-[13px] text-gray-700">
+                {post.author_name} · {post.author_email}
+              </span>
+            </Link>
+          ))}
         </div>
-
-        <AdminFilterBar
-          searchPlaceholder="Buscar por título o autor..."
-          searchValue={searchValue}
-          onSearchChange={setSearchValue}
-          statusOptions={STATUS_OPTIONS}
-          statusValue={statusValue}
-          onStatusChange={setStatusValue}
-          resultCount={filtered.length}
-        />
-
-        {loading ? (
-          <p className="text-sm text-muted">Cargando...</p>
-        ) : filtered.length === 0 ? (
-          <EmptyState
-            title="No hay notas"
-            description={statusValue === 'submitted' ? 'No hay notas pendientes de revisión.' : 'No hay notas con este filtro.'}
-          />
-        ) : (
-          <div className="flex flex-col gap-3">
-            {filtered.map(post => {
-              const statusConfig = STATUS_LABELS[post.status] ?? { label: post.status, className: 'bg-surface-2 text-muted' }
-              return (
-                <GlassCard key={post.id}>
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="flex flex-col gap-1 flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-foreground font-medium truncate">{post.title}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusConfig.className}`}>
-                          {statusConfig.label}
-                        </span>
-                        {post.is_hara_editorial && (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-brand bg-brand-weak rounded-full px-2 py-0.5">
-                            Hara Vital
-                          </span>
-                        )}
-                        {post.professional_id && !post.professional_link_confirmed && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-info-weak text-info font-medium">
-                            Vínculo pendiente
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-xs text-muted">
-                        {post.author_name} · {post.author_email} · {formatDate(post.created_at)}
-                      </div>
-                    </div>
-                    <Link
-                      href={`/admin/blog/${post.id}`}
-                      className="text-sm font-medium text-brand hover:underline shrink-0"
-                      prefetch={false}
-                    >
-                      Revisar
-                    </Link>
-                  </div>
-                </GlassCard>
-              )
-            })}
-          </div>
-        )}
-      </div>
+      )}
     </AdminLayout>
   )
 }

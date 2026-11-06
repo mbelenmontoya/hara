@@ -6,7 +6,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { DestacadoPaymentModal } from './DestacadoPaymentModal'
 
-// Stub next/* — vitest unit env uses component-setup.ts which already mocks next/navigation
+// Stub next/*: vitest unit env uses component-setup.ts which already mocks next/navigation
 // and next/link, but we need fetch too.
 
 const mockFetch = vi.fn()
@@ -47,9 +47,8 @@ async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText(/monto/i), '5000')
   // Select 30-day preset
   await user.click(screen.getByRole('button', { name: /30 días/i }))
-  // Payment method — select mp_link
-  const methodSelect = screen.getByLabelText(/método de pago/i)
-  await user.selectOptions(methodSelect, 'mp_link')
+  // Payment method pill
+  await user.click(screen.getByRole('button', { name: 'Mercado Pago (link)' }))
 }
 
 beforeEach(() => {
@@ -72,22 +71,42 @@ describe('info banner', () => {
 
 // ─── (a) amount validation ────────────────────────────────────────────────────
 
-describe('validation — amount', () => {
+describe('validation: amount', () => {
   it('shows error when amount is zero and does not call fetch', async () => {
     const user = userEvent.setup()
     renderModal()
     const amountInput = screen.getByLabelText(/monto/i)
     await user.clear(amountInput)
     await user.type(amountInput, '0')
-    await user.click(screen.getByRole('button', { name: /guardar/i }))
-    expect(screen.getByText(/mayor que 0/i)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /registrar pago/i }))
+    expect(screen.getByText('Ingresá el monto del pago.')).toBeInTheDocument()
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it('shows error when amount is missing and does not call fetch', async () => {
+    const user = userEvent.setup()
+    renderModal()
+    await user.click(screen.getByRole('button', { name: /registrar pago/i }))
+    expect(screen.getByText('Ingresá el monto del pago.')).toBeInTheDocument()
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+})
+
+describe('validation: payment date', () => {
+  it('asks for the payment date when it is cleared and does not call fetch', async () => {
+    const user = userEvent.setup()
+    renderModal()
+    await user.type(screen.getByLabelText(/monto/i), '5000')
+    await user.clear(screen.getByLabelText(/fecha de pago/i))
+    await user.click(screen.getByRole('button', { name: /registrar pago/i }))
+    expect(screen.getByText('Elegí la fecha de pago.')).toBeInTheDocument()
     expect(mockFetch).not.toHaveBeenCalled()
   })
 })
 
 // ─── (b) period validation ────────────────────────────────────────────────────
 
-describe('validation — period', () => {
+describe('validation: period', () => {
   it('shows error when period_end is before period_start and does not call fetch', async () => {
     const user = userEvent.setup()
     renderModal()
@@ -96,14 +115,14 @@ describe('validation — period', () => {
     await user.type(screen.getByLabelText(/monto/i), '5000')
     // Choose custom period with end before start
     await user.click(screen.getByRole('button', { name: /personalizado/i }))
-    const startInput = screen.getByLabelText(/inicio del período/i)
-    const endInput   = screen.getByLabelText(/fin del período/i)
+    const startInput = screen.getByLabelText(/^inicio$/i)
+    const endInput   = screen.getByLabelText(/^fin$/i)
     await user.clear(startInput)
     await user.type(startInput, '2026-05-01')
     await user.clear(endInput)
     await user.type(endInput, '2026-04-01')  // before start
-    await user.click(screen.getByRole('button', { name: /guardar/i }))
-    expect(screen.getByText(/posterior a/i)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /registrar pago/i }))
+    expect(screen.getByText('El fin tiene que ser posterior al inicio.')).toBeInTheDocument()
     expect(mockFetch).not.toHaveBeenCalled()
   })
 })
@@ -116,7 +135,7 @@ describe('successful submit', () => {
     const user = userEvent.setup()
     const { onSuccess, onClose } = renderModal()
     await fillValidForm(user)
-    await user.click(screen.getByRole('button', { name: /guardar/i }))
+    await user.click(screen.getByRole('button', { name: /registrar pago/i }))
     await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1))
     const [url, opts] = mockFetch.mock.calls[0] as [string, RequestInit]
     expect(url).toBe('/api/admin/subscriptions')
@@ -130,7 +149,8 @@ describe('successful submit', () => {
     })
     expect(body.period_start).toBeDefined()
     expect(body.period_end).toBeDefined()
-    await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1))
+    // The parent's toast uses the expiry the server computed (it extends an active Destacado)
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledWith('2026-05-24T00:00:00Z'))
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1))
   })
 })
@@ -156,8 +176,8 @@ describe('fetch error handling', () => {
     const user = userEvent.setup()
     const { onSuccess } = renderModal()
     await fillValidForm(user)
-    await user.click(screen.getByRole('button', { name: /guardar/i }))
-    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())
+    await user.click(screen.getByRole('button', { name: /registrar pago/i }))
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Error interno'))
     expect(onSuccess).not.toHaveBeenCalled()
   })
 })

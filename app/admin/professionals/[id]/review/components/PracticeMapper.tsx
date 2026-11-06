@@ -1,8 +1,8 @@
-// PracticeMapper — maps a professional's free-text specialty entries to
+// PracticeMapper: maps a professional's free-text specialty entries to
 // canonical practice keys from the catalog.
 //
 // Each row the professional wrote (e.g. "terapia reiki", "péndulo hebreo")
-// gets a dropdown of catalog practices. Yellow = unmapped. Auto-matches
+// gets a dropdown of catalog practices. Amber dropdown = unmapped. Auto-matches
 // when the entry key is an exact case-insensitive hit on a practice key.
 // onChange fires with the deduplicated list of mapped practice keys.
 
@@ -64,62 +64,47 @@ export function PracticeMapper({ freeTextEntries, catalogPractices, initialPract
   }
 
   if (!freeTextEntries.length) {
-    return <p className="text-xs text-muted">Este profesional no ingresó prácticas libres.</p>
+    return <p className="text-[14px] italic text-gray-500">No escribió prácticas propias.</p>
   }
 
+  const unmapped = mappings.filter(m => m === '').length
+
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-[7px]">
       {freeTextEntries.map((entry, i) => {
         const mapped = mappings[i]
-        const isUnmapped = mapped === ''
-        const isSkipped = mapped === '__skip__'
-        const selectedPractice = catalogPractices.find(p => p.key === mapped)
 
         return (
-          <div
-            key={`${entry}-${i}`}
-            className={`flex items-center gap-3 rounded-xl px-3 py-2 border text-sm ${
-              isUnmapped
-                ? 'bg-warning-weak border-warning/30'
-                : isSkipped
-                ? 'bg-surface-2 border-outline/50 opacity-60'
-                : 'bg-surface border-outline/50'
-            }`}
-          >
+          <div key={`${entry}-${i}`} className="grid grid-cols-[minmax(0,1fr)_20px_minmax(0,1.1fr)] items-center gap-2.5">
             {/* Free-text entry the professional wrote */}
-            <span className="text-foreground font-medium min-w-0 flex-1 truncate">{entry}</span>
-
-            <span className="text-muted text-xs flex-shrink-0">→</span>
-
-            {/* Mapping dropdown */}
-            <select
-              value={mapped}
-              onChange={(e) => handleChange(i, e.target.value)}
-              className="text-xs bg-transparent border-none outline-none cursor-pointer text-brand font-medium flex-shrink-0 max-w-[180px]"
-              aria-label={`Mapear "${entry}" a una práctica del catálogo`}
-            >
-              <option value="">Mapear...</option>
-              <option value="__skip__">No aplica</option>
-              <optgroup label="Catálogo de prácticas">
-                {catalogPractices.map(p => (
-                  <option key={p.key} value={p.key}>{p.label}</option>
-                ))}
-              </optgroup>
-            </select>
-
-            {/* Confirmation label when mapped */}
-            {selectedPractice && (
-              <span className="text-xs text-success font-medium flex-shrink-0">✓ {selectedPractice.label}</span>
-            )}
+            <span className="font-almanac-serif min-w-0 break-words text-[18px] italic">
+              “<span>{entry}</span>”
+            </span>
+            <span className="text-center text-gray-500" aria-hidden="true">→</span>
+            <div className="min-w-0">
+              <select
+                value={mapped}
+                onChange={(e) => handleChange(i, e.target.value)}
+                className={`w-full cursor-pointer rounded-[13px] px-[13px] py-3 text-[14.5px] text-foreground outline-none ${
+                  mapped === '' ? 'bg-warning-weak' : 'bg-background'
+                }`}
+                aria-label={`Mapear "${entry}" a una práctica del catálogo`}
+              >
+                <option value="">Mapear…</option>
+                <option value="__skip__">No aplica</option>
+                <optgroup label="Catálogo de prácticas">
+                  {catalogPractices.map(p => (
+                    <option key={p.key} value={p.key}>{p.label}</option>
+                  ))}
+                </optgroup>
+              </select>
+            </div>
           </div>
         )
       })}
 
-      <p className="text-xs text-muted mt-1">
-        {mappings.filter(m => m === '').length > 0
-          ? `${mappings.filter(m => m === '').length} entrada(s) sin mapear`
-          : 'Todas las entradas mapeadas.'
-        }
+      <p className="mt-1 text-[12.5px] text-muted">
+        {unmapped > 0 ? `${unmapped} sin mapear` : 'Todas mapeadas.'}
       </p>
     </div>
   )

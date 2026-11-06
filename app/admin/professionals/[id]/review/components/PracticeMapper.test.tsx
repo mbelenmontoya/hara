@@ -22,7 +22,7 @@ describe('PracticeMapper', () => {
     expect(screen.getByText('terapia de pendulo')).toBeDefined()
   })
 
-  it('auto-matches exact key hit and shows confirmation label', () => {
+  it('auto-matches exact key hit and preselects that practice', () => {
     render(
       <PracticeMapper
         freeTextEntries={['reiki']}
@@ -31,10 +31,10 @@ describe('PracticeMapper', () => {
         onChange={vi.fn()}
       />
     )
-    expect(screen.getByText('✓ Reiki')).toBeDefined()
+    expect(screen.getByRole('combobox')).toHaveValue('reiki')
   })
 
-  it('leaves non-matching entries unmapped (no confirmation label)', () => {
+  it('leaves non-matching entries unmapped', () => {
     render(
       <PracticeMapper
         freeTextEntries={['terapia de pendulo']}
@@ -43,7 +43,7 @@ describe('PracticeMapper', () => {
         onChange={vi.fn()}
       />
     )
-    expect(screen.queryByText(/✓/)).toBeNull()
+    expect(screen.getByRole('combobox')).toHaveValue('')
   })
 
   it('calls onChange with deduplicated practice keys when user maps an entry', () => {
@@ -101,6 +101,6 @@ describe('PracticeMapper', () => {
         onChange={vi.fn()}
       />
     )
-    expect(screen.getByText(/no ingresó prácticas libres/i)).toBeDefined()
+    expect(screen.getByText('No escribió prácticas propias.')).toBeDefined()
   })
 })

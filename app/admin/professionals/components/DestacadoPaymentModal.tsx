@@ -1,13 +1,12 @@
 'use client'
 
-// DestacadoPaymentModal — admin form to record a Destacado payment.
+// DestacadoPaymentModal (design 13, "Pasar a Destacado"): admin form to record a Destacado payment.
 // Calls POST /api/admin/subscriptions on submit, which atomically creates
 // a subscription_payments row and updates the professional's tier + expiry.
 
-import { useState, useEffect } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Modal } from '@/app/components/ui/Modal'
-import { Button } from '@/app/components/ui/Button'
-import { Alert } from '@/app/components/ui/Alert'
+import { ADMIN_BTN_PRIMARY, ADMIN_BTN_SECONDARY, AdminError, AdminPill, formatAdminDate } from '@/app/admin/components/AdminUI'
 import { isEffectivelyDestacado } from '@/lib/ranking'
 
 interface Professional {
@@ -20,13 +19,31 @@ interface Professional {
 interface DestacadoPaymentModalProps {
   open: boolean
   onClose: () => void
-  onSuccess: () => void
+  /** Called with the new expiry the server computed (it extends an active Destacado). */
+  onSuccess: (tierExpiresAt: string | null) => void
   professional: Professional
 }
 
-type Currency      = 'ARS' | 'USD'
+type Currency = 'ARS' | 'USD'
 type PaymentMethod = 'mp_link' | 'transferencia' | 'efectivo' | 'otro'
-type PeriodPreset  = 30 | 90 | 180 | 365 | 'custom'
+type PeriodPreset = 30 | 90 | 180 | 365 | 'custom'
+
+const CURRENCIES: Currency[] = ['ARS', 'USD']
+const PERIOD_PRESETS: Array<{ label: string; value: PeriodPreset }> = [
+  { label: '30 días', value: 30 },
+  { label: '90 días', value: 90 },
+  { label: '180 días', value: 180 },
+  { label: '365 días', value: 365 },
+  { label: 'Personalizado', value: 'custom' },
+]
+/** Payment method labels, shared with the payment history rows. */
+export const METHOD_LABEL: Record<PaymentMethod, string> = {
+  mp_link: 'Mercado Pago (link)',
+  transferencia: 'Transferencia',
+  efectivo: 'Efectivo',
+  otro: 'Otro',
+}
+const FIELD_CLASS = 'w-full rounded-[13px] bg-background px-[13px] py-3 text-[15px] text-foreground outline-none placeholder:text-gray-500'
 
 function todayISO(): string {
   return new Date().toISOString().split('T')[0]
@@ -38,78 +55,60 @@ function addDays(dateISO: string, days: number): string {
   return d.toISOString().split('T')[0]
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })
+function Field({ label, htmlFor, children }: { label: string; htmlFor?: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-[7px]">
+      <label htmlFor={htmlFor} className="text-[13.5px] font-medium">
+        {label}
+      </label>
+      {children}
+    </div>
+  )
 }
 
 export function DestacadoPaymentModal({ open, onClose, onSuccess, professional }: DestacadoPaymentModalProps) {
   const today = todayISO()
   const currentlyActive = isEffectivelyDestacado(professional.subscription_tier, professional.tier_expires_at)
 
-  // ── Form state ─────────────────────────────────────────────────────────────
-  const [amount,        setAmount]        = useState('')
-  const [currency,      setCurrency]      = useState<Currency>('ARS')
-  const [paidAt,        setPaidAt]        = useState(today)
-  const [periodPreset,  setPeriodPreset]  = useState<PeriodPreset>(30)
-  const [customStart,   setCustomStart]   = useState(today)
-  // period_start..period_end are INCLUSIVE on both ends — a "30-day" period from
+  const [amount, setAmount] = useState('')
+  const [currency, setCurrency] = useState<Currency>('ARS')
+  const [paidAt, setPaidAt] = useState(today)
+  const [periodPreset, setPeriodPreset] = useState<PeriodPreset>(30)
+  const [customStart, setCustomStart] = useState(today)
+  // period_start..period_end are INCLUSIVE on both ends: a "30-day" period from
   // today is today..(today + 29). Matches the RPC's duration math.
-  const [customEnd,     setCustomEnd]     = useState(addDays(today, 29))
+  const [customEnd, setCustomEnd] = useState(addDays(today, 29))
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('mp_link')
   const [invoiceNumber, setInvoiceNumber] = useState('')
-  const [notes,         setNotes]         = useState('')
+  const [notes, setNotes] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  // ── UI state ───────────────────────────────────────────────────────────────
-  const [errors,    setErrors]    = useState<Record<string, string>>({})
-  const [apiError,  setApiError]  = useState<string | null>(null)
-  const [loading,   setLoading]   = useState(false)
-
-  // Reset form state when the target professional changes (defensive — the
-  // parent currently unmounts/remounts the modal per row, but this makes the
-  // component robust if that pattern ever changes).
-  useEffect(() => {
-    setAmount('')
-    setCurrency('ARS')
-    setPaidAt(today)
-    setPeriodPreset(30)
-    setCustomStart(today)
-    setCustomEnd(addDays(today, 29))
-    setPaymentMethod('mp_link')
-    setInvoiceNumber('')
-    setNotes('')
-    setErrors({})
-    setApiError(null)
-    // `today` is stable per render via todayISO() — only re-run when professional changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [professional.id])
-
-  // Computed period dates from preset or custom inputs.
   // Preset anchors to paidAt (the recorded payment date), not today, so backdated
   // payments still produce a coherent audit trail in subscription_payments.
-  // INCLUSIVE semantics: a "30-day" preset from paidAt yields paidAt..(paidAt+29).
-  const periodStart = periodPreset === 'custom' ? customStart : paidAt
-  const periodEnd   = periodPreset === 'custom' ? customEnd   : addDays(paidAt, periodPreset - 1)
+  const isCustom = periodPreset === 'custom'
+  const periodStart = isCustom ? customStart : paidAt
+  const periodEnd = isCustom ? customEnd : paidAt ? addDays(paidAt, periodPreset - 1) : ''
 
-  // ── Validation ─────────────────────────────────────────────────────────────
-  function validate(): boolean {
-    const e: Record<string, string> = {}
-
-    if (!amount || Number(amount) <= 0) {
-      e.amount = 'El monto debe ser mayor que 0'
+  function change<T>(setter: (v: T) => void) {
+    return (v: T) => {
+      setter(v)
+      setError('')
     }
-
-    if (periodEnd <= periodStart) {
-      e.period = 'La fecha de fin debe ser posterior al inicio del período'
-    }
-
-    setErrors(e)
-    return Object.keys(e).length === 0
   }
 
-  // ── Submit ─────────────────────────────────────────────────────────────────
+  /** First problem with the form, or '' when it can be saved. */
+  function validate(): string {
+    if (!amount || Number(amount) <= 0) return 'Ingresá el monto del pago.'
+    if (!paidAt) return 'Elegí la fecha de pago.'
+    if (isCustom && (!customStart || !customEnd)) return 'Completá el inicio y el fin del período.'
+    if (periodEnd <= periodStart) return 'El fin tiene que ser posterior al inicio.'
+    return ''
+  }
+
   async function handleSubmit() {
-    setApiError(null)
-    if (!validate()) return
+    const problem = validate()
+    if (problem) return setError(problem)
 
     setLoading(true)
     try {
@@ -118,216 +117,127 @@ export function DestacadoPaymentModal({ open, onClose, onSuccess, professional }
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           professional_id: professional.id,
-          amount:          Number(amount),
+          amount: Number(amount),
           currency,
-          paid_at:         new Date(paidAt).toISOString(),
-          period_start:    periodStart,
-          period_end:      periodEnd,
-          payment_method:  paymentMethod,
-          invoice_number:  invoiceNumber.trim() || null,
-          notes:           notes.trim() || null,
+          paid_at: new Date(paidAt).toISOString(),
+          period_start: periodStart,
+          period_end: periodEnd,
+          payment_method: paymentMethod,
+          invoice_number: invoiceNumber.trim() || null,
+          notes: notes.trim() || null,
         }),
       })
-
-      if (!res.ok) {
-        const body = await res.json()
-        setApiError(body?.error ?? 'Error desconocido al guardar el pago')
-        return
-      }
-
-      onSuccess()
+      const body = await res.json()
+      if (!res.ok) return setError(body?.error ?? 'No pudimos guardar el pago. Intentá de nuevo.')
+      onSuccess(body?.tier_expires_at ?? null)
       onClose()
     } catch {
-      setApiError('No se pudo conectar con el servidor. Intentá de nuevo.')
+      setError('No se pudo conectar con el servidor. Intentá de nuevo.')
     } finally {
       setLoading(false)
     }
   }
 
-  const PERIOD_PRESETS: Array<{ label: string; value: PeriodPreset }> = [
-    { label: '30 días', value: 30 },
-    { label: '90 días', value: 90 },
-    { label: '180 días', value: 180 },
-    { label: '365 días', value: 365 },
-    { label: 'Personalizado', value: 'custom' },
-  ]
-
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title={currentlyActive ? 'Extender Destacado' : 'Destacar profesional'}
+      title={
+        <>
+          {currentlyActive ? 'Renovar' : 'Pasar a'} <span className="italic text-brand">Destacado</span>
+        </>
+      }
       footer={
-        <div className="flex gap-3 justify-end">
-          <Button variant="secondary" onClick={onClose} disabled={loading}>
+        <div className="flex justify-end gap-2">
+          <button type="button" onClick={onClose} disabled={loading} className={ADMIN_BTN_SECONDARY}>
             Cancelar
-          </Button>
-          <Button onClick={handleSubmit} loading={loading}>
-            Guardar
-          </Button>
+          </button>
+          <button type="button" onClick={handleSubmit} disabled={loading} className={ADMIN_BTN_PRIMARY}>
+            {loading ? 'Guardando…' : 'Registrar pago'}
+          </button>
         </div>
       }
     >
-      <div className="space-y-4">
+      <p className="text-[14px] leading-normal text-gray-700">{professional.name}</p>
+      {currentlyActive && professional.tier_expires_at && (
+        <p className="mt-1 text-[13px] text-brand-dark">
+          Ya es Destacado hasta el {formatAdminDate(professional.tier_expires_at)}. El pago nuevo extiende ese período.
+        </p>
+      )}
 
-        {/* Info banner — shown when professional is already Destacado */}
-        {currentlyActive && professional.tier_expires_at && (
-          <Alert variant="info">
-            Este profesional ya es Destacado hasta{' '}
-            <strong>{formatDate(professional.tier_expires_at)}</strong>.
-            Al registrar un nuevo pago, el periodo se extiende automáticamente.
-          </Alert>
-        )}
-
-        {/* API error */}
-        {apiError && <Alert variant="error">{apiError}</Alert>}
-
-        {/* Monto */}
-        <div>
-          <label htmlFor="amount" className="block text-sm font-medium text-foreground mb-1">
-            Monto
-          </label>
-          <input
-            id="amount"
-            type="number"
-            min="1"
-            value={amount}
-            onChange={e => { setAmount(e.target.value); setErrors(prev => ({ ...prev, amount: '' })) }}
-            className="w-full border border-outline rounded-lg px-3 py-2 text-sm text-foreground bg-surface focus:outline-none focus:border-brand"
-            placeholder="5000"
-          />
-          {errors.amount && <p className="text-xs text-danger mt-1">{errors.amount}</p>}
-        </div>
-
-        {/* Moneda */}
-        <div>
-          <label htmlFor="currency" className="block text-sm font-medium text-foreground mb-1">
-            Moneda
-          </label>
-          <select
-            id="currency"
-            value={currency}
-            onChange={e => setCurrency(e.target.value as Currency)}
-            className="w-full border border-outline rounded-lg px-3 py-2 text-sm text-foreground bg-surface focus:outline-none focus:border-brand"
-          >
-            <option value="ARS">ARS — Peso argentino</option>
-            <option value="USD">USD — Dólar</option>
-          </select>
-        </div>
-
-        {/* Pagado el */}
-        <div>
-          <label htmlFor="paid-at" className="block text-sm font-medium text-foreground mb-1">
-            Pagado el
-          </label>
-          <input
-            id="paid-at"
-            type="date"
-            value={paidAt}
-            onChange={e => setPaidAt(e.target.value)}
-            className="w-full border border-outline rounded-lg px-3 py-2 text-sm text-foreground bg-surface focus:outline-none focus:border-brand"
-          />
-        </div>
-
-        {/* Periodo */}
-        <div>
-          <span className="block text-sm font-medium text-foreground mb-2">Periodo</span>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {PERIOD_PRESETS.map(({ label, value }) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => { setPeriodPreset(value); setErrors(prev => ({ ...prev, period: '' })) }}
-                className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
-                  periodPreset === value
-                    ? 'bg-brand text-white border-brand'
-                    : 'bg-surface border-outline text-foreground hover:border-brand'
-                }`}
-              >
-                {label}
-              </button>
+      <div className="mt-[18px] flex flex-col gap-4">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2.5">
+          <Field label="Monto" htmlFor="amount">
+            <div className="flex items-center gap-1.5 rounded-[13px] bg-background px-[13px]">
+              <span className="text-[13px] font-medium text-gray-500">{currency}</span>
+              <input
+                id="amount"
+                inputMode="decimal"
+                value={amount}
+                onChange={(e) => change(setAmount)(e.target.value.replace(/[^\d.]/g, ''))}
+                placeholder="0"
+                className="min-w-0 flex-1 bg-transparent py-3 text-[15px] outline-none"
+              />
+            </div>
+          </Field>
+          <div className="flex gap-1.5">
+            {CURRENCIES.map((c) => (
+              <AdminPill key={c} label={c} active={currency === c} onClick={() => setCurrency(c)} />
             ))}
           </div>
+        </div>
 
-          {periodPreset === 'custom' && (
-            <div className="grid grid-cols-2 gap-3 mt-2">
+        <Field label="Fecha de pago" htmlFor="paid-at">
+          <input id="paid-at" type="date" value={paidAt} onChange={(e) => change(setPaidAt)(e.target.value)} className={FIELD_CLASS} />
+        </Field>
+
+        <div className="flex flex-col gap-[7px]">
+          <span className="text-[13.5px] font-medium">Período</span>
+          <div className="flex flex-wrap gap-1.5">
+            {PERIOD_PRESETS.map(({ label, value }) => (
+              <AdminPill key={value} label={label} active={periodPreset === value} onClick={() => change(setPeriodPreset)(value)} />
+            ))}
+          </div>
+          {isCustom && (
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <label htmlFor="period-start" className="block text-xs text-muted mb-1">
-                  Inicio del período
+                <label htmlFor="period-start" className="mb-[5px] block text-[12px] text-muted">
+                  Inicio
                 </label>
-                <input
-                  id="period-start"
-                  type="date"
-                  value={customStart}
-                  onChange={e => { setCustomStart(e.target.value); setErrors(prev => ({ ...prev, period: '' })) }}
-                  className="w-full border border-outline rounded-lg px-3 py-2 text-sm text-foreground bg-surface focus:outline-none focus:border-brand"
-                />
+                <input id="period-start" type="date" value={customStart} onChange={(e) => change(setCustomStart)(e.target.value)} className={FIELD_CLASS} />
               </div>
               <div>
-                <label htmlFor="period-end" className="block text-xs text-muted mb-1">
-                  Fin del período <span className="text-muted">(último día incluido)</span>
+                <label htmlFor="period-end" className="mb-[5px] block text-[12px] text-muted">
+                  Fin
                 </label>
-                <input
-                  id="period-end"
-                  type="date"
-                  value={customEnd}
-                  onChange={e => { setCustomEnd(e.target.value); setErrors(prev => ({ ...prev, period: '' })) }}
-                  className="w-full border border-outline rounded-lg px-3 py-2 text-sm text-foreground bg-surface focus:outline-none focus:border-brand"
-                />
+                <input id="period-end" type="date" value={customEnd} onChange={(e) => change(setCustomEnd)(e.target.value)} className={FIELD_CLASS} />
               </div>
             </div>
           )}
-          {errors.period && <p className="text-xs text-danger mt-1">{errors.period}</p>}
+          <p className="text-[12.5px] text-brand-dark">
+            {periodEnd && periodEnd > periodStart ? `Destacado hasta el ${formatAdminDate(periodEnd)}` : 'Elegí el período'}
+          </p>
         </div>
 
-        {/* Método de pago */}
-        <div>
-          <label htmlFor="payment-method" className="block text-sm font-medium text-foreground mb-1">
-            Método de pago
-          </label>
-          <select
-            id="payment-method"
-            value={paymentMethod}
-            onChange={e => setPaymentMethod(e.target.value as PaymentMethod)}
-            className="w-full border border-outline rounded-lg px-3 py-2 text-sm text-foreground bg-surface focus:outline-none focus:border-brand"
-          >
-            <option value="mp_link">Mercado Pago link</option>
-            <option value="transferencia">Transferencia bancaria</option>
-            <option value="efectivo">Efectivo</option>
-            <option value="otro">Otro</option>
-          </select>
+        <div className="flex flex-col gap-[7px]">
+          <span className="text-[13.5px] font-medium">Método</span>
+          <div className="flex flex-wrap gap-1.5">
+            {(Object.keys(METHOD_LABEL) as PaymentMethod[]).map((m) => (
+              <AdminPill key={m} label={METHOD_LABEL[m]} active={paymentMethod === m} onClick={() => setPaymentMethod(m)} />
+            ))}
+          </div>
         </div>
 
-        {/* Factura N° (AFIP) */}
-        <div>
-          <label htmlFor="invoice" className="block text-sm font-medium text-foreground mb-1">
-            Factura N° (AFIP) <span className="text-muted font-normal text-xs">— opcional</span>
-          </label>
-          <input
-            id="invoice"
-            type="text"
-            value={invoiceNumber}
-            onChange={e => setInvoiceNumber(e.target.value)}
-            className="w-full border border-outline rounded-lg px-3 py-2 text-sm text-foreground bg-surface focus:outline-none focus:border-brand"
-            placeholder="A-0001-00000001"
-          />
-        </div>
+        <Field label="Número de factura (AFIP)" htmlFor="invoice">
+          <input id="invoice" value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} placeholder="Opcional" className={FIELD_CLASS} />
+        </Field>
 
-        {/* Notas */}
-        <div>
-          <label htmlFor="notes" className="block text-sm font-medium text-foreground mb-1">
-            Notas <span className="text-muted font-normal text-xs">— opcional</span>
-          </label>
-          <textarea
-            id="notes"
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-            rows={2}
-            className="w-full border border-outline rounded-lg px-3 py-2 text-sm text-foreground bg-surface focus:outline-none focus:border-brand resize-none"
-            placeholder="Ej: renovación anual, descuento aplicado..."
-          />
-        </div>
+        <Field label="Notas" htmlFor="notes">
+          <textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Opcional" className={`${FIELD_CLASS} block min-h-[70px] resize-none`} />
+        </Field>
       </div>
+
+      {error && <AdminError text={error} />}
     </Modal>
   )
 }

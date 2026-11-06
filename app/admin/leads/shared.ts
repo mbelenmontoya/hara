@@ -35,14 +35,6 @@ export const LEAD_STATUS_OPTIONS = [
   { value: 'closed', label: 'Cerrado' },
 ]
 
-export const LEAD_STATUS_VARIANT: Record<string, 'new' | 'matched' | 'contacted' | 'converted' | 'closed' | 'default'> = {
-  new: 'new',
-  matched: 'matched',
-  contacted: 'contacted',
-  converted: 'converted',
-  closed: 'closed',
-}
-
 export const LEAD_STATUS_LABEL: Record<string, string> = {
   new: 'Nuevo',
   matched: 'Matcheado',
@@ -55,4 +47,16 @@ export const LEAD_URGENCY_LABEL: Record<string, string> = {
   high: 'Urgente',
   medium: 'Pronto',
   low: 'Sin prisa',
+}
+
+/** Urgency dot color per urgency value (Urgente, Pronto, Sin prisa). */
+export const LEAD_URGENCY_DOT: Record<string, string> = {
+  high: 'bg-danger-dark',
+  medium: 'bg-warning-dark',
+  low: 'bg-gray-500',
+}
+
+/** Card and detail title: the email, or a short id when the lead left none. */
+export function leadTitle(lead: Pick<Lead, 'id' | 'email'>): string {
+  return lead.email ?? `Solicitud ${lead.id.slice(0, 8)}`
 }

@@ -87,6 +87,19 @@ beforeEach(() => {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('POST /api/pro/profile', () => {
+  it.each(['submitted', 'rejected', 'inactive', null])('blocks a %s profile before parsing or uploading', async (status) => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: USER_ID } }, error: null })
+    proMaybeSingle.mockResolvedValue({ data: { id: PRO_ID, status }, error: null })
+    const { uploadProfileImage } = await import('@/lib/storage')
+    const { POST } = await import('./route')
+    const req = new NextRequest('http://localhost/api/pro/profile', { method: 'POST', body: 'invalid JSON' })
+
+    expect((await POST(req)).status).toBe(403)
+    expect(lastUpdatePayload).toBeNull()
+    expect(proUpdateEq).not.toHaveBeenCalled()
+    expect(uploadProfileImage).not.toHaveBeenCalled()
+  })
+
   it('returns 401 when no session', async () => {
     mockGetUser.mockResolvedValue({ data: { user: null }, error: null })
 
@@ -108,7 +121,7 @@ describe('POST /api/pro/profile', () => {
 
   it('returns 200 and updates the professional row on valid payload', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: USER_ID } }, error: null })
-    proMaybeSingle.mockResolvedValue({ data: { id: PRO_ID }, error: null })
+    proMaybeSingle.mockResolvedValue({ data: { id: PRO_ID, status: 'active' }, error: null })
 
     const { POST } = await import('./route')
     const res = await POST(makeReq())
@@ -120,7 +133,7 @@ describe('POST /api/pro/profile', () => {
 
   it('never writes email — ignores any email field in the payload', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: USER_ID } }, error: null })
-    proMaybeSingle.mockResolvedValue({ data: { id: PRO_ID }, error: null })
+    proMaybeSingle.mockResolvedValue({ data: { id: PRO_ID, status: 'active' }, error: null })
 
     const { POST } = await import('./route')
     const req = makeReq({ email: 'hacker@evil.com' })
@@ -133,7 +146,7 @@ describe('POST /api/pro/profile', () => {
 
   it('returns 400 for invalid WhatsApp number', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: USER_ID } }, error: null })
-    proMaybeSingle.mockResolvedValue({ data: { id: PRO_ID }, error: null })
+    proMaybeSingle.mockResolvedValue({ data: { id: PRO_ID, status: 'active' }, error: null })
 
     const { POST } = await import('./route')
     const res = await POST(makeReq({ whatsapp: 'not-a-phone' }))
@@ -143,7 +156,7 @@ describe('POST /api/pro/profile', () => {
 
   it('returns 400 when bio is too short', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: USER_ID } }, error: null })
-    proMaybeSingle.mockResolvedValue({ data: { id: PRO_ID }, error: null })
+    proMaybeSingle.mockResolvedValue({ data: { id: PRO_ID, status: 'active' }, error: null })
 
     const { POST } = await import('./route')
     const res = await POST(makeReq({ bio: 'Muy corta' }))
@@ -153,7 +166,7 @@ describe('POST /api/pro/profile', () => {
 
   it('returns 400 when modality is empty', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: USER_ID } }, error: null })
-    proMaybeSingle.mockResolvedValue({ data: { id: PRO_ID }, error: null })
+    proMaybeSingle.mockResolvedValue({ data: { id: PRO_ID, status: 'active' }, error: null })
 
     const { POST } = await import('./route')
     const res = await POST(makeReq({ modality: [] }))

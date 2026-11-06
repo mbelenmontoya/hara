@@ -8,6 +8,9 @@ import { NextRequest } from 'next/server'
 
 const mockInsert = vi.fn()
 const mockLike = vi.fn()
+const mockCreateUser = vi.fn()
+const mockDeleteUser = vi.fn()
+const mockRateLimit = vi.fn()
 
 // Cooldown query chain: .select(...).eq('email', ...).eq('status', 'rejected')
 //                                   .order(created_at).order(id).limit(1).maybeSingle()
@@ -20,6 +23,7 @@ const mockCooldownEq1 = vi.fn().mockReturnValue({ eq: mockCooldownEq2 })
 
 vi.mock('@/lib/supabase-admin', () => ({
   supabaseAdmin: {
+    auth: { admin: { createUser: mockCreateUser, deleteUser: mockDeleteUser } },
     from: vi.fn((table: string) => {
       if (table === 'professionals') {
         return {
@@ -52,6 +56,10 @@ vi.mock('@/lib/monitoring', () => ({
   logError: vi.fn(),
 }))
 
+vi.mock('@/lib/rate-limit', () => ({
+  ratelimit: { limit: mockRateLimit },
+}))
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const VALID_FIELDS = {
@@ -63,7 +71,10 @@ const VALID_FIELDS = {
   specialties: ['ansiedad'],
   bio: 'Soy reikista con 10 años de experiencia acompañando procesos de sanación.',
   practices: ['reiki'],
+  password: 'clave-segura-1',
 }
+
+const AUTH_USER_ID = 'auth-user-1'
 
 function makeJsonRequest(body: Record<string, unknown>): NextRequest {
   return new NextRequest('http://localhost/api/professionals/register', {
@@ -93,6 +104,9 @@ function setupInsertMock(id = 'uuid-1234') {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockRateLimit.mockResolvedValue({ success: true })
+  mockCreateUser.mockResolvedValue({ data: { user: { id: AUTH_USER_ID } }, error: null })
+  mockDeleteUser.mockResolvedValue({ data: {}, error: null })
 })
 
 describe('POST /api/professionals/register — practices field', () => {
@@ -185,5 +199,102 @@ describe('POST /api/professionals/register — practices field', () => {
       expect.not.objectContaining({ style: expect.anything() })
     )
     expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ practices: ['reiki'] }))
+  })
+})
+
+// ── Account creation (the applicant gets a login with role professional) ─────────
+
+describe('POST /api/professionals/register: account', () => {
+  async function ready() {
+    const { validatePracticeKeys } = await import('@/lib/practices')
+    vi.mocked(validatePracticeKeys).mockResolvedValue({ ok: true })
+    setupCooldownNoMatch()
+    setupSlugMock()
+    setupInsertMock()
+    return (await import('./route')).POST
+  }
+
+  it('creates a confirmed professional account and links it, never storing the password', async () => {
+    const POST = await ready()
+    const res = await POST(makeJsonRequest(VALID_FIELDS))
+
+    expect(res.status).toBe(200)
+    expect(mockCreateUser).toHaveBeenCalledWith({
+      email: VALID_FIELDS.email,
+      password: 'clave-segura-1',
+      email_confirm: true,
+      app_metadata: { role: 'professional' },
+    })
+    const row = mockInsert.mock.calls[0][0]
+    expect(row.user_id).toBe(AUTH_USER_ID)
+    expect(row).not.toHaveProperty('password')
+    expect(JSON.stringify(await res.json())).not.toContain('clave-segura-1')
+  })
+
+  it.each([
+    ['missing', undefined],
+    ['7 characters', '1234567'],
+    ['73 characters', 'x'.repeat(73)],
+  ])('rejects a %s password with 400 and creates nothing', async (_label, password) => {
+    const POST = await ready()
+    const res = await POST(makeJsonRequest({ ...VALID_FIELDS, password }))
+    expect(res.status).toBe(400)
+    expect((await res.json()).error).toMatch(/contraseña/i)
+    expect(mockCreateUser).not.toHaveBeenCalled()
+    expect(mockInsert).not.toHaveBeenCalled()
+  })
+
+  it('returns 409 and inserts nothing when the email already has an account', async () => {
+    const POST = await ready()
+    mockCreateUser.mockResolvedValue({ data: { user: null }, error: { status: 422, code: 'email_exists', message: 'A user with this email address has already been registered' } })
+    const res = await POST(makeJsonRequest(VALID_FIELDS))
+    expect(res.status).toBe(409)
+    expect((await res.json()).error).toMatch(/Ya tenés una cuenta/)
+    expect(mockInsert).not.toHaveBeenCalled()
+  })
+
+  it('deletes the new account when saving the professional fails', async () => {
+    const POST = await ready()
+    mockInsert.mockReturnValue({
+      select: vi.fn().mockReturnValue({ single: vi.fn().mockResolvedValue({ data: null, error: { code: '23505', message: 'duplicate key professionals_email' } }) }),
+    })
+    const res = await POST(makeJsonRequest(VALID_FIELDS))
+    expect(res.status).toBe(409)
+    expect(mockDeleteUser).toHaveBeenCalledWith(AUTH_USER_ID)
+  })
+
+  it('rolls the account back when the insert throws', async () => {
+    const POST = await ready()
+    mockInsert.mockReturnValue({ select: () => ({ single: () => Promise.reject(new Error('network failure')) }) })
+    expect((await POST(makeJsonRequest(VALID_FIELDS))).status).toBe(500)
+    expect(mockDeleteUser).toHaveBeenCalledWith(AUTH_USER_ID)
+  })
+
+  it('reports a failed rollback without exposing the password', async () => {
+    const POST = await ready()
+    mockInsert.mockReturnValue({ select: () => ({ single: () => Promise.resolve({ data: null, error: { code: '500', message: 'DB failure' } }) }) })
+    mockDeleteUser.mockResolvedValue({ error: { message: 'Auth failure' } })
+    const { logError } = await import('@/lib/monitoring')
+    expect((await POST(makeJsonRequest(VALID_FIELDS))).status).toBe(500)
+    expect(logError).toHaveBeenCalledWith(expect.any(Error), expect.objectContaining({ userId: AUTH_USER_ID }))
+    expect(JSON.stringify(vi.mocked(logError).mock.calls)).not.toContain(VALID_FIELDS.password)
+  })
+
+  it('does not confuse another 422 error with an existing email', async () => {
+    const POST = await ready()
+    mockCreateUser.mockResolvedValue({ data: { user: null }, error: { status: 422, code: 'weak_password', message: 'Password too weak' } })
+    const res = await POST(makeJsonRequest(VALID_FIELDS))
+    expect(res.status).toBe(400)
+    expect((await res.json()).error).toContain('contraseña más segura')
+    expect(mockInsert).not.toHaveBeenCalled()
+  })
+
+  it('answers 429 before any write when the rate limit is hit', async () => {
+    const POST = await ready()
+    mockRateLimit.mockResolvedValue({ success: false })
+    const res = await POST(makeJsonRequest(VALID_FIELDS))
+    expect(res.status).toBe(429)
+    expect(mockCreateUser).not.toHaveBeenCalled()
+    expect(mockInsert).not.toHaveBeenCalled()
   })
 })

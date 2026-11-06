@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { loadGoogleMapsScript } from '@/lib/google-maps-loader'
 
 interface PlacesAutocompleteProps {
+  id?: string
   value: string
   onChange: (value: string, placeData?: PlaceData) => void
   placeholder?: string
@@ -31,6 +32,7 @@ declare global {
 }
 
 export function PlacesAutocomplete({
+  id,
   value,
   onChange,
   placeholder = 'Buscar ubicación...',
@@ -118,6 +120,7 @@ export function PlacesAutocomplete({
   if (!apiKey) {
     return (
       <input
+        id={id}
         type="text"
         value={inputValue}
         onChange={handleInputChange}
@@ -129,6 +132,7 @@ export function PlacesAutocomplete({
 
   return (
     <input
+      id={id}
       ref={inputRef}
       type="text"
       value={inputValue}

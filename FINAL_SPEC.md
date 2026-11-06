@@ -8,6 +8,16 @@
 
 ---
 
+## Professional registration and account access (2026-11-06)
+
+- `POST /api/professionals/register` accepts multipart FormData (including an optional profile image) or JSON. Required fields include `full_name`, `email`, `password` (8 to 72 characters), `whatsapp`, `country`, `modality`, `specialties`, and `bio` (50 characters minimum). Practice keys are validated against the catalog.
+- Registration requests a limit of 5 attempts per IP per hour. The existing rate limiter fails open if Upstash is unavailable (ISSUES.md entry 16).
+- The server creates a confirmed Supabase Auth user with `app_metadata.role = 'professional'`, then inserts a `submitted` professional linked through `user_id`. Passwords are passed only to Auth. A failed insert triggers deletion of the newly created account; rollback failures are logged.
+- Success returns 200 with `{ success: true, message, slug }`. Invalid input returns 400, an existing account returns 409, cooldown rejection returns 403, and rate limiting returns 429. Other failures return 500.
+- `/pro/perfil` shows a review notice for submitted profiles and the rejection reason for rejected ones. Only active profiles see the editor. `POST /api/pro/profile` resolves ownership from the authenticated user and returns 403 before parsing or uploading unless the profile is active.
+- Registration emails link to `/pro/login`. Approval emails use login for linked accounts; older applicants without `user_id` keep the set-password invitation.
+- Reapplication after rejection with an existing account is not supported yet (ISSUES.md entry 19).
+
 ## Database Schema
 
 ### Complete Migration (migrations/001_schema.sql)

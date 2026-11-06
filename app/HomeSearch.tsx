@@ -5,7 +5,6 @@
 // Opening it brings the sticky filter bar into view. Other pages link to /#buscar to arrive with it open.
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { AlmanacBottomNav } from '@/app/components/AlmanacBottomNav'
 import { HOME_SEARCH_ANCHOR } from '@/lib/home-search'
 
 interface HomeSearch {
@@ -66,10 +65,4 @@ export function Magnifier({ className }: { className: string }) {
       <path d="M9.3 9.5 14 14" />
     </svg>
   )
-}
-
-/** The bottom bar on the home, where Buscar opens the search in place instead of reloading. */
-export function HomeBottomNav() {
-  const { openSearch } = useHomeSearch()
-  return <AlmanacBottomNav active="inicio" onSearch={openSearch} />
 }

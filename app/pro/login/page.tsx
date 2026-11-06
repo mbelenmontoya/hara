@@ -3,8 +3,10 @@
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { PageBackground } from '@/app/components/ui/PageBackground'
-import { GlassCard } from '@/app/components/ui/GlassCard'
+import Image from 'next/image'
+import Link from 'next/link'
+
+const INPUT_CLASS = 'w-full rounded-[14px] bg-background px-3.5 py-[13px] text-base text-foreground outline-none placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-brand'
 
 function LoginForm() {
   const router = useRouter()
@@ -51,121 +53,137 @@ function LoginForm() {
         body: JSON.stringify({ email: forgotEmail.trim() }),
       })
     } catch {
-      // Ignore network errors — show generic success regardless
+      // Ignore network errors: show generic success regardless
     }
 
     setForgotStatus('sent')
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <PageBackground />
+    <main className="min-h-screen bg-background font-almanac text-foreground">
+      <div className="mx-auto w-full max-w-md px-5 pb-12 pt-6 md:max-w-xl">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center">
+          <Link href="/" className="justify-self-start py-2.5 text-[13.5px] font-medium text-brand-dark">
+            ← Volver
+          </Link>
+          <Image src="/assets/logo/logoreduccion.png" alt="Hara" width={66} height={53} className="h-[38px] w-auto object-contain" priority />
+          <span />
+        </div>
 
-      <div className="relative z-10 min-h-screen flex items-center justify-center px-4">
-        <div className="w-full max-w-sm">
-
-          <h1 className="text-2xl font-semibold text-foreground text-center mb-2">
-            Tu perfil en Hara
+        <div className="mt-10">
+          <p className="almanac-label mb-0 text-brand">Profesionales</p>
+          <h1 className="font-almanac-serif mb-0 mt-3 text-[44px] leading-[1.05]">
+            Entrá a tu <em className="text-brand">perfil</em>
           </h1>
-          <p className="text-sm text-muted text-center mb-8">
-            Ingresá para editar tu información
+          <p className="mt-3 text-[15px] leading-normal text-gray-700">
+            Revisá tu solicitud o actualizá tu información.
           </p>
+        </div>
 
-          <GlassCard>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="tu@email.com"
-                  required
-                  className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all"
-                />
-              </div>
+        <div className="mt-6 rounded-3xl bg-gray-50 px-[18px] py-6">
+          <form onSubmit={handleLogin} aria-label="Ingresar a mi perfil" className="space-y-5">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="pro-email" className="text-[14px] font-medium">Email</label>
+              <input
+                id="pro-email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tu@email.com"
+                required
+                aria-invalid={!!loginError}
+                aria-describedby={loginError ? 'pro-login-error' : undefined}
+                className={INPUT_CLASS}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="pro-password" className="text-[14px] font-medium">Contraseña</label>
+              <input
+                id="pro-password"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Tu contraseña"
+                required
+                aria-invalid={!!loginError}
+                aria-describedby={loginError ? 'pro-login-error' : undefined}
+                className={INPUT_CLASS}
+              />
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Contraseña
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all"
-                />
-              </div>
+            {loginError && (
+              <p id="pro-login-error" role="alert" className="rounded-[14px] bg-danger-weak px-3.5 py-3 text-[13.5px] leading-normal text-danger-dark">
+                {loginError}
+              </p>
+            )}
+            <button
+              type="submit"
+              disabled={loading}
+              aria-busy={loading}
+              className="w-full rounded-2xl bg-brand-dark px-6 py-[15px] text-[15px] font-medium text-gray-50 disabled:opacity-50"
+            >
+              {loading ? 'Ingresando...' : 'Ingresar'}
+            </button>
+            <button
+              type="button"
+              aria-expanded={showForgot}
+              aria-controls="pro-recovery"
+              onClick={() => { setShowForgot(v => !v); setForgotStatus('idle') }}
+              className="min-h-11 w-full text-center text-[13px] text-brand-dark underline underline-offset-4"
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
+          </form>
 
-              {loginError && (
-                <div className="p-3 bg-danger-weak border border-danger/20 rounded-xl text-sm text-danger">
-                  {loginError}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full px-6 py-3.5 bg-brand text-white font-semibold rounded-full shadow-elevated hover:shadow-strong btn-press-glow transition-all disabled:opacity-50"
-              >
-                {loading ? 'Ingresando...' : 'Ingresar'}
-              </button>
-
-              {/* Forgot password toggle */}
-              <div className="pt-1">
-                <button
-                  type="button"
-                  onClick={() => { setShowForgot(v => !v); setForgotStatus('idle') }}
-                  className="text-xs text-muted hover:text-foreground transition-colors underline underline-offset-2 w-full text-center"
-                >
-                  ¿Olvidaste tu contraseña?
-                </button>
-              </div>
-            </form>
-
-            {/* Forgot-password form — revealed on toggle */}
-            {showForgot && (
-              <div className="mt-4 pt-4 border-t border-outline">
-                {forgotStatus === 'sent' ? (
-                  <p className="text-sm text-muted text-center leading-relaxed">
-                    Si hay una cuenta con ese email, te enviamos un enlace en breve.
-                  </p>
-                ) : (
-                  <form onSubmit={handleForgotPassword} className="space-y-3">
-                    <p className="text-xs text-muted mb-2">
-                      Ingresá tu email y te mandamos un enlace para crear una nueva contraseña.
-                    </p>
+          {showForgot && (
+            <section id="pro-recovery" aria-labelledby="pro-recovery-title" className="mt-5 border-t border-outline pt-5">
+              <h2 id="pro-recovery-title" className="font-almanac-serif mb-3 text-[28px] leading-tight">Recuperá tu acceso</h2>
+              {forgotStatus === 'sent' ? (
+                <p role="status" className="text-[14px] leading-normal text-gray-700">
+                  Si hay una cuenta con ese email, te enviamos un enlace en breve.
+                </p>
+              ) : (
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <p className="text-[13.5px] leading-normal text-gray-700">Te mandamos un enlace para crear una nueva contraseña.</p>
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="pro-recovery-email" className="text-[14px] font-medium">Email de tu cuenta</label>
                     <input
+                      id="pro-recovery-email"
                       type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      autoFocus
                       value={forgotEmail}
                       onChange={(e) => setForgotEmail(e.target.value)}
                       placeholder="tu@email.com"
                       required
-                      className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all text-sm"
+                      className={INPUT_CLASS}
                     />
-                    <button
-                      type="submit"
-                      disabled={forgotStatus === 'loading'}
-                      className="w-full px-6 py-3 bg-surface-2 text-foreground font-medium rounded-full border border-outline hover:bg-surface transition-all text-sm disabled:opacity-50"
-                    >
-                      {forgotStatus === 'loading' ? 'Enviando...' : 'Enviar enlace'}
-                    </button>
-                  </form>
-                )}
-              </div>
-            )}
-          </GlassCard>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={forgotStatus === 'loading'}
+                    className="w-full rounded-2xl bg-surface-2 px-6 py-[15px] text-[15px] font-medium text-brand-dark disabled:opacity-50"
+                  >
+                    {forgotStatus === 'loading' ? 'Enviando...' : 'Enviar enlace'}
+                  </button>
+                </form>
+              )}
+            </section>
+          )}
+        </div>
 
-          <p className="text-xs text-muted text-center mt-6">
-            Hara Vital · Portal de profesionales
-          </p>
+        <div className="mt-7 border-t border-outline pt-5">
+          <p className="text-[14px] text-gray-700">¿Querés sumarte a Hara?</p>
+          <Link href="/registro" className="mt-1 inline-flex min-h-11 items-center text-[14px] font-medium text-brand-dark underline underline-offset-4">
+            Completar mi solicitud
+          </Link>
         </div>
       </div>
-    </div>
+    </main>
   )
 }
 

@@ -2,7 +2,8 @@ import { afterEach, describe, it, expect, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { HomeArrival } from './HomeArrival'
-import { HomeBottomNav, HomeSearchProvider } from './HomeSearch'
+import { HomeSearchProvider } from './HomeSearch'
+import { AlmanacBottomNav } from './components/AlmanacBottomNav'
 import type { HomeRow } from '@/lib/home-arrival'
 import type { DirectoryProfessional } from '@/app/profesionales/components/ProfessionalsDirectory'
 import type { Practice } from '@/lib/practices'
@@ -176,18 +177,21 @@ describe('home filter bar', () => {
     expect(screen.getByRole('button', { name: 'Buscar' })).toBeInTheDocument()
   })
 
-  it('opens the same search field from Buscar in the bottom bar and brings the bar into view', async () => {
+  it('keeps search in the home filter bar without duplicating it in the bottom menu', async () => {
     const user = userEvent.setup()
     const scrolled = vi.spyOn(Element.prototype, 'scrollIntoView')
     render(
       <HomeSearchProvider>
         <HomeArrival cards={[]} rows={ROWS} professionals={PROS} practices={PRACTICES} featuredPicks={[]} />
-        <HomeBottomNav />
+        <AlmanacBottomNav active="inicio" />
       </HomeSearchProvider>
     )
     expect(screen.queryByRole('textbox', { name: /buscar/i })).not.toBeInTheDocument()
 
-    await user.click(within(screen.getByRole('navigation', { name: 'Principal' })).getByRole('button', { name: 'Buscar' }))
+    const nav = screen.getByRole('navigation', { name: 'Principal' })
+    expect(within(nav).queryByRole('button', { name: 'Buscar' })).not.toBeInTheDocument()
+    expect(within(nav).queryByRole('link', { name: 'Buscar' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Buscar' }))
     expect(screen.getByRole('textbox', { name: /buscar/i })).toHaveFocus()
     expect(screen.getByRole('button', { name: /^prácticas/i })).toBeInTheDocument()
     expect(scrolled).toHaveBeenCalledTimes(1)

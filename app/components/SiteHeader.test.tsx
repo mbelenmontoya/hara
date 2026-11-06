@@ -14,7 +14,7 @@ vi.mock('next/link', () => ({
 
 describe('SiteHeader', () => {
   it('renders home link and nav on public pages with correct z-index', () => {
-    mockUsePathname.mockReturnValue('/registro')
+    mockUsePathname.mockReturnValue('/terminos')
     const { container } = render(<SiteHeader />)
     expect(screen.getByRole('link', { name: 'Hara — inicio' })).toHaveAttribute('href', '/')
     expect(screen.getByRole('link', { name: 'Profesionales' })).toHaveAttribute('href', '/')
@@ -28,7 +28,7 @@ describe('SiteHeader', () => {
   })
 
   it('shows hamburger button and toggles mobile nav on click', async () => {
-    mockUsePathname.mockReturnValue('/registro')
+    mockUsePathname.mockReturnValue('/terminos')
     render(<SiteHeader />)
 
     // Hamburger button must exist
@@ -51,12 +51,12 @@ describe('SiteHeader', () => {
     expect(screen.queryByTestId('mobile-nav')).toBeNull()
   })
 
-  it('marks the link of the current page as active and no other', () => {
-    mockUsePathname.mockReturnValue('/registro')
+  it('marks no link as active on a page outside the nav', () => {
+    mockUsePathname.mockReturnValue('/terminos')
     render(<SiteHeader />)
-    expect(screen.getByRole('link', { name: 'Soy profesional' })).toHaveClass('underline')
-    expect(screen.getByRole('link', { name: 'Profesionales' })).not.toHaveClass('underline')
-    expect(screen.getByRole('link', { name: 'Diario' })).not.toHaveClass('underline')
+    for (const name of ['Soy profesional', 'Profesionales', 'Diario', 'Qué es Hara']) {
+      expect(screen.getByRole('link', { name })).not.toHaveClass('underline')
+    }
   })
 
   it('keeps a section link active on its sub-pages, even though the first link points to /', () => {
@@ -67,7 +67,7 @@ describe('SiteHeader', () => {
   })
 
   it('returns null on excluded routes', () => {
-    for (const path of ['/', '/que-es-hara', '/solicitar', '/blog', '/blog/mi-nota', '/admin/leads', '/r/abc123']) {
+    for (const path of ['/', '/que-es-hara', '/solicitar', '/blog', '/registro', '/pro/login', '/pro/perfil', '/pro/set-password', '/blog/mi-nota', '/admin/leads', '/r/abc123']) {
       mockUsePathname.mockReturnValue(path)
       const { container } = render(<SiteHeader />)
       expect(container.firstChild).toBeNull()

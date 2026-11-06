@@ -3,11 +3,11 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { PageBackground } from '@/app/components/ui/PageBackground'
-import { GlassCard } from '@/app/components/ui/GlassCard'
+import Image from 'next/image'
 import Link from 'next/link'
 
 const MIN_PASSWORD_LENGTH = 8
+const INPUT_CLASS = 'w-full rounded-[14px] bg-background px-3.5 py-[13px] text-base text-foreground outline-none placeholder:text-gray-700 focus-visible:ring-2 focus-visible:ring-brand'
 
 type PageState = 'verifying' | 'invalid' | 'form' | 'saving' | 'done'
 
@@ -75,105 +75,102 @@ function SetPasswordForm() {
     router.refresh()
   }
 
+  const error = matchError ?? saveError
+
   return (
-    <div className="min-h-screen bg-background">
-      <PageBackground />
+    <main className="min-h-screen bg-background font-almanac text-foreground">
+      <div className="mx-auto w-full max-w-md px-5 pb-12 pt-6 md:max-w-xl">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center">
+          <Link href="/pro/login" className="justify-self-start py-3 text-sm font-medium text-brand-dark focus-visible:outline-brand">
+            ← Volver
+          </Link>
+          <Image src="/assets/logo/logoreduccion.png" alt="Hara" width={66} height={53} className="h-[38px] w-auto object-contain" priority />
+          <span />
+        </div>
 
-      <div className="relative z-10 min-h-screen flex items-center justify-center px-4">
-        <div className="w-full max-w-sm">
+        <div className="mt-10">
+          <p className="almanac-label mb-0 text-gray-700!">Profesionales</p>
+          <h1 className="font-almanac-serif mb-0 mt-3 text-[44px] leading-[1.05]">
+            {pageState === 'invalid' ? (
+              <>Enlace inválido o <em className="text-brand">vencido</em></>
+            ) : (
+              <>{type === 'recovery' ? 'Elegí tu nueva ' : 'Creá tu '}<em className="text-brand">contraseña</em></>
+            )}
+          </h1>
+          <p className="mt-3 text-[15px] leading-normal text-gray-700">
+            {pageState === 'invalid'
+              ? 'El enlace ya fue usado o venció. Podés pedir uno nuevo desde la pantalla de inicio de sesión.'
+              : 'Usala para acceder a tu perfil en Hara.'}
+          </p>
+        </div>
 
+        <div className="mt-6 rounded-3xl bg-gray-50 px-5 py-6 sm:px-6">
           {pageState === 'verifying' && (
-            <p className="text-center text-muted text-sm">Verificando enlace…</p>
+            <p role="status" className="text-sm text-gray-700">Verificando enlace…</p>
           )}
 
           {pageState === 'invalid' && (
-            <GlassCard>
-              <div className="text-center space-y-4">
-                <h1 className="text-xl font-semibold text-foreground">
-                  Enlace inválido o vencido
-                </h1>
-                <p className="text-sm text-muted leading-relaxed">
-                  El enlace ya fue usado o venció. Podés pedir uno nuevo desde la pantalla de inicio de sesión.
-                </p>
-                <Link
-                  href="/pro/login"
-                  className="inline-block mt-2 px-6 py-3 bg-brand text-white text-sm font-semibold rounded-full hover:shadow-elevated transition-all"
-                >
-                  Ir al inicio de sesión
-                </Link>
-              </div>
-            </GlassCard>
+            <Link href="/pro/login" className="block min-h-12 rounded-2xl bg-brand-dark px-6 py-3.5 text-center text-base font-medium text-gray-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand">
+              Ir al inicio de sesión
+            </Link>
           )}
 
           {(pageState === 'form' || pageState === 'saving') && (
-            <>
-              <h1 className="text-2xl font-semibold text-foreground text-center mb-2">
-                Creá tu contraseña
-              </h1>
-              <p className="text-sm text-muted text-center mb-8">
-                Usala para acceder a tu perfil en Hara.
-              </p>
-
-              <GlassCard>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Nueva contraseña
-                    </label>
-                    <input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Mínimo 8 caracteres"
-                      required
-                      minLength={MIN_PASSWORD_LENGTH}
-                      autoComplete="new-password"
-                      className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Repetí la contraseña
-                    </label>
-                    <input
-                      type="password"
-                      value={confirm}
-                      onChange={(e) => setConfirm(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                      autoComplete="new-password"
-                      className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all"
-                    />
-                  </div>
-
-                  {(matchError || saveError) && (
-                    <div className="p-3 bg-danger-weak border border-danger/20 rounded-xl text-sm text-danger">
-                      {matchError ?? saveError}
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={pageState === 'saving'}
-                    className="w-full px-6 py-3.5 bg-brand text-white font-semibold rounded-full shadow-elevated hover:shadow-strong btn-press-glow transition-all disabled:opacity-50"
-                  >
-                    {pageState === 'saving' ? 'Guardando…' : 'Guardar contraseña'}
-                  </button>
-                </form>
-              </GlassCard>
-            </>
+            <form onSubmit={handleSubmit} aria-label="Establecer contraseña" className="space-y-5">
+              <div>
+                <label htmlFor="pro-new-password" className="mb-2 block text-sm font-medium">Nueva contraseña</label>
+                <input
+                  id="pro-new-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Mínimo 8 caracteres"
+                  required
+                  minLength={MIN_PASSWORD_LENGTH}
+                  autoComplete="new-password"
+                  aria-invalid={!!error}
+                  aria-describedby={error ? 'pro-password-error' : 'pro-password-hint'}
+                  className={INPUT_CLASS}
+                />
+                <p id="pro-password-hint" className="mt-2 text-xs text-gray-700">Al menos 8 caracteres.</p>
+              </div>
+              <div>
+                <label htmlFor="pro-confirm-password" className="mb-2 block text-sm font-medium">Repetí la contraseña</label>
+                <input
+                  id="pro-confirm-password"
+                  type="password"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  placeholder="Repetí tu nueva contraseña"
+                  required
+                  autoComplete="new-password"
+                  aria-invalid={!!error}
+                  aria-describedby={error ? 'pro-password-error' : undefined}
+                  className={INPUT_CLASS}
+                />
+              </div>
+              {error && (
+                <p id="pro-password-error" role="alert" className="rounded-2xl bg-danger-weak p-4 text-sm text-danger-dark">{error}</p>
+              )}
+              <button
+                type="submit"
+                disabled={pageState === 'saving'}
+                className="min-h-12 w-full rounded-2xl bg-brand-dark px-6 py-3.5 text-base font-medium text-gray-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand disabled:opacity-50"
+              >
+                {pageState === 'saving' ? 'Guardando…' : 'Guardar contraseña'}
+              </button>
+              {pageState === 'saving' && <p role="status" className="sr-only">Guardando contraseña…</p>}
+            </form>
           )}
-
         </div>
       </div>
-    </div>
+    </main>
   )
 }
 
 export default function SetPasswordPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<p role="status" className="min-h-screen bg-background p-6 font-almanac text-muted">Verificando enlace…</p>}>
       <SetPasswordForm />
     </Suspense>
   )

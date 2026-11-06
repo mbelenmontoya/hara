@@ -2,7 +2,7 @@
 
 ## What Is This
 
-Curated marketplace for **terapias alternativas y bienestar holístico** in Spanish-speaking markets (LATAM + Spain, Argentina home base). Practitioners are reikistas, masajistas, facilitadores de constelaciones familiares, expertos en diseño humano, lectores de registros akáshicos, terapeutas florales/energéticos, instructores de meditación, y otras prácticas afines. The match is symptom → holistic modality: a user atravesando ansiedad/insomnio/duelo gets paired with whichever holistic practice resonates. Three user-facing surfaces: **Browse** (`/` — the home page is the directory, almanac design, primary path), **Concierge** (`/solicitar` — admin hand-picks 3 recommendations delivered via `/r/{tracking_code}`), and **Blog** (`/blog` — editorial content for SEO + trust). Professionals register at `/profesionales/registro` and self-manage their profile at `/pro/perfil`. Revenue is supply-funded via subscription tiers (Básico free, Destacado paid). Concierge leads (PQL infra) are preserved as an optional premium layer after the Apr 2026 pivot away from PQL-only billing.
+Curated marketplace for **terapias alternativas y bienestar holístico** in Spanish-speaking markets (LATAM + Spain, Argentina home base). Practitioners are reikistas, masajistas, facilitadores de constelaciones familiares, expertos en diseño humano, lectores de registros akáshicos, terapeutas florales/energéticos, instructores de meditación, y otras prácticas afines. The match is symptom → holistic modality: a user atravesando ansiedad/insomnio/duelo gets paired with whichever holistic practice resonates. Three user-facing surfaces: **Browse** (`/` — the home page is the directory, almanac design, primary path), **Concierge** (`/solicitar` — admin hand-picks 3 recommendations delivered via `/r/{tracking_code}`), and **Blog** (`/blog` — editorial content for SEO + trust). Professionals apply at `/registro`, creating an email/password account with the professional role. They can sign in at `/pro/login` while under review; `/pro/perfil` shows their status until approval, then allows editing. Revenue is supply-funded via subscription tiers (Básico free, Destacado paid). Concierge leads (PQL infra) are preserved as an optional premium layer after the Apr 2026 pivot away from PQL-only billing.
 
 **📖 Read [`PRODUCT.md`](./PRODUCT.md) for the full product context — what we're building, who it's for, why it exists, and how we measure success.** This file (CLAUDE.md) is engineering context only; PRODUCT.md is the canonical answer to "what is this product?"
 
@@ -15,8 +15,8 @@ Curated marketplace for **terapias alternativas y bienestar holístico** in Span
 - **Next.js 14.2** (App Router) + **TypeScript**
 - **Tailwind CSS v4** (`@theme` directive in `globals.css`, NOT `theme.extend`)
 - **Supabase** (PostgreSQL) + **Upstash Redis** (rate limiting)
-- **Supabase Auth** (professional portal `/pro` — email+password, invite-link onboarding)
-- **Vitest** (integration tests) + **Playwright** (E2E)
+- **Supabase Auth** (professional portal `/pro` — email+password at registration, invite links for older profiles)
+- **Vitest** (unit and integration tests) + **Playwright** (E2E)
 
 ## Project Structure
 
@@ -26,14 +26,15 @@ app/
 │   ├── hooks/                # useRecommendations (Carta data)
 │   └── components/           # CartaPick, CardSkeleton
 ├── p/[slug]/                 # Professional public profile
-├── registro/                 # Professional registration form (4 steps) + confirmacion page
+├── registro/                 # Almanac application (4 steps + password), in-place confirmation; /confirmacion redirects
+│   └── components/           # RegistroShell, RegistroSteps and SpecialtySelector for the application
 ├── profesionales/            # Directory pieces the home uses (no page, no route)
 │   ├── components/           # ProfessionalsDirectory (type + filter helpers), DirectoryFilters (FilterState), DirectoryMap
 │   └── hooks/                # useCityGeocode
 ├── pro/                      # Professional self-service portal
-│   ├── login/                # Auth entry point
-│   ├── set-password/         # First-login password setup (from approval email link)
-│   └── perfil/               # Profile editor + live Hara score panel
+│   ├── login/                # Almanac professional sign-in, password recovery and application link
+│   ├── set-password/         # Almanac password setup for older profiles and recovery links
+│   └── perfil/               # Almanac review/rejection notice, or profile editor + live Hara score for active profiles
 ├── blog/                     # Editorial blog
 │   ├── [slug]/               # Article detail page
 │   └── escribir/             # Admin: write/upload .md post
@@ -126,6 +127,7 @@ These are non-negotiable process rules. Follow them always.
 4. **Do not take shortcuts.** No flags, workarounds, hardcoded values, or hacks to make things pass. Understand how the system works and work within it.
 5. **One thing at a time.** Complete what was agreed upon before starting something new. Test after every change.
 6. **Check the dev server before sending URLs.** Verify the port, verify the page returns 200, verify the content renders.
+   **UI verification uses a visible Chrome window** (user instruction, 2026-11-06). Prefer the foreground Chrome connector; if unavailable, launch isolated Chrome with Playwright `headless: false`. Headless runs alone do not satisfy visual review. Preserve the user's existing browser windows.
 7. **Read before writing.** Always read the file, the docs, the schema, and the related code before making changes. Understand the full context.
 8. **Track everything in PLAN-main.md.** Any new task discovered, any bug found, any pending item — add it immediately. Never lose track of work.
 

@@ -80,7 +80,7 @@ describe('PracticePicker', () => {
   })
 
   describe('chip selection state', () => {
-    it('selected chips should have bg-brand class', () => {
+    it('selected chips should have bg-brand-dark class', () => {
       render(
         <PracticePicker
           practices={MOCK_PRACTICES}
@@ -90,7 +90,7 @@ describe('PracticePicker', () => {
         />
       )
       const reikiButton = screen.getByRole('button', { name: 'Reiki' })
-      expect(reikiButton).toHaveClass('bg-brand')
+      expect(reikiButton).toHaveClass('bg-brand-dark')
     })
 
     it('unselected chips should have bg-surface-2 class', () => {
@@ -177,7 +177,7 @@ describe('PracticePicker', () => {
         />
       )
       const pill = screen.getByRole('button', { name: 'No tengo preferencia' })
-      expect(pill).toHaveClass('bg-brand')
+      expect(pill).toHaveClass('bg-brand-dark')
     })
 
     it('clicking a practice chip when No tengo preferencia is active calls onChange with just that key', () => {

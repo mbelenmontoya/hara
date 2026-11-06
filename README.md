@@ -35,7 +35,7 @@ Both paths end in a WhatsApp conversation between user and professional, on the 
 - **Language:** TypeScript 5.3
 - **Styling:** Tailwind CSS v4 (`@theme` directive in `app/globals.css`, NOT `theme.extend`)
 - **Database:** Supabase (PostgreSQL)
-- **Authentication:** Supabase Auth (admin only — professional `/pro/*` portal is Phase 3)
+- **Authentication:** Supabase Auth with admin and professional roles; professionals create their account at `/registro` and can edit their profile after approval.
 - **Email:** Resend (transactional)
 
 ### Infrastructure
@@ -284,7 +284,9 @@ User → /solicitar
 
 **Public Routes:**
 - `/` — home page and directory
-- `/registro` — professional registration
+- `/registro` — professional application and account creation (email + password)
+- `/pro/login` — almanac professional sign-in, password recovery and application link, reached through "Ingresar"; admin uses `/admin/login` directly
+- `/pro/set-password` - Almanac password setup from invitation/recovery tokens
 - `/p/[slug]` — professional profile
 - `/solicitar` — concierge intake form
 - `/r/[tracking_code]` — concierge recommendations
@@ -294,6 +296,8 @@ User → /solicitar
 **Protected Routes:**
 - `/admin/*` - Admin dashboard
 - `/api/admin/*` - Admin APIs
+- `/pro/perfil` - Almanac professional review status or profile editor after approval
+- `/api/pro/profile` - Professional edits, restricted to active profiles owned by the signed-in user
 - Gated by middleware in production
 
 **Controlled Endpoints:**
@@ -344,6 +348,11 @@ Before deploying:
 ## API Documentation
 
 ### Public Endpoints
+
+**POST `/api/professionals/register`**
+- Creates a confirmed professional account and a submitted profile in one request; rolls back the account if the profile insert fails
+- Requires a password of 8 to 72 characters, used only by Supabase Auth
+- Rate limit: 5 attempts per IP per hour (fails open during the known Upstash outage, ISSUES.md entry 16)
 
 **GET `/api/public/recommendations?tracking_code={code}`**
 - Returns 3 ranked professionals for a match

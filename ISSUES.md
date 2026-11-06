@@ -174,15 +174,41 @@ Fixed in part on 2026-10-16: `lib/rate-limit.ts` now waits at most 800 ms for Re
 
 **Parked on 2026-10-19:** the user wants to check this together once the redesign is done. First look in the Upstash console for an archived `sacred-calf-69756`, then compare with the Upstash variables in Vercel, and only then create a new database.
 
-### 17. No public link to professional sign-up or login
+### 19. Rejected applicants with an account cannot reapply with the same email
 
-**Found:** 2026-10-19, while adding the bottom bar.
+**Found:** 2026-11-06, while adding account creation to `/registro`.
 
-No public page links to sign-up (`/registro`) or the professional login (`/pro/login`). Professionals can only reach them with a direct URL. The bottom bar (Inicio, Buscar, Diario, Ayuda) does not include them, and neither does the design.
+New applicants already have a Supabase Auth account. After rejection and the 60-day cooldown, another application using that email returns 409 with the login/contact message. Existing profiles without an account keep the previous reapplication flow. This is explicitly out of scope in `docs/plans/2026-11-06-registro-almanac-account.md`.
 
-**Still to do:** ask Claude Design where these two links go, then add them.
+**Still to do:** define how an authenticated rejected applicant resubmits without creating a second account.
+
+### 20. Passing unit tests do not verify critical request and mail delivery
+
+**Found:** 2026-11-06, while reviewing what the test suite actually guarantees.
+
+The real registration/sign-in E2E passed while Resend rejected its example.com confirmation recipient. The admin email did arrive (checked read-only in Hara Gmail), but the test asserted neither mail receipt. SolicitarForm mocks createLead, and even the createLead test under integration mocks both DB and email, so they cannot establish that a concierge request reaches the database, admin and receiving inbox.
+
+**Verification gap:** not evidence that every live notification or concierge request is broken. The release gate needs real persisted-row/admin/inbox assertions, recorded by scenario. Plan: `docs/plans/2026-11-06-critical-flows-verification.md`, deferred by the user and unapproved. The approved portal release verifies real invitation/password/profile persistence, not inbox delivery or concierge processing.
+
+### 21. Required server fields accept unusable values
+
+**Found:** 2026-11-06, reproduced with isolated diagnostic tests.
+
+Registration returns 200 and attempts account/profile insertion for a whitespace name, a 60-space biography, or specialties containing an empty string. createLead accepts a concierge input with no email or WhatsApp. These were verified against the actual handlers with mocked external services; no invalid live row was inserted. The public form validates contacts, but a broken mapper/direct caller can bypass that protection.
+
+**Still to do:** persist the RED cases and validate at server boundaries without rejecting optional fields. Root causes and affected callers are in `docs/plans/2026-11-06-critical-flows-verification.md`.
+
+### 22. Contact event is not retried when the browser refuses sendBeacon
+
+**Found:** 2026-11-06, during the domain-flow test review.
+
+`ContactButton` checks whether sendBeacon exists, but ignores a false return and does not use its fetch fallback. An isolated diagnostic forced false and expected a POST fallback; the assertion failed with zero calls (`/tmp/hara-beacon-rejection-probe.log`). The original source/test was restored; no real contact was sent.
+
+**Impact to verify end to end:** contact statistics and opt-in review eligibility can miss the interaction even when the WhatsApp destination remains usable. Fix remains unapproved under the revised critical-flow plan.
 
 ## Done
+
+- 2026-11-06: fixed entry 17 (found 2026-10-19 while adding the bottom bar): professional sign-up and login previously required direct URLs, and neither the bottom bar nor the design exposed them. The shared bottom menu has one "Ingresar" link to `/pro/login`, exclusively presented as professional access. The user removed the separate registration/admin entry links; admin uses `/admin/login` directly. The user moved these out of the masthead after reviewing the first implementation; the centered home logo is restored.
 
 - 2026-11-06: fixed entry 18 (any signed-in professional could open the admin). Access now depends on the role in the Supabase Auth user (`app_metadata.role`, only writable by the server): `admin` opens `/admin` and `/api/admin`, `professional` opens `/pro`. Also fixed: the admin write routes (Crear match, practices create/edit/discard, PQL adjust) returned 503 on the live site because the old `getAdminUserId` rejected every request in production. They now use `requireAdmin()`, guarded by `app/api/admin/admin-auth.production.test.ts`, which runs them with `NODE_ENV=production`.
 - 2026-10-02: removed the old directory page `/profesionales` but kept its components for the new design (it redirects to `/`), moved sign-up from `/profesionales/registro` to `/registro` (old addresses redirect), and pointed the nav, other pages, emails, docs and tests to the new places.

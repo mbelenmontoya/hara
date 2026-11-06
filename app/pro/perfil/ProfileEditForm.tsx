@@ -7,7 +7,6 @@ import { ScoreRing, ScoreBreakdown } from '@/app/admin/professionals/[id]/review
 import { PracticePicker } from '@/app/components/PracticePicker'
 import { SpecialtySelector } from '@/app/registro/components/SpecialtySelector'
 import { PlacesAutocomplete } from '@/app/components/PlacesAutocomplete'
-import { GlassCard } from '@/app/components/ui/GlassCard'
 
 // Full editable profile — all fields the professional can change
 export interface EditableProfessional {
@@ -55,6 +54,9 @@ function ReadOnlyScorePanel({ score }: { score: ReturnType<typeof calculateProfi
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+const INPUT_CLASS = 'w-full rounded-[14px] bg-background px-3.5 py-[13px] text-base text-foreground outline-none placeholder:text-gray-700 focus-visible:ring-2 focus-visible:ring-brand'
+const CARD_CLASS = 'min-w-0 space-y-4 rounded-3xl bg-gray-50 p-5 sm:p-6'
+
 const MODALITY_OPTIONS = [
   { value: 'presencial', label: 'Presencial' },
   { value: 'online', label: 'Online' },
@@ -79,7 +81,7 @@ export default function ProfileEditForm({ professional, practices }: Props) {
   const [modality, setModality] = useState<string[]>(professional.modality ?? [])
   const [specialties, setSpecialties] = useState<string[]>(professional.specialties ?? [])
   const [selectedPractices, setSelectedPractices] = useState<string[]>(professional.practices ?? [])
-  const [serviceType, setServiceType] = useState<string[]>(professional.service_type ?? [])
+  const [serviceType] = useState<string[]>(professional.service_type ?? [])
   const [shortDescription, setShortDescription] = useState(professional.short_description ?? '')
   const [bio, setBio] = useState(professional.bio ?? '')
   const [experienceDescription, setExperienceDescription] = useState(professional.experience_description ?? '')
@@ -170,80 +172,82 @@ export default function ProfileEditForm({ professional, practices }: Props) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
       {/* Live score panel */}
-      <GlassCard>
-        <h2 className="text-sm font-semibold text-muted uppercase tracking-wider mb-4">
+      <aside aria-label="Índice Hara" className="order-2 rounded-3xl bg-gray-50 p-5 sm:p-6 lg:sticky lg:top-6">
+        <h2 className="font-almanac-serif mb-5 text-[28px] leading-tight">
           Índice Hara
         </h2>
         <ReadOnlyScorePanel score={score} />
-      </GlassCard>
+      </aside>
 
       {/* Edit form */}
-      <GlassCard>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} aria-label="Editar perfil" className="order-1 min-w-0 space-y-5 [&_button]:min-h-11">
 
           {/* Personal */}
-          <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">Datos personales</h3>
+          <section className={CARD_CLASS}>
+            <h3 className="font-almanac-serif mb-4 text-[28px] leading-tight">Datos personales</h3>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label htmlFor="pro-name" className="block text-sm font-medium text-foreground mb-1">
                 Nombre completo
               </label>
-              <input
+              <input id="pro-name"
                 type="text"
                 value={fullName}
                 onChange={e => setFullName(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50 transition-all"
+                className={INPUT_CLASS}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label htmlFor="pro-email" className="block text-sm font-medium text-foreground mb-1">
                 Email
                 <span className="ml-2 text-xs text-muted font-normal">(no editable)</span>
               </label>
-              <input
+              <input id="pro-email"
                 type="email"
                 value={professional.email}
                 disabled
-                className="w-full px-4 py-3 bg-surface-2 border border-outline rounded-xl text-muted cursor-not-allowed"
+                className="w-full rounded-[14px] bg-surface-2 px-3.5 py-[13px] text-base text-gray-700 cursor-not-allowed"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label htmlFor="pro-whatsapp" className="block text-sm font-medium text-foreground mb-1">
                 WhatsApp
               </label>
-              <input
+              <input id="pro-whatsapp"
                 type="text"
                 value={whatsapp}
                 onChange={e => setWhatsapp(e.target.value)}
                 placeholder="+5491112345678"
-                className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50 transition-all"
+                className={INPUT_CLASS}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label htmlFor="pro-instagram" className="block text-sm font-medium text-foreground mb-1">
                 Instagram
               </label>
-              <input
+              <input id="pro-instagram"
                 type="text"
                 value={instagram}
                 onChange={e => handleInstagramChange(e.target.value)}
                 placeholder="tu_usuario"
-                className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50 transition-all"
+                className={INPUT_CLASS}
               />
             </div>
           </section>
 
           {/* Location */}
-          <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">Ubicación</h3>
+          <section className={CARD_CLASS}>
+            <h3 className="font-almanac-serif mb-4 text-[28px] leading-tight">Ubicación</h3>
+            <label htmlFor="pro-city" className="block text-sm font-medium">Ciudad o localidad</label>
             <PlacesAutocomplete
+              id="pro-city"
+              className={INPUT_CLASS}
               value={city}
               onChange={(value, placeData) => {
                 setCity(value)
@@ -255,7 +259,7 @@ export default function ProfileEditForm({ professional, practices }: Props) {
               }}
               placeholder="Ciudad o localidad"
             />
-            <label className="flex items-center gap-3 cursor-pointer">
+            <label className="flex min-h-11 items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={onlineOnly}
@@ -267,11 +271,11 @@ export default function ProfileEditForm({ professional, practices }: Props) {
           </section>
 
           {/* Modality */}
-          <section className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">Modalidad de atención</h3>
+          <section className={CARD_CLASS} role="group" aria-labelledby="pro-modality-label">
+            <h3 id="pro-modality-label" className="font-almanac-serif mb-4 text-[28px] leading-tight">Modalidad de atención</h3>
             <div className="flex flex-wrap gap-3">
               {MODALITY_OPTIONS.map(({ value, label }) => (
-                <label key={value} className="flex items-center gap-2 cursor-pointer">
+                <label key={value} className="flex min-h-11 items-center gap-2 rounded-full bg-background px-4 cursor-pointer focus-within:ring-2 focus-within:ring-brand">
                   <input
                     type="checkbox"
                     checked={modality.includes(value)}
@@ -285,8 +289,8 @@ export default function ProfileEditForm({ professional, practices }: Props) {
           </section>
 
           {/* Practices */}
-          <section className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">Prácticas</h3>
+          <section className={CARD_CLASS}>
+            <h3 className="font-almanac-serif mb-4 text-[28px] leading-tight">Prácticas</h3>
             <PracticePicker
               practices={practices}
               selected={selectedPractices}
@@ -296,8 +300,7 @@ export default function ProfileEditForm({ professional, practices }: Props) {
           </section>
 
           {/* Specialties */}
-          <section className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">Especialidades</h3>
+          <section className={CARD_CLASS}>
             <SpecialtySelector
               selected={specialties}
               onChange={setSpecialties}
@@ -305,82 +308,82 @@ export default function ProfileEditForm({ professional, practices }: Props) {
           </section>
 
           {/* Descriptions */}
-          <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">Descripciones</h3>
+          <section className={CARD_CLASS}>
+            <h3 className="font-almanac-serif mb-4 text-[28px] leading-tight">Descripciones</h3>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label htmlFor="pro-short-description" className="block text-sm font-medium text-foreground mb-1">
                 Descripción corta
               </label>
-              <textarea
+              <textarea id="pro-short-description"
                 value={shortDescription}
                 onChange={e => setShortDescription(e.target.value)}
                 placeholder="Una descripción breve de tu práctica..."
                 rows={2}
-                className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50 transition-all resize-none"
+                className={`${INPUT_CLASS} resize-y`}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label htmlFor="pro-bio" className="block text-sm font-medium text-foreground mb-1">
                 Biografía
               </label>
-              <textarea
+              <textarea id="pro-bio"
                 value={bio}
                 onChange={e => setBio(e.target.value)}
                 placeholder="Contá quién sos y tu camino en esta práctica..."
                 rows={4}
-                className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50 transition-all resize-none"
+                className={`${INPUT_CLASS} resize-y`}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label htmlFor="pro-experience" className="block text-sm font-medium text-foreground mb-1">
                 Experiencia
               </label>
-              <textarea
+              <textarea id="pro-experience"
                 value={experienceDescription}
                 onChange={e => setExperienceDescription(e.target.value)}
                 placeholder="Describí tu formación y experiencia..."
                 rows={3}
-                className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50 transition-all resize-none"
+                className={`${INPUT_CLASS} resize-y`}
               />
             </div>
           </section>
 
           {/* Service & pricing */}
-          <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">Servicio y precios</h3>
+          <section className={CARD_CLASS}>
+            <h3 className="font-almanac-serif mb-4 text-[28px] leading-tight">Servicio y precios</h3>
 
-            <div className="flex gap-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div className="flex-1">
-                <label className="block text-sm font-medium text-foreground mb-1">Precio mín</label>
-                <input
+                <label htmlFor="pro-price-min" className="block text-sm font-medium text-foreground mb-1">Precio mínimo</label>
+              <input id="pro-price-min"
                   type="number"
                   value={priceMin}
                   onChange={e => setPriceMin(e.target.value)}
                   placeholder="0"
                   min={0}
-                  className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50 transition-all"
+                  className={INPUT_CLASS}
                 />
               </div>
               <div className="flex-1">
-                <label className="block text-sm font-medium text-foreground mb-1">Precio máx</label>
-                <input
+                <label htmlFor="pro-price-max" className="block text-sm font-medium text-foreground mb-1">Precio máximo</label>
+              <input id="pro-price-max"
                   type="number"
                   value={priceMax}
                   onChange={e => setPriceMax(e.target.value)}
                   placeholder="0"
                   min={0}
-                  className="w-full px-4 py-3 bg-surface border border-outline rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50 transition-all"
+                  className={INPUT_CLASS}
                 />
               </div>
-              <div className="w-28">
-                <label className="block text-sm font-medium text-foreground mb-1">Moneda</label>
-                <select
+              <div className="min-w-0">
+                <label htmlFor="pro-currency" className="block text-sm font-medium text-foreground mb-1">Moneda</label>
+              <select id="pro-currency"
                   value={currency}
                   onChange={e => setCurrency(e.target.value)}
-                  className="w-full px-3 py-3 bg-surface border border-outline rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50 transition-all"
+                  className={INPUT_CLASS}
                 >
                   <option value="ARS">ARS</option>
                   <option value="USD">USD</option>
@@ -389,7 +392,7 @@ export default function ProfileEditForm({ professional, practices }: Props) {
               </div>
             </div>
 
-            <label className="flex items-center gap-3 cursor-pointer">
+            <label className="flex min-h-11 items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={acceptingClients}
@@ -402,12 +405,12 @@ export default function ProfileEditForm({ professional, practices }: Props) {
 
           {/* Save feedback */}
           {saveSuccess && (
-            <div className="p-3 bg-success-weak border border-success/20 rounded-xl text-sm text-success">
+            <div role="status" className="rounded-2xl bg-success-weak p-4 text-sm text-success-dark">
               ¡Cambios guardados exitosamente!
             </div>
           )}
           {saveError && (
-            <div className="p-3 bg-danger-weak border border-danger/20 rounded-xl text-sm text-danger">
+            <div role="alert" className="rounded-2xl bg-danger-weak p-4 text-sm text-danger-dark">
               {saveError}
             </div>
           )}
@@ -415,13 +418,12 @@ export default function ProfileEditForm({ professional, practices }: Props) {
           <button
             type="submit"
             disabled={saving}
-            className="w-full px-6 py-3.5 bg-brand text-white font-semibold rounded-full shadow-elevated hover:shadow-strong btn-press-glow transition-all disabled:opacity-50"
+            className="min-h-12 w-full rounded-2xl bg-brand-dark px-6 py-3.5 text-base font-medium text-gray-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand disabled:opacity-50"
           >
             {saving ? 'Guardando…' : 'Guardar cambios'}
           </button>
 
         </form>
-      </GlassCard>
     </div>
   )
 }

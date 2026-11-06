@@ -36,7 +36,7 @@ export function PracticePicker({
     onChange([])
   }
 
-  const selectedClass = 'bg-brand text-white border-brand'
+  const selectedClass = 'bg-brand-dark text-white border-brand-dark'
   const unselectedClass = 'bg-surface-2 text-foreground border-outline hover:border-brand/50'
 
   return (
@@ -51,7 +51,7 @@ export function PracticePicker({
             type="button"
             aria-pressed={isNoPreference}
             onClick={handleNoPreferenceClick}
-            className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${
+            className={`min-h-11 px-3 py-2 text-sm font-medium rounded-full border transition-all focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
               isNoPreference ? selectedClass : unselectedClass
             }`}
           >
@@ -67,7 +67,7 @@ export function PracticePicker({
               type="button"
               aria-pressed={isSelected}
               onClick={() => handleChipClick(p.key)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${
+              className={`min-h-11 px-3 py-2 text-sm font-medium rounded-full border transition-all focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
                 isSelected ? selectedClass : unselectedClass
               }`}
             >

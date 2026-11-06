@@ -93,23 +93,24 @@ export function SpecialtySelector({ selected, onChange }: Props) {
   }
 
   return (
-    <div>
-      <label className="block text-sm font-medium text-foreground mb-3">
-        Especialidades * <span className="text-muted font-normal">(seleccioná al menos una)</span>
-      </label>
+    <div className="flex flex-col gap-2">
+      <p className="flex items-baseline gap-1.5 text-[14px] font-medium">
+        Especialidades <span className="text-brand">*</span>
+      </p>
+      <p className="-mt-0.5 text-[12.5px] text-muted">{selected.length ? `${selected.length} elegidas` : 'Elegí al menos una'}</p>
 
       {/* Curated toggles */}
-      <div className="flex flex-wrap gap-2 mb-3">
+      <div className="flex flex-wrap gap-[7px]">
         {SPECIALTIES.map(s => (
           <button
             key={s.value}
             type="button"
             aria-pressed={selectedCurated.includes(s.value)}
             onClick={() => toggleCurated(s.value)}
-            className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+            className={`rounded-full border-[1.5px] px-[13px] py-2 text-[13.5px] font-medium ${
               selectedCurated.includes(s.value)
-                ? 'bg-brand text-white'
-                : 'bg-surface border border-outline text-foreground hover:border-brand/50'
+                ? 'border-foreground bg-foreground text-background'
+                : 'border-foreground/12 bg-background'
             }`}
           >
             {s.label}
@@ -119,26 +120,27 @@ export function SpecialtySelector({ selected, onChange }: Props) {
 
       {/* Custom specialty inputs */}
       {customInputs.map((value, index) => (
-        <div key={index} className="flex gap-2 mb-2">
+        <div key={index} className="flex gap-2">
           <div className="flex-1">
             <input
               type="text"
+              aria-label={`Otra especialidad ${index + 1}`}
               value={value}
               onChange={(e) => handleCustomChange(e.target.value, index)}
               placeholder="Ej: Mindfulness, EMDR..."
               maxLength={CUSTOM_MAX_CHARS}
-              className={`w-full px-4 py-3 bg-surface border rounded-xl text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand transition-all text-sm ${
-                customErrors[index] ? 'border-danger' : 'border-outline'
+              className={`w-full rounded-[14px] bg-background px-3.5 py-[13px] text-base text-foreground focus-visible:ring-2 focus-visible:ring-brand outline-none placeholder:text-gray-500 ${
+                customErrors[index] ? 'shadow-[inset_0_0_0_1.5px] shadow-danger-dark' : ''
               }`}
             />
             {customErrors[index] && (
-              <p className="text-xs text-danger mt-1">{customErrors[index]}</p>
+              <p className="mt-1 text-[12.5px] text-danger-dark">{customErrors[index]}</p>
             )}
           </div>
           <button
             type="button"
             onClick={() => removeCustomField(index)}
-            className="px-3 py-2 text-muted hover:text-danger transition-colors text-sm"
+            className="flex h-[46px] w-[46px] flex-none items-center justify-center rounded-[14px] bg-surface-2 text-[14px] text-gray-700"
             aria-label="Eliminar especialidad"
           >
             ✕
@@ -151,11 +153,12 @@ export function SpecialtySelector({ selected, onChange }: Props) {
         <button
           type="button"
           onClick={addCustomField}
-          className="text-sm text-brand hover:text-brand-hover transition-colors mt-1"
+          className="w-fit rounded-[14px] bg-surface-2 px-[15px] py-2.5 text-[14px] font-medium text-brand-dark"
         >
           + Agregar otra especialidad
         </button>
       )}
+      <p className="text-[12.5px] text-muted">{customInputs.length >= MAX_CUSTOM ? 'Ya sumaste las 2 propias.' : 'Podés sumar hasta 2 propias.'}</p>
     </div>
   )
 }

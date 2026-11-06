@@ -244,7 +244,11 @@ export async function notifyRegistrationReceived({
           Hola ${safeName},
         </h2>
         <p style="font-size: 15px; color: #1F1A24; line-height: 1.6; margin-bottom: 16px;">
-          Recibimos tu solicitud para sumarte como profesional a Hara. Vamos a revisar tu perfil con calma — esto suele tomar unos pocos días.
+          Recibimos tu solicitud para sumarte como profesional a Hara. Vamos a revisar tu perfil con calma. Esto suele tomar unos pocos días.
+        </p>
+        <p style="font-size: 15px; color: #1F1A24; line-height: 1.6; margin-bottom: 16px;">
+          Ya podés entrar con tu email y contraseña para ver tu perfil mientras lo revisamos. Vas a poder editarlo cuando esté aprobado.
+          <a href="${emailBaseUrl()}/pro/login">Entrar a mi perfil</a>
         </p>
         <p style="font-size: 15px; color: #1F1A24; line-height: 1.6; margin-bottom: 16px;">
           Te escribimos en cuanto tengamos una respuesta. Si necesitás cambiar algo en tu solicitud mientras tanto, escribinos a ${ADMIN_EMAIL}.
@@ -264,11 +268,13 @@ export async function notifyProfessionalApproved({
   full_name,
   slug,
   setupUrl,
+  loginUrl,
 }: {
   to: string
   full_name: string
   slug: string
   setupUrl?: string
+  loginUrl?: string
 }): Promise<boolean> {
   const safeName = escapeHtml(full_name)
   // slug is URL-safe by construction (app/api/professionals/register/route.ts:22-30
@@ -307,10 +313,23 @@ export async function notifyProfessionalApproved({
           ¿Cómo te contactan?
         </h3>
         <p style="font-size: 14px; color: #1F1A24; line-height: 1.6; margin-bottom: 16px;">
-          Cuando alguien hace click en tu perfil, se abre un chat de WhatsApp directo a tu número. No filtramos ni intermediamos — la conversación es entre vos y el cliente.
+          Cuando alguien hace click en tu perfil, se abre un chat de WhatsApp directo a tu número. La conversación es entre vos y el cliente.
         </p>
 
-        ${setupUrl ? `
+        ${loginUrl ? `
+        <h3 style="font-size: 16px; font-weight: 600; margin-top: 24px; margin-bottom: 8px; color: #1F1A24;">
+          Editá tu perfil
+        </h3>
+        <p style="font-size: 14px; color: #1F1A24; line-height: 1.6; margin-bottom: 16px;">
+          Ya podés entrar con tu email y contraseña para actualizar tu información.
+        </p>
+        <div style="margin: 16px 0 24px;">
+          <a href="${loginUrl}" target="_blank" rel="noopener"
+             style="display: inline-block; padding: 14px 28px; background-color: #4B2BBF; color: #ffffff;
+                    text-decoration: none; border-radius: 9999px; font-size: 15px; font-weight: 600;">
+            Entrar a mi perfil
+          </a>
+        </div>` : setupUrl ? `
         <h3 style="font-size: 16px; font-weight: 600; margin-top: 24px; margin-bottom: 8px; color: #1F1A24;">
           Configurá tu acceso
         </h3>

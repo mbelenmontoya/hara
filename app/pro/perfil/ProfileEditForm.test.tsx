@@ -23,8 +23,8 @@ vi.mock('@/app/registro/components/SpecialtySelector', () => ({
 }))
 
 vi.mock('@/app/components/PlacesAutocomplete', () => ({
-  PlacesAutocomplete: ({ value, placeholder }: { value: string; placeholder?: string }) => (
-    <input data-testid="places-autocomplete" value={value} placeholder={placeholder ?? ''} readOnly />
+  PlacesAutocomplete: ({ id, value, placeholder }: { id?: string; value: string; placeholder?: string }) => (
+    <input id={id} data-testid="places-autocomplete" value={value} placeholder={placeholder ?? ''} readOnly />
   ),
 }))
 
@@ -122,17 +122,53 @@ describe('ProfileEditForm', () => {
     expect(overrideInputs.length).toBe(0)
   })
 
-  it('"Guardar cambios" POSTs to /api/pro/profile', async () => {
-    await renderForm()
-
-    const saveBtn = screen.getByRole('button', { name: /guardar/i })
-    fireEvent.click(saveBtn)
-
-    await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith(
-        '/api/pro/profile',
-        expect.objectContaining({ method: 'POST' })
-      )
+  it('saves the labeled profile fields without losing untouched values', async () => {
+    await renderForm({ service_type: ['individual'], profile_image_url: 'https://example.com/photo.jpg' })
+    fireEvent.change(screen.getByLabelText('Nombre completo'), { target: { value: ' Laura Nueva ' } })
+    fireEvent.change(screen.getByLabelText('Instagram'), { target: { value: 'https://instagram.com/laura.nueva/' } })
+    fireEvent.change(screen.getByLabelText('Biografía'), { target: { value: 'Mi nueva biografía.' } })
+    expect(screen.getByLabelText(/Email/)).toBeDisabled()
+    for (const label of ['WhatsApp', 'Ciudad o localidad', 'Descripción corta', 'Experiencia', 'Precio mínimo', 'Precio máximo', 'Moneda']) {
+      expect(screen.getByLabelText(label)).toBeInTheDocument()
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    await screen.findByRole('status')
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+    expect(mockFetch.mock.calls[0][0]).toBe('/api/pro/profile')
+    expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toEqual({
+      full_name: 'Laura Nueva', whatsapp: BASE_PRO.whatsapp, instagram: 'laura.nueva',
+      country: 'Argentina', city: 'Buenos Aires', latitude: null, longitude: null,
+      online_only: false, modality: ['presencial'], specialties: ['ansiedad'], practices: ['reiki'],
+      service_type: ['individual'], short_description: null, bio: 'Mi nueva biografía.',
+      experience_description: null, price_range_min: null, price_range_max: null,
+      currency: 'ARS', accepting_new_clients: true,
     })
+  })
+
+  it('keeps edits after a failed save and allows a successful retry', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, json: async () => ({ error: 'No se pudo guardar.' }) })
+    await renderForm()
+    fireEvent.change(screen.getByLabelText('Descripción corta'), { target: { value: 'Este texto no se puede perder.' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo guardar.')
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Descripción corta')).toHaveValue('Este texto no se puede perder.')
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    expect(await screen.findByRole('status')).toHaveTextContent('Cambios guardados')
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+  })
+
+  it('preserves zero prices and blocks another save while the request is pending', async () => {
+    let finish!: (value: { ok: boolean }) => void
+    mockFetch.mockReturnValueOnce(new Promise(resolve => { finish = resolve }))
+    await renderForm({ price_range_min: 0, price_range_max: 0 })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    const saving = screen.getByRole('button', { name: 'Guardando…' })
+    expect(saving).toBeDisabled()
+    fireEvent.click(saving)
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+    expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toMatchObject({ price_range_min: 0, price_range_max: 0 })
+    finish({ ok: true })
+    await screen.findByRole('status')
   })
 })

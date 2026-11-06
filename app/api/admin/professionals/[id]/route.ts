@@ -13,7 +13,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { logError } from '@/lib/monitoring'
 import { getActivePractices, validatePracticeKeys } from '@/lib/practices'
-import { notifyProfessionalApproved, notifyProfessionalRejected } from '@/lib/email'
+import { emailBaseUrl, notifyProfessionalApproved, notifyProfessionalRejected } from '@/lib/email'
 import { generateProAccessLink } from '@/lib/pro-invite'
 
 export const runtime = 'nodejs'
@@ -156,7 +156,7 @@ export async function PATCH(
 
   const { data: existing, error: fetchError } = await supabaseAdmin
     .from('professionals')
-    .select('id, status, email, full_name, slug')
+    .select('id, status, email, full_name, slug, user_id')
     .eq('id', id)
     .single()
 
@@ -236,9 +236,8 @@ export async function PATCH(
     return NextResponse.json({ error: 'Error al aprobar el perfil' }, { status: 500 })
   }
 
-  // Generate invite link — await because setupUrl is needed for the email.
-  // Failure is non-blocking: null → email uses fallback copy.
-  const accessLink = await generateProAccessLink({
+  // Older applicants still need to set a password; new ones already have an account.
+  const accessLink = existing.user_id ? null : await generateProAccessLink({
     email: existing.email,
     professionalId: id,
   })
@@ -249,6 +248,7 @@ export async function PATCH(
     full_name: existing.full_name,
     slug: existing.slug,
     setupUrl: accessLink?.setupUrl,
+    loginUrl: existing.user_id ? `${emailBaseUrl()}/pro/login` : undefined,
   }).catch(() => {})
 
   return NextResponse.json({ success: true, status: 'active' })

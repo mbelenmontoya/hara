@@ -121,12 +121,16 @@ export async function POST(request: NextRequest) {
     // 2. Resolve professional by user_id — proves ownership at data layer
     const { data: pro } = await supabaseAdmin
       .from('professionals')
-      .select('id')
+      .select('id, status')
       .eq('user_id', user.id)
       .maybeSingle()
 
     if (!pro?.id) {
       return NextResponse.json({ error: 'No tenés un perfil asociado' }, { status: 403 })
+    }
+
+    if (pro.status !== 'active') {
+      return NextResponse.json({ error: 'Solo podés editar tu perfil cuando esté aprobado.' }, { status: 403 })
     }
 
     // 3. Parse body — accepts multipart/form-data (browser) or JSON (tests/API)

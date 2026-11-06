@@ -1,8 +1,18 @@
 # Hara Vital — Completed Work
 
-**Last Updated:** 2026-03-11
+**Last Updated:** 2026-11-06
 
 ---
+
+## Professional accounts and almanac portal (2026-11-06)
+
+- [x] Registration creates a professional Auth account linked to its submitted profile, with account rollback if profile insertion fails.
+- [x] Four-step almanac application, professional login, profile editor/status notices and invitation/recovery password screens.
+- [x] Submitted/rejected profiles cannot edit; active professionals retain editing and their live Hara score.
+- [x] Public bottom menu: Inicio, Diario, Ayuda, Ingresar; admin access remains by direct URL.
+- [x] Email templates distinguish an existing account's login from older profiles' password invitations.
+- [x] Production build and TypeScript passed. Visible Chrome verified real Auth invitation/recovery, profile persistence/public display, retry, restrictions and responsive controls; temporary profile and Auth account deleted and absence checked.
+- [x] Final user approval and authorization to commit/push received. Limitations remain in ISSUES.md: Upstash, mail/concierge verification gaps, server validation and rejected-account reapplication. Practice classification for 41 existing profiles is next.
 
 ## Week 1: Database Schema + RLS + Admin APIs
 

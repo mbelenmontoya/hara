@@ -58,6 +58,8 @@ describe('notifyRegistrationReceived', () => {
 
     expect(ok).toBe(true)
     expect(getSentEmail().subject).toBe('Recibimos tu solicitud en Hara')
+    expect(getSentEmail().html).toContain('Ya podés entrar con tu email y contraseña')
+    expect(getSentEmail().html).toMatch(/href="[^"]*\/pro\/login"/)
   })
 
   it('addresses the recipient by name (escaped)', async () => {
@@ -77,6 +79,19 @@ describe('notifyRegistrationReceived', () => {
 // ── notifyProfessionalApproved ───────────────────────────────────────────────
 
 describe('notifyProfessionalApproved', () => {
+  it('uses the login link and existing password when the applicant has an account', async () => {
+    const { notifyProfessionalApproved } = await import('./email')
+    await notifyProfessionalApproved({
+      to: 'pro@example.com', full_name: 'Laura', slug: 'laura-giraudo',
+      loginUrl: 'https://haravital.app/pro/login',
+    })
+    const { html } = getSentEmail()
+    expect(html).toContain('Ya podés entrar con tu email y contraseña')
+    expect(html).toContain('href="https://haravital.app/pro/login"')
+    expect(html).not.toContain('Configurá tu acceso')
+    expect(html).not.toContain('Creá tu contraseña')
+  })
+
   it('sends an email with the PRD subject', async () => {
     const { notifyProfessionalApproved } = await import('./email')
 

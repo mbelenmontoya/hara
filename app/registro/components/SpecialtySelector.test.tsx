@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi } from 'vitest'
 import { SpecialtySelector } from './SpecialtySelector'
 
-describe('SpecialtySelector — curated toggles', () => {
+describe('SpecialtySelector: curated toggles', () => {
   it('renders 12 curated buttons with aria-pressed reflecting selection state', () => {
     render(<SpecialtySelector selected={['estres-ansiedad']} onChange={vi.fn()} />)
     expect(screen.getByRole('button', { name: 'Estrés y ansiedad' })).toHaveAttribute('aria-pressed', 'true')
@@ -23,7 +23,7 @@ describe('SpecialtySelector — curated toggles', () => {
   })
 })
 
-describe('SpecialtySelector — custom fields', () => {
+describe('SpecialtySelector: custom fields', () => {
   it('reveals input on "Agregar otra" click and adds valid custom to onChange', async () => {
     const onChange = vi.fn()
     render(<SpecialtySelector selected={[]} onChange={onChange} />)

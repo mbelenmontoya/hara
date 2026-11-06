@@ -10,7 +10,8 @@ import { getActiveProfessionals } from '@/lib/active-professionals'
 import { formatAlmanacDate, getMoonPhase } from '@/lib/moon-phase'
 import { HomeArrival } from './HomeArrival'
 import { HomeConcierge } from './HomeConcierge'
-import { HomeBottomNav, HomeSearchProvider } from './HomeSearch'
+import { HomeSearchProvider } from './HomeSearch'
+import { AlmanacBottomNav } from './components/AlmanacBottomNav'
 
 // Always render fresh: ranking and Destacado expiry change behind the scenes, and so does the date.
 export const dynamic = 'force-dynamic'
@@ -62,7 +63,7 @@ export default async function HomePage() {
           </HomeArrival>
         </div>
       </main>
-      <HomeBottomNav />
+      <AlmanacBottomNav active="inicio" />
     </HomeSearchProvider>
   )
 }

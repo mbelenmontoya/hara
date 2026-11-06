@@ -44,6 +44,7 @@ vi.mock('@/lib/supabase-admin', () => ({
 vi.mock('@/lib/monitoring', () => ({ logError: vi.fn() }))
 
 vi.mock('@/lib/email', () => ({
+  emailBaseUrl: () => 'https://haravital.app',
   notifyProfessionalApproved: vi.fn().mockResolvedValue(true),
   notifyProfessionalRejected: vi.fn().mockResolvedValue(true),
 }))
@@ -167,6 +168,26 @@ describe('PATCH /api/admin/professionals/[id] — approve/reject email firing', 
       full_name: 'Laura Giraudo',
       slug: 'laura-giraudo',
       setupUrl: SETUP_URL,
+      loginUrl: undefined,
+    })
+  })
+
+  it('approves an applicant with an account using login, without generating an invitation', async () => {
+    const { notifyProfessionalApproved } = await import('@/lib/email')
+    const { generateProAccessLink } = await import('@/lib/pro-invite')
+    builders.fetchSingle.mockResolvedValue({ data: { ...SUBMITTED_PRO, user_id: 'auth-user-id' }, error: null })
+    builders.proUpdateEq.mockResolvedValue({ error: null })
+
+    const res = await PATCH(makePatchReq({ action: 'approve' }), { params: { id: ID } })
+
+    expect(res.status).toBe(200)
+    expect(generateProAccessLink).not.toHaveBeenCalled()
+    expect(notifyProfessionalApproved).toHaveBeenCalledWith({
+      to: SUBMITTED_PRO.email,
+      full_name: SUBMITTED_PRO.full_name,
+      slug: SUBMITTED_PRO.slug,
+      setupUrl: undefined,
+      loginUrl: 'https://haravital.app/pro/login',
     })
   })
 

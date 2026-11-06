@@ -19,7 +19,7 @@ const NAV_LINKS = [
 ]
 
 const EXCLUDED_PREFIXES = ['/admin', '/r/', '/r/review']
-const EXCLUDED_EXACT = ['/', '/que-es-hara', '/solicitar', '/blog']
+const EXCLUDED_EXACT = ['/', '/que-es-hara', '/solicitar', '/blog', '/registro', '/pro/login', '/pro/perfil', '/pro/set-password']
 const DIARIO_WRITE_PATH = '/blog/escribir'
 
 export function SiteHeader() {

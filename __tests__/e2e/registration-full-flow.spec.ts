@@ -40,6 +40,7 @@ const GOOGLE_MAPS_MOCK_SCRIPT = `
     maps: {
       places: {
         Autocomplete: function(inputEl, options) {
+          if (inputEl.id !== 'reg-city') return { addListener: function() {}, getPlace: function() { return {}; } };
           return {
             addListener: function(event, callback) {
               if (event === 'place_changed') {
@@ -141,11 +142,12 @@ test.describe('Professional Registration — Full Flow', () => {
   const TEST_EXPERIENCE = '10 años de experiencia clínica. UBA. Posgrado en TCC.'
 
   test.beforeAll(() => {
+    expect(getCleanupClient(), 'Supabase credentials are required for account cleanup').not.toBeNull()
     // Fresh timestamp + random suffix per test session (safe against retries)
     const ts = Date.now()
     const rand = Math.random().toString(36).slice(2, 6)
     TEST_NAME = `E2E Test Prof ${ts}`
-    TEST_EMAIL = `e2e-${ts}-${rand}@test.hara.com`
+    TEST_EMAIL = `hara-registro-${ts}-${rand}@example.com`
 
     // Write temp image file for upload
     tempImagePath = join(tmpdir(), `hara-e2e-profile-${ts}.jpg`)
@@ -165,27 +167,24 @@ test.describe('Professional Registration — Full Flow', () => {
       return
     }
 
-    if (createdId) {
-      // Upload always uses .jpg extension (tempImagePath ends with .jpg)
-      const { error: storageErr } = await supabase.storage
-        .from('profile-images')
-        .remove([`${createdId}.jpg`])
-      if (storageErr) {
-        console.warn(`[cleanup] Storage cleanup error for ${createdId}:`, storageErr.message)
+    const { data: pro, error: lookupError } = await supabase.from('professionals')
+      .select('id, user_id').eq('email', TEST_EMAIL).maybeSingle()
+    expect(lookupError).toBeNull()
+    if (pro) {
+      const { error: storageError } = await supabase.storage.from('profile-images').remove([`${pro.id}.jpg`])
+      expect(storageError).toBeNull()
+      const { error: deleteError } = await supabase.from('professionals').delete().eq('id', pro.id)
+      expect(deleteError).toBeNull()
+      if (pro.user_id) {
+        const { error: authError } = await supabase.auth.admin.deleteUser(pro.user_id)
+        expect(authError).toBeNull()
+        const { data: deletedUser } = await supabase.auth.admin.getUserById(pro.user_id)
+        expect(deletedUser.user).toBeNull()
       }
-    }
-
-    if (createdSlug) {
-      const { error: dbErr } = await supabase
-        .from('professionals')
-        .delete()
-        .eq('slug', createdSlug)
-      if (dbErr) {
-        console.warn(`[cleanup] DB cleanup error for slug "${createdSlug}":`, dbErr.message)
-        console.warn('[cleanup] Manual cleanup needed: DELETE FROM professionals WHERE slug =', createdSlug)
-      } else {
-        console.log(`[cleanup] Deleted test professional: ${createdSlug}`)
-      }
+      const { data: remaining, error: verifyError } = await supabase.from('professionals')
+        .select('id').eq('email', TEST_EMAIL)
+      expect(verifyError).toBeNull()
+      expect(remaining).toEqual([])
     }
   })
 
@@ -215,6 +214,7 @@ test.describe('Professional Registration — Full Flow', () => {
     // ── Step 0: Fill personal data ──────────────────────────────────────────
     await page.getByPlaceholder('Ej: María García López').fill(TEST_NAME)
     await page.getByPlaceholder('tu@email.com').fill(TEST_EMAIL)
+    await page.getByLabel(/^Contraseña/).fill('Hara-e2e-registro-2026!')
 
     // Fill location input (types the city name; PlacesAutocomplete onChange sets raw city string)
     const locationInput = page.getByPlaceholder('Buscar ciudad...')
@@ -225,6 +225,7 @@ test.describe('Professional Registration — Full Flow', () => {
     // only after new Autocomplete(...).addListener('place_changed', cb) is called.
     await page.waitForFunction(
       () => !!(window as Window & { __isPlaceListenerReady?: () => boolean }).__isPlaceListenerReady?.(),
+      undefined,
       { timeout: 8000, polling: 100 }
     )
 
@@ -233,22 +234,13 @@ test.describe('Professional Registration — Full Flow', () => {
       () => (window as Window & { __triggerPlaceChanged?: () => void }).__triggerPlaceChanged?.()
     )
 
-    // Wait for the location input value to change to the formatted address.
-    // This is the observable DOM effect of setInputValue(placeData.formattedAddress) inside
-    // the place_changed handler — confirms the React handler completed.
-    await page.waitForFunction(
-      () => {
-        const el = document.querySelector('input[placeholder="Buscar ciudad..."]') as HTMLInputElement | null
-        return el?.value === 'Buenos Aires, Argentina'
-      },
-      { timeout: 5000, polling: 100 }
-    )
+    await expect(locationInput).toHaveValue(/^Buenos Aires(?:, Argentina)?$/)
 
     // Fill phone (Argentina +54 is auto-set by the location mock setting countryCode='AR')
     await page.getByPlaceholder('1123456789').fill(TEST_PHONE)
 
     // Fill Instagram
-    await page.getByPlaceholder('tu_usuario').fill(TEST_INSTAGRAM)
+    await page.getByPlaceholder('tuusuario').fill(TEST_INSTAGRAM)
 
     // Screenshot: Step 0 filled
     await page.screenshot({
@@ -266,11 +258,11 @@ test.describe('Professional Registration — Full Flow', () => {
     // Select modality: Ambos (verify via CSS class since no aria-pressed on modality buttons)
     const ambosBtn = page.getByRole('button', { name: 'Ambos' })
     await ambosBtn.click()
-    await expect(ambosBtn).toHaveClass(/bg-brand/)
+    await expect(ambosBtn).toHaveAttribute('aria-pressed', 'true')
 
     // Select specialties (aria-pressed toggles)
-    const ansiedadBtn = page.getByRole('button', { name: 'Ansiedad' })
-    const autoestimaBtn = page.getByRole('button', { name: 'Autoestima' })
+    const ansiedadBtn = page.getByRole('button', { name: 'Estrés y ansiedad' })
+    const autoestimaBtn = page.getByRole('button', { name: 'Autoconocimiento' })
     await ansiedadBtn.click()
     await autoestimaBtn.click()
     await expect(ansiedadBtn).toHaveAttribute('aria-pressed', 'true')
@@ -314,10 +306,10 @@ test.describe('Professional Registration — Full Flow', () => {
     await expect(submitBtn).toBeDisabled()
 
     // Fill short description
-    await page.getByPlaceholder(/Ej: Psicóloga especializada/).fill(TEST_SHORT_DESC)
+    await page.getByLabel('Frase corta sobre vos').fill(TEST_SHORT_DESC)
 
     // Fill bio (must be ≥50 chars for canProceed() to return true)
-    const bioTextarea = page.getByPlaceholder(/Contá un poco sobre tu enfoque/)
+    const bioTextarea = page.getByLabel(/^Sobre vos/)
     await bioTextarea.fill(TEST_BIO)
     expect(TEST_BIO.length).toBeGreaterThanOrEqual(50)
 
@@ -388,13 +380,25 @@ test.describe('Professional Registration — Full Flow', () => {
     }
 
     // ── Confirmation page ────────────────────────────────────────────────────
-    await page.waitForURL('**/registro/confirmacion')
+    await expect(page).toHaveURL(/\/registro$/)
     await expect(page.getByRole('heading', { name: '¡Solicitud enviada!' })).toBeVisible()
-    await expect(page.getByText('Recibimos tu información')).toBeVisible()
+    await expect(page.getByText(/Recibimos tu información/)).toBeVisible()
 
-    // Screenshot: Confirmation
+    await page.getByRole('link', { name: 'Entrar a mi perfil' }).click()
+    await expect(page.getByRole('heading', { name: 'Entrá a tu perfil' })).toBeVisible()
+    await page.screenshot({ path: `${screenshotDir()}/05-login.png`, fullPage: true })
+    await page.getByPlaceholder('tu@email.com').fill(TEST_EMAIL)
+    await page.locator('input[type="password"]').fill('Hara-e2e-registro-2026!')
+    await page.getByRole('button', { name: 'Ingresar', exact: true }).click()
+    await expect(page).toHaveURL(/\/pro\/perfil$/)
+    await expect(page.getByText('Tu perfil está en revisión. Te avisamos por email cuando esté publicado.')).toBeVisible()
+    await expect(page.getByRole('button', { name: /Guardar/ })).toHaveCount(0)
+    const forbidden = await page.request.post('/api/pro/profile', { data: { full_name: 'Should not save' } })
+    expect(forbidden.status()).toBe(403)
+
+    // Screenshot: review notice
     await page.screenshot({
-      path: `${screenshotDir()}/05-confirmation.png`,
+      path: `${screenshotDir()}/05-review-notice.png`,
       fullPage: true,
     })
   })

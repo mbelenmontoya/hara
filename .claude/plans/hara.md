@@ -1,6 +1,8 @@
 # Plan: hara
 
 ## Overview
+
+Current status checked 2026-11-06: admin redesign and role-based access are committed and pushed (`ef13ca2`, `e73d5fa`; local `main` matches `origin/main`). The user approved registration/account creation, pending-profile restrictions, email instructions, professional login and the final four-item menu for commit and push after verification. The approved follow-up migrated `/pro/perfil` and `/pro/set-password` to almanac too; those changes also received final user approval after the visible Chrome run. Real Auth invite/recovery and active-profile saving/public persistence passed with a temporary fixture; its profile and account were deleted. Read-only queries against the real Hara database found 45 active profiles, zero linked accounts, zero professional Auth accounts, one admin, and 41 profiles needing practice review. Existing professionals still need access invitations; no invitations were sent to them. The critical-flow verification plan is deferred by the user and remains unapproved. Invitation inbox receipt is not verified by the new direct-token fixture tests.
 Hara Vital is a marketplace for holistic therapies (Argentina and Spanish-speaking markets), built with Next.js 14, Tailwind v4 and Supabase. We are applying the Claude Design "quiet almanac" redesign one page at a time and stopping after each page for review in the browser.
 
 Pages done and approved: the professional profile `/p/[slug]`, the home `/` (which is now the directory), and Ayuda `/que-es-hara`. Sign-up moved to `/registro`. The old `/profesionales` page was removed on purpose, but its components are still in `app/profesionales/components` and `app/profesionales/hooks` because the home imports from them.
@@ -14,6 +16,7 @@ Rules from the user for this work:
 - Do not restyle things that were not asked for. One page at a time. No questions in planning.
 - No em dashes or en dashes anywhere. No extra .md files except the spec plan and ISSUES.md entries.
 - Never kill processes by port or kill browsers. The dev server on port 3000 is stopped only by the PID in `/tmp/hara-dev.pid`.
+- UI checks must use a visible Chrome window (2026-11-06 user correction). Prefer the foreground connector; if occupied, use isolated headed Chrome. A headless-only run does not close visual verification.
 
 ## Success Criteria
 - [x] Home `/` has the sticky filter bar (search, Prácticas, Modalidad, Ciudad, count, Limpiar filtros, Lista/Mapa) working with real data
@@ -28,21 +31,21 @@ Rules from the user for this work:
 - [x] Carta (9c, `/r/[tracking_code]`) and review link (9d) built and checked in Chrome 2026-10-16 (plan `docs/plans/2026-10-16-almanac-carta-resena.md`, migration 024 run)
 - [x] Bottom nav bar (Inicio, Buscar, Diario, Ayuda) on the home, Diario and Ayuda, done 2026-10-19 (plan `docs/plans/2026-10-19-almanac-bottom-nav.md`). The masthead search circle was removed at the user's request.
 - [ ] Ponytail review findings decided (1 should-fix, 4 nice-to-haves, 2026-10-20)
-- [ ] Links to professional sign-up and login placed somewhere public (ISSUES.md entry 17, needs a design)
+- [x] Shared bottom menu has one "Ingresar" link to professional access; no Soy pro, Entrar or admin entry (final user clarification, 2026-11-06; ISSUES.md entry 17 done)
 - [x] `ig-network` audit of all professionals' Instagram handles done (38 handles: 22 valid, 5 possible new accounts, 11 invalid)
 - [ ] Invalid handles resolved with the professionals and the 5 candidate accounts confirmed
 - [ ] Follow phase built and run (daily cap, starting with professionals who already follow Hara)
 - [ ] Content discovery for stories built (approval required for every share)
 - [x] Redesign committed and pushed to `main` (cc2e2d7, 2026-10-28, with the 5 earlier redesign commits)
-- [x] Admin redesign (design 13) done page by page and verified (plan `docs/plans/2026-10-29-admin-almanac-redesign.md`, all 11 tasks done and VERIFIED 2026-11-06; not committed)
-- [ ] Only the admin can open `/admin` and `/api/admin`: role-based since 2026-11-06 (`app_metadata.role`, plan `docs/plans/2026-11-06-admin-role-permissions.md`). Needs the user's admin SQL and migration 026 run before pushing
-- [ ] "Soy profesional" form (`/registro`) matches design 12
+- [x] Admin redesign (design 13) done page by page and verified (plan `docs/plans/2026-10-29-admin-almanac-redesign.md`, committed and pushed as `ef13ca2`)
+- [x] Only the admin can open `/admin` and `/api/admin`: role-based (`app_metadata.role`, plan `docs/plans/2026-11-06-admin-role-permissions.md`, committed and pushed as `e73d5fa`; admin SQL and migration 026 were run by the user)
+- [x] "Soy profesional" form (`/registro`) matches design 12, creates an account and supports review status (2026-11-06; final commit/push approved)
 
 ## Constraints
 - The home imports filter logic, `DirectoryFilters`, `DirectoryMap`, `useCityGeocode` and the `DirectoryProfessional` type from `app/profesionales`. Those cannot be deleted.
 - Never show raw `professionals.specialties` free text; specialties come from the practices catalog through `resolveProfileSpecialties`.
 - Use design tokens only (no new hex colors). Fonts Instrument Serif and Jost are opt-in through `.font-almanac`, `.font-almanac-serif` and `.almanac-label`.
-- Git write commands need explicit permission. Nothing from this work is committed yet.
+- Git write commands need explicit permission. The user approved commit and push of the registration and professional portal work on 2026-11-06; Instagram changes remain excluded.
 - `.env.local` holds the real Supabase keys and is git-ignored; never print its values.
 - `ig-network`: Supabase is read-only (one SELECT). Never edit the DB from the skill; wrong handles go to the report and the user decides. No automatic scheduling: it runs only when the user launches it, and by default audits only professionals not yet in the log (or whose instagram changed in the DB). `--all` audits everyone.
 - `ig-network`: follows will be automatic but capped per day, never unfollow. Sharing content always needs the user's approval; if native share is not available, mark `manual_required` and never download or repost.
@@ -54,19 +57,21 @@ Rules from the user for this work:
 - PQLs stay in the admin. The "remove pqls" request on 2026-10-28 only meant leaving them out of the Claude Design brief.
 
 ## Next Steps
-1. **Run the role SQL, then push**
-   - What: the user runs the one-line admin SQL (in `migrations/026_auth_roles.sql`, with their email) and migration 026 in the Supabase SQL editor. I confirm the role through the API (read only), then push `ef13ca2` plus the roles commit.
-   - Why: without the admin role the live admin locks the user out; without 026 existing professionals lose `/pro`.
+1. **Classify practices for the 41 outstanding professional profiles**
+   - Spec approved and implemented 2026-11-06: `docs/plans/2026-11-06-pro-portal-almanac.md` (VERIFIED; final user approval and commit/push authorization received). Profile editor/statuses and set-password now use almanac. Production build, unit project and real invitation/edit/recovery journeys passed with a temporary account/profile, both deleted afterward. The visible Chrome run passed all six scenarios and the user approved the design. Practice classification is next. The broader critical-flow verification plan remains deferred.
+   - Remaining: practice classification; decide separately when to invite the 45 existing professionals who currently have no linked account. Approved-profile persistence has now been verified against the real database and public page. The form edits text/contact/location/practices/prices/availability, but has no photo upload control (outside this visual migration).
+   - Already done: admin redesign and role SQL/migration 026, committed and pushed. No need to rerun that migration as a next step.
 
-2. **"Soy profesional" pill and the login entry on the home**
-   - What: design 11a puts a "Soy profesional" pill to the right of the logo on the home (to `/registro`). The design has no public "Entrar"; the user wants an entry for the admin that professionals use later. Ask Claude Design where it goes, then build it.
+2. **Deliver the approved registration and portal release**
+   - What: commit and push the approved registration/account and portal changes; both specs are VERIFIED and the user explicitly authorized delivery. The final shared menu is Inicio, Diario, Ayuda, Ingresar; only Ingresar leads to professional access.
+   - Limits: the real registration/login/pending-account journey passed, but active-profile saving was not exercised in that journey. Admin notification receipt was confirmed; Resend rejected the example.com professional recipient, so professional inbox delivery remains unverified. The separate critical-flow plan is deferred by the user, not approved or completed.
 
 3. **Pushed admin redesign follow-ups**
    - What: decide on removing the now-unused `onOverride` path in `ScoreBreakdown` (also used read-only by `/pro/perfil`) and the unused `PracticeReclassificationBanner`.
 
-4. **Plan and build the "Soy profesional" form (design 12)**
-   - What: a separate /spec for `/registro` from design 12 in the same Claude Design file (`t12`).
-   - Considerations: design 12 says the public header shows only "Soy profesional" and there is no public "Entrar"; the professional gets access by email after approval. That answers most of ISSUES.md entry 17.
+4. **Registration follow-up**
+   - Done: design 12, account creation at submit, review/rejection notices, edit guard, login instructions in emails and the home entry points. New accounts work immediately with the chosen password.
+   - Deferred by the approved spec: rejected applicants who already have an account cannot resubmit with that email (ISSUES.md entry 19).
 
 5. **Decide which ponytail review findings to fix**
    - What: the review of the bottom bar and home card work (2026-10-20) found no must-fix items. Should fix: (1) a test that the map only shows the professionals of the selected card. Nice to have: (2) drop `pendingScroll` and the `animate` flag in `app/HomeSearch.tsx`, (3) move `Magnifier` back into `app/HomeFilterBar.tsx`, (4) make "Limpiar filtros" also clear the selected card (product choice), (5) drop the unused `export` on `AlmanacTab`.
@@ -76,7 +81,7 @@ Rules from the user for this work:
    - What: see ISSUES.md entry 16. Check the Upstash console first, then Vercel's variables, and only then create a new database.
 
 7. **Work through the open items in ISSUES.md**
-   - What: slow database calls with no caching, 42 of 45 professionals still need practice review, home cards barely differ because most practices map to `estres-ansiedad`, mixed tú and vos wording, the broken destello SVG, build, install and lint problems, odd `.env.local` lines, no Destacado professional in the data, unused leftovers (`RevealOnScroll`, `WelcomeModal`, stale visual baseline), and the Ayuda page's missing WhatsApp number, hours and Argentine emergency line (needs input from the user).
+   - What: slow database calls with no caching, 41 of 45 active professionals still need practice review (real DB query 2026-11-06), home cards barely differ because most practices map to `estres-ansiedad`, mixed tú and vos wording, the broken destello SVG, lint configuration, odd `.env.local` lines, no Destacado professional in the data, unused leftovers (`RevealOnScroll`, `WelcomeModal`, stale visual baseline), and the Ayuda page's missing WhatsApp number, hours and Argentine emergency line (needs input from the user). Build/install problems were previously resolved; old issue text is not evidence they remain broken.
 
 8. **Resolve the invalid Instagram handles**
    - What: decide with the user what to do with the 11 invalid handles and confirm or reject the 5 candidate accounts (Guadalupe Rodriguez, Leonela Velona, Lucina Micheloud, Sofía Belluscio, Victoria Garino).
@@ -92,6 +97,15 @@ Rules from the user for this work:
    - Considerations: test in Chrome what "Add to story" really allows for the Hara account before writing that step.
 
 ## Session Log
+
+### Session 2026-11-06 (registration account, Codex continuation)
+- Reviewed the inherited uncommitted Tasks 1 and 2, completed Tasks 3 to 5 and the documentation/verification portion of Task 6 in `docs/plans/2026-11-06-registro-almanac-account.md`.
+- Review fixes: distinguish email conflicts from weak-password errors, roll back accounts on thrown insert errors, report rollback failures without passwords, restore accessible fields/photo selection and move focus when steps change. Photo preview cleanup works when returning to step 4 in StrictMode.
+- Verified: TypeScript, 786 unit tests in 108 files, production build, five public Chrome tests, all four steps at desktop/402px with live Google suggestions. Real Supabase test created the account/profile/image, signed in, saw the review notice, received API 403 on edits, then removed all test records and checked account/profile absence.
+- Email delivery limit: example.com was rejected by Resend; copy and both approval paths are unit-tested. Actual admin password sign-in was not repeated because E2E credentials are absent; middleware tests cover the redirect.
+- Docs updated in CLAUDE.md, README.md, FINAL_SPEC.md and ISSUES.md (17 done, 19 added). Upstash remains parked under entry 16 and the configured registration limit still fails open while it is unavailable.
+- Browser MCP was occupied by another session. Used an isolated Playwright Chrome; screenshots in `/tmp/hara-registro-proof`, test config `/tmp/hara-registro-playwright.config.mjs`. Stopped only the dev server from `/tmp/hara-dev.pid`; production server remains on localhost:3000.
+- Pending: user approval for commit and push, required by Task 6. No git writes or deployment performed.
 
 ### Session — 2026-11-06 (started 2026-10-28)
 **Completed:**
@@ -239,3 +253,40 @@ Rules from the user for this work:
   5. **Do the concierge screens**
      - What: `/solicitar` form and the `/r/{tracking_code}` recommendations page (design 9a to 9d).
      - Considerations: the home already links here from three places. Re-read the round 9 screens first.
+
+### Registration review follow-up (2026-11-06)
+- User rejected the account links in the home masthead and requested more bottom-menu items. Restored the centered logo and moved registration ("Soy pro") and login ("Entrar") to the shared bottom menu on home, Diario and Ayuda.
+- User requested "← Volver" for the registration back link; changed it.
+- User asked for evidence that tests catch actual flow failures. Nine deliberate behavior-breaking mutations were all detected by existing tests; original files were restored byte for byte. Logs: `/tmp/hara-registration-mutations`. No git writes or extra live accounts.
+
+- Follow-up verification passed: TypeScript, production build, 67 affected tests and the nine home/Diario/Ayuda viewport checks at 1280/402/320px, including actual menu navigation and "← Volver". Screenshots inspected in `/tmp/hara-nav-proof`. No extra accounts or email sends.
+
+### Single professional entry clarification (2026-11-06)
+- User clarified that there must be exactly one public access link, "Ingresar", for professionals. Removed Soy pro and Entrar; public menu now has Inicio, Buscar, Diario, Ayuda and Ingresar (`/pro/login`). Admin uses its URL directly.
+- Source: `AlmanacBottomNav`'s entries and column count. Existing test was updated first and failed RED on the old two-entry menu, then the source was fixed. No auth/registration behavior or role rules changed.
+
+- Single-access verification: RED reproduced the old extra entries, GREEN passed with one Ingresar; TypeScript/build and all 786 unit tests passed. Production Chrome verified all five menu entries and professional login navigation on home/Diario/Ayuda at 320/402/1280px. Screenshots in `/tmp/hara-single-access-proof`. Lint remains blocked by missing repo ESLint configuration; no new config/dependencies added.
+
+### Professional login and bottom-search revision (2026-11-06)
+- User added `/pro/login` styling to the scope: the old visual is not acceptable for approval. Reused registration/admin almanac composition, with one logo, Volver, serif heading, cream card, warm fields and terracotta action. Preserved sign-in/redirect/recovery handlers and added the application link inside this professional entry point. The profile editor remains outside the visual scope.
+- User removed Buscar from the public bottom menu: now Inicio, Diario, Ayuda and Ingresar. Removed the nav-only search prop/wrapper; search stays in the home filter bar and #buscar links still work.
+- Tests updated first (8 expected RED failures); 25 targeted checks pass after implementation. Production visual checks at 320/402/1280px passed for login/error/recovery, home search and four-entry navigation. Build, TypeScript and 790 tests passed. Real registration/sign-in/review/403 E2E passed in 8.2 seconds and deleted the test account/profile/image. Recovery email delivery was not verified (its browser response is stubbed).
+
+### Critical-flow test coverage audit (2026-11-06)
+- User rejected test counts as a readiness signal and requested actual mail, persisted form-data and concierge outcomes plus edge cases. New concrete plan: `docs/plans/2026-11-06-critical-flows-verification.md` (PENDING approval for source fixes).
+- Confirmed coverage gap: registration E2E passed with a rejected confirmation recipient. Read-only Gmail verified its admin notice in INBOX; do not claim all mail is broken or all delivery is covered.
+- Reproduced isolated boundary bugs: whitespace name/bio and blank specialty reach registration insertion; no-contact concierge input returns a lead id. Diagnostic tests were restored/removed afterwards; no live data was created or changed.
+- Added ISSUES.md 20 (verification gaps) and 21 (required-data validation). No business fixes, migrations, extra emails or live concierge submissions performed.
+- Future readiness reports must use business scenarios/stages (browser/server/DB/admin/mail), not the count of passing units. Existing useful unit/security tests remain; no mass deletion.
+
+### Critical-flow plan rejected and revised (2026-11-06)
+- User explicitly rejected revision 1 because it only expanded their examples. No implementation is approved.
+- Read PRODUCT.md and the coupled account/recovery/approval, Carta, contact/reviews, subscription/expiry and Diario paths. Rewrote `docs/plans/2026-11-06-critical-flows-verification.md` around six Hara journeys and domain-specific state transitions, with priorities, evidence classes and unresolved product contracts.
+- New reproduced edge: sendBeacon returning false triggers no fallback contact-event request; original unit file restored byte for byte, no real message/contact/data changes (ISSUES.md 22).
+- Source findings remain observations/risks: submitted-account recovery conflicts with the new account lifecycle; approve/reject concurrency; Carta availability after professional state changes; consumed review links edit rather than create; review invite insert-before-email tradeoff; UTC/ART renewal/expiry and intentional repeated-payment behavior. Do not label all of these production bugs without reproduction and an agreed contract.
+- Pending: user's review of the new case matrix. No source fixes, schema changes, live fixtures, commits or push.
+
+### Session 2026-11-06 (final release approval)
+- User approved the headed Chrome results and explicitly requested commit and push. Both registration and portal specs are VERIFIED. Scope includes the account workflow, review/edit guard, professional almanac pages, navigation, tests and synced documentation.
+- Evidence: `/tmp/hara-pro-e2e.log` records six scenarios passing in visible Chrome, with verified cleanup. TypeScript, unit project and production build passed; lint configuration, Upstash, real inbox delivery and live Google selection remain disclosed limits.
+- Next requested work: classify practices for the 41 outstanding profiles. The broader critical-flow plan is deferred, with no business fixes authorized by this release.

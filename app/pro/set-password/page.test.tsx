@@ -45,6 +45,14 @@ async function renderSetPassword() {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('SetPasswordPage', () => {
+  it('rejects a missing token without calling Auth', async () => {
+    mockSearchParams = {}
+    await renderSetPassword()
+    expect(await screen.findByRole('heading', { name: /enlace inválido/i })).toBeInTheDocument()
+    expect(mockVerifyOtp).not.toHaveBeenCalled()
+    expect(screen.queryByRole('form')).not.toBeInTheDocument()
+  })
+
   it('shows invalid-link error state when verifyOtp fails', async () => {
     mockVerifyOtp.mockResolvedValue({ error: { message: 'Token expired' }, data: { session: null, user: null } })
 
@@ -67,6 +75,9 @@ describe('SetPasswordPage', () => {
       // Password inputs are present (type=password, not textbox role)
       expect(document.querySelectorAll('input[type="password"]').length).toBe(2)
     })
+    expect(screen.getByLabelText('Nueva contraseña')).toHaveAttribute('autoComplete', 'new-password')
+    expect(screen.getByLabelText('Repetí la contraseña')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /volver/i })).toHaveAttribute('href', '/pro/login')
   })
 
   it('passes type=invite to verifyOtp when URL param is invite', async () => {
@@ -139,5 +150,28 @@ describe('SetPasswordPage', () => {
       expect(mockUpdateUser).toHaveBeenCalledWith({ password: 'NewPassword123!' })
       expect(mockPush).toHaveBeenCalledWith('/pro/perfil')
     })
+  })
+
+  it('announces verification, blocks repeat submission and preserves fields after an Auth error', async () => {
+    let verify!: (value: { error: null }) => void
+    let save!: (value: { error: { message: string } }) => void
+    mockVerifyOtp.mockReturnValueOnce(new Promise(resolve => { verify = resolve }))
+    mockUpdateUser.mockReturnValueOnce(new Promise(resolve => { save = resolve }))
+    await renderSetPassword()
+    expect(screen.getByRole('status')).toHaveTextContent('Verificando enlace')
+    verify({ error: null })
+    const password = await screen.findByLabelText('Nueva contraseña')
+    fireEvent.change(password, { target: { value: 'StrongPassword123!' } })
+    fireEvent.change(screen.getByLabelText('Repetí la contraseña'), { target: { value: 'StrongPassword123!' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar contraseña' }))
+    expect(screen.getByRole('button', { name: 'Guardando…' })).toBeDisabled()
+    expect(screen.getByRole('status')).toHaveTextContent('Guardando contraseña')
+    fireEvent.click(screen.getByRole('button', { name: 'Guardando…' }))
+    expect(mockUpdateUser).toHaveBeenCalledTimes(1)
+    save({ error: { message: 'Auth unavailable' } })
+    expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos guardar')
+    expect(password).toHaveValue('StrongPassword123!')
+    expect(screen.getByRole('button', { name: 'Guardar contraseña' })).toBeEnabled()
+    expect(mockPush).not.toHaveBeenCalled()
   })
 })

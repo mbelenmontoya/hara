@@ -6,7 +6,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { normalizeBillingMonth } from '@/lib/billing-month'
-import { getAdminUserId } from '@/lib/admin-auth'
+import { requireAdmin } from '@/lib/require-admin'
 
 export const runtime = 'nodejs'
 
@@ -23,9 +23,9 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   // Check admin auth
-  const adminUserId = getAdminUserId()
-  if (typeof adminUserId === 'object') {
-    return NextResponse.json({ error: adminUserId.error }, { status: adminUserId.status })
+  const admin = await requireAdmin()
+  if ('error' in admin) {
+    return NextResponse.json({ error: admin.error }, { status: admin.status })
   }
 
   try {
@@ -71,7 +71,7 @@ export async function POST(
         reason: body.reason,
         notes: body.notes,
         billing_month: billingMonth,  // Normalized (first of month)
-        created_by: adminUserId,  // From auth (NOT request body)
+        created_by: admin.userId,  // From auth (NOT request body)
       })
       .select()
       .single()

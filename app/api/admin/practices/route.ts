@@ -2,11 +2,11 @@
 // GET:  list all practices (active + inactive) with usage counts.
 // POST: create a new practice (validates kebab-case key/slug, pre-checks
 //       uniqueness, busts the in-process catalog cache on success).
-// Security: Admin-only via getAdminUserId().
+// Security: Admin-only via requireAdmin() (app_metadata.role = 'admin').
 
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { getAdminUserId } from '@/lib/admin-auth'
+import { requireAdmin } from '@/lib/require-admin'
 import { loadAdminPracticesView } from '@/lib/admin-practices'
 import { bustPracticesCache } from '@/lib/practices'
 import { logError } from '@/lib/monitoring'
@@ -89,9 +89,9 @@ function validatePracticeInput(
 }
 
 export async function GET(_req: NextRequest) {
-  const adminUserId = getAdminUserId()
-  if (typeof adminUserId === 'object') {
-    return NextResponse.json({ error: adminUserId.error }, { status: adminUserId.status })
+  const admin = await requireAdmin()
+  if ('error' in admin) {
+    return NextResponse.json({ error: admin.error }, { status: admin.status })
   }
 
   try {
@@ -109,9 +109,9 @@ export async function GET(_req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const adminUserId = getAdminUserId()
-  if (typeof adminUserId === 'object') {
-    return NextResponse.json({ error: adminUserId.error }, { status: adminUserId.status })
+  const admin = await requireAdmin()
+  if ('error' in admin) {
+    return NextResponse.json({ error: admin.error }, { status: admin.status })
   }
 
   let body: unknown

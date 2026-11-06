@@ -1,12 +1,12 @@
 // Hara Vital — Admin Practices Catalog API (single resource)
 // PATCH: update label/slug/sort_order/active. `key` is immutable —
 //        any body.key that differs from params.key returns 400.
-// Security: Admin-only via getAdminUserId().
+// Security: Admin-only via requireAdmin() (app_metadata.role = 'admin').
 
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { getAdminUserId } from '@/lib/admin-auth'
+import { requireAdmin } from '@/lib/require-admin'
 import { bustPracticesCache } from '@/lib/practices'
 import { logError } from '@/lib/monitoring'
 import { CURATED_SPECIALTY_KEYS } from '@/lib/design-constants'
@@ -104,9 +104,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: { key: string } }
 ) {
-  const adminUserId = getAdminUserId()
-  if (typeof adminUserId === 'object') {
-    return NextResponse.json({ error: adminUserId.error }, { status: adminUserId.status })
+  const admin = await requireAdmin()
+  if ('error' in admin) {
+    return NextResponse.json({ error: admin.error }, { status: admin.status })
   }
 
   const urlKey = params.key

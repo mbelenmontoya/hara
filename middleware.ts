@@ -1,17 +1,18 @@
 // Hara Vital - Route Protection Middleware
-// Purpose: Gate /admin/* routes with Supabase Auth
+// Purpose: Gate /admin/* and /pro/* routes with Supabase Auth roles (app_metadata.role)
 // Public routes (/r/, /p/, /solicitar, etc.) are not affected
 
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
-import { isAdminEmail } from '@/lib/admin-auth'
+import { roleOf } from '@/lib/admin-auth'
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Always refresh session cookies (needed for Supabase Auth to work)
   const { response, user } = await updateSession(request)
+  const role = roleOf(user)
 
   // Check if this is a protected route.
   // ⛔ Use '/pro/' (with trailing slash) not '/pro': the latter also matches
@@ -23,18 +24,18 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/pro/') ||
     pathname.startsWith('/api/pro/')
 
-  // /admin/login: redirect authenticated admins to the dashboard.
-  // A signed-in non-admin (a professional) sees the login, otherwise /admin would bounce them back here forever.
+  // /admin/login: redirect admins to the dashboard.
+  // Anyone else signed in sees the login, otherwise /admin would bounce them back here forever.
   if (pathname === '/admin/login') {
-    if (user && isAdminEmail(user.email)) {
+    if (role === 'admin') {
       return NextResponse.redirect(new URL('/admin/leads', request.url))
     }
     return response
   }
 
-  // /pro/login: redirect authenticated pros to their profile
+  // /pro/login: redirect professionals to their profile (anyone else sees the login: no loop)
   if (pathname === '/pro/login') {
-    if (user) {
+    if (role === 'professional') {
       return NextResponse.redirect(new URL('/pro/perfil', request.url))
     }
     return response
@@ -64,9 +65,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // Signed in but not the admin (e.g. a professional from /pro/login): keep them out of the admin
-  const isAdminRoute = !pathname.startsWith('/pro/') && !pathname.startsWith('/api/pro/')
-  if (isAdminRoute && !isAdminEmail(user.email)) {
+  const isProRoute = pathname.startsWith('/pro/') || pathname.startsWith('/api/pro/')
+
+  // /pro is for the professional role only. The admin goes back to the admin; no role goes to the pro login.
+  if (isProRoute && role !== 'professional') {
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+    const target = role === 'admin' ? '/admin/leads' : '/pro/login'
+    return NextResponse.redirect(new URL(target, request.url))
+  }
+
+  // Everything else protected (/admin, /api/admin, /api/debug) is for the admin role only
+  if (!isProRoute && role !== 'admin') {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }

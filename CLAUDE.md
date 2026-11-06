@@ -39,7 +39,7 @@ app/
 │   └── escribir/             # Admin: write/upload .md post
 ├── solicitar/                # Concierge request form
 ├── que-es-hara/              # Support / onboarding doc (replaces /ayuda)
-├── admin/                    # Admin dashboard (almanac design 13; only emails in ADMIN_EMAILS get in)
+├── admin/                    # Admin dashboard (almanac design 13; only users with app_metadata.role = 'admin')
 │   ├── components/           # AdminUI (title, cards, badges, skeleton, empty states, pills), AdminFilterBar, AdminToast
 │   ├── analytics/            # Interaction analytics per professional (charts + download)
 │   ├── blog/                 # Blog post approval queue
@@ -58,7 +58,8 @@ lib/
 ├── attribution-tokens.ts     # JWT generation/verification
 ├── rate-limit.ts             # Upstash config
 ├── env.ts                    # Environment validation
-├── admin-auth.ts             # isAdminEmail: checks a user against ADMIN_EMAILS (used by middleware.ts)
+├── admin-auth.ts             # roleOf: a user's role from app_metadata ('admin' | 'professional'), used by middleware.ts
+├── require-admin.ts          # requireAdmin: admin check for /api/admin route handlers (no NODE_ENV branch)
 ├── admin-unread.ts           # Unread counts for the admin menu (admin_read_at, migration 025)
 ├── monitoring.ts             # Error logging (Sentry) — use this, NOT console.log
 ├── validation.ts             # IP, fingerprint, session validators

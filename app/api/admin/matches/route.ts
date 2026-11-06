@@ -8,7 +8,7 @@ import { randomUUID } from 'crypto'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { createAttributionToken } from '@/lib/attribution-tokens'
 import { generateTrackingCode } from '@/lib/tracking-code'
-import { getAdminUserId } from '@/lib/admin-auth'
+import { requireAdmin } from '@/lib/require-admin'
 
 export const runtime = 'nodejs'
 
@@ -25,9 +25,9 @@ interface CreateMatchRequest {
 
 export async function POST(req: Request) {
   // Check admin auth
-  const adminUserId = getAdminUserId()
-  if (typeof adminUserId === 'object') {
-    return NextResponse.json({ error: adminUserId.error }, { status: adminUserId.status })
+  const admin = await requireAdmin()
+  if ('error' in admin) {
+    return NextResponse.json({ error: admin.error }, { status: admin.status })
   }
 
   try {

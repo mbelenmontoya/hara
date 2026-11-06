@@ -24,15 +24,14 @@ function makeResponse() {
   }
 }
 
-const ADMIN_EMAIL = 'admin@hara.com'
-const PRO_EMAIL = 'pro@example.com'
+type Role = 'admin' | 'professional' | 'none'
 
-function buildSession(email: string | null) {
+// A signed-in user carries its role in app_metadata (set only by the server)
+function buildSession(role: Role | false) {
   const response = makeResponse()
-  return {
-    response,
-    user: email ? { id: 'user-123', email } : null,
-  }
+  if (role === false) return { response, user: null }
+  const app_metadata = role === 'none' ? {} : { role }
+  return { response, user: { id: 'user-123', email: `${role}@test.com`, app_metadata, user_metadata: {} } }
 }
 
 function makeReq(path: string): NextRequest {
@@ -41,17 +40,18 @@ function makeReq(path: string): NextRequest {
 
 // ── Helper: run middleware and extract redirect target ────────────────────────
 
-// withUser true signs in as the admin; a string signs in as that email
-async function runMiddleware(path: string, withUser: boolean | string = false) {
-  const email = withUser === true ? ADMIN_EMAIL : withUser || null
-  mockUpdateSession.mockResolvedValue(buildSession(email))
+// withUser true signs in as the admin; a role string signs in with that role; false is signed out
+async function runMiddleware(path: string, withUser: boolean | Role = false) {
+  const role: Role | false = withUser === true ? 'admin' : withUser
+  mockUpdateSession.mockResolvedValue(buildSession(role))
   const { middleware } = await import('./middleware')
   const req = makeReq(path)
   return middleware(req)
 }
 
+// The live site runs with NODE_ENV=production; a dev-only branch must not hide a failure here
 beforeEach(() => {
-  process.env.ADMIN_EMAILS = ADMIN_EMAIL
+  vi.stubEnv('NODE_ENV', 'production')
 })
 
 // ── /admin routes (regression: must still work) ─────────────────────────────
@@ -75,11 +75,11 @@ describe('/admin protection (existing behaviour)', () => {
   })
 })
 
-// ── /admin is for the admin only (ISSUES 18) ─────────────────────────────────
+// ── /admin is for the admin role only (ISSUES 18) ───────────────────────────
 
-describe('/admin rejects signed-in users who are not the admin', () => {
+describe('/admin rejects signed-in users without the admin role', () => {
   it('redirects a signed-in professional on /admin/leads to the login with no-access', async () => {
-    const res = await runMiddleware('/admin/leads', PRO_EMAIL)
+    const res = await runMiddleware('/admin/leads', 'professional')
     expect(res.status).toBe(307)
     const location = new URL(res.headers.get('location') ?? '')
     expect(location.pathname).toBe('/admin/login')
@@ -87,29 +87,32 @@ describe('/admin rejects signed-in users who are not the admin', () => {
   })
 
   it('returns 403 to a signed-in professional on /api/admin/leads', async () => {
-    const res = await runMiddleware('/api/admin/leads', PRO_EMAIL)
+    const res = await runMiddleware('/api/admin/leads', 'professional')
     expect(res.status).toBe(403)
   })
 
   it('returns 403 to a signed-in professional on /api/debug', async () => {
-    const res = await runMiddleware('/api/debug', PRO_EMAIL)
+    const res = await runMiddleware('/api/debug', 'professional')
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 403 to a signed-in user with no role on /api/admin/leads', async () => {
+    const res = await runMiddleware('/api/admin/leads', 'none')
+    expect(res.status).toBe(403)
+  })
+
+  it('does not trust a role the user wrote into their own user_metadata', async () => {
+    mockUpdateSession.mockResolvedValue({
+      response: makeResponse(),
+      user: { id: 'user-9', email: 'x@test.com', app_metadata: {}, user_metadata: { role: 'admin' } },
+    })
+    const { middleware } = await import('./middleware')
+    const res = await middleware(makeReq('/api/admin/leads'))
     expect(res.status).toBe(403)
   })
 
   it('shows /admin/login to a signed-in professional instead of redirecting (no loop)', async () => {
-    const res = await runMiddleware('/admin/login', PRO_EMAIL)
-    expect(res.status).not.toBe(307)
-  })
-
-  it('lets nobody in when ADMIN_EMAILS is empty', async () => {
-    process.env.ADMIN_EMAILS = ''
-    const res = await runMiddleware('/admin/leads', true)
-    expect(res.status).toBe(307)
-    expect(res.headers.get('location')).toMatch('/admin/login')
-  })
-
-  it('still lets a signed-in professional into /pro/perfil', async () => {
-    const res = await runMiddleware('/pro/perfil', PRO_EMAIL)
+    const res = await runMiddleware('/admin/login', 'professional')
     expect(res.status).not.toBe(307)
   })
 })
@@ -123,15 +126,42 @@ describe('/pro protection (new)', () => {
     expect(res.headers.get('location')).toMatch('/pro/login')
   })
 
-  it('lets authenticated users through to /pro/perfil', async () => {
-    const res = await runMiddleware('/pro/perfil', true)
+  it('lets a professional through to /pro/perfil', async () => {
+    const res = await runMiddleware('/pro/perfil', 'professional')
     expect(res.status).not.toBe(307)
   })
 
-  it('redirects authenticated users on /pro/login to /pro/perfil', async () => {
-    const res = await runMiddleware('/pro/login', true)
+  it('sends the admin from /pro/perfil to the admin', async () => {
+    const res = await runMiddleware('/pro/perfil', 'admin')
+    expect(res.status).toBe(307)
+    expect(new URL(res.headers.get('location') ?? '').pathname).toBe('/admin/leads')
+  })
+
+  it('sends a signed-in user with no role from /pro/perfil to /pro/login', async () => {
+    const res = await runMiddleware('/pro/perfil', 'none')
+    expect(res.status).toBe(307)
+    expect(new URL(res.headers.get('location') ?? '').pathname).toBe('/pro/login')
+  })
+
+  it('returns 403 to a user with no role on /api/pro/profile', async () => {
+    const res = await runMiddleware('/api/pro/profile', 'none')
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 403 to the admin on /api/pro/profile', async () => {
+    const res = await runMiddleware('/api/pro/profile', 'admin')
+    expect(res.status).toBe(403)
+  })
+
+  it('redirects a professional on /pro/login to /pro/perfil', async () => {
+    const res = await runMiddleware('/pro/login', 'professional')
     expect(res.status).toBe(307)
     expect(res.headers.get('location')).toMatch('/pro/perfil')
+  })
+
+  it('shows /pro/login to a signed-in user with no role (no loop)', async () => {
+    const res = await runMiddleware('/pro/login', 'none')
+    expect(res.status).not.toBe(307)
   })
 
   it('/pro/login is reachable without a session', async () => {

@@ -184,5 +184,5 @@ No public page links to sign-up (`/registro`) or the professional login (`/pro/l
 
 ## Done
 
-- 2026-11-06: fixed entry 18 (any signed-in professional could open the admin). `middleware.ts` now lets into `/admin` and `/api/admin` only the emails listed in `ADMIN_EMAILS` (`isAdminEmail` in `lib/admin-auth.ts`). Others get 403 on the API and go back to `/admin/login?error=no-access`. `ADMIN_EMAILS` must be set in Vercel before this is pushed.
+- 2026-11-06: fixed entry 18 (any signed-in professional could open the admin). Access now depends on the role in the Supabase Auth user (`app_metadata.role`, only writable by the server): `admin` opens `/admin` and `/api/admin`, `professional` opens `/pro`. Also fixed: the admin write routes (Crear match, practices create/edit/discard, PQL adjust) returned 503 on the live site because the old `getAdminUserId` rejected every request in production. They now use `requireAdmin()`, guarded by `app/api/admin/admin-auth.production.test.ts`, which runs them with `NODE_ENV=production`.
 - 2026-10-02: removed the old directory page `/profesionales` but kept its components for the new design (it redirects to `/`), moved sign-up from `/profesionales/registro` to `/registro` (old addresses redirect), and pointed the nav, other pages, emails, docs and tests to the new places.

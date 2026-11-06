@@ -1,36 +1,15 @@
-// Hara Vital - Admin Authentication Guard
-// Purpose: Shared auth check for all /api/admin/* routes
-// Production: Fail-closed (503) until Clerk configured
-// Development: Placeholder UUID allowed
+// Hara Vital - Roles for admin and professional access
+// Purpose: one place that reads a user's role (middleware and requireAdmin both use it)
 
-export function getAdminUserId(): string | { error: string; status: number } {
-  // Production: Fail-closed
-  if (process.env.NODE_ENV === 'production') {
-    // TODO (Week 4): Extract from Clerk session
-    // import { auth } from '@clerk/nextjs'
-    // const { userId } = auth()
-    // if (!userId) return { error: 'Unauthorized', status: 401 }
-    // return userId
+// Roles live in the Supabase Auth user's app_metadata.role. Only the service role can write
+// app_metadata, so a user cannot give themselves a role. user_metadata is user-editable: never read it here.
 
-    return {
-      error: 'Service unavailable: Admin authentication required. Configure Clerk auth before production deployment.',
-      status: 503,
-    }
-  }
+export type Role = 'admin' | 'professional'
 
-  // Development: Placeholder allowed
-  return '00000000-0000-0000-0000-000000000001'
-}
+const ROLES: readonly Role[] = ['admin', 'professional']
 
-// Who counts as the admin: the emails listed in ADMIN_EMAILS (comma-separated).
-// An empty or missing list lets nobody in, so a missing env var fails closed.
-
-/** True when the email is in ADMIN_EMAILS, ignoring case and spaces. */
-export function isAdminEmail(email: string | null | undefined): boolean {
-  if (!email) return false
-  const allowed = (process.env.ADMIN_EMAILS ?? '')
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean)
-  return allowed.includes(email.trim().toLowerCase())
+/** The user's role from app_metadata, or null for no user, no role or an unknown value. */
+export function roleOf(user: { app_metadata?: Record<string, unknown>; user_metadata?: unknown } | null | undefined): Role | null {
+  const role = user?.app_metadata?.role
+  return typeof role === 'string' && (ROLES as readonly string[]).includes(role) ? (role as Role) : null
 }

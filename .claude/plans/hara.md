@@ -35,7 +35,7 @@ Rules from the user for this work:
 - [ ] Content discovery for stories built (approval required for every share)
 - [x] Redesign committed and pushed to `main` (cc2e2d7, 2026-10-28, with the 5 earlier redesign commits)
 - [x] Admin redesign (design 13) done page by page and verified (plan `docs/plans/2026-10-29-admin-almanac-redesign.md`, all 11 tasks done and VERIFIED 2026-11-06; not committed)
-- [ ] Only the admin can open `/admin` and `/api/admin` (ISSUES.md entry 18 done; `ADMIN_EMAILS` is set locally, still needs Vercel before pushing)
+- [ ] Only the admin can open `/admin` and `/api/admin`: role-based since 2026-11-06 (`app_metadata.role`, plan `docs/plans/2026-11-06-admin-role-permissions.md`). Needs the user's admin SQL and migration 026 run before pushing
 - [ ] "Soy profesional" form (`/registro`) matches design 12
 
 ## Constraints
@@ -49,55 +49,45 @@ Rules from the user for this work:
 - The user does not want the `ig-network` work committed or pushed.
 - Leads are written only through `createLead` (`app/actions/create-lead.ts`). Test leads sent during browser checks are deleted by the user or through the admin, never by a script.
 - Supabase migrations are run by the user in the SQL editor, not from a session.
-- Pushing to `main` deploys. `ADMIN_EMAILS` must be set in Vercel before the admin access check (Task 1 of the admin plan) is pushed, or nobody can enter the admin.
+- Pushing to `main` deploys. The user's account must have `app_metadata.role = 'admin'` and migration 026 must be run before the role-based access is pushed, or the live admin and `/pro` lock people out.
+- Admin and API actions are tested on a production build (`npm run build` + `npm start`), not only `npm run dev`: a production-only branch once hid a 503 on every admin write.
 - PQLs stay in the admin. The "remove pqls" request on 2026-10-28 only meant leaving them out of the Claude Design brief.
 
 ## Next Steps
-1. **Finish the admin setup the user owns, then review Task 3 of the admin plan**
-   - What: the user adds `ADMIN_EMAILS` to `.env.local`, runs `migrations/025_admin_read_at.sql` in the SQL editor, signs in at `/admin/login`, and reviews the new shell (sidebar, pills at phone width, email, Salir). I restart my dev server after the env change.
-   - Why: without `ADMIN_EMAILS` the new check keeps everyone out of the local admin; without migration 025 the menu shows no unread numbers.
-   - Considerations: Task 3 stays unticked in the plan until this browser check passes (TS-001 and TS-006).
+1. **Run the role SQL, then push**
+   - What: the user runs the one-line admin SQL (in `migrations/026_auth_roles.sql`, with their email) and migration 026 in the Supabase SQL editor. I confirm the role through the API (read only), then push `ef13ca2` plus the roles commit.
+   - Why: without the admin role the live admin locks the user out; without 026 existing professionals lose `/pro`.
 
-2. **Continue the admin redesign plan, one page at a time**
-   - What: Tasks 4 to 11 of `docs/plans/2026-10-29-admin-almanac-redesign.md` (Leads, Profesionales, review page, Prácticas, Analíticas, Blog, Reseñas plus PQLs, docs), stopping after each page for the user's review, then `spec-verify`.
-   - Considerations: design copy and logic are in the session scratchpad (`.../7ec11e52-ddee-4379-9900-4f342bbc26ba/scratchpad/design/app.html` and `logic.js`), which can disappear; re-download through the `claude_design` MCP if so.
+2. **"Soy profesional" pill and the login entry on the home**
+   - What: design 11a puts a "Soy profesional" pill to the right of the logo on the home (to `/registro`). The design has no public "Entrar"; the user wants an entry for the admin that professionals use later. Ask Claude Design where it goes, then build it.
 
-3. **Set `ADMIN_EMAILS` in Vercel before pushing the admin work**
-   - What: the user adds the variable in Vercel; then commit and push when the user says so.
-   - Why: the middleware fails closed, so a deploy without it locks the admin out.
+3. **Pushed admin redesign follow-ups**
+   - What: decide on removing the now-unused `onOverride` path in `ScoreBreakdown` (also used read-only by `/pro/perfil`) and the unused `PracticeReclassificationBanner`.
 
 4. **Plan and build the "Soy profesional" form (design 12)**
    - What: a separate /spec for `/registro` from design 12 in the same Claude Design file (`t12`).
    - Considerations: design 12 says the public header shows only "Soy profesional" and there is no public "Entrar"; the professional gets access by email after approval. That answers most of ISSUES.md entry 17.
 
-5. **Decide what to do about `getAdminUserId` returning 503 in production**
-   - What: `lib/admin-auth.ts` `getAdminUserId` (used by `app/api/admin/practices/route.ts`) is a Clerk-era placeholder that returns 503 when `NODE_ENV` is production, so creating a practice probably fails on the live site. Not checked in production.
-   - Considerations: could now use the Supabase user plus `isAdminEmail`. Ask the user before changing it; add to ISSUES.md if they want it tracked.
-
-6. **Decide which ponytail review findings to fix**
+5. **Decide which ponytail review findings to fix**
    - What: the review of the bottom bar and home card work (2026-10-20) found no must-fix items. Should fix: (1) a test that the map only shows the professionals of the selected card. Nice to have: (2) drop `pendingScroll` and the `animate` flag in `app/HomeSearch.tsx`, (3) move `Magnifier` back into `app/HomeFilterBar.tsx`, (4) make "Limpiar filtros" also clear the selected card (product choice), (5) drop the unused `export` on `AlmanacTab`.
    - Considerations: no code changed yet; wait for the user to pick by number. Not checked: the bar's fixed 30px bottom padding on a real iPhone with a home indicator.
 
-7. **Check the Upstash rate limiter together with the user (parked until the redesign is done)**
+6. **Check the Upstash rate limiter together with the user (parked until the redesign is done)**
    - What: see ISSUES.md entry 16. Check the Upstash console first, then Vercel's variables, and only then create a new database.
 
-8. **Place the professional sign-up and login links**
-   - What: nothing public links to `/registro` or `/pro/login` (ISSUES.md entry 17). The bottom bar is done (2026-10-19) and does not include them.
-   - Considerations: ask Claude Design where they go before building anything. Update 2026-10-29: design 12 answers this (header "Soy profesional" only, no public login); build it with step 4.
-
-9. **Work through the open items in ISSUES.md**
+7. **Work through the open items in ISSUES.md**
    - What: slow database calls with no caching, 42 of 45 professionals still need practice review, home cards barely differ because most practices map to `estres-ansiedad`, mixed tú and vos wording, the broken destello SVG, build, install and lint problems, odd `.env.local` lines, no Destacado professional in the data, unused leftovers (`RevealOnScroll`, `WelcomeModal`, stale visual baseline), and the Ayuda page's missing WhatsApp number, hours and Argentine emergency line (needs input from the user).
 
-10. **Resolve the invalid Instagram handles**
+8. **Resolve the invalid Instagram handles**
    - What: decide with the user what to do with the 11 invalid handles and confirm or reject the 5 candidate accounts (Guadalupe Rodriguez, Leonela Velona, Lucina Micheloud, Sofía Belluscio, Victoria Garino).
    - Why: the user said "luego vemos qué hacer con los inválidos".
    - Considerations: the full list with evidence is in `scripts/logs/network-audit-2026-10-02.md`. Fixes go into Supabase by the user (or through the admin), never from the skill.
 
-11. **Build the ig-network follow phase**
+9. **Build the ig-network follow phase**
    - What: follow valid professionals Hara does not follow yet, with a daily cap (was 5, its config file was removed, define it again), logging `last_followed_at`, never unfollowing.
    - Considerations: start with the 9 that already follow Hara ("Follow Back"). The current log has no `follows_hara` values yet; they get filled by the next `plan --all` run.
 
-12. **Build the ig-network content discovery phase**
+10. **Build the ig-network content discovery phase**
    - What: read recent posts of valid professionals, classify them (educativo, práctica, sesión, evento, reflexión), and propose `share_to_story`, `comment` or `skip` with the exact post and why it is useful. Every share needs the user's approval.
    - Considerations: test in Chrome what "Add to story" really allows for the Hara account before writing that step.
 
@@ -211,8 +201,8 @@ Rules from the user for this work:
 - [ ] What daily follow cap to use (was 5)?
 - [ ] Is the confirmation's "Lo que sigue" copy okay? It is adapted from the old `/gracias` page, in vos and without dashes.
 - [ ] Should the concierge budget default to ARS instead of USD? It kept the old form's USD default.
-- [ ] Which email(s) go in `ADMIN_EMAILS`? (the user sets it; I never read `.env.local`)
-- [ ] Fix `getAdminUserId` returning 503 in production, and track it in ISSUES.md?
+- [x] Which email(s) go in `ADMIN_EMAILS`? Superseded 2026-11-06: the user asked for roles instead of an email list.
+- [x] Fix `getAdminUserId` returning 503 in production? Done 2026-11-06 in the roles plan (`requireAdmin`), with a production-mode guard test.
 
 ## Notes
 - Done 2026-10-20 (removed from Next Steps, verbatim): 4. **Fix or restart the dev server on port 3000** / What: it returns 500 on every page, including the home. The user restarts it (PID in `/tmp/hara-dev.pid`), or I stop it by that PID with the user's approval. / Considerations: my server on port 3001 (PID in Notes) is still running for the TS-002 check. Two `next dev` servers share `.next`, so stop one once TS-002 is done. Port 3000 now serves my dev server (started 2026-10-19 with `rm -rf .next && npm run dev`, background task b6eoy2cyc), and it answers normally.

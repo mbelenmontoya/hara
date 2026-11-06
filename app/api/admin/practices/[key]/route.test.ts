@@ -25,7 +25,7 @@ vi.mock('@/lib/supabase-admin', () => ({
   },
 }))
 
-vi.mock('@/lib/admin-auth', () => ({ getAdminUserId: vi.fn() }))
+vi.mock('@/lib/require-admin', () => ({ requireAdmin: vi.fn() }))
 vi.mock('@/lib/practices', () => ({ bustPracticesCache: vi.fn() }))
 vi.mock('@/lib/monitoring', () => ({ logError: vi.fn() }))
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
@@ -42,18 +42,18 @@ const PARAMS = { params: { key: 'reiki' } }
 
 beforeEach(async () => {
   vi.clearAllMocks()
-  const { getAdminUserId } = await import('@/lib/admin-auth')
-  vi.mocked(getAdminUserId).mockReturnValue('admin-user-id')
+  const { requireAdmin } = await import('@/lib/require-admin')
+  vi.mocked(requireAdmin).mockResolvedValue({ userId: 'admin-user-id' })
 })
 
 describe('PATCH /api/admin/practices/[key]', () => {
-  it('returns 503 when admin auth fails', async () => {
-    const { getAdminUserId } = await import('@/lib/admin-auth')
-    vi.mocked(getAdminUserId).mockReturnValue({ error: 'unauthorized', status: 503 })
+  it('returns 403 when the user is not the admin', async () => {
+    const { requireAdmin } = await import('@/lib/require-admin')
+    vi.mocked(requireAdmin).mockResolvedValue({ error: 'Forbidden', status: 403 })
 
     const { PATCH } = await import('./route')
     const res = await PATCH(makeReq({ label: 'New' }), PARAMS)
-    expect(res.status).toBe(503)
+    expect(res.status).toBe(403)
   })
 
   it('updates label and returns 200 + busts cache', async () => {

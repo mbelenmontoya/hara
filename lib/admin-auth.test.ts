@@ -1,32 +1,21 @@
-import { describe, it, expect, afterEach } from 'vitest'
-import { isAdminEmail } from './admin-auth'
+import { describe, it, expect } from 'vitest'
+import { roleOf } from './admin-auth'
 
-describe('isAdminEmail', () => {
-  afterEach(() => {
-    delete process.env.ADMIN_EMAILS
+describe('roleOf', () => {
+  it('should read the role from app_metadata', () => {
+    expect(roleOf({ app_metadata: { role: 'admin' } })).toBe('admin')
+    expect(roleOf({ app_metadata: { role: 'professional' } })).toBe('professional')
   })
 
-  it('should accept an email in the list regardless of case and spaces', () => {
-    process.env.ADMIN_EMAILS = ' Hola@HaraVital.com , otra@hara.com'
-    expect(isAdminEmail('hola@haravital.com')).toBe(true)
-    expect(isAdminEmail('OTRA@hara.com')).toBe(true)
+  it('should ignore user_metadata, which the user can edit themselves', () => {
+    expect(roleOf({ app_metadata: {}, user_metadata: { role: 'admin' } })).toBeNull()
   })
 
-  it('should reject an email that is not in the list', () => {
-    process.env.ADMIN_EMAILS = 'hola@haravital.com'
-    expect(isAdminEmail('pro@example.com')).toBe(false)
-  })
-
-  it('should reject everyone when the list is missing or empty', () => {
-    expect(isAdminEmail('hola@haravital.com')).toBe(false)
-    process.env.ADMIN_EMAILS = ' , '
-    expect(isAdminEmail('hola@haravital.com')).toBe(false)
-  })
-
-  it('should reject a missing email', () => {
-    process.env.ADMIN_EMAILS = 'hola@haravital.com'
-    expect(isAdminEmail(null)).toBe(false)
-    expect(isAdminEmail(undefined)).toBe(false)
-    expect(isAdminEmail('')).toBe(false)
+  it('should give no role to unknown values, a missing role or no user', () => {
+    expect(roleOf({ app_metadata: { role: 'superuser' } })).toBeNull()
+    expect(roleOf({ app_metadata: { role: 'ADMIN' } })).toBeNull()
+    expect(roleOf({ app_metadata: {} })).toBeNull()
+    expect(roleOf({})).toBeNull()
+    expect(roleOf(null)).toBeNull()
   })
 })

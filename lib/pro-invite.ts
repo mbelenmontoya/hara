@@ -5,6 +5,7 @@
 
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { emailBaseUrl } from '@/lib/email'
+import { roleOf } from '@/lib/admin-auth'
 
 export interface ProAccessLink {
   setupUrl: string
@@ -21,7 +22,8 @@ export interface ProAccessLink {
  *     NOTE: Supabase names the response field `hashed_token`; the verifyOtp
  *     argument and URL query param are both named `token_hash` — same value,
  *     different names on either side of the wire.
- *  4. Write user_id back to the professionals row only when currently null.
+ *  4. Give the auth user app_metadata.role = 'professional' (unless already admin or professional).
+ *  5. Write user_id back to the professionals row only when currently null.
  *
  * Returns null on total failure (caller treats as non-blocking).
  */
@@ -49,6 +51,16 @@ export async function generateProAccessLink({
     // hashed_token (Supabase response) becomes token_hash (verifyOtp / URL param)
     const token_hash = result.data.properties.hashed_token
     const setupUrl = `${emailBaseUrl()}/pro/set-password?token_hash=${token_hash}&type=${kind}`
+
+    // The professional role is what lets this user into /pro (middleware.ts). Never downgrade the admin.
+    const authUser = result.data.user
+    if (authUser && roleOf(authUser) === null) {
+      const { error: roleError } = await supabaseAdmin.auth.admin.updateUserById(authUser.id, {
+        app_metadata: { ...(authUser.app_metadata ?? {}), role: 'professional' },
+      })
+      // Without the role the link would open a login that sends them away, so report failure instead
+      if (roleError) return null
+    }
 
     // Write user_id back only when the row has none yet (avoid clobbering)
     const authUserId = result.data.user?.id

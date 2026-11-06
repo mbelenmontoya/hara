@@ -6,15 +6,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { getAdminUserId } from '@/lib/admin-auth'
+import { requireAdmin } from '@/lib/require-admin'
 import { logError } from '@/lib/monitoring'
 
 export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
-  const adminUserId = getAdminUserId()
-  if (typeof adminUserId === 'object') {
-    return NextResponse.json({ error: adminUserId.error }, { status: adminUserId.status })
+  const admin = await requireAdmin()
+  if ('error' in admin) {
+    return NextResponse.json({ error: admin.error }, { status: admin.status })
   }
 
   let body: unknown

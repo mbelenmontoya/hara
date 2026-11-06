@@ -26,9 +26,7 @@ vi.mock('@/lib/supabase-admin', () => ({
   },
 }))
 
-vi.mock('@/lib/admin-auth', () => ({
-  getAdminUserId: vi.fn(),
-}))
+vi.mock('@/lib/require-admin', () => ({ requireAdmin: vi.fn() }))
 
 vi.mock('@/lib/admin-practices', () => ({
   loadAdminPracticesView: vi.fn(),
@@ -65,19 +63,19 @@ beforeEach(() => {
 })
 
 describe('GET /api/admin/practices', () => {
-  it('returns 503 when admin auth fails (production stub)', async () => {
-    const { getAdminUserId } = await import('@/lib/admin-auth')
-    vi.mocked(getAdminUserId).mockReturnValue({ error: 'unauthorized', status: 503 })
+  it('returns 403 when the user is not the admin', async () => {
+    const { requireAdmin } = await import('@/lib/require-admin')
+    vi.mocked(requireAdmin).mockResolvedValue({ error: 'Forbidden', status: 403 })
 
     const { GET } = await import('./route')
     const res = await GET(makeReq('GET'))
 
-    expect(res.status).toBe(503)
+    expect(res.status).toBe(403)
   })
 
   it('returns 200 with { practices } including usage_count', async () => {
-    const { getAdminUserId } = await import('@/lib/admin-auth')
-    vi.mocked(getAdminUserId).mockReturnValue('admin-user-id')
+    const { requireAdmin } = await import('@/lib/require-admin')
+    vi.mocked(requireAdmin).mockResolvedValue({ userId: 'admin-user-id' })
     const { loadAdminPracticesView } = await import('@/lib/admin-practices')
     vi.mocked(loadAdminPracticesView).mockResolvedValue([
       { key: 'reiki', label: 'Reiki', slug: 'reiki', sort_order: 10, active: true, usage_count: 3 },
@@ -95,8 +93,8 @@ describe('GET /api/admin/practices', () => {
 
 describe('POST /api/admin/practices', () => {
   beforeEach(async () => {
-    const { getAdminUserId } = await import('@/lib/admin-auth')
-    vi.mocked(getAdminUserId).mockReturnValue('admin-user-id')
+    const { requireAdmin } = await import('@/lib/require-admin')
+    vi.mocked(requireAdmin).mockResolvedValue({ userId: 'admin-user-id' })
   })
 
   it('returns 400 when key is missing', async () => {

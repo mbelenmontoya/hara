@@ -120,13 +120,17 @@ export async function POST(request: NextRequest) {
 
     const { fields, imageFile } = await parseBody(request)
 
-    const full_name = fields.full_name as string
-    const email = fields.email as string
-    const whatsapp = (fields.whatsapp as string) || ''
-    const country = fields.country as string
-    const modality = fields.modality as string[]
-    const specialties = fields.specialties as string[]
-    const bio = fields.bio as string
+    if (!fields || typeof fields !== 'object' || Array.isArray(fields)) {
+      return NextResponse.json({ error: 'Los datos del registro no son válidos' }, { status: 400 })
+    }
+
+    const full_name = typeof fields.full_name === 'string' ? fields.full_name.trim() : ''
+    const email = typeof fields.email === 'string' ? fields.email : ''
+    const whatsapp = typeof fields.whatsapp === 'string' ? fields.whatsapp : ''
+    const country = typeof fields.country === 'string' ? fields.country.trim() : ''
+    const modality = fields.modality
+    const specialties = fields.specialties
+    const bio = typeof fields.bio === 'string' ? fields.bio.trim() : ''
 
     if (!full_name || !email || !whatsapp || !country) {
       return NextResponse.json(
@@ -149,14 +153,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!modality || modality.length === 0) {
+    if (!Array.isArray(modality) || modality.length === 0 ||
+        !modality.every(value => typeof value === 'string' && value.trim().length > 0)) {
       return NextResponse.json(
         { error: 'Seleccioná al menos una modalidad de atención' },
         { status: 400 }
       )
     }
 
-    if (!specialties || specialties.length === 0) {
+    if (!Array.isArray(specialties) || specialties.length === 0 ||
+        !specialties.every(value => typeof value === 'string' && value.trim().length > 0)) {
       return NextResponse.json(
         { error: 'Seleccioná al menos una especialidad' },
         { status: 400 }

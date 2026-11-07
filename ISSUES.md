@@ -202,7 +202,9 @@ The real registration/sign-in E2E passed while Resend rejected its example.com c
 
 Registration returns 200 and attempts account/profile insertion for a whitespace name, a 60-space biography, or specialties containing an empty string. createLead accepts a concierge input with no email or WhatsApp. These were verified against the actual handlers with mocked external services; no invalid live row was inserted. The public form validates contacts, but a broken mapper/direct caller can bypass that protection.
 
-**Still to do:** persist the RED cases and validate at server boundaries without rejecting optional fields. Root causes and affected callers are in `docs/plans/2026-11-06-critical-flows-verification.md`.
+**Still to do:** concierge contact validation remains a separate bugfix. The registration portion is fixed, verified locally and approved for commit/push by the user.
+
+**Registration fix (2026-11-07):** plan `docs/plans/2026-11-07-register-required-fields.md` VERIFIED; final user review and commit/push approved. Persistent RED → GREEN plus revert-test proves the regression detects the original bug. Visible Chrome against local production rejected four real JSON/multipart requests with 400 and confirmed no Auth/profile records; valid registration, image bytes in Storage, login, pending edit 403 and fixture cleanup passed. TypeScript/build/unit passed; ESLint remains unconfigured. Google selection, inbox delivery and deployment were not verified. Upstash remains parked; the general flow plan has not been resumed.
 
 ### 22. Contact event is not retried when the browser refuses sendBeacon
 

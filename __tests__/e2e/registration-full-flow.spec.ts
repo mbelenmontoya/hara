@@ -13,6 +13,8 @@ import { writeFileSync, unlinkSync, mkdirSync, existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 
+test.use({ channel: 'chrome', headless: false })
+
 // ─── Buenos Aires place data (what PlacesAutocomplete would return) ────────────
 
 const BUENOS_AIRES_PLACE = {
@@ -99,15 +101,6 @@ const GOOGLE_MAPS_MOCK_SCRIPT = `
 })();
 `
 
-// ─── Minimal valid JPEG (1×1 purple pixel) ────────────────────────────────────
-// Base64-encoded so no fixture file needed in the repo
-
-const MINIMAL_JPEG_BASE64 =
-  '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8U' +
-  'HRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgN' +
-  'DRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIy' +
-  'MjL/wAARCAABAAEDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAABAUG/8QAHBABAAICAwEAAAAAAAAAAAAAAQACAxIxQVH/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8Aq7NruJbN6lJdStVFAAH/2Q=='
-
 // ─── Screenshot helper ─────────────────────────────────────────────────────────
 
 function screenshotDir(): string {
@@ -149,9 +142,7 @@ test.describe('Professional Registration — Full Flow', () => {
     TEST_NAME = `E2E Test Prof ${ts}`
     TEST_EMAIL = `hara-registro-${ts}-${rand}@example.com`
 
-    // Write temp image file for upload
     tempImagePath = join(tmpdir(), `hara-e2e-profile-${ts}.jpg`)
-    writeFileSync(tempImagePath, Buffer.from(MINIMAL_JPEG_BASE64, 'base64'))
   })
 
   test.afterAll(async () => {
@@ -173,6 +164,10 @@ test.describe('Professional Registration — Full Flow', () => {
     if (pro) {
       const { error: storageError } = await supabase.storage.from('profile-images').remove([`${pro.id}.jpg`])
       expect(storageError).toBeNull()
+      const { data: images, error: imagesError } = await supabase.storage.from('profile-images')
+        .list('', { search: `${pro.id}.jpg` })
+      expect(imagesError).toBeNull()
+      expect(images).toEqual([])
       const { error: deleteError } = await supabase.from('professionals').delete().eq('id', pro.id)
       expect(deleteError).toBeNull()
       if (pro.user_id) {
@@ -189,6 +184,15 @@ test.describe('Professional Registration — Full Flow', () => {
   })
 
   test('TS-001: complete 4-step registration with image upload', async ({ page }) => {
+    const imageBase64 = await page.evaluate(() => {
+      const canvas = document.createElement('canvas')
+      canvas.width = canvas.height = 32
+      const context = canvas.getContext('2d')!
+      context.fillStyle = '#803f35'
+      context.fillRect(0, 0, 32, 32)
+      return canvas.toDataURL('image/jpeg').split(',')[1]
+    })
+    writeFileSync(tempImagePath!, Buffer.from(imageBase64, 'base64'))
     // ── Set up Google Maps mock ─────────────────────────────────────────────
     // Intercept the Google Maps SDK script request and return our minimal mock.
     // If the API key is not set, PlacesAutocomplete renders a plain input and
@@ -250,6 +254,9 @@ test.describe('Professional Registration — Full Flow', () => {
 
     // Continuar should now be enabled — country was set by PlacesAutocomplete onChange
     await expect(continuarBtn).toBeEnabled()
+    await page.getByPlaceholder('Ej: María García López').fill('   ')
+    await expect(continuarBtn).toBeDisabled()
+    await page.getByPlaceholder('Ej: María García López').fill(TEST_NAME)
     await continuarBtn.click()
 
     // ── Step 1: Professional profile ────────────────────────────────────────
@@ -310,6 +317,8 @@ test.describe('Professional Registration — Full Flow', () => {
 
     // Fill bio (must be ≥50 chars for canProceed() to return true)
     const bioTextarea = page.getByLabel(/^Sobre vos/)
+    await bioTextarea.fill(' '.repeat(60))
+    await expect(submitBtn).toBeDisabled()
     await bioTextarea.fill(TEST_BIO)
     expect(TEST_BIO.length).toBeGreaterThanOrEqual(50)
 
@@ -321,6 +330,8 @@ test.describe('Professional Registration — Full Flow', () => {
 
     // Image preview should appear
     await expect(page.locator('img[alt="Vista previa"]')).toBeVisible()
+    await expect.poll(() => page.locator('img[alt="Vista previa"]')
+      .evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0)
 
     // Submit button should now be enabled (bio ≥50 chars)
     await expect(submitBtn).toBeEnabled()
@@ -330,6 +341,19 @@ test.describe('Professional Registration — Full Flow', () => {
       path: `${screenshotDir()}/04-step-3-filled.png`,
       fullPage: true,
     })
+
+    // A simulated validation response checks that correcting/retrying keeps the form data.
+    // The following successful submit uses the real registration endpoint and Supabase.
+    const validationError = 'Revisá los datos antes de enviar tu solicitud.'
+    await page.route('**/api/professionals/register', route => route.fulfill({
+      status: 400, contentType: 'application/json', body: JSON.stringify({ error: validationError }),
+    }), { times: 1 })
+    await submitBtn.click()
+    await expect(page.getByText(validationError, { exact: true })).toBeVisible()
+    await expect(bioTextarea).toHaveValue(TEST_BIO)
+    await expect(page.getByLabel('Frase corta sobre vos')).toHaveValue(TEST_SHORT_DESC)
+    await expect(page.locator('img[alt="Vista previa"]')).toBeVisible()
+    await expect(submitBtn).toBeEnabled()
 
     // ── Submit — intercept API response to capture slug ──────────────────────
     // Catch any response from the register endpoint (not just 200) for clear error messages
@@ -356,7 +380,7 @@ test.describe('Professional Registration — Full Flow', () => {
     if (supabase && createdSlug) {
       const { data, error: fetchErr } = await supabase
         .from('professionals')
-        .select('id, status')
+        .select('id, status, profile_image_url')
         .eq('slug', createdSlug)
         .single()
       if (fetchErr || !data) {
@@ -365,6 +389,10 @@ test.describe('Professional Registration — Full Flow', () => {
       } else {
         createdId = data.id
         expect(data.status).toBe('submitted')
+        expect(data.profile_image_url).toEqual(expect.any(String))
+        const storedImage = await page.request.get(data.profile_image_url!)
+        expect(storedImage.status()).toBe(200)
+        expect(await storedImage.body()).toEqual(Buffer.from(imageBase64, 'base64'))
       }
 
       // TS-001 step 5: Verify selected practices landed in the DB row

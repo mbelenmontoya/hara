@@ -11,6 +11,7 @@
 ## Professional registration and account access (2026-11-06)
 
 - `POST /api/professionals/register` accepts multipart FormData (including an optional profile image) or JSON. Required fields include `full_name`, `email`, `password` (8 to 72 characters), `whatsapp`, `country`, `modality`, `specialties`, and `bio` (50 characters minimum). Practice keys are validated against the catalog.
+- Required text must have the correct runtime type; `full_name`, `country` and `bio` are trimmed, with at least 50 characters in the trimmed bio. `modality` and `specialties` must be nonempty arrays of nonblank strings; any invalid member rejects the whole request with 400 before profile queries, account creation, uploads or notifications. Optional fields remain optional and passwords are preserved exactly.
 - Registration requests a limit of 5 attempts per IP per hour. The existing rate limiter fails open if Upstash is unavailable (ISSUES.md entry 16).
 - The server creates a confirmed Supabase Auth user with `app_metadata.role = 'professional'`, then inserts a `submitted` professional linked through `user_id`. Passwords are passed only to Auth. A failed insert triggers deletion of the newly created account; rollback failures are logged.
 - Success returns 200 with `{ success: true, message, slug }`. Invalid input returns 400, an existing account returns 409, cooldown rejection returns 403, and rate limiting returns 429. Other failures return 500.

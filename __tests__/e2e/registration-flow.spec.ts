@@ -1,5 +1,67 @@
 // Public registration checks that do not create accounts.
 import { test, expect } from '@playwright/test'
+import { supabaseAdmin } from '../../lib/supabase-admin'
+
+test.use({ channel: 'chrome', headless: false })
+
+test('rejects tampered JSON and multipart without creating profiles or accounts', async ({ page }) => {
+  const prefix = `hara-invalid-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+  const emails = [0, 1, 2, 3].map(i => `${prefix}-${i}@example.com`)
+  await page.goto('/registro')
+  try {
+    const results = await page.evaluate(async emails => {
+      const invalid = [
+        { full_name: '   ' }, { specialties: [''] },
+        { bio: ' '.repeat(60) }, { modality: ['online', ''] },
+      ]
+      const results = []
+      for (const [i, overrides] of invalid.entries()) {
+        const fields = {
+          full_name: 'Prueba inválida Hara', email: emails[i], password: 'Hara-validacion-2026!',
+          whatsapp: '+5491112345678', country: 'AR', modality: ['online'],
+          specialties: ['autoconocimiento'],
+          bio: 'Acompaño procesos personales con herramientas de bienestar y autoconocimiento.',
+          ...overrides,
+        }
+        const form = new FormData()
+        for (const [key, value] of Object.entries(fields)) {
+          form.set(key, Array.isArray(value) ? JSON.stringify(value) : value)
+        }
+        const res = await fetch('/api/professionals/register', i < 2 ? {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fields),
+        } : { method: 'POST', body: form })
+        results.push({ status: res.status, body: await res.json() })
+      }
+      return results
+    }, emails)
+    for (const result of results) {
+      expect.soft(result.status, JSON.stringify(result.body)).toBe(400)
+      expect.soft(result.body.error).toEqual(expect.any(String))
+    }
+  } finally {
+    const { data: profiles, error } = await supabaseAdmin.from('professionals')
+      .select('id').in('email', emails)
+    expect(error).toBeNull()
+    const accounts = []
+    for (let page = 1; ; page++) {
+      const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 })
+      expect(error).toBeNull()
+      accounts.push(...data.users.filter(user => emails.includes(user.email ?? '')))
+      if (data.users.length < 1000) break
+    }
+    // Remove only this test's fixtures if a regression unexpectedly created them.
+    for (const profile of profiles ?? []) {
+      const { error } = await supabaseAdmin.from('professionals').delete().eq('id', profile.id)
+      expect.soft(error).toBeNull()
+    }
+    for (const account of accounts) {
+      const { error } = await supabaseAdmin.auth.admin.deleteUser(account.id)
+      expect.soft(error).toBeNull()
+    }
+    expect(profiles).toEqual([])
+    expect(accounts).toEqual([])
+  }
+})
 
 test.describe('Registration form /registro', () => {
   test.beforeEach(async ({ page }) => {

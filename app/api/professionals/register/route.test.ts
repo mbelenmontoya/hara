@@ -1,5 +1,5 @@
 // Unit tests for POST /api/professionals/register
-// Focus: practices field handling + validatePracticeKeys integration.
+// Required fields, account creation and practices through the real handler.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
@@ -76,7 +76,7 @@ const VALID_FIELDS = {
 
 const AUTH_USER_ID = 'auth-user-1'
 
-function makeJsonRequest(body: Record<string, unknown>): NextRequest {
+function makeJsonRequest(body: unknown): NextRequest {
   return new NextRequest('http://localhost/api/professionals/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -107,6 +107,65 @@ beforeEach(() => {
   mockRateLimit.mockResolvedValue({ success: true })
   mockCreateUser.mockResolvedValue({ data: { user: { id: AUTH_USER_ID } }, error: null })
   mockDeleteUser.mockResolvedValue({ data: {}, error: null })
+})
+
+describe('POST /api/professionals/register: required fields', () => {
+  beforeEach(async () => {
+    const { validatePracticeKeys } = await import('@/lib/practices')
+    vi.mocked(validatePracticeKeys).mockResolvedValue({ ok: true })
+    setupCooldownNoMatch()
+    setupSlugMock()
+    setupInsertMock()
+  })
+
+  const invalidFields = [
+    ...['full_name', 'email', 'whatsapp', 'country', 'bio'].flatMap(field =>
+      [undefined, '', '   ', 123, {}, ['contenido']].map(value => ({
+        label: `${field}=${JSON.stringify(value)}`, body: { ...VALID_FIELDS, [field]: value },
+      }))
+    ),
+    ...['modality', 'specialties'].flatMap(field =>
+      [undefined, [], [''], ['   '], [null], [123], ['online', ''], 'online', {}].map(value => ({
+        label: `${field}=${JSON.stringify(value)}`, body: { ...VALID_FIELDS, [field]: value },
+      }))
+    ),
+    { label: '49 bio characters padded with spaces', body: { ...VALID_FIELDS, bio: ` ${'a'.repeat(49)} ` } },
+    { label: 'malformed email', body: { ...VALID_FIELDS, email: 'sin-arroba' } },
+    { label: 'malformed WhatsApp', body: { ...VALID_FIELDS, whatsapp: 'abc' } },
+    { label: 'null body', body: null },
+    { label: 'array body', body: [] },
+  ]
+
+  it.each(invalidFields)('test_POST_invalid_required_fields_returns_400_without_side_effects: $label', async ({ body }) => {
+    const { POST } = await import('./route')
+    const { notifyNewProfessional, notifyRegistrationReceived } = await import('@/lib/email')
+    const { uploadProfileImage } = await import('@/lib/storage')
+    const res = await POST(makeJsonRequest(body))
+
+    expect.soft(res.status).toBe(400)
+    expect((await res.json()).error).toEqual(expect.any(String))
+    for (const effect of [mockCooldownEq1, mockLike, mockCreateUser, mockInsert, uploadProfileImage,
+      notifyNewProfessional, notifyRegistrationReceived]) {
+      expect.soft(effect).not.toHaveBeenCalled()
+    }
+  })
+
+  it.each(['a'.repeat(50), 'Primera parte del relato.\n\nSegunda parte con más información.'])('accepts useful text and preserves optional fields and password: %s', async bio => {
+    const { POST } = await import('./route')
+    const password = '  clave con espacios  '
+    const res = await POST(makeJsonRequest({
+      ...VALID_FIELDS, full_name: '  María García  ', country: ' AR ', bio: `  ${bio}  `,
+      specialties: ['Mi especialidad personalizada'], practices: [], password,
+      city: '', instagram: '', short_description: '', experience_description: '',
+    }))
+    expect(res.status).toBe(200)
+    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({
+      full_name: 'María García', country: 'AR', bio,
+      specialties: ['Mi especialidad personalizada'], practices: [],
+      city: null, instagram: null, short_description: null, experience_description: null,
+    }))
+    expect(mockCreateUser).toHaveBeenCalledWith(expect.objectContaining({ password }))
+  })
 })
 
 describe('POST /api/professionals/register — practices field', () => {
@@ -251,6 +310,27 @@ describe('POST /api/professionals/register: account', () => {
     expect(res.status).toBe(409)
     expect((await res.json()).error).toMatch(/Ya tenés una cuenta/)
     expect(mockInsert).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    { offsetDays: 30, status: 403 },
+    { offsetDays: -1, status: 200 },
+  ])('preserves the rejection cooldown ($offsetDays days → $status)', async ({ offsetDays, status }) => {
+    const POST = await ready()
+    mockCooldownMaybeSingle.mockResolvedValue({ data: {
+      id: 'rejected-profile', created_at: '2026-01-01T00:00:00Z',
+      resubmit_after: new Date(Date.now() + offsetDays * 86400000).toISOString(),
+    }, error: null })
+    const res = await POST(makeJsonRequest(VALID_FIELDS))
+    expect(res.status).toBe(status)
+    if (status === 403) {
+      expect((await res.json()).resubmit_after).toBeTruthy()
+      expect(mockCreateUser).not.toHaveBeenCalled()
+      expect(mockInsert).not.toHaveBeenCalled()
+    } else {
+      expect(mockCreateUser).toHaveBeenCalledOnce()
+      expect(mockInsert).toHaveBeenCalledOnce()
+    }
   })
 
   it('deletes the new account when saving the professional fails', async () => {

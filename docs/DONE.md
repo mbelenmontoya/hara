@@ -4,6 +4,12 @@
 
 ---
 
+## Registration required-field validation (2026-11-07)
+
+- [x] Reject unusable required text and invalid selections at the registration server boundary, before queries or account/profile creation. Preserve optional fields and exact passwords.
+- [x] Persistent RED → GREEN and revert-test prove regression detection. Visible Chrome against real Supabase verifies rejected requests leave no accounts/profiles, and valid registration/image/login/review restrictions and cleanup pass.
+- [x] Final user review approved; commit/push authorized. TypeScript/build/unit passed; lint configuration, live Google selection, inbox delivery and deployment remain unverified. Evidence: `docs/plans/2026-11-07-register-required-fields.md`.
+
 ## Arteterapia catalog association (2026-11-07)
 
 - [x] Completed only Arteterapia → Autoconocimiento in the live catalog. Readback confirmed one changed row/field and unchanged professional records.

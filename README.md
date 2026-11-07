@@ -352,6 +352,7 @@ Before deploying:
 **POST `/api/professionals/register`**
 - Creates a confirmed professional account and a submitted profile in one request; rolls back the account if the profile insert fails
 - Requires a password of 8 to 72 characters, used only by Supabase Auth
+- Rejects blank or wrong-type required text and empty/invalid modality or specialty selections with 400 before creating accounts or profiles; bio needs at least 50 characters after trimming
 - Rate limit: 5 attempts per IP per hour (fails open during the known Upstash outage, ISSUES.md entry 16)
 
 **GET `/api/public/recommendations?tracking_code={code}`**

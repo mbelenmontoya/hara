@@ -1,8 +1,14 @@
 # Hara Vital — Completed Work
 
-**Last Updated:** 2026-11-06
+**Last Updated:** 2026-11-07
 
 ---
+
+## Arteterapia catalog association (2026-11-07)
+
+- [x] Completed only Arteterapia → Autoconocimiento in the live catalog. Readback confirmed one changed row/field and unchanged professional records.
+- [x] Verified the two affected public profiles in visible Chrome at desktop/mobile sizes. No application code or schema change was needed.
+- [x] Corrected the obsolete 41-profile classification backlog and recorded the completed registration/portal git delivery in both main plans. Evidence: `docs/plans/2026-11-07-arteterapia-specialty.md`.
 
 ## Professional accounts and almanac portal (2026-11-06)
 

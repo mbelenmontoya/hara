@@ -293,3 +293,8 @@ All four tasks implemented. Status remains COMPLETE until the user reviews the r
 ## Final user approval (2026-11-06)
 
 The user approved the completed work after the visible Chrome run: "si pasaron entonces apruebo, podes comietear y pushear". The final review gate is satisfied and commit/push are authorized. Earlier pending-review statements above describe the review history. The critical-flow follow-up remains deferred and its implementation is not approved by this release.
+
+
+## Git delivery confirmed (2026-11-06)
+
+Committed and pushed to main as f9e229717963f5b1d779867e4ece535da44d1a62. The pre-push unit project passed and local HEAD matched origin/main after push. Final visual approval and git delivery are complete; historical pending-review statements above are superseded. Automatic deployment, invitations for existing professionals and the deferred critical-flow work are not marked complete by this release.

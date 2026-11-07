@@ -212,7 +212,7 @@ Type: Feature
 
 **Definition of Done:**
 
-- [ ] TS-001 to TS-003 pass on `npm run build && npm start`.
+- [x] TS-001 to TS-003 pass on `npm run build && npm start`; real registration and final public navigation evidence are recorded below and in /tmp/hara-login-real-e2e.log and /tmp/hara-login-browser.log.
 - [x] No test applicant is left in `professionals` or in Supabase Auth.
 - [x] Verify: `npx tsc --noEmit && npx vitest run --project unit && npm run build`
 
@@ -295,7 +295,7 @@ The functional suite does not judge visual quality. The rejected masthead layout
 
 - [x] Task 1: Reproducing RED test. Change the expected navigation contract before modifying the source and observe the extra/wrong entries fail.
 - [x] Task 2: Source fix. Remove the registration entry, name the sole professional access "Ingresar", and use five equal columns.
-- [ ] Task 3: Quality gate. Targeted tests, TypeScript, build and the full unit suite; inspect production navigation on home/Diario/Ayuda at 320/402/1280px and click the sole professional access.
+- [x] Task 3: Listed targeted tests, TypeScript, build, unit project and local-production navigation checks completed. This five-item navigation contract was subsequently superseded by the approved four-item menu below. ESLint remains explicitly unverified under ISSUES.md entry 7.
 
 - RED evidence: `/tmp/hara-single-access-red.log`, one test failed with the extra Soy pro/Entrar entries before changing source.
 - GREEN evidence: the existing menu contract was changed to exactly five destinations; 15 targeted menu/search tests passed after the source fix. The final production checks also passed. No accounts or auth logic changed.
@@ -342,3 +342,8 @@ The user requested real outcome-based coverage. The new plan `docs/plans/2026-11
 ## Final release approval (2026-11-06)
 
 The user approved commit and push after the professional portal follow-up passed all six scenarios in visible Chrome. The approved delivery combines registration/account creation, the four-item public menu, professional login, review/edit restrictions, email access instructions and the portal design. Documentation and verification are complete; git delivery is authorized in the same session. Git command results establish the final commit and remote delivery, rather than a test count. Known mail-delivery, Upstash, reapplication and server-validation limitations remain recorded in ISSUES.md and the deferred critical-flow plan.
+
+
+## Git delivery confirmed (2026-11-06)
+
+Committed and pushed to main as f9e229717963f5b1d779867e4ece535da44d1a62 together with the professional portal follow-up. The push command succeeded, the pre-push unit project passed, and local HEAD matched origin/main. This confirms git delivery, not the automatic production deployment or real email delivery. Those checks remain open in the main plan.

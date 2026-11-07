@@ -2,6 +2,20 @@
 
 > **Product context:** see [`PRODUCT.md`](../../PRODUCT.md) (canonical answer to "what is this product?"). This file is the operational plan — phases, sessions, work-in-flight. Update PRODUCT.md when the product evolves; update this file when work moves.
 
+## Current delivery checkpoint (2026-11-07)
+
+This operational roadmap retains historical phase/session details. Current implementation progress and the ordered backlog live in [hara.md](hara.md); its almanac plan supersedes older glass-design and route descriptions below.
+
+- [x] Admin redesign and role-based access shipped in ef13ca2/e73d5fa.
+- [x] Registration creates a linked professional account; professional login, profile editor/status notices and password setup/recovery now use almanac.
+- [x] User approved the six real Auth/DB scenarios in visible Chrome. Temporary records were deleted and absence verified.
+- [x] Application changes committed and pushed as f9e229717963f5b1d779867e4ece535da44d1a62; the pre-push hook passed and HEAD matched origin/main.
+- [ ] Verify the automatic production deployment of f9e2297; git delivery alone is not deployment evidence.
+- [x] Rechecked practice backlog on 2026-11-07: the 41 stored arrays/flags do not represent 41 manual classifications; the existing resolver already recognizes practices for all 45 profiles.
+- [x] Completed only Arteterapia → Autoconocimiento and verified both affected public profiles in visible Chrome. No other practice or professional record changed; hara.md and the Arteterapia plan contain the evidence.
+- [ ] Enable access for the 45 existing professionals who lacked linked accounts in that query; no invitation campaign was sent.
+- [ ] Review Upstash and remaining operational/product backlog listed in hara.md. The broader critical-flow verification/fix plan is deferred by the user, not approved or completed.
+
 ## Overview
 
 Hara Vital is **the Spanish-speaking holistic-wellness trust layer** — a curated marketplace for **terapias alternativas y bienestar holístico** (reiki, masajes, constelaciones familiares, diseño humano, registros akáshicos, terapia floral/energética, meditación, etc.) in Spanish-speaking markets (LATAM + Spain), with Argentina as the home/proving ground. It combines two modes:
@@ -232,13 +246,24 @@ Plus up to 2 custom entries per professional (same UX as `SpecialtySelector`).
 
 ## Next Steps
 
-1. **Commit + push all pending changes**
-   - What: Stage and commit the full batch — `app/layout.tsx` (metadata), `app/admin/login/page.tsx` (background fix + new test), `app/pro/` (portal: login, set-password, perfil, background fixes, login test), `app/api/pro/`, `lib/pro-invite.*`, `middleware.ts`, `middleware.test.ts`, `migrations/022`, `app/api/admin/professionals/[id]/invite/`, modified `email.ts`, `email.test.ts`, `vitest.workspace.ts`, admin review page. Run full test suite first (568 tests currently green).
-   - Considerations: after push, mark `docs/plans/2026-06-10-professional-self-service-portal.md` as VERIFIED.
+1. Arteterapia-only correction completed 2026-11-07: associated Autoconocimiento in the catalog and verified both public profiles in visible Chrome on haravital.app. No professional records or other practices changed. The 41-profile manual reclassification proposal is withdrawn; see hara.md and docs/plans/2026-11-07-arteterapia-specialty.md.
+2. Verify the production deployment of f9e2297; decide separately on enabling the 45 existing accounts and reviewing Upstash.
+3. Follow the current, explicitly deferred and maintenance items in [hara.md](hara.md). Do not revive the old portal commit task: registration and professional portal specs are VERIFIED and git delivery succeeded.
 
 ---
 
 ## Session Log
+
+### Session 2026-11-06 (delivery status synchronized)
+- The old pending portal commit instruction below is superseded by the verified November registration/portal release and actual push f9e2297. The earlier June portal spec is historical; the November follow-up verifies the current account and almanac behavior.
+- Preserved former Next Steps for traceability:
+
+**Historical next-step instruction**
+
+1. **Commit + push all pending changes**
+   - What: Stage and commit the full batch — `app/layout.tsx` (metadata), `app/admin/login/page.tsx` (background fix + new test), `app/pro/` (portal: login, set-password, perfil, background fixes, login test), `app/api/pro/`, `lib/pro-invite.*`, `middleware.ts`, `middleware.test.ts`, `migrations/022`, `app/api/admin/professionals/[id]/invite/`, modified `email.ts`, `email.test.ts`, `vitest.workspace.ts`, admin review page. Run full test suite first (568 tests currently green).
+   - Considerations: after push, mark `docs/plans/2026-06-10-professional-self-service-portal.md` as VERIFIED.
+
 
 ### Session — 2026-06-16 (Portal testing + metadata + background fix)
 

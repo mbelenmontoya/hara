@@ -40,13 +40,17 @@ The connection is fast. The time is spent waiting for the database to answer, ab
 4. Put the database and the Vercel functions in the same region.
 5. Fetch the professional and their reviews in one database call.
 
-### 2. Most professionals have not been mapped to practices yet
+### 2. Stored practice fields and automatic resolution need reconciliation
 
-**Found:** 2026-10-02.
+**Found:** 2026-10-02. **Corrected:** 2026-11-07 after the user pointed out that mapping had already been fixed.
 
-42 of 45 active professionals are flagged `needs_practice_review`, and none has a curated specialty saved directly. The pages work around this by matching their free text to the practices catalog (`lib/profile-specialties.ts`). Also, 5 practices have no specialties set (`coaching`, `arteterapia`, `mediumnidad`, `pendulo`, `biodescodificacion`), so people who only match those get fewer tiles.
+The original count was 42/45, later 41/45, for empty professionals.practices and needs_practice_review. This was incorrectly presented as 41 profiles requiring new manual classification. The June session records migration 020 applied, and the existing resolver uses catalog keys, labels and aliases on raw specialties.
 
-**Idea:** finish the admin review (`SpecialtyMapper` and `PracticeMapper`) and fill the 5 empty practices.
+**Read-only check before the correction:** Running resolveProfileSpecialties on that snapshot recognized practices for all 45 profiles and specialties for 44. Only the Arteterapia-only profile lacked derived specialties. Evidence: `/tmp/hara-practice-resolution-check.log`; that diagnostic itself made no browser check or database writes. The missing Arteterapia association was subsequently fixed and checked publicly as recorded below.
+
+After the user-approved Arteterapia-only correction on 2026-11-07, four catalog entries retain empty specialty mappings (Biodescodificacion, Coaching, Mediumnidad, Pendulo), but that is separate from the stored-profile flags and is not authorization to invent new mappings. The current schema allows automatic resolution without writing inferred practices back.
+
+**Scope decision (2026-11-07):** the user requested only the Arteterapia fix. It is now associated with Autoconocimiento, verified on both affected public profiles. Persisted practice-array/review-flag reconciliation and the other catalog entries are outside that approved scope. Do not treat the old 41 count as a confirmed public-classification failure or rerun migrations blindly.
 
 ### 3. The home cards barely change the list
 
@@ -63,6 +67,8 @@ The four cards are the four most common specialties, and 42 of 45 professionals 
 The home shows one featured professional plus 8 rows, even under "Todos los profesionales". "Ver todos" opens the full directory.
 
 **Idea:** decide whether a "Ver más" button that expands the list is worth the longer page.
+
+**Revalidation needed (2026-11-06):** `app/HomeArrival.tsx` now has visibleCount pagination and a "Cargar ... más" control. This was observed in source, not newly tested in the browser. Do not treat the original fixed-nine report as a confirmed current bug before checking the actual page.
 
 ### 5. Wording is mixed between "tú" and "vos"
 
@@ -207,6 +213,8 @@ Registration returns 200 and attempts account/profile insertion for a whitespace
 **Impact to verify end to end:** contact statistics and opt-in review eligibility can miss the interaction even when the WhatsApp destination remains usable. Fix remains unapproved under the revised critical-flow plan.
 
 ## Done
+
+- 2026-11-07: completed the sole approved Arteterapia gap: practices[arteterapia].specialties now contains autoconocimiento. Verified on the María Laura and Victoria public profiles in visible Chrome on haravital.app at desktop/mobile sizes. Snapshot comparison confirms no other catalog row/field or professional record changed. No application code or migration was needed. Plan: docs/plans/2026-11-07-arteterapia-specialty.md.
 
 - 2026-11-06: fixed entry 17 (found 2026-10-19 while adding the bottom bar): professional sign-up and login previously required direct URLs, and neither the bottom bar nor the design exposed them. The shared bottom menu has one "Ingresar" link to `/pro/login`, exclusively presented as professional access. The user removed the separate registration/admin entry links; admin uses `/admin/login` directly. The user moved these out of the masthead after reviewing the first implementation; the centered home logo is restored.
 

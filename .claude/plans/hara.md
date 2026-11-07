@@ -2,12 +2,14 @@
 
 ## Overview
 
-Current status checked 2026-11-06: admin redesign and role-based access are committed and pushed (`ef13ca2`, `e73d5fa`; local `main` matches `origin/main`). The user approved registration/account creation, pending-profile restrictions, email instructions, professional login and the final four-item menu for commit and push after verification. The approved follow-up migrated `/pro/perfil` and `/pro/set-password` to almanac too; those changes also received final user approval after the visible Chrome run. Real Auth invite/recovery and active-profile saving/public persistence passed with a temporary fixture; its profile and account were deleted. Read-only queries against the real Hara database found 45 active profiles, zero linked accounts, zero professional Auth accounts, one admin, and 41 profiles needing practice review. Existing professionals still need access invitations; no invitations were sent to them. The critical-flow verification plan is deferred by the user and remains unapproved. Invitation inbox receipt is not verified by the new direct-token fixture tests.
+Current status checked 2026-11-06: registration/accounts, professional login, profile editor/statuses, password setup/recovery and the final public menu were approved, committed and pushed to main as `f9e229717963f5b1d779867e4ece535da44d1a62`. Local HEAD and origin/main matched after push. Admin redesign and roles were already delivered as `ef13ca2` and `e73d5fa`. Both November registration/portal specs are VERIFIED. The deployment of f9e2297 has not been checked and is still an open item.
+
+Practice check before the Arteterapia correction (2026-11-07): 45 active professionals; 41 had empty stored practices/review flags, while the existing resolver already recognized practices for all 45 and specialties for 44. Those flags did not establish 41 pending human classifications. The sole approved residual gap, Arteterapia → Autoconocimiento, is now fixed and verified on both affected public profiles; other practices and every professional record stayed unchanged. The previous account query found no linked accounts. Existing-professional invitations have not been sent. The real browser fixtures were deleted; their Auth/profile absence was checked. General critical-flow testing is deferred by the user.
 Hara Vital is a marketplace for holistic therapies (Argentina and Spanish-speaking markets), built with Next.js 14, Tailwind v4 and Supabase. We are applying the Claude Design "quiet almanac" redesign one page at a time and stopping after each page for review in the browser.
 
 Pages done and approved: the professional profile `/p/[slug]`, the home `/` (which is now the directory), and Ayuda `/que-es-hara`. Sign-up moved to `/registro`. The old `/profesionales` page was removed on purpose, but its components are still in `app/profesionales/components` and `app/profesionales/hooks` because the home imports from them.
 
-This session finished the home page: the sticky filter bar with its panels, and the new professional cards, both copied from the design's round 11 markup.
+The earlier home work finished the sticky filter bar, panels and professional cards from design round 11. The latest completed work is the registration/account and professional portal release recorded above.
 
 A separate workstream (Instagram network): the `ig-network` skill in `.claude/skills/ig-network/`. It reads active professionals from Supabase (read-only), opens each one's Instagram in Chrome with the Hara account, and records whether the handle exists, whether Hara follows them and whether they follow Hara. It is separate from `ig-engage` (hashtag comments and DMs to strangers). Later phases, agreed but not built: automatic follows with a daily cap, and finding posts to share in stories with approval.
 
@@ -21,15 +23,15 @@ Rules from the user for this work:
 ## Success Criteria
 - [x] Home `/` has the sticky filter bar (search, Prácticas, Modalidad, Ciudad, count, Limpiar filtros, Lista/Mapa) working with real data
 - [x] Home cards (featured and list) follow the design, with real data only
-- [x] Unit suite and `tsc` pass at the last run (92 files, 652 tests)
+- [x] Unit project and TypeScript passed; the pre-push hook passed again for f9e2297 (108 files, 794 tests). This does not establish email delivery or complete concierge processing
 - [x] `/profesionales` leftovers removed without breaking the home (2026-10-25)
-- [x] Diario (blog) matches the design (done 2026-10-05, plan `docs/plans/2026-10-05-almanac-diario-page.md`, approved, not committed)
+- [x] Diario (blog) matches the design (done 2026-10-05, plan `docs/plans/2026-10-05-almanac-diario-page.md`, approved, included in the earlier redesign push)
 - [x] Concierge screens (`/solicitar`, `/r/{tracking_code}`, design 9a to 9d) match the design (all four done 2026-10-16; the visual check against the design is done too)
 - [x] Home cards filter the list, the count and the map (the user chose this over the design's reorder, 2026-10-19); the featured card is a random pick per visit among Índice Hara 50 or more, and there is no featured card when none of them is shown
 - [ ] Upstash rate limiter checked together with the user once the redesign is done (ISSUES.md entry 16)
 - [x] Concierge form and confirmation (9a, 9b) done and verified 2026-10-16 (migration 023 run, test lead sent; plan `docs/plans/2026-10-05-almanac-concierge-screens.md`)
 - [x] Carta (9c, `/r/[tracking_code]`) and review link (9d) built and checked in Chrome 2026-10-16 (plan `docs/plans/2026-10-16-almanac-carta-resena.md`, migration 024 run)
-- [x] Bottom nav bar (Inicio, Buscar, Diario, Ayuda) on the home, Diario and Ayuda, done 2026-10-19 (plan `docs/plans/2026-10-19-almanac-bottom-nav.md`). The masthead search circle was removed at the user's request.
+- [x] Bottom nav bar on home, Diario and Ayuda, originally done 2026-10-19 and now Inicio, Diario, Ayuda, Ingresar (Buscar removed from the bar at the user's request; home search remains) (plan `docs/plans/2026-10-19-almanac-bottom-nav.md`). The masthead search circle was removed at the user's request.
 - [ ] Ponytail review findings decided (1 should-fix, 4 nice-to-haves, 2026-10-20)
 - [x] Shared bottom menu has one "Ingresar" link to professional access; no Soy pro, Entrar or admin entry (final user clarification, 2026-11-06; ISSUES.md entry 17 done)
 - [x] `ig-network` audit of all professionals' Instagram handles done (38 handles: 22 valid, 5 possible new accounts, 11 invalid)
@@ -39,10 +41,18 @@ Rules from the user for this work:
 - [x] Redesign committed and pushed to `main` (cc2e2d7, 2026-10-28, with the 5 earlier redesign commits)
 - [x] Admin redesign (design 13) done page by page and verified (plan `docs/plans/2026-10-29-admin-almanac-redesign.md`, committed and pushed as `ef13ca2`)
 - [x] Only the admin can open `/admin` and `/api/admin`: role-based (`app_metadata.role`, plan `docs/plans/2026-11-06-admin-role-permissions.md`, committed and pushed as `e73d5fa`; admin SQL and migration 026 were run by the user)
-- [x] "Soy profesional" form (`/registro`) matches design 12, creates an account and supports review status (2026-11-06; final commit/push approved)
+- [x] "Soy profesional" form (`/registro`) matches design 12, creates an account and supports review status (2026-11-06; committed and pushed in f9e2297)
+
+- [x] Professional profile editor, review/rejection notices and invitation/recovery password pages migrated to almanac, approved and delivered in f9e2297.
+- [x] Six real Auth/DB portal scenarios passed in visible Chrome, including persistence and recovery; temporary records deleted and absence verified.
+- [x] Registration and portal commit pushed to main: f9e2297; pre-push checks passed, working tree was clean immediately afterward.
+- [ ] Verify the automatic deployment of f9e2297 and the public production pages. A successful push alone is not deployment evidence.
+- [x] Recheck the claimed 41-profile classification backlog: the existing resolver already recognizes practices for all 45 profiles. The earlier count was a storage/review-flag count, not an actual-resolution count (2026-11-07 correction).
+- [x] Complete only Arteterapia → Autoconocimiento (2026-11-07); verified on both affected public profiles in visible Chrome. Other practices and every professional record stayed unchanged.
+- [ ] Enable/invite the 45 existing professionals who still lack linked accounts; sending invitations needs a concrete agreed batch.
 
 ## Constraints
-- The home imports filter logic, `DirectoryFilters`, `DirectoryMap`, `useCityGeocode` and the `DirectoryProfessional` type from `app/profesionales`. Those cannot be deleted.
+- The home imports the filter helpers/types (`FilterState`, `DirectoryProfessional`), `DirectoryMap` and `useCityGeocode` from `app/profesionales`; DirectoryFilters.tsx and ProfessionalsDirectory.tsx now contain types/helpers, not directory UI components. Those cannot be deleted.
 - Never show raw `professionals.specialties` free text; specialties come from the practices catalog through `resolveProfileSpecialties`.
 - Use design tokens only (no new hex colors). Fonts Instrument Serif and Jost are opt-in through `.font-almanac`, `.font-almanac-serif` and `.almanac-label`.
 - Git write commands need explicit permission. The user approved commit and push of the registration and professional portal work on 2026-11-06; Instagram changes remain excluded.
@@ -57,14 +67,14 @@ Rules from the user for this work:
 - PQLs stay in the admin. The "remove pqls" request on 2026-10-28 only meant leaving them out of the Claude Design brief.
 
 ## Next Steps
-1. **Classify practices for the 41 outstanding professional profiles**
-   - Spec approved and implemented 2026-11-06: `docs/plans/2026-11-06-pro-portal-almanac.md` (VERIFIED; final user approval and commit/push authorization received). Profile editor/statuses and set-password now use almanac. Production build, unit project and real invitation/edit/recovery journeys passed with a temporary account/profile, both deleted afterward. The visible Chrome run passed all six scenarios and the user approved the design. Practice classification is next. The broader critical-flow verification plan remains deferred.
-   - Remaining: practice classification; decide separately when to invite the 45 existing professionals who currently have no linked account. Approved-profile persistence has now been verified against the real database and public page. The form edits text/contact/location/practices/prices/availability, but has no photo upload control (outside this visual migration).
-   - Already done: admin redesign and role SQL/migration 026, committed and pushed. No need to rerun that migration as a next step.
+1. **Arteterapia: CLOSED for the approved scope (2026-11-07)**
+   - User explicitly limited the work to this case. Updated only practices[arteterapia].specialties from [] to [autoconocimiento]. The two public profiles were checked in visible Chrome at 1280/402 px on localhost and haravital.app; María Laura now shows Autoconocimiento and Victoria retains her other specialties.
+   - Compared the complete catalog snapshot and professionals fingerprint: exactly one catalog row/field changed and all professional records stayed identical. Plan: docs/plans/2026-11-07-arteterapia-specialty.md (VERIFIED).
+   - No 41-profile reclassification, other catalog edits, code changes or migrations. Existing-professional invitations and photo replacement remain separate, outside this completed data correction.
 
-2. **Deliver the approved registration and portal release**
-   - What: commit and push the approved registration/account and portal changes; both specs are VERIFIED and the user explicitly authorized delivery. The final shared menu is Inicio, Diario, Ayuda, Ingresar; only Ingresar leads to professional access.
-   - Limits: the real registration/login/pending-account journey passed, but active-profile saving was not exercised in that journey. Admin notification receipt was confirmed; Resend rejected the example.com professional recipient, so professional inbox delivery remains unverified. The separate critical-flow plan is deferred by the user, not approved or completed.
+2. **Verify the deployed release**
+   - Commit/push are DONE: f9e2297 contains the approved registration, account, portal and menu changes. Both specs are VERIFIED. The remaining check is the actual automatic deployment and public production routes, using visible Chrome.
+   - Already verified locally: production build, TypeScript, unit project, real registration/sign-in/pending notice and the six headed Chrome portal scenarios, including active-profile save/public persistence. Admin notification receipt was confirmed earlier; professional inbox delivery remains unverified.
 
 3. **Pushed admin redesign follow-ups**
    - What: decide on removing the now-unused `onOverride` path in `ScoreBreakdown` (also used read-only by `/pro/perfil`) and the unused `PracticeReclassificationBanner`.
@@ -77,11 +87,14 @@ Rules from the user for this work:
    - What: the review of the bottom bar and home card work (2026-10-20) found no must-fix items. Should fix: (1) a test that the map only shows the professionals of the selected card. Nice to have: (2) drop `pendingScroll` and the `animate` flag in `app/HomeSearch.tsx`, (3) move `Magnifier` back into `app/HomeFilterBar.tsx`, (4) make "Limpiar filtros" also clear the selected card (product choice), (5) drop the unused `export` on `AlmanacTab`.
    - Considerations: no code changed yet; wait for the user to pick by number. Not checked: the bar's fixed 30px bottom padding on a real iPhone with a home indicator.
 
-6. **Check the Upstash rate limiter together with the user (parked until the redesign is done)**
-   - What: see ISSUES.md entry 16. Check the Upstash console first, then Vercel's variables, and only then create a new database.
+6. **Check the Upstash rate limiter together with the user**
+   - Open, previously parked until the redesign was done. The redesign is now closed; review it after the requested practice-classification work. See ISSUES.md entry 16: inspect the console first, compare Vercel variables, then decide whether a new database is necessary. Do not mark rate limiting fixed from the UI tests.
 
 7. **Work through the open items in ISSUES.md**
    - What: slow database calls with no caching, 41 of 45 active professionals still need practice review (real DB query 2026-11-06), home cards barely differ because most practices map to `estres-ansiedad`, mixed tú and vos wording, the broken destello SVG, lint configuration, odd `.env.local` lines, no Destacado professional in the data, unused leftovers (`RevealOnScroll`, `WelcomeModal`, stale visual baseline), and the Ayuda page's missing WhatsApp number, hours and Argentine emergency line (needs input from the user). Build/install problems were previously resolved; old issue text is not evidence they remain broken.
+
+   - Explicitly deferred by the user: the critical-flow verification/fix plan (ISSUES 20 to 22). This includes real mail/concierge delivery evidence, server rejection of blank/unusable fields, and the sendBeacon=false fallback. Keep them open, not bundled into the completed redesign. Rejected-account reapplication remains a separate product follow-up (entry 19).
+   - Older visual/data reports need revalidation before implementation. Example: entry 4 still describes a fixed nine-profile list, but HomeArrival now has a load-more control in source; no fresh browser verification was performed for that old report during this plan update.
 
 8. **Resolve the invalid Instagram handles**
    - What: decide with the user what to do with the 11 invalid handles and confirm or reject the 5 candidate accounts (Guadalupe Rodriguez, Leonela Velona, Lucina Micheloud, Sofía Belluscio, Victoria Garino).
@@ -220,7 +233,7 @@ Rules from the user for this work:
 
 ## Notes
 - Done 2026-10-20 (removed from Next Steps, verbatim): 4. **Fix or restart the dev server on port 3000** / What: it returns 500 on every page, including the home. The user restarts it (PID in `/tmp/hara-dev.pid`), or I stop it by that PID with the user's approval. / Considerations: my server on port 3001 (PID in Notes) is still running for the TS-002 check. Two `next dev` servers share `.next`, so stop one once TS-002 is done. Port 3000 now serves my dev server (started 2026-10-19 with `rm -rf .next && npm run dev`, background task b6eoy2cyc), and it answers normally.
-- Uncommitted: all of this session's work and earlier almanac work are untracked or modified in the working tree and not committed. Run `git status` once access is back. Files that must not stay untracked (project git hygiene rule): `app/Home*.tsx`, `lib/home-*.ts`, `lib/near-me*.ts`, `lib/moon-phase*.ts`, `lib/profile-specialties*.ts`, `app/registro/`, `app/que-es-hara/AyudaFaq*`, `public/assets/almanac/`, `ISSUES.md`, `docs/plans/*`.
+- Historical pre-release note: earlier sessions had uncommitted almanac work. The earlier redesign and f9e2297 now close those application changes; Instagram exclusions and local-only data remain governed by the separate rules above. Run `git status` once access is back. Files that must not stay untracked (project git hygiene rule): `app/Home*.tsx`, `lib/home-*.ts`, `lib/near-me*.ts`, `lib/moon-phase*.ts`, `lib/profile-specialties*.ts`, `app/registro/`, `app/que-es-hara/AyudaFaq*`, `public/assets/almanac/`, `ISSUES.md`, `docs/plans/*`.
 - Design source: Claude Design project `d0e3236f-a77b-4d60-b083-b3dd4cdd9da2`, file `Hara Vital App.dc.html`, read with `DesignSync get_file`. `get_file` returns only the first 256 KB (`truncated: true`), and it has no offset. Newest rounds come first: on 2026-10-05 a fresh fetch returned rounds 11 and 10 only, and round 9 was past the cut. Rounds 10 and 11 do not change the Diario.
 - Design file (copy, cut at 256 KB): `/private/tmp/claude-501/-Users-belenmontoya-Desktop-repos-hara/7176b110-1cbb-4c91-9f1a-086c78d014f5/scratchpad/app3.dc.html`. Round 11 (home as directory) is the current one; screens 11a to 11d.
 - Round 9 screens (concierge 9a to 9d, Diario 9e, Buscar 9f, Ayuda 9g) are complete in `t9.html` in that same scratchpad folder. Diario 9e is the `id="9e"` block: list (title, category chips, featured article, rows) and article view (cover with back button, meta, title, dek, author row, body with pull quote, dark "Si esto te sonó" card, "Sigue leyendo"). That folder is under `/private/tmp` and can disappear on reboot.
@@ -290,3 +303,20 @@ Rules from the user for this work:
 - User approved the headed Chrome results and explicitly requested commit and push. Both registration and portal specs are VERIFIED. Scope includes the account workflow, review/edit guard, professional almanac pages, navigation, tests and synced documentation.
 - Evidence: `/tmp/hara-pro-e2e.log` records six scenarios passing in visible Chrome, with verified cleanup. TypeScript, unit project and production build passed; lint configuration, Upstash, real inbox delivery and live Google selection remain disclosed limits.
 - Next requested work: classify practices for the 41 outstanding profiles. The broader critical-flow plan is deferred, with no business fixes authorized by this release.
+
+### Session 2026-11-06 (plan status reconciliation after push)
+- Confirmed actual delivery: f9e229717963f5b1d779867e4ece535da44d1a62 is both local HEAD and origin/main after the successful push; the pre-push unit project passed and the tree was clean before these documentation-only updates.
+- Marked registration/account, professional almanac pages, menu, visible Chrome verification and git delivery complete. No deployment success is claimed: that check remains open.
+- Next requested work remains classification of the 41 profiles. Existing-professional account invitations, Upstash, reapplication and Ayuda details remain open; general critical-flow coverage/fixes remain deferred and unapproved.
+- This session updates plan records only; it changes no application code or live professional data and runs no new business tests.
+
+### Session 2026-11-07 (correction to practice backlog)
+- User said the practice mapping had already been fixed. Confirmed the prior June record that migration 020 was applied, then ran the current resolveProfileSpecialties function on a fresh read-only snapshot of the real 45 profiles and catalog.
+- Actual result: 45 profiles resolve practices, 44 resolve specialties, one Arteterapia-only profile has no derived specialties. Evidence: `/tmp/hara-practice-resolution-check.log`. This is a function/data check, not a new browser-flow verification.
+- Corrected the previous inference that 41 empty stored arrays imply 41 people needing manual classification. The count describes stored fields/review flags. No profiles, catalog rows or application code were changed.
+
+### Session 2026-11-07 (Arteterapia only, completed)
+- Scope explicitly narrowed by the user: complete only the missing specialty association for Arteterapia. Assigned the existing Autoconocimiento category based on the two profiles' descriptions of exploration/connection through art.
+- RED visible-browser check reproduced the missing tile. Updated exactly one live catalog field; protected the prior empty value. Independent readback showed no other catalog changes and an identical professionals fingerprint.
+- GREEN in visible Chrome on local production and haravital.app: both public profiles show Autoconocimiento at 1280/402 px; Victoria's other specialties remain visible. Evidence and backup are recorded in docs/plans/2026-11-07-arteterapia-specialty.md.
+- No 41-profile writeback, other catalog edits, code changes, migrations, accounts or emails. No git delivery was performed for this data-only task.

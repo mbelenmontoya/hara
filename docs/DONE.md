@@ -4,6 +4,12 @@
 
 ---
 
+## Concierge contact validation (2026-11-07)
+
+- [x] Require valid email and international WhatsApp in createLead before queries, inserts or notifications; preserve valid input and optional fields.
+- [x] Persistent RED → GREEN and visible Chrome against the real production action confirm invalid requests leave no Supabase leads. Existing action tests now run in the unit/pre-push suite.
+- [x] Final user review approved. TypeScript/build/unit passed; valid live concierge submission, inbox delivery and lint configuration remain unverified. Git delivery pending. Evidence: `.claude/plans/hara.md`, session /fix concierge contact.
+
 ## Registration required-field validation (2026-11-07)
 
 - [x] Reject unusable required text and invalid selections at the registration server boundary, before queries or account/profile creation. Preserve optional fields and exact passwords.

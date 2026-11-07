@@ -7,6 +7,7 @@
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { notifyNewLead } from '@/lib/email'
 import { validatePracticeKeys } from '@/lib/practices'
+import { isValidPhoneNumber } from 'libphonenumber-js'
 
 export interface CreateLeadInput {
   country: string
@@ -19,14 +20,21 @@ export interface CreateLeadInput {
   currency?: string
   practice_preference?: string[]
   urgency?: string
-  email?: string
-  whatsapp?: string
+  email: string
+  whatsapp: string
   additional_context?: string
 }
 
 export async function createLead(input: CreateLeadInput) {
   if (!input.country || !input.intent_tags || input.intent_tags.length === 0) {
     throw new Error('Country and intent tags are required')
+  }
+
+  if (typeof input.email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.email)) {
+    throw new Error('Ingresá un email válido')
+  }
+  if (typeof input.whatsapp !== 'string' || !input.whatsapp.startsWith('+') || !isValidPhoneNumber(input.whatsapp)) {
+    throw new Error('Ingresá un WhatsApp válido con código de país')
   }
 
   if (input.practice_preference && input.practice_preference.length > 0) {

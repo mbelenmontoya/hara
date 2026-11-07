@@ -339,6 +339,8 @@ GRANT EXECUTE ON FUNCTION purge_old_events() TO service_role;
 
 **Note:** leads table has RLS enabled with no public INSERT policy. Lead submission must use service role.
 
+`createLead` requires both a valid email and a valid international WhatsApp number beginning with `+`, matching the concierge form. Missing, blank, malformed or wrong-type contacts throw before practice queries, lead insertion and admin notification. Valid submissions keep the existing `{ lead_id }` return shape and optional fields. The snippet below illustrates persistence only; the production action validates contacts before this insert.
+
 ```typescript
 'use server'
 
@@ -348,13 +350,15 @@ export async function createLead(formData: {
   country: string
   intent_tags: string[]
   budget_max?: number
-  email?: string
+  email: string
+  whatsapp: string
 }) {
   const { data, error } = await supabaseAdmin.from('leads').insert({
     country: formData.country,
     intent_tags: formData.intent_tags,
     budget_max: formData.budget_max,
     email: formData.email,
+    whatsapp: formData.whatsapp,
     status: 'new',
   }).select().single()
 

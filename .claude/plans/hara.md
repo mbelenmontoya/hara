@@ -73,7 +73,7 @@ Rules from the user for this work:
    - No 41-profile reclassification, other catalog edits, code changes or migrations. Existing-professional invitations and photo replacement remain separate, outside this completed data correction.
 
 2. **Verify the deployed release**
-   - Commit/push are DONE: f9e2297 contains the approved registration, account, portal and menu changes. Both specs are VERIFIED. The remaining check is the actual automatic deployment and public production routes, using visible Chrome.
+   - Commit/push are DONE: f9e2297 contains the approved registration, account, portal and menu changes; e782854 and dd4d787 add the approved registration/concierge validation fixes. The remaining check is the actual automatic deployment and public production routes, using visible Chrome.
    - Already verified locally: production build, TypeScript, unit project, real registration/sign-in/pending notice and the six headed Chrome portal scenarios, including active-profile save/public persistence. Admin notification receipt was confirmed earlier; professional inbox delivery remains unverified.
 
 3. **Pushed admin redesign follow-ups**
@@ -93,7 +93,7 @@ Rules from the user for this work:
 7. **Work through the open items in ISSUES.md**
    - What: slow database calls with no caching, 41 of 45 active professionals still need practice review (real DB query 2026-11-06), home cards barely differ because most practices map to `estres-ansiedad`, mixed tú and vos wording, the broken destello SVG, lint configuration, odd `.env.local` lines, no Destacado professional in the data, unused leftovers (`RevealOnScroll`, `WelcomeModal`, stale visual baseline), and the Ayuda page's missing WhatsApp number, hours and Argentine emergency line (needs input from the user). Build/install problems were previously resolved; old issue text is not evidence they remain broken.
 
-   - Explicitly deferred by the user: the critical-flow verification/fix plan (ISSUES 20 to 22). This includes real mail/concierge delivery evidence, server rejection of blank/unusable fields, and the sendBeacon=false fallback. Keep them open, not bundled into the completed redesign. Rejected-account reapplication remains a separate product follow-up (entry 19).
+   - The broader critical-flow/inbox plan remains deferred. The user separately approved and shipped the two bounded required-field fixes (ISSUES 21): registration e782854 and concierge dd4d787. Next individual bug is sendBeacon=false fallback (ISSUES 22); it is not yet fixed or approved for implementation. Rejected-account reapplication remains a separate product follow-up (entry 19).
    - Older visual/data reports need revalidation before implementation. Example: entry 4 still describes a fixed nine-profile list, but HomeArrival now has a load-more control in source; no fresh browser verification was performed for that old report during this plan update.
 
 8. **Resolve the invalid Instagram handles**
@@ -336,4 +336,19 @@ Rules from the user for this work:
 - [x] Quality gate: production build, TypeScript and full unit suite pass (/tmp/hara-concierge-contact-build.log, /tmp/hara-concierge-contact-types.log, /tmp/hara-concierge-contact-unit.log). Lint was attempted and exits 1 asking for the existing missing ESLint configuration (/tmp/hara-concierge-contact-lint.log); no tooling changes made.
 - [x] Actual-program verification: isolated visible Chrome called the compiled production server action from /solicitar for missing/blank contacts, malformed email with valid phone, and valid email with incomplete phone. All four rejected; Next Server Actions encodes thrown errors as HTTP 500 with error digests. Server logs independently confirm the email/WhatsApp guard messages, and the real Supabase query found zero leads under the unique fixture marker. No valid live lead or email was created to perform this check. Harness: /tmp/hara-concierge-contact-browser.mjs; evidence: /tmp/hara-concierge-contact-browser.log and /tmp/hara-concierge-contact-browser-results.json.
 - Limits: the valid path is covered by action/form/mapper tests with external services mocked, including the admin-notification invocation; no new valid live concierge submission or inbox-delivery assertion. No UI, pricing, country/intent hardening, server-action error transport or Upstash changes.
-- [x] Final review approved by the user with option 1 (2026-11-07). /fix complete; commit/push and end-session explicitly authorized afterward. Next separate bug: contact-event fallback when sendBeacon returns false (ISSUES 22). Upstash remains parked.
+- [x] Final review approved by the user with option 1 (2026-11-07). /fix complete; committed and pushed as dd4d787 after explicit authorization. Pre-push unit suite passed; HEAD matched origin/main and the working tree was clean before end-session docs. Next separate bug: contact-event fallback when sendBeacon returns false (ISSUES 22). Upstash remains parked.
+
+### Session — 2026-11-07
+**Completed:**
+- Ran end-session via `node scripts/codex/git-session-summary.mjs "today 00:00"`; output saved to /tmp/hara-end-session-2026-11-07.log. Reviewed today's commits and confirmed no staged/unstaged carryover before writing this closeout.
+- Shipped registration required-field validation (e782854) and concierge contact validation (dd4d787), both approved by the user. RED/GREEN, production builds, TypeScript, unit suites and visible-Chrome checks are recorded above. The concierge push hook passed with 864 unit cases; invalid live tests left no leads.
+- Earlier Arteterapia-only live correction and plan reconciliation are recorded in 3ec1298. No broad profile reclassification or invitations were performed.
+
+**Deviations:**
+- Moved the existing mocked createLead test into the unit/pre-push suite instead of keeping it mislabeled as integration. Fixed the existing invalid JPEG test fixture and checked decoded preview/stored bytes. No unrelated production changes.
+
+**Next Steps:**
+- Next individual /fix candidate: sendBeacon returning false must trigger the existing fetch fallback (ISSUES 22). Investigate and reproduce before changing it; no implementation started today.
+- Separately address rejected-account reapplication (ISSUES 19) and existing-professional invitations when authorized. The broader inbox/critical-flow plan remains deferred.
+- Upstash stays parked by user request. Lint is unconfigured; valid live concierge submission/inbox delivery and automatic deployment of the latest commits remain unverified.
+- No code work remains uncommitted after delivering this closeout. Local production server remains on :3000; PID is in /tmp/hara-production.pid. Only this task's isolated Chrome was closed; user windows were preserved.

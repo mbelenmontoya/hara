@@ -14,7 +14,9 @@ This operational roadmap retains historical phase/session details. Current imple
 - [x] Rechecked practice backlog on 2026-11-07: the 41 stored arrays/flags do not represent 41 manual classifications; the existing resolver already recognizes practices for all 45 profiles.
 - [x] Completed only Arteterapia → Autoconocimiento and verified both affected public profiles in visible Chrome. No other practice or professional record changed; hara.md and the Arteterapia plan contain the evidence.
 - [ ] Enable access for the 45 existing professionals who lacked linked accounts in that query; no invitation campaign was sent.
-- [ ] Review Upstash and remaining operational/product backlog listed in hara.md. The broader critical-flow verification/fix plan is deferred by the user, not approved or completed.
+- [x] Approved required-field bugfixes pushed: registration e782854 and concierge dd4d787. Both have RED/GREEN and visible-Chrome evidence in hara.md; pre-push unit tests passed. Deployment remains unverified.
+- [ ] Next bounded bug: sendBeacon=false fetch fallback (ISSUES 22); no implementation started. Upstash remains parked by user request. The broader critical-flow/inbox plan remains deferred.
+- [x] End-session 2026-11-07: git activity captured with the repository command and closeout/limits/next steps recorded under `Session — 2026-11-07` in [hara.md](hara.md).
 
 ## Overview
 

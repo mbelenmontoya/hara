@@ -11,7 +11,7 @@ export interface CartaRecommendationRow {
   rank: number
   reasons: string[] | null
   attribution_token: string
-  professional: HomeProfessional & { whatsapp: string }
+  professional: HomeProfessional & { whatsapp: string | null; show_whatsapp: boolean }
 }
 
 export interface CartaPick {
@@ -48,7 +48,7 @@ export function toCartaPick(rec: CartaRecommendationRow, catalog: Practice[]): C
     slug: row.slug,
     name: row.name,
     firstName: row.name.split(/\s+/)[0] ?? row.name,
-    whatsapp: rec.professional.whatsapp,
+    whatsapp: rec.professional.show_whatsapp ? rec.professional.whatsapp ?? '' : '',
     photoUrl: row.photoUrl,
     practice: row.practice,
     specialtyKey: row.specialtyKeys[0] ?? null,

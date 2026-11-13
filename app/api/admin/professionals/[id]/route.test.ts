@@ -10,6 +10,7 @@ const builders = {
   pqlsDeleteEq: vi.fn(),
   proDeleteEq:  vi.fn(),
   proUpdateEq:  vi.fn(),
+  visibilityMaybeSingle: vi.fn(),
   // Last update payload captured by the shared mock — read from tests
   // rather than overriding `from()` per-test (which silently breaks if the
   // route reorders its from() calls).
@@ -32,7 +33,9 @@ vi.mock('@/lib/supabase-admin', () => ({
           delete: () => ({ eq: builders.proDeleteEq }),
           update: vi.fn((payload: Record<string, unknown>) => {
             builders.lastUpdatePayload = payload
-            return { eq: builders.proUpdateEq }
+            return { eq: 'show_email' in payload || 'show_whatsapp' in payload
+              ? () => ({ select: () => ({ maybeSingle: builders.visibilityMaybeSingle }) })
+              : builders.proUpdateEq }
           }),
         }
       }
@@ -76,6 +79,7 @@ beforeEach(() => {
   builders.pqlsDeleteEq.mockReset()
   builders.proDeleteEq.mockReset()
   builders.proUpdateEq.mockReset()
+  builders.visibilityMaybeSingle.mockReset()
   builders.lastUpdatePayload = null
 })
 
@@ -137,6 +141,29 @@ describe('DELETE /api/admin/professionals/[id]', () => {
 
     const res = await DELETE(makeReq(), { params: { id: ID } })
     expect(res.status).toBe(500)
+  })
+})
+
+describe('PATCH /api/admin/professionals/[id] — contact visibility', () => {
+  it('updates only the selected visibility field and leaves stored contacts untouched', async () => {
+    builders.visibilityMaybeSingle.mockResolvedValue({ data: { id: ID }, error: null })
+    const res = await PATCH(makePatchReq({
+      action: 'update_contact_visibility',
+      show_whatsapp: false,
+      email: '',
+      whatsapp: '',
+    }), { params: { id: ID } })
+    expect(res.status).toBe(200)
+    expect(builders.lastUpdatePayload).toEqual({ show_whatsapp: false, updated_at: expect.any(String) })
+  })
+
+  it('rejects a non-boolean visibility value before attempting a write', async () => {
+    const res = await PATCH(makePatchReq({
+      action: 'update_contact_visibility',
+      show_email: 'false',
+    }), { params: { id: ID } })
+    expect(res.status).toBe(400)
+    expect(builders.lastUpdatePayload).toBeNull()
   })
 })
 

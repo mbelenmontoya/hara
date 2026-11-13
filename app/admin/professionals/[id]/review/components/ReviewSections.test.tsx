@@ -14,6 +14,8 @@ const SCORE: ProfileScore = {
 const EMPTY_PRO: ReviewProfessional = {
   email: 'pro@test.com',
   whatsapp: '',
+  show_email: true,
+  show_whatsapp: true,
   country: 'AR',
   city: null,
   online_only: false,
@@ -79,7 +81,7 @@ describe('AboutCard and ContactCard', () => {
     render(
       <>
         <AboutCard pro={EMPTY_PRO} />
-        <ContactCard pro={EMPTY_PRO} />
+        <ContactCard pro={EMPTY_PRO} savingVisibility={false} onVisibilityChange={vi.fn()} />
       </>
     )
     for (const text of [

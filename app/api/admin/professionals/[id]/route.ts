@@ -1,6 +1,7 @@
 // Admin API — Single Professional
 // GET:    Fetch professional by UUID (all fields for review)
 // PATCH:  Update status (approve → 'active', reject → 'rejected' + reason)
+//         Can also update public contact visibility independently.
 //         Accepts optional `specialties` array for editing before/alongside approval.
 //         Specialty-only updates (no `action`) work regardless of profile status.
 // DELETE: Permanently remove the professional and dependent rows.
@@ -66,6 +67,36 @@ export async function PATCH(
   }
 
   const body = await request.json()
+  if (body?.action === 'update_contact_visibility') {
+    const { show_email, show_whatsapp } = body
+    if (
+      (show_email === undefined && show_whatsapp === undefined) ||
+      (show_email !== undefined && typeof show_email !== 'boolean') ||
+      (show_whatsapp !== undefined && typeof show_whatsapp !== 'boolean')
+    ) {
+      return NextResponse.json({ error: 'Elegí la visibilidad del email o de WhatsApp.' }, { status: 400 })
+    }
+
+    const { data: updated, error } = await supabaseAdmin
+      .from('professionals')
+      .update({
+        ...(show_email !== undefined && { show_email }),
+        ...(show_whatsapp !== undefined && { show_whatsapp }),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select('id')
+      .maybeSingle()
+
+    if (error || !updated) {
+      return NextResponse.json(
+        { error: error ? 'No se pudo actualizar la visibilidad.' : 'Profesional no encontrado' },
+        { status: error ? 500 : 404 }
+      )
+    }
+    return NextResponse.json({ success: true })
+  }
+
   const { action, rejection_reason, specialties, practices, score_overrides } = body as {
     action?: string
     rejection_reason?: string

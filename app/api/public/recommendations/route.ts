@@ -18,7 +18,7 @@ const RATE_LIMIT = {
 }
 
 const PROFESSIONAL_COLUMNS =
-  'slug, full_name, short_description, profile_image_url, city, country, online_only, modality, ranking_score, practices, specialties, price_range_min, price_range_max, currency, rating_average, rating_count, subscription_tier, tier_expires_at, whatsapp'
+  'slug, full_name, short_description, profile_image_url, city, country, online_only, modality, ranking_score, practices, specialties, price_range_min, price_range_max, currency, rating_average, rating_count, subscription_tier, tier_expires_at, whatsapp, show_whatsapp'
 
 interface MatchRow {
   id: string

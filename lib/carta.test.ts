@@ -7,7 +7,7 @@ const CATALOG: Practice[] = [
   { key: 'reiki', label: 'Reiki', slug: 'reiki', sort_order: 0, active: true, specialties: ['estres-ansiedad', 'duelo-perdidas'], aliases: [] },
 ]
 
-const professional = (p: Partial<HomeProfessional> = {}): HomeProfessional & { whatsapp: string } => ({
+const professional = (p: Partial<HomeProfessional> = {}): HomeProfessional & { whatsapp: string; show_whatsapp: boolean } => ({
   slug: 'lucia-paz',
   full_name: 'Lucía Paz',
   short_description: null,
@@ -27,6 +27,7 @@ const professional = (p: Partial<HomeProfessional> = {}): HomeProfessional & { w
   modality: ['presencial'],
   ranking_score: null,
   whatsapp: '5491155550101',
+  show_whatsapp: true,
   ...p,
 })
 
@@ -75,6 +76,11 @@ describe('toCartaPick', () => {
       rating: 4.5,
       reasons: ['Trabaja mucho con ansiedad y sueño'],
     })
+  })
+
+  it('omits a stored number from the response when WhatsApp is private', () => {
+    const pick = toCartaPick(row({ professional: { ...professional(), show_whatsapp: false } }), CATALOG)
+    expect(pick.whatsapp).toBe('')
   })
 
   it('has no rating without reviews, no price when unset and no specialty when nothing resolves', () => {

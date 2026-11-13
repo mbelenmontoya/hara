@@ -12,7 +12,9 @@ import { PracticeMapper } from './PracticeMapper'
 
 export interface ReviewProfessional {
   email: string
-  whatsapp: string
+  whatsapp: string | null
+  show_email: boolean
+  show_whatsapp: boolean
   country: string
   city: string | null
   online_only: boolean
@@ -130,7 +132,13 @@ export function ProfileCard({ pro, catalog, onPractices }: ProfileCardProps) {
   )
 }
 
-export function ContactCard({ pro }: { pro: ReviewProfessional }) {
+interface ContactCardProps {
+  pro: ReviewProfessional
+  savingVisibility: boolean
+  onVisibilityChange: (field: 'show_email' | 'show_whatsapp', visible: boolean) => void
+}
+
+export function ContactCard({ pro, savingVisibility, onVisibilityChange }: ContactCardProps) {
   const coords = pro.latitude != null && pro.longitude != null ? `${pro.latitude.toFixed(4)}, ${pro.longitude.toFixed(4)}` : ''
   const ig = pro.instagram ? `@${pro.instagram.replace(/^@/, '')}` : ''
   return (
@@ -142,6 +150,25 @@ export function ContactCard({ pro }: { pro: ReviewProfessional }) {
       <KeyRow k="WhatsApp">
         <Val v={pro.whatsapp} empty="Sin WhatsApp" />
       </KeyRow>
+      <fieldset className="space-y-2 border-b border-foreground/8 pb-3" disabled={savingVisibility}>
+        <legend className="mb-2 pt-3 text-sm font-medium">Contacto público</legend>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={pro.show_email}
+            onChange={(event) => onVisibilityChange('show_email', event.target.checked)}
+          />
+          Mostrar email
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={pro.show_whatsapp}
+            onChange={(event) => onVisibilityChange('show_whatsapp', event.target.checked)}
+          />
+          Mostrar WhatsApp
+        </label>
+      </fieldset>
       <KeyRow k="Ubicación">
         <Val v={pro.city ? `${pro.city}, ${pro.country}` : ''} empty="Sin ubicación" />
       </KeyRow>

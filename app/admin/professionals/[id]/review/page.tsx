@@ -66,6 +66,7 @@ function ReviewBody({ id }: { id: string }) {
   const [editedPractices, setEditedPractices] = useState<string[] | null>(null)
   const [scoreOverrides, setScoreOverrides] = useState<Record<string, number>>({})
   const [imageUploading, setImageUploading] = useState(false)
+  const [savingVisibility, setSavingVisibility] = useState(false)
 
   const fetchProfessional = useCallback(async () => {
     try {
@@ -103,6 +104,25 @@ function ReviewBody({ id }: { id: string }) {
       toast.show('Error de red al subir la foto.', 'err')
     } finally {
       setImageUploading(false)
+    }
+  }
+
+  async function handleVisibilityChange(field: 'show_email' | 'show_whatsapp', visible: boolean) {
+    setSavingVisibility(true)
+    try {
+      const res = await fetch(`/api/admin/professionals/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update_contact_visibility', [field]: visible }),
+      })
+      const body = await res.json()
+      if (!res.ok) throw new Error(body.error || 'No se pudo actualizar la visibilidad.')
+      setProfessional((prev) => (prev ? { ...prev, [field]: visible } : prev))
+      toast.show('Visibilidad actualizada.')
+    } catch (err) {
+      toast.show(errorMessage(err), 'err')
+    } finally {
+      setSavingVisibility(false)
     }
   }
 
@@ -196,7 +216,11 @@ function ReviewBody({ id }: { id: string }) {
             onSet={(key, value) => setScoreOverrides((prev) => ({ ...prev, [key]: value }))}
             onReset={handleReset}
           />
-          <ContactCard pro={professional} />
+          <ContactCard
+            pro={professional}
+            savingVisibility={savingVisibility}
+            onVisibilityChange={handleVisibilityChange}
+          />
         </div>
       </div>
 
